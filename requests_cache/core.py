@@ -21,7 +21,8 @@ _cache = None
 
 def configure(cache_filename_prefix='cache', backend='sqlite', expire_after=60,
               allowable_codes=(200,), monkey_patch=True):
-    """ Configures cache
+    """ Configure cache and patch ``requests`` library, to  transparently use it
+
     :param cache_filename_prefix: cache files will start with this prefix,
                                   e.g ``cache_urls.sqlite``, ``cache_responses.sqlite``
     :param backend: cache backend e.g ``'sqlite'``, ``'memory'``
@@ -45,19 +46,32 @@ def configure(cache_filename_prefix='cache', backend='sqlite', expire_after=60,
 
 
 def clear():
+    """ Clear cache
+    """
     _cache.clear()
 
 
 def undo_patch():
+    """ Undo ``requests`` monkey patch
+    """
     Request.send = _original_request_send
 
 
 def redo_patch():
+    """ Redo ``requests`` monkey patch
+    """
     Request.send = _request_send_hook
 
 
 def get_cache():
+    """ Returns internal cache object
+    """
     return _cache
+
+def delete_url(url):
+    """ Deletes all cache for `url`
+    """
+    _cache.del_cached_url(url)
 
 
 def _request_send_hook(self, *args, **kwargs):
