@@ -1,14 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+    requests_cache.core
+    ~~~~~~~~~~~~~~~~~~~
+
+    Core functions for configuring cache and monkey patch ``requests.Request.send``
+"""
 from datetime import datetime, timedelta
 
-from requests.sessions import Session
 from requests import Request
+from requests.hooks import dispatch_hook
 
 from requests_cache import backends
 
 
-_original_session_request = Session.request
 _original_request_send = Request.send
 _config = {}
 _cache = None
@@ -16,6 +21,17 @@ _cache = None
 
 def configure(cache_filename_prefix='cache', backend='sqlite', expire_after=60,
               allowable_codes=(200,), monkey_patch=True):
+    """ Configures cache
+    :param cache_filename_prefix: cache files will start with this prefix,
+                                  e.g ``cache_urls.sqlite``, ``cache_responses.sqlite``
+    :param backend: cache backend e.g ``'sqlite'``, ``'memory'``
+    :param expire_after: number of minutes after cache will be expired
+    :type expire_after: int or float
+    :param allowable_codes: limit caching only for response with this codes
+    :type allowable_codes: tuple
+    :param monkey_patch: patch ``requests.Request.send`` if True, otherwise
+                         cache will not work until calling :func:`redo_patch`
+    """
     try:
         global _cache
         _cache = backends.registry[backend](cache_filename_prefix)
@@ -33,12 +49,10 @@ def clear():
 
 
 def undo_patch():
-    Session.request = _original_session_request
     Request.send = _original_request_send
 
 
 def redo_patch():
-    Session.request = _session_request_hook
     Request.send = _request_send_hook
 
 
@@ -46,24 +60,22 @@ def get_cache():
     return _cache
 
 
-def dummy_send(*args, **kwargs):
-    return True
-
-def _session_request_hook(self, method, url, **kwargs):
-    print method, url, kwargs
-    if not kwargs.get('return_response', True):  # Used in async
-        return _original_session_request(self, method, url, **kwargs)
-    response, timestamp = _cache.get_response_and_time(url)
+def _request_send_hook(self, *args, **kwargs):
+    #print('send: %s' % self.url)
+    response, timestamp = _cache.get_response_and_time(self.url)
     if response is None:
-        response = _original_session_request(self, method, url, **kwargs)
-        if response.status_code in _config['allowable_codes']:
-            _cache.save_response(response.url, response)
-        return response
+        result = _original_request_send(self, *args, **kwargs)
+        if result and self.response.status_code in _config['allowable_codes']:
+            _cache.save_response(self.response.url, self.response)
+        return result
+    self.sent = True
     difference = datetime.now() - timestamp
     if difference > timedelta(minutes=_config['expire_after']):
-        _cache.del_cached_url(url)
-    return response
+        _cache.del_cached_url(self.url)
+    self.response = response
+    # TODO is it stable api?
+    dispatch_hook('response', self.hooks, self.response)
+    r = dispatch_hook('post_request', self.hooks, self)
+    self.__dict__.update(r.__dict__)
+    return True
 
-def _request_send_hook(self, anyway=False, prefetch=False):
-    print 'send', self, self.url, anyway, prefetch
-    return _original_request_send(self, anyway, prefetch)

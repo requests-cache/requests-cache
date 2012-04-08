@@ -11,13 +11,14 @@ def main():
     requests_cache.configure('test')
     requests_cache.clear()
 
-    #for i in range(10):
-    #    r = requests.get('http://httpbin.org/redirect/10')
-    #    r = requests.get('http://httpbin.org/delay/3')
-    #    print r.text, r.cookies
+    for i in range(10):
+        r = requests.get('http://httpbin.org/redirect/10')
+        r = requests.get('http://httpbin.org/delay/3')
+        print r.text, r.cookies
 
-    rs = [async.get('http://httpbin.org/delay/3') for _ in range(5)]
-    async.map(rs)
+    rs = [async.get('http://httpbin.org/delay/%s' % i) for i in range(5)]
+    for r in async.map(rs):
+        print r.text
     print requests_cache.core._cache
 
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#date: 08.04.12
+from collections import defaultdict
 import unittest
 import time
 
@@ -12,10 +12,8 @@ import requests_cache
 class CacheTestCase(unittest.TestCase):
 
     def setUp(self):
-        """setup"""
         requests_cache.configure()
         requests_cache.clear()
-
 
     def test_speedup_and_undo_redo_patch(self):
         delay = 1
@@ -58,15 +56,42 @@ class CacheTestCase(unittest.TestCase):
         url_map['http://ya.ru/'] = 'htpp://??.ru'
         url_map['http://ya.ru/'] = 'htpp://ya.ru'
 
-#        # del with history
-#        requests.get('http://github.com/')
-#        requests_cache.get_cache().del_cached_url('http://github.com/')
 
     def test_unregistered_backend(self):
         with self.assertRaises(ValueError):
             requests_cache.configure(backend='nonexistent')
 
 
+    def test_async_compatibility(self):
+        from requests import async
+        n = 3
+        def long_running():
+            t = time.time()
+            rs = [async.get('http://httpbin.org/delay/%s' % i) for i in range(n + 1)]
+            async.map(rs)
+            return time.time() - t
+        # cache it
+        delta = long_running()
+        self.assertGreaterEqual(delta, n)
+        # fast from cache
+        delta = 0
+        for i in range(n):
+            delta += long_running()
+        self.assertLessEqual(delta, 1)
+
+    def test_hooks(self):
+        state = defaultdict(int)
+        for hook in ('response', 'post_request'):
+
+            def hook_func(r):
+                state[hook] += 1
+                return r
+            n = 5
+            for i in range(n):
+                r = requests.get('http://httpbin.org/get', hooks={hook: hook_func})
+            self.assertEqual(state[hook], n)
+
+    # TODO: https test
 
 if __name__ == '__main__':
     unittest.main()
