@@ -4,5 +4,6 @@ syntax: glob
 *.idea
 *.sqlite
 build
+_build
 dist
 MANIFEST
