@@ -7,7 +7,10 @@
     Dictionary-like objects for saving large data sets to `sqlite` database
 """
 import UserDict
-import pickle
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 import sqlite3 as sqlite
 
 # TODO: close connection
@@ -64,4 +67,5 @@ class DbPickleDict(DbDict):
         super(DbPickleDict, self).__setitem__(key, sqlite.Binary(pickle.dumps(item)))
 
     def __getitem__(self, key):
-        return pickle.loads(super(DbPickleDict, self).__getitem__(key))
+        # TODO: there is TypeError without str() when cPickle is used, what about py3?
+        return pickle.loads(str(super(DbPickleDict, self).__getitem__(key)))
