@@ -4,7 +4,7 @@
     requests_cache.core
     ~~~~~~~~~~~~~~~~~~~
 
-    Core functions for configuring cache and monkey patch ``requests.Request.send``
+    Core functions for configuring cache and monkey patching ``requests``
 """
 from datetime import datetime, timedelta
 
@@ -82,6 +82,7 @@ def _request_send_hook(self, *args, **kwargs):
         if result and self.response.status_code in _config['allowable_codes']:
             _cache.save_response(self.response.url, self.response)
         return result
+
     self.sent = True
     difference = datetime.now() - timestamp
     if difference > timedelta(minutes=_config['expire_after']):
