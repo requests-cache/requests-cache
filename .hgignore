@@ -1,0 +1,8 @@
+syntax: glob
+*.pyc
+*.pyo
+*.idea
+*.sqlite
+build
+dist
+MANIFEST
