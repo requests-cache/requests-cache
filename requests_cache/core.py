@@ -9,7 +9,10 @@
 from datetime import datetime, timedelta
 
 from requests import Request
-from requests.hooks import dispatch_hook
+try:
+    from requests.hooks import dispatch_hook
+except ImportError:
+    dispatch_hook = None
 
 from requests_cache import backends
 
@@ -90,8 +93,9 @@ def _request_send_hook(self, *args, **kwargs):
         _cache.del_cached_url(self.url)
     self.response = response
     # TODO is it stable api?
-    dispatch_hook('response', self.hooks, self.response)
-    r = dispatch_hook('post_request', self.hooks, self)
-    self.__dict__.update(r.__dict__)
+    if dispatch_hook is not None:
+        dispatch_hook('response', self.hooks, self.response)
+        r = dispatch_hook('post_request', self.hooks, self)
+        self.__dict__.update(r.__dict__)
     return True
 
