@@ -88,11 +88,12 @@ def _request_send_hook(self, *args, **kwargs):
         return result
 
     self.sent = True
+    # TODO: if cache is outdated, url should be downloaded again
     difference = datetime.now() - timestamp
     if difference > timedelta(minutes=_config['expire_after']):
         _cache.del_cached_url(self.url)
     self.response = response
-    # TODO is it stable api?
+    # TODO: is it stable api?
     if dispatch_hook is not None:
         dispatch_hook('response', self.hooks, self.response)
         r = dispatch_hook('post_request', self.hooks, self)

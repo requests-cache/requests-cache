@@ -85,7 +85,7 @@ _fields_to_copy = ('_content', 'url', 'status_code', 'cookies',
                    'headers', 'encoding')
 
 def reduce_response(response):
-    """ Reduce response object to make it compatible with pickle
+    """ Reduce response object to make it compatible with ``pickle``
     """
     result = _Store()
     # prefetch

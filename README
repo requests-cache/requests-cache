@@ -1,7 +1,8 @@
 requests-cache
 ---------------
 
-Requests-cache is a transparent cache for requests_ library with persistence and async support
+Requests-cache is a transparent cache for requests_ library with
+persistence and async support
 
 Just write::
 
@@ -15,6 +16,7 @@ And requests to resources will be cached for faster repeated access::
         r = requests.get('http://httpbin.org/redirect/5')
     # will took  approximately 5 seconds instead 50
 
-It can be useful when you are writing some data scraper, and change parsing algorithms by trials and errors
+It can be useful when you are writing some data scraper,
+and changing parsing algorithms by trials and errors
 
 .. _requests: http://docs.python-requests.org/

@@ -10,6 +10,8 @@ import UserDict
 import pickle
 import sqlite3 as sqlite
 
+# TODO: close connection
+# TODO: let user control commits
 class DbDict(object, UserDict.DictMixin):
     """ DbDict - a dictionary-like object for saving large datasets to `sqlite` database
     """
