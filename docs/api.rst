@@ -1,7 +1,7 @@
 API
 ===
 
-This part of the documentation covers all the interfaces of :mod:`requsts_cache`
+This part of the documentation covers all the interfaces of `requests-cache`
 
 
 Public api
@@ -11,8 +11,17 @@ Public api
    :members:
 
 
-Extensible objects
-------------------
+Cache backends
+--------------
 
 .. automodule:: requests_cache.backends.base
+   :members:
+
+.. automodule:: requests_cache.backends.sqlite
+   :members:
+
+Internal modules which can be used outside
+------------------------------------------
+
+.. automodule:: requests_cache.backends.dbdict
    :members:

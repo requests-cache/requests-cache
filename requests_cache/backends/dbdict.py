@@ -1,13 +1,23 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+"""
+    requests_cache.backends.dbdict
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Dictionary-like objects for saving large data sets to `sqlite` database
+"""
 import UserDict
 import pickle
 import sqlite3 as sqlite
 
 class DbDict(object, UserDict.DictMixin):
-    """ DbDict - a dictionary-like object for large datasets with sqlite backend"""
+    """ DbDict - a dictionary-like object for saving large datasets to `sqlite` database
+    """
 
     def __init__(self, dict_name):
+        """
+        :param dict_name: filename for database
+        """
         self.db_filename = "%s.sqlite" % dict_name
         self.con = sqlite.connect(self.db_filename)
         self.con.execute("create table if not exists data (key PRIMARY KEY, value)")
@@ -41,13 +51,12 @@ class DbDict(object, UserDict.DictMixin):
         self.con.execute("create table data (key PRIMARY KEY, value)")
         self.con.commit()
 
-
     def __str__(self):
         return str(dict(self.iteritems()))
 
 
 class DbPickleDict(DbDict):
-    """ Pickles data before store
+    """ Same as :class:`DbDict`, but pickles values before saving
     """
     def __setitem__(self, key, item):
         super(DbPickleDict, self).__setitem__(key, sqlite.Binary(pickle.dumps(item)))

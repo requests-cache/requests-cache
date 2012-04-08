@@ -4,7 +4,8 @@
     requests_cache.backends.base
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Contains base extensible in-memory cache backend and common functions
+    Contains in-memory cache backend which can be extended to support persistence
+     and some common functions
 """
 from datetime import datetime
 import requests
@@ -31,6 +32,8 @@ class MemoryCache(object):
 
                     .. note:: urls from history saved automatically
         :param response: response to save
+
+        .. note:: Response is reduced before saving (with :func:`reduce_response`) to make it picklable
         """
         self.responses[url] = reduce_response(response), datetime.now()
         self.url_map[url] = response.url
@@ -44,6 +47,8 @@ class MemoryCache(object):
         :param url: url of resource
         :param default: return this if `url` not found in cache
         :returns: tuple (response, datetime)
+
+        .. note:: Response is restored after unpickling with :func:`restore_response`
         """
         try:
             response, timestamp = self.responses[self.url_map[url]]
@@ -80,6 +85,8 @@ _fields_to_copy = ('_content', 'url', 'status_code', 'cookies',
                    'headers', 'encoding')
 
 def reduce_response(response):
+    """ Reduce response object to make it compatible with pickle
+    """
     result = _Store()
     # prefetch
     response.content
@@ -91,6 +98,8 @@ def reduce_response(response):
     return result
 
 def restore_response(response):
+    """ Restore response object after unpickling
+    """
     result = requests.Response()
     for field in _fields_to_copy:
         setattr(result, field, getattr(response, field))

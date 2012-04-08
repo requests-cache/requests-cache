@@ -19,23 +19,24 @@ _config = {}
 _cache = None
 
 
-def configure(cache_filename_prefix='cache', backend='sqlite', expire_after=60,
+def configure(cache_name_prefix='cache', backend='sqlite', expire_after=60,
               allowable_codes=(200,), monkey_patch=True):
-    """ Configure cache and patch ``requests`` library, to  transparently use it
+    """
+    Configure cache storage and patch ``requests`` library to transparently cache responses
 
-    :param cache_filename_prefix: cache files will start with this prefix,
+    :param cache_name_prefix: cache files will start with this prefix,
                                   e.g ``cache_urls.sqlite``, ``cache_responses.sqlite``
     :param backend: cache backend e.g ``'sqlite'``, ``'memory'``
-    :param expire_after: number of minutes after cache will be expired
+    :param expire_after: number of minutes after cache will be expired (default 60)
     :type expire_after: int or float
     :param allowable_codes: limit caching only for response with this codes
     :type allowable_codes: tuple
-    :param monkey_patch: patch ``requests.Request.send`` if True, otherwise
+    :param monkey_patch: patch ``requests.Request.send`` if `True` (default), otherwise
                          cache will not work until calling :func:`redo_patch`
     """
     try:
         global _cache
-        _cache = backends.registry[backend](cache_filename_prefix)
+        _cache = backends.registry[backend](cache_name_prefix)
     except KeyError:
         raise ValueError('Unsupported backend "%s" try one of: %s' %
                          (backend, ', '.join(backends.registry.keys())))
