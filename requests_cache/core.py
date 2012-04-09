@@ -6,6 +6,7 @@
 
     Core functions for configuring cache and monkey patching ``requests``
 """
+from contextlib import contextmanager
 from datetime import datetime, timedelta
 
 from requests import Request
@@ -57,6 +58,41 @@ def has_url(url):
     """
     return _cache.has_url(url)
 
+@contextmanager
+def disabled():
+    """
+    Context manager for temporary disabling cache
+    ::
+
+        >>> with requests_cache.disabled():
+        ...     request.get('http://httpbin.org/ip')
+        ...     request.get('http://httpbin.org/get')
+
+    """
+    previous = Request.send
+    undo_patch()
+    try:
+        yield
+    finally:
+        Request.send = previous
+
+@contextmanager
+def enabled():
+    """
+    Context manager for temporary enabling cache
+    ::
+
+        >>> with requests_cache.enabled():
+        ...     request.get('http://httpbin.org/ip')
+        ...     request.get('http://httpbin.org/get')
+
+    """
+    previous = Request.send
+    redo_patch()
+    try:
+        yield
+    finally:
+        Request.send = previous
 
 def clear():
     """ Clear cache

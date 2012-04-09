@@ -22,4 +22,6 @@
     :copyright: (c) 2012 by Roman Haritonov.
     :license: BSD, see LICENSE for more details.
 """
-from core import configure, clear, redo_patch, undo_patch, get_cache, has_url, delete_url
+from core import configure, clear, redo_patch, \
+                 undo_patch, get_cache, has_url, \
+                 delete_url, enabled, disabled

@@ -95,6 +95,26 @@ class CacheTestCase(unittest.TestCase):
         self.assertIn('test2', r2['form'])
         self.assert_(not requests_cache.has_url(url))
 
+    def test_disabled_enabled(self):
+        delay = 1
+        url = 'http://httpbin.org/delay/%s' % delay
+        with requests_cache.disabled():
+            t = time.time()
+            n = 2
+            for i in range(n):
+                requests.get(url)
+            delta = time.time() - t
+            self.assertGreaterEqual(delta, delay*n)
+
+        with requests_cache.enabled():
+            t = time.time()
+            n = 2
+            for i in range(n):
+                requests.get(url)
+            delta = time.time() - t
+            self.assertLessEqual(delta, delay*n)
+
+
 
 
     # TODO: https test
