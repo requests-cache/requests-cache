@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from collections import defaultdict
 import unittest
 import time
+import json
+from collections import defaultdict
 
 import requests
 
@@ -32,13 +33,19 @@ class CacheTestCase(unittest.TestCase):
         requests_cache.redo_patch()
         long_request()
 
+
     def test_expire_cache(self):
+        delay = 1
+        url = 'http://httpbin.org/delay/%s' % delay
         requests_cache.configure(expire_after=0.001)
-        url = 'http://httpbin.org/response-headers?expire_test=1'
+        t = time.time()
         r = requests.get(url)
-        self.assertIn(url, requests_cache.get_cache().url_map)
+        delta = time.time() - t
+        self.assertGreaterEqual(delta, delay)
+        t = time.time()
         r = requests.get(url)
-        self.assertNotIn(url, requests_cache.get_cache().url_map)
+        delta = time.time() - t
+        self.assertGreaterEqual(delta, delay)
 
     def test_just_for_coverage(self):
         # str method and keys
@@ -90,6 +97,15 @@ class CacheTestCase(unittest.TestCase):
             for i in range(n):
                 r = requests.get('http://httpbin.org/get', hooks={hook: hook_func})
             self.assertEqual(state[hook], n)
+
+    def test_post(self):
+        url = 'http://httpbin.org/post'
+        r1 = json.loads(requests.post(url, data={'test1': 'test1'}).content)
+        r2 = json.loads(requests.post(url, data={'test2': 'test2'}).content)
+        self.assertIn('test2', r2['form'])
+        self.assert_(not requests_cache.has_url(url))
+
+
 
     # TODO: https test
 

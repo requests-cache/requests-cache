@@ -23,7 +23,7 @@ _cache = None
 
 
 def configure(cache_name_prefix='cache', backend='sqlite', expire_after=60,
-              allowable_codes=(200,), monkey_patch=True):
+              allowable_codes=(200,), allowable_methods=('GET',), monkey_patch=True):
     """
     Configure cache storage and patch ``requests`` library to transparently cache responses
 
@@ -32,8 +32,10 @@ def configure(cache_name_prefix='cache', backend='sqlite', expire_after=60,
     :param backend: cache backend e.g ``'sqlite'``, ``'memory'``
     :param expire_after: number of minutes after cache will be expired (default 60)
     :type expire_after: int or float
-    :param allowable_codes: limit caching only for response with this codes
+    :param allowable_codes: limit caching only for response with this codes (default: 200)
     :type allowable_codes: tuple
+    :param allowable_methods: cache only requests of this methods (default: 'GET')
+    :type allowable_methods: tuple
     :param monkey_patch: patch ``requests.Request.send`` if `True` (default), otherwise
                          cache will not work until calling :func:`redo_patch`
     """
@@ -47,6 +49,13 @@ def configure(cache_name_prefix='cache', backend='sqlite', expire_after=60,
         redo_patch()
     _config['expire_after'] = expire_after
     _config['allowable_codes'] = allowable_codes
+    _config['allowable_methods'] = allowable_methods
+
+
+def has_url(url):
+    """ Returns `True` if cache has `url`, `False` otherwise
+    """
+    return _cache.has_url(url)
 
 
 def clear():
@@ -72,26 +81,33 @@ def get_cache():
     """
     return _cache
 
+
 def delete_url(url):
     """ Deletes all cache for `url`
     """
     _cache.del_cached_url(url)
 
-# TODO: handle methods
+
 def _request_send_hook(self, *args, **kwargs):
-    #print('send: %s' % self.url)
-    response, timestamp = _cache.get_response_and_time(self.url)
-    if response is None:
+    if self.method not in _config['allowable_methods']:
+        return _original_request_send(self, *args, **kwargs)
+
+    def send_request_and_cache_response():
         result = _original_request_send(self, *args, **kwargs)
         if result and self.response.status_code in _config['allowable_codes']:
             _cache.save_response(self.response.url, self.response)
         return result
 
-    self.sent = True
-    # TODO: if cache is outdated, url should be downloaded again
+    response, timestamp = _cache.get_response_and_time(self.url)
+    if response is None:
+        return send_request_and_cache_response()
+
     difference = datetime.now() - timestamp
     if difference > timedelta(minutes=_config['expire_after']):
         _cache.del_cached_url(self.url)
+        return send_request_and_cache_response()
+
+    self.sent = True
     self.response = response
     # TODO: is it stable api?
     if dispatch_hook is not None:

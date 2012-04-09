@@ -74,6 +74,11 @@ class MemoryCache(object):
         self.responses.clear()
         self.url_map.clear()
 
+    def has_url(self, url):
+        """ Returns `True` if cache has `url`, `False` otherwise
+        """
+        return url in self.url_map
+
     def __str__(self):
         return 'urls: %s responses: %s' % (self.url_map, self.responses)
 
