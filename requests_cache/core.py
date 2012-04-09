@@ -23,7 +23,7 @@ _config = {}
 _cache = None
 
 
-def configure(cache_name='cache', backend='sqlite', expire_after=60,
+def configure(cache_name='cache', backend='sqlite', expire_after=None,
               allowable_codes=(200,), allowable_methods=('GET',),
               monkey_patch=True, **backend_options):
     """
@@ -32,8 +32,9 @@ def configure(cache_name='cache', backend='sqlite', expire_after=60,
     :param cache_name: cache files will start with this prefix,
                                   e.g ``cache_urls.sqlite``, ``cache_responses.sqlite``
     :param backend: cache backend e.g ``'sqlite'``, ``'memory'``
-    :param expire_after: number of minutes after cache will be expired (default 60)
-    :type expire_after: int or float
+    :param expire_after: number of minutes after cache will be expired
+                         or `None` (default) to ignore expiration
+    :type expire_after: int, float or None
     :param allowable_codes: limit caching only for response with this codes (default: 200)
     :type allowable_codes: tuple
     :param allowable_methods: cache only requests of this methods (default: 'GET')
@@ -140,10 +141,11 @@ def _request_send_hook(self, *args, **kwargs):
     if response is None:
         return send_request_and_cache_response()
 
-    difference = datetime.now() - timestamp
-    if difference > timedelta(minutes=_config['expire_after']):
-        _cache.del_cached_url(self.url)
-        return send_request_and_cache_response()
+    if _config['expire_after'] is not None:
+        difference = datetime.now() - timestamp
+        if difference > timedelta(minutes=_config['expire_after']):
+            _cache.del_cached_url(self.url)
+            return send_request_and_cache_response()
 
     self.sent = True
     self.response = response
@@ -153,4 +155,3 @@ def _request_send_hook(self, *args, **kwargs):
         r = dispatch_hook('post_request', self.hooks, self)
         self.__dict__.update(r.__dict__)
     return True
-

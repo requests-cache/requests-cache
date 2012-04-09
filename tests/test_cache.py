@@ -108,13 +108,11 @@ class CacheTestCase(unittest.TestCase):
 
         with requests_cache.enabled():
             t = time.time()
-            n = 2
+            n = 5
             for i in range(n):
                 requests.get(url)
             delta = time.time() - t
             self.assertLessEqual(delta, delay*n)
-
-
 
 
     # TODO: https test
