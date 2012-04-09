@@ -33,21 +33,22 @@ Just import :mod:`requests_cache` and call :func:`configure`
 
     request_cache.configure()
 
-And you can just use ``requests`` to download pages, it will be cached transparently!
+And you can use ``requests``, all responses will be cached transparently!
 
-For example following code will take only 1-2 seconds instead 10::
+For example, following code will take only 1-2 seconds instead 10::
 
     for i in range(10):
         requests.get('http://httpbin.org/delay/1')
 
 Cache can be configured with some options, such as cache filename, backend (sqlite, memory),
-expiration time, etc. (see :func:`requests_cache.configure() <requests_cache.core.configure>`
-for full list of options)
+expiration time, etc. E.g. cache stored in sqlite database (default)
+named ``'test_cache.sqlite'`` with expiration set to 5 minutes can be configured as::
 
-For example, following code will configure cache stored in sqlite database format (default)
-named ``'cache.sqlite'`` with expiration set to 5 minutes::
+    request_cache.configure('test_cache', backend='sqlite', expire_after=5)
 
-    request_cache.configure('cache.sqlite', backend='sqlite', expire_after=5)
+.. seealso::
+    Full list of options can be found in
+    :func:`requests_cache.configure() <requests_cache.core.configure>` reference
 
 
 Transparent caching is achieved by monkey-patching ``requests`` library
@@ -77,6 +78,20 @@ and delete it with :func:`requests_cache.delete_url() <requests_cache.core.delet
     >>> requests_cache.delete_ulr('http://httpbin.org/get')
     >>> requests_cache.has_ulr('http://httpbin.org/get')
     False
+
+Persistence
+-----------
+
+:mod:`requests_cache` designed to support different backends for persistent storage.
+By default it uses ``sqlite`` database. Type of storage can be selected with ``backend`` argument of :func:`configure`.
+
+List of available backends:
+
+- ``'sqlite'``  - sqlite database (**default**)
+- ``'memory'``  - not persistent,  stores all data in Python ``dict`` in memory
+- ``'mongodb'`` - (**not implemented yet**) MongoDB database (``pymongo`` required)
+
+Also, you can write your own. See :ref:`cache_backends` API documentation and sources.
 
 ----------------------
 

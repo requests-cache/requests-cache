@@ -11,6 +11,8 @@ Public api
    :members:
 
 
+.. _cache_backends:
+
 Cache backends
 --------------
 
