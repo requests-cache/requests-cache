@@ -60,7 +60,7 @@ class MemoryCache(object):
         """ Delete `url` from cache. Also deletes all urls from response history
         """
         try:
-            response, _ = self.responses[url]
+            response, _ = self.responses[self.url_map[url]]
             for r in response.history:
                 del self.url_map[r.url]
             del self.url_map[url]

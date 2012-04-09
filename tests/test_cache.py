@@ -47,27 +47,17 @@ class CacheTestCase(unittest.TestCase):
         delta = time.time() - t
         self.assertGreaterEqual(delta, delay)
 
-    def test_just_for_coverage(self):
-        # str method and keys
-        s = str(requests_cache.get_cache())
+    def test_delete_urls(self):
         url = 'http://httpbin.org/redirect/3'
         r = requests.get(url)
-        # delete keys
-        requests_cache.get_cache().del_cached_url(url)
-        requests_cache.get_cache().del_cached_url('http://httpbin.org/redirect/3')
-        url_map = requests_cache.get_cache().url_map
-        with self.assertRaises(KeyError):
-            del url_map['123']
-
-        # update
-        url_map['http://ya.ru/'] = 'htpp://??.ru'
-        url_map['http://ya.ru/'] = 'htpp://ya.ru'
-
+        for i in range(1, 4):
+            self.assert_(requests_cache.has_url('http://httpbin.org/redirect/%s' % i))
+        requests_cache.delete_url(url)
+        self.assert_(not requests_cache.has_url(url))
 
     def test_unregistered_backend(self):
         with self.assertRaises(ValueError):
             requests_cache.configure(backend='nonexistent')
-
 
     def test_async_compatibility(self):
         from requests import async
