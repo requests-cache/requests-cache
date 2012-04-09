@@ -14,8 +14,8 @@ Or::
 
     easy_install -U requests-cache
 
-Quick start
------------
+Usage
+-----
 
 ::
 
@@ -27,6 +27,8 @@ Quick start
     for i in range(10):
         r = requests.get('http://httpbin.org/delay/5')
 
-To cache can be configured with some options, see
-:func:`requests_cache.configure() <requests_cache.core.configure>` function reference
+Cache can be configured with some options, see
+:func:`requests_cache.configure() <requests_cache.core.configure>` function reference.
+
+`requests-cache` also provides some useful functions...
 

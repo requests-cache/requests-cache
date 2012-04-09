@@ -26,7 +26,7 @@ class DbDict(object, UserDict.DictMixin):
         d2 = DbDict('test', 'table2', d1)
         d3 = DbDict('test', 'table3', d1)
 
-    all data will be stored to ``test.sqlite`` database into
+    all data will be stored in ``test.sqlite`` database into
     correspondent tables: ``table1``, ``table2``, ``table3``
     """
 
@@ -55,9 +55,21 @@ class DbDict(object, UserDict.DictMixin):
         if force or self._can_commit:
             self.con.commit()
 
+    @property
+    def can_commit(self):
+        """ Transactions can be commited if this property set to `True`
+        """
+        return self._can_commit
+
+    @can_commit.setter
+    def can_commit(self, value):
+        self._can_commit = value
+
     @contextmanager
     def bulk_commit(self):
-        """ Context manager used to speedup insertion of big number of records::
+        """
+        Context manager used to speedup insertion of big number of records
+        ::
 
             >>> d1 = DbDict('test')
             >>> with d1.bulk_commit():
@@ -72,15 +84,6 @@ class DbDict(object, UserDict.DictMixin):
         finally:
             self._can_commit = True
 
-    @property
-    def can_commit(self):
-        """ Transactions can be commited if this property set to `True`
-        """
-        return self._can_commit
-
-    @can_commit.setter
-    def can_commit(self, value):
-        self._can_commit = value
 
     def __getitem__(self, key):
         row = self.con.execute("select value from %s where key=?" % self.table_name, (key,)).fetchone()
