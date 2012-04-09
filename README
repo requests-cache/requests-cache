@@ -13,7 +13,7 @@ Just write::
 And requests to resources will be cached for faster repeated access::
 
     for i in range(10):
-        r = requests.get('http://httpbin.org/redirect/5')
+        r = requests.get('http://httpbin.org/delay/5')
     # will took  approximately 5 seconds instead 50
 
 It can be useful when you are writing some data scraper,

@@ -77,7 +77,7 @@ def delete_url(url):
     """
     _cache.del_cached_url(url)
 
-
+# TODO: handle methods
 def _request_send_hook(self, *args, **kwargs):
     #print('send: %s' % self.url)
     response, timestamp = _cache.get_response_and_time(self.url)
