@@ -13,8 +13,8 @@ Just write::
 And requests to resources will be cached for faster repeated access::
 
     for i in range(10):
-        r = requests.get('http://httpbin.org/delay/5')
-    # will took  approximately 5 seconds instead 50
+        r = requests.get('http://httpbin.org/delay/1')
+    # will took only 1-2 seconds instead 10
 
 It can be useful when you are writing some data scraper,
 and changing parsing algorithms by trials and errors

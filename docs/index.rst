@@ -6,6 +6,12 @@
 Welcome to requests-cache's documentation!
 ==========================================
 
+`Requests-cache <http://pypi.python.org/pypi/requests-cache>`_
+is a transparent cache for requests_ library with persistence and async support.
+
+Source code and issue tracking at `BitBucket <https://bitbucket.org/reclosedev/requests-cache>`_.
+
+
 Contents:
 
 .. toctree::
@@ -15,7 +21,6 @@ Contents:
    api
 
 
-
 Indices and tables
 ==================
 
@@ -23,3 +28,4 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
+.. _requests: http://docs.python-requests.org/
