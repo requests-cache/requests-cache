@@ -99,5 +99,7 @@ Also, you can write your own. See :ref:`cache_backends` API documentation and so
 
 ----------------------
 
-For more information see :doc:`API reference <api>`
+For more information see :doc:`API reference <api>` and example_.
+
+.. _example: https://bitbucket.org/reclosedev/requests-cache/src/tip/example.py
 

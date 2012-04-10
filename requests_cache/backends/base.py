@@ -80,7 +80,7 @@ class MemoryCache(object):
         return url in self.url_map
 
     def __str__(self):
-        return 'urls: %s responses: %s' % (self.url_map, self.responses)
+        return 'urls: %s\nresponses: %s' % (self.url_map, self.responses)
 
 
 class _Store(object):
