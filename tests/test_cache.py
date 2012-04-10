@@ -64,7 +64,10 @@ class CacheTestCase(unittest.TestCase):
             requests_cache.configure(backend='nonexistent')
 
     def test_async_compatibility(self):
-        from requests import async
+        try:
+            from requests import async
+        except Exception:
+            self.fail('gevent is not installed')
         n = 3
         def long_running():
             t = time.time()
@@ -94,8 +97,8 @@ class CacheTestCase(unittest.TestCase):
 
     def test_post(self):
         url = 'http://httpbin.org/post'
-        r1 = json.loads(requests.post(url, data={'test1': 'test1'}).content)
-        r2 = json.loads(requests.post(url, data={'test2': 'test2'}).content)
+        r1 = json.loads(requests.post(url, data={'test1': 'test1'}).text)
+        r2 = json.loads(requests.post(url, data={'test2': 'test2'}).text)
         self.assertIn('test2', r2['form'])
         self.assert_(not requests_cache.has_url(url))
 
