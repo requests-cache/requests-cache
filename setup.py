@@ -1,12 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import sys
+import os
+import glob
 try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
 
-with open('README') as f:
-    long_description = f.read()
+
+if sys.argv[-1] == 'test':
+    os.chdir('tests')
+    for test in glob.glob('*.py'):
+        os.system('python %s' % test)
+    sys.exit()
 
 setup(
     name="requests-cache",
@@ -28,5 +35,5 @@ setup(
         "Intended Audience :: System Administrators",
         "Topic :: Software Development :: Libraries :: Python Modules",
         ],
-    long_description=long_description
+    long_description=open('README').read(),
 )

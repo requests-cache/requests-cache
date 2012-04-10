@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#date: 09.04.12
+# Path hack
+import os, sys
+sys.path.insert(0, os.path.abspath('..'))
+
 import unittest
 from requests_cache.backends.dbdict import DbDict, DbPickleDict
 
@@ -63,7 +66,6 @@ class DbdictTestCase(unittest.TestCase):
             del d[0]
 
     def test_picklable_dict(self):
-
         d = DbPickleDict('test')
         d[1] = ForPickle()
         d = DbPickleDict('test')
