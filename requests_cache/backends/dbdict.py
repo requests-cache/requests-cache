@@ -27,28 +27,29 @@ class DbDict(object, UserDict.DictMixin):
         d3 = DbDict('test', 'table3', d1)
 
     all data will be stored in ``test.sqlite`` database into
-    correspondent tables: ``table1``, ``table2``, ``table3``
+    correspondent tables: ``table1``, ``table2`` and ``table3``
     """
 
     def __init__(self, filename, table_name='data', reusable_dbdict=None):
         """
         :param filename: filename for database (without extension)
         :param table_name: table name
-        :param reusable_dbdict: DbDict instance which connection will be reused
+        :param reusable_dbdict: :class:`DbDict` instance which connection will be reused
         """
         self.filename = "%s.sqlite" % filename
         self.table_name = table_name
         self._can_commit = True
         if reusable_dbdict is not None:
             if self.table_name == reusable_dbdict.table_name:
-                raise ValueError("table_name should be different")
+                raise ValueError("table_name should be the same as in reusable_dbdict")
             self.con = reusable_dbdict.con
         else:
             self.con = sqlite.connect(self.filename)
         self.con.execute("create table if not exists %s (key PRIMARY KEY, value)" % self.table_name)
 
     def commit(self, force=False):
-        """ Commits pending transaction if it's :attr:`can_commit` is `True`
+        """
+        Commits pending transaction if :attr:`can_commit` or `force` is `True`
 
         :param force: force commit, ignore :attr:`can_commit`
         """
@@ -115,7 +116,7 @@ class DbDict(object, UserDict.DictMixin):
         self.commit()
 
     def __str__(self):
-        return str(dict(self.iteritems()))
+        return str(dict(self.items()))
 
 
 class DbPickleDict(DbDict):

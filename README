@@ -1,22 +1,35 @@
 requests-cache
 ---------------
 
-Requests-cache is a transparent cache for requests_ library with
-persistence and async support
+Requests-cache is a transparent persistent cache for requests_ library.
+
+.. _requests: http://docs.python-requests.org/
+
+Usage example
+-------------
 
 Just write::
 
     import requests
     import request_cache
+    
     request_cache.configure()
 
-And requests to resources will be cached for faster repeated access::
+And all responses will be transparently cached to disk (sqlite database, 
+or another backend). For example, following code will take only 
+1-2 seconds instead 10::
 
     for i in range(10):
-        r = requests.get('http://httpbin.org/delay/1')
-    # will took only 1-2 seconds instead 10
+        requests.get('http://httpbin.org/delay/1')
+    
+It can be useful when you are creating some simple data scraper with constantly
+changing parsing logic or data format, and don't want to redownload pages or
+write complex error handling and persistence.
 
-It can be useful when you are writing some data scraper,
-and changing parsing algorithms by trials and errors
+Links
+-----
 
-.. _requests: http://docs.python-requests.org/
+- **Documentation** at `readthedocs.org <http://readthedocs.org/docs/requests-cache/>`_
+
+- **Source code and issue tracking** at `BitBucket.org <https://bitbucket.org/reclosedev/requests-cache>`_.
+
