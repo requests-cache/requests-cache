@@ -22,7 +22,7 @@ setup(
     description='Persistent cache for requests library',
     author='Roman Haritonov',
     author_email='reclosedev@gmail.com',
-    url='https://bitbucket.org/reclosedev/requsts-cache',
+    url='https://bitbucket.org/reclosedev/requests-cache',
     install_requires=['requests'],
     keywords=['requests', 'cache', 'persistence'],
     license='BSD License',
