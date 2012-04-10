@@ -91,6 +91,10 @@ List of available backends:
 - ``'memory'``  - not persistent,  stores all data in Python ``dict`` in memory
 - ``'mongodb'`` - (**experimental**) MongoDB database (``pymongo`` required)
 
+  .. note:: ``pymongo`` doesn't work fine with `gevent <http://www.gevent.org/>`_ which powers ``requests.async``.
+            But there is some workarounds, see question on
+            `StackOverflow <http://stackoverflow.com/questions/7166998/pymongo-gevent-throw-me-a-banana-and-just-monkey-patch>`_.
+
 Also, you can write your own. See :ref:`cache_backends` API documentation and sources.
 
 ----------------------
