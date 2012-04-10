@@ -6,17 +6,17 @@
 
     Dictionary-like objects for saving large data sets to `sqlite` database
 """
-import UserDict
+from collections import MutableMapping
+import sqlite3 as sqlite
+from contextlib import contextmanager
 try:
     import cPickle as pickle
 except ImportError:
     import pickle
-import sqlite3 as sqlite
-from contextlib import contextmanager
 
-# TODO: close connection
-# TODO: let user control commits
-class DbDict(object, UserDict.DictMixin):
+from requests_cache.compat import bytes
+
+class DbDict(MutableMapping):
     """ DbDict - a dictionary-like object for saving large datasets to `sqlite` database
 
     It's possible to create multiply DbDict instances, which will be stored as separate
@@ -106,9 +106,12 @@ class DbDict(object, UserDict.DictMixin):
         else:
             raise KeyError
 
-    def keys(self):
-        return [row[0] for row in
-                self.con.execute("select key from %s" % self.table_name).fetchall()]
+    def __iter__(self):
+        for row in self.con.execute("select key from %s" % self.table_name).fetchall():
+            yield row[0]
+
+    def __len__(self):
+        return self.con.execute("select count(key) from %s" % self.table_name)
 
     def clear(self):
         self.con.execute("drop table %s" % self.table_name)
@@ -128,4 +131,4 @@ class DbPickleDict(DbDict):
 
     def __getitem__(self, key):
         # TODO: there is TypeError without str() when cPickle is used, what about py3?
-        return pickle.loads(str(super(DbPickleDict, self).__getitem__(key)))
+        return pickle.loads(bytes(super(DbPickleDict, self).__getitem__(key)))

@@ -15,9 +15,9 @@ class DbdictTestCase(unittest.TestCase):
         d1[1] = 1
         d2[2] = 2
         d3[3] = 3
-        self.assertEqual(d1.keys(), [1])
-        self.assertEqual(d2.keys(), [2])
-        self.assertEqual(d3.keys(), [3])
+        self.assertEqual(list(d1.keys()), [1])
+        self.assertEqual(list(d2.keys()), [2])
+        self.assertEqual(list(d3.keys()), [3])
 
         with self.assertRaises(ValueError):
             d4 = DbDict('test', 'table1', d1)
@@ -28,7 +28,7 @@ class DbdictTestCase(unittest.TestCase):
         with d.bulk_commit():
             for i in range(100):
                 d[i] = i
-        self.assertEqual(d.keys(), range(100))
+        self.assertEqual(list(d.keys()), list(range(100)))
 
     def test_switch_commit(self):
         d = DbDict('test')
@@ -60,7 +60,7 @@ class DbdictTestCase(unittest.TestCase):
         del d[0]
         del d[1]
         del d[2]
-        self.assertEqual(d.keys(), range(3, 5))
+        self.assertEqual(list(d.keys()), list(range(3, 5)))
 
         with self.assertRaises(KeyError):
             del d[0]
