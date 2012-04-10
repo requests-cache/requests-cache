@@ -3,7 +3,7 @@ requests-cache
 
 Requests-cache is a transparent persistent cache for requests_ library.
 
-.. _requests: http://docs.python-requests.org/
+.. _requests: http://python-requests.org/
 
 Usage example
 -------------
