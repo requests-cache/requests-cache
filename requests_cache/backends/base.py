@@ -4,8 +4,8 @@
     requests_cache.backends.base
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Contains in-memory cache backend which can be extended to support persistence
-     and some common functions
+    Contains BaseCache class which can be used as in-memory cache backend or
+    can be extended to support persistence.
 """
 from datetime import datetime
 import requests

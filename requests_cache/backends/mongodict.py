@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
     requests_cache.backends.mongodict
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Dictionary-like objects for saving large data sets to ``mongodb`` database
 """

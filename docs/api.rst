@@ -22,8 +22,14 @@ Cache backends
 .. automodule:: requests_cache.backends.sqlite
    :members:
 
+.. automodule:: requests_cache.backends.mongo
+   :members:
+
 Internal modules which can be used outside
 ------------------------------------------
 
 .. automodule:: requests_cache.backends.dbdict
+   :members:
+
+.. automodule:: requests_cache.backends.mongodict
    :members:

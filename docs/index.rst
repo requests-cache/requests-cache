@@ -3,16 +3,17 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to requests-cache's documentation!
-==========================================
+Requests-cache documentation
+============================
 
 `Requests-cache <http://pypi.python.org/pypi/requests-cache>`_
-is a transparent cache for requests_ library with persistence and async support.
+is a transparent persistent cache for requests_ library.
 
-Source code and issue tracking at `BitBucket <https://bitbucket.org/reclosedev/requests-cache>`_.
+Source code and issue tracking can be found at
+`BitBucket <https://bitbucket.org/reclosedev/requests-cache>`_.
 
 
-Contents:
+**Contents:**
 
 .. toctree::
    :maxdepth: 2
