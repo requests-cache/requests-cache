@@ -112,7 +112,8 @@ class DbDict(MutableMapping):
             yield row[0]
 
     def __len__(self):
-        return self.con.execute("select count(key) from %s" % self.table_name)
+        return self.con.execute("select count(key) from %s" %
+                                self.table_name).fetchone()[0]
 
     def clear(self):
         self.con.execute("drop table %s" % self.table_name)

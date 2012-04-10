@@ -77,6 +77,13 @@ class DbdictTestCase(unittest.TestCase):
         d2[2] = 2
         self.assertEqual(d1, d2)
 
+    def test_len(self):
+        n = 5
+        d = MongoDict('test')
+        for i in range(n):
+            d[i] = i
+        self.assertEqual(len(d), 5)
+
 
 class ForPickle(object):
     a = 1

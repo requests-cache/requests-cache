@@ -72,6 +72,13 @@ class DbdictTestCase(unittest.TestCase):
         self.assertEqual(d[1].a, 1)
         self.assertEqual(d[1].b, 2)
 
+    def test_len(self):
+        n = 5
+        d = DbDict('test')
+        for i in range(n):
+            d[i] = i
+        self.assertEqual(len(d), 5)
+
 
 class ForPickle(object):
     a = 1
