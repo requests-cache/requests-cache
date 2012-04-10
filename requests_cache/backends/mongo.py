@@ -19,5 +19,5 @@ class MongoCache(MemoryCache):
         """
         super(MongoCache, self).__init__()
         self.responses = MongoPickleDict(db_name, 'responses')
-        self.url_map = MongoDict(db_name, 'urls')
+        self.url_map = MongoDict(db_name, 'urls', self.responses.connection)
 
