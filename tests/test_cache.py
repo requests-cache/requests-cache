@@ -13,11 +13,14 @@ import requests
 
 import requests_cache
 
+CACHE_BACKEND = 'sqlite'
+CACHE_NAME = 'requests_cache_test'
+
 
 class CacheTestCase(unittest.TestCase):
 
     def setUp(self):
-        requests_cache.configure()
+        requests_cache.configure(CACHE_NAME, backend=CACHE_BACKEND)
         requests_cache.clear()
 
     def test_speedup_and_undo_redo_patch(self):
@@ -37,15 +40,15 @@ class CacheTestCase(unittest.TestCase):
         requests_cache.redo_patch()
         long_request()
 
-
     def test_expire_cache(self):
         delay = 1
         url = 'http://httpbin.org/delay/%s' % delay
-        requests_cache.configure(expire_after=0.001)
+        requests_cache.configure(CACHE_NAME, backend=CACHE_BACKEND, expire_after=0.001)
         t = time.time()
         r = requests.get(url)
         delta = time.time() - t
         self.assertGreaterEqual(delta, delay)
+        time.sleep(0.5)
         t = time.time()
         r = requests.get(url)
         delta = time.time() - t
@@ -61,7 +64,7 @@ class CacheTestCase(unittest.TestCase):
 
     def test_unregistered_backend(self):
         with self.assertRaises(ValueError):
-            requests_cache.configure(backend='nonexistent')
+            requests_cache.configure(CACHE_NAME, backend='nonexistent')
 
     def test_async_compatibility(self):
         try:
@@ -111,7 +114,7 @@ class CacheTestCase(unittest.TestCase):
             for i in range(n):
                 requests.get(url)
             delta = time.time() - t
-            self.assertGreaterEqual(delta, delay*n)
+            self.assertGreaterEqual(delta, delay * n)
 
         with requests_cache.enabled():
             t = time.time()
@@ -119,8 +122,24 @@ class CacheTestCase(unittest.TestCase):
             for i in range(n):
                 requests.get(url)
             delta = time.time() - t
-            self.assertLessEqual(delta, delay*n)
+            self.assertLessEqual(delta, delay * n)
 
+    def test_content_and_cookies(self):
+        s = requests.session()
+        def js(url):
+            return json.loads(s.get(url).text)
+        r1 = js('http://httpbin.org/cookies/set/test1/test2')
+        with requests_cache.disabled():
+            r2 = js('http://httpbin.org/cookies')
+        self.assertEqual(r1, r2)
+        r3 = js('http://httpbin.org/cookies')
+        with requests_cache.disabled():
+            r4 = js('http://httpbin.org/cookies/set/test3/test4')
+        # from cache
+        self.assertEqual(r3, js('http://httpbin.org/cookies'))
+        # updated
+        with requests_cache.disabled():
+            self.assertEqual(r4, js('http://httpbin.org/cookies'))
 
     # TODO: https test
 

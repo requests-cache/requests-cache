@@ -13,11 +13,11 @@ Just write::
     import requests
     import request_cache
     
-    request_cache.configure()
+    request_cache.configure('demo_cache')
 
-And all responses will be transparently cached to disk (sqlite database, 
-or another backend). For example, following code will take only 
-1-2 seconds instead 10::
+And all responses with headers and cookies will be transparently cached to
+`demo_cache.sqlite` database. For example, following code will take only
+1-2 seconds instead 10, and will run instantly on next launch::
 
     for i in range(10):
         requests.get('http://httpbin.org/delay/1')

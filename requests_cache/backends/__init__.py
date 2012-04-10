@@ -13,4 +13,9 @@ from requests_cache.backends.base import MemoryCache
 registry = {
     'sqlite': DbCache,
     'memory': MemoryCache,
-    }
+}
+try:
+    from requests_cache.backends.mongo import MongoCache
+    registry['mongo'] = registry['mongodb'] = MongoCache
+except ImportError:
+    MongoCache = None

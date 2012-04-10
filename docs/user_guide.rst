@@ -89,7 +89,7 @@ List of available backends:
 
 - ``'sqlite'``  - sqlite database (**default**)
 - ``'memory'``  - not persistent,  stores all data in Python ``dict`` in memory
-- ``'mongodb'`` - (**not implemented yet**) MongoDB database (``pymongo`` required)
+- ``'mongodb'`` - (**experimental**) MongoDB database (``pymongo`` required)
 
 Also, you can write your own. See :ref:`cache_backends` API documentation and sources.
 
