@@ -41,7 +41,7 @@ class DbDict(object, UserDict.DictMixin):
         self._can_commit = True
         if reusable_dbdict is not None:
             if self.table_name == reusable_dbdict.table_name:
-                raise ValueError("table_name should be the same as in reusable_dbdict")
+                raise ValueError("table_name can't be the same as reusable_dbdict.table_name")
             self.con = reusable_dbdict.con
         else:
             self.con = sqlite.connect(self.filename)
