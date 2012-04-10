@@ -16,6 +16,7 @@ except ImportError:
 
 from requests_cache.compat import bytes
 
+
 class DbDict(MutableMapping):
     """ DbDict - a dictionary-like object for saving large datasets to `sqlite` database
 
@@ -130,5 +131,4 @@ class DbPickleDict(DbDict):
                                               sqlite.Binary(pickle.dumps(item)))
 
     def __getitem__(self, key):
-        # TODO: there is TypeError without str() when cPickle is used, what about py3?
         return pickle.loads(bytes(super(DbPickleDict, self).__getitem__(key)))
