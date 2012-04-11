@@ -5,7 +5,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Contains BaseCache class which can be used as in-memory cache backend or
-    can be extended to support persistence.
+    extended to support persistence.
 """
 from datetime import datetime
 import requests
@@ -31,10 +31,10 @@ class BaseCache(object):
                     .. note:: urls from history saved automatically
         :param response: response to save
 
-        .. note:: Response is reduced before saving (with :func:`reduce_response`)
+        .. note:: Response is reduced before saving (with :meth:`reduce_response`)
                   to make it picklable
         """
-        self.responses[url] = reduce_response(response), datetime.now()
+        self.responses[url] = self.reduce_response(response), datetime.now()
         self.url_map[url] = response.url
         for r in response.history:
             self.url_map[r.url] = response.url
@@ -47,13 +47,13 @@ class BaseCache(object):
         :param default: return this if `url` not found in cache
         :returns: tuple (response, datetime)
 
-        .. note:: Response is restored after unpickling with :func:`restore_response`
+        .. note:: Response is restored after unpickling with :meth:`restore_response`
         """
         try:
             response, timestamp = self.responses[self.url_map[url]]
         except KeyError:
             return default
-        return restore_response(response), timestamp
+        return self.restore_response(response), timestamp
 
     def del_cached_url(self, url):
         """ Delete `url` from cache. Also deletes all urls from response history
@@ -78,32 +78,33 @@ class BaseCache(object):
         """
         return url in self.url_map
 
+    _response_attrs = ['_content', 'url', 'status_code', 'cookies',
+                       'headers', 'encoding']
+
+    def reduce_response(self, response):
+        """ Reduce response object to make it compatible with ``pickle``
+        """
+        result = _Store()
+        # prefetch
+        response.content
+        for field in self._response_attrs:
+            setattr(result, field, getattr(response, field))
+        result.history = [self.reduce_response(r) for r in response.history]
+        return result
+
+    def restore_response(self, response):
+        """ Restore response object after unpickling
+        """
+        result = requests.Response()
+        for field in self._response_attrs:
+            setattr(result, field, getattr(response, field))
+        result.history = [self.restore_response(r) for r in response.history]
+        return result
+
     def __str__(self):
         return 'urls: %s\nresponses: %s' % (self.url_map, self.responses)
 
 
+# used for saving response attributes
 class _Store(object):
     pass
-
-_fields_to_copy = ('_content', 'url', 'status_code', 'cookies',
-                   'headers', 'encoding')
-
-def reduce_response(response):
-    """ Reduce response object to make it compatible with ``pickle``
-    """
-    result = _Store()
-    # prefetch
-    response.content
-    for field in _fields_to_copy:
-        setattr(result, field, getattr(response, field))
-    result.history = [reduce_response(r) for r in response.history]
-    return result
-
-def restore_response(response):
-    """ Restore response object after unpickling
-    """
-    result = requests.Response()
-    for field in _fields_to_copy:
-        setattr(result, field, getattr(response, field))
-    result.history = [restore_response(r) for r in response.history]
-    return result
