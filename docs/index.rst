@@ -21,6 +21,11 @@ Source code and issue tracking can be found at
    user_guide
    api
 
+.. toctree::
+   :maxdepth: 1
+
+   changelog
+
 
 Indices and tables
 ==================
