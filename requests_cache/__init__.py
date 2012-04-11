@@ -22,6 +22,10 @@
     :copyright: (c) 2012 by Roman Haritonov.
     :license: BSD, see LICENSE for more details.
 """
-from requests_cache.core import configure, clear, redo_patch, \
-                                undo_patch, get_cache, has_url, \
-                                delete_url, enabled, disabled
+__docformat__ = 'restructuredtext'
+__version__ = '0.1.0'
+
+from requests_cache.core import(
+    configure, enabled, disabled, has_url, get_cache,
+    delete_url,clear, redo_patch, undo_patch,
+)
