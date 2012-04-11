@@ -11,13 +11,11 @@ from datetime import datetime
 import requests
 
 
-class MemoryCache(object):
-    """ Represents in-memory cache.
+class BaseCache(object):
+    """ Base class for cache implementations, can be used as in-memory cache.
 
-    It can be easily extended to support other backends, such as file system.
-
-    To extend it you can provide dictionary-like object for :attr:`url_map` and :attr:`responses`
-    or override public methods.
+    To extend it you can provide dictionary-like objects for
+    :attr:`url_map` and :attr:`responses` or override public methods.
     """
     def __init__(self, location='memory', *args, **kwargs):
         #: `url` -> `key_in_cache` mapping
@@ -33,7 +31,8 @@ class MemoryCache(object):
                     .. note:: urls from history saved automatically
         :param response: response to save
 
-        .. note:: Response is reduced before saving (with :func:`reduce_response`) to make it picklable
+        .. note:: Response is reduced before saving (with :func:`reduce_response`)
+                  to make it picklable
         """
         self.responses[url] = reduce_response(response), datetime.now()
         self.url_map[url] = response.url

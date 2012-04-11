@@ -6,11 +6,11 @@
 
     ``mongo`` cache backend
 """
-from requests_cache.backends.base import MemoryCache
+from requests_cache.backends.base import BaseCache
 from requests_cache.backends.mongodict import MongoDict, MongoPickleDict
 
 # TODO: reusable connection
-class MongoCache(MemoryCache):
+class MongoCache(BaseCache):
     """ ``mongo`` cache backend.
     """
     def __init__(self, db_name='requests-cache'):

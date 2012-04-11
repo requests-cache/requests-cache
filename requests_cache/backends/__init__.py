@@ -8,11 +8,11 @@
 """
 
 from requests_cache.backends.sqlite import DbCache
-from requests_cache.backends.base import MemoryCache
+from requests_cache.backends.base import BaseCache
 
 registry = {
     'sqlite': DbCache,
-    'memory': MemoryCache,
+    'memory': BaseCache,
 }
 try:
     from requests_cache.backends.mongo import MongoCache

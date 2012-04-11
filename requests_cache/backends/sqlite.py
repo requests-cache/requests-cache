@@ -6,11 +6,11 @@
 
     ``sqlite3`` cache backend
 """
-from requests_cache.backends.base import MemoryCache
+from requests_cache.backends.base import BaseCache
 from requests_cache.backends.dbdict import DbDict, DbPickleDict
 
 
-class DbCache(MemoryCache):
+class DbCache(BaseCache):
     """ sqlite cache backend.
 
     Reading is fast, saving is a bit slower. It can store big amount of data
