@@ -141,6 +141,19 @@ class CacheTestCase(unittest.TestCase):
         with requests_cache.disabled():
             self.assertEqual(r4, js('http://httpbin.org/cookies'))
 
+    def test_response_history(self):
+        r1 = requests.get('http://httpbin.org/redirect/3')
+        def test_redirect_history(url):
+            r2 = requests.get(url)
+            for r11, r22 in zip(r1.history, r2.history):
+                self.assertEqual(r11.url, r22.url)
+        test_redirect_history('http://httpbin.org/redirect/3')
+        test_redirect_history('http://httpbin.org/redirect/2')
+        with requests_cache.disabled():
+            r3 = requests.get('http://httpbin.org/redirect/1')
+            self.assertEqual(len(r3.history), 1)
+
+
     # TODO: https test
 
 if __name__ == '__main__':

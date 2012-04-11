@@ -97,9 +97,7 @@ def reduce_response(response):
     response.content
     for field in _fields_to_copy:
         setattr(result, field, getattr(response, field))
-    result.history = []
-    for r in response.history:
-        result.history.append(reduce_response(r))
+    result.history = [reduce_response(r) for r in response.history]
     return result
 
 def restore_response(response):
@@ -108,4 +106,5 @@ def restore_response(response):
     result = requests.Response()
     for field in _fields_to_copy:
         setattr(result, field, getattr(response, field))
+    result.history = [restore_response(r) for r in response.history]
     return result
