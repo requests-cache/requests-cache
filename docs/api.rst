@@ -11,6 +11,8 @@ Public api
    :members:
 
 
+----------------------------------------------
+
 .. _cache_backends:
 
 Cache backends
@@ -24,6 +26,8 @@ Cache backends
 
 .. automodule:: requests_cache.backends.mongo
    :members:
+
+----------------------------------------------
 
 Internal modules which can be used outside
 ------------------------------------------
