@@ -10,7 +10,7 @@ Requests-cache documentation
 is a transparent persistent cache for requests_ library.
 
 Source code and issue tracking can be found at
-`BitBucket <https://bitbucket.org/reclosedev/requests-cache>`_.
+`GitHub <https://github.com/reclosedev/requests-cache>`_.
 
 
 **Contents:**

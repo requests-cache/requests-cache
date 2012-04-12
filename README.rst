@@ -31,5 +31,5 @@ Links
 
 - **Documentation** at `readthedocs.org <http://readthedocs.org/docs/requests-cache/>`_
 
-- **Source code and issue tracking** at `BitBucket.org <https://bitbucket.org/reclosedev/requests-cache>`_.
+- **Source code and issue tracking** at `GitHub <https://github.com/reclosedev/requests-cache>`_.
 

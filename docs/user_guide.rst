@@ -13,7 +13,7 @@ Install with pip_ or easy_install_::
 
 or download latest version from version control::
 
-    hg clone https://bitbucket.org/reclosedev/requests-cache
+    git clone git://github.com/reclosedev/requests-cache.git
     cd requests-cache
     python setup.py install
 
@@ -82,7 +82,7 @@ and delete it with :func:`requests_cache.delete_url() <requests_cache.core.delet
     >>> requests_cache.has_ulr('http://httpbin.org/get')
     False
 
-.. seealso:: `example.py <https://bitbucket.org/reclosedev/requests-cache/src/tip/example.py>`_
+.. seealso:: `example.py <https://github.com/reclosedev/requests-cache/blob/master/example.py>`_
 
 
 Persistence
