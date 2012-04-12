@@ -1,4 +1,4 @@
-include LICENSE AUTHORS README HISTORY
+include LICENSE README.rst
 include *.py
 recursive-include tests *.py
 recursive-include examples *.py
