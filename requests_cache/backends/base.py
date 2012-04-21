@@ -35,7 +35,8 @@ class BaseCache(object):
                   to make it picklable
         """
         self.responses[url] = self.reduce_response(response), datetime.now()
-        self.url_map[url] = response.url
+        if response.url != url:
+            self.url_map[url] = response.url
         for r in response.history:
             self.url_map[r.url] = response.url
 
@@ -50,7 +51,9 @@ class BaseCache(object):
         .. note:: Response is restored after unpickling with :meth:`restore_response`
         """
         try:
-            response, timestamp = self.responses[self.url_map[url]]
+            if url not in self.responses:
+                url = self.url_map[url]
+            response, timestamp = self.responses[url]
         except KeyError:
             return default
         return self.restore_response(response), timestamp
@@ -59,11 +62,14 @@ class BaseCache(object):
         """ Delete `url` from cache. Also deletes all urls from response history
         """
         try:
-            response, _ = self.responses[self.url_map[url]]
+            if url in self.responses:
+                response, _ = self.responses[url]
+                del self.responses[url]
+            else:
+                response, _ = self.responses[self.url_map[url]]
+                del self.url_map[url]
             for r in response.history:
                 del self.url_map[r.url]
-            del self.url_map[url]
-            del self.responses[url]
         except KeyError:
             pass
 
@@ -76,7 +82,7 @@ class BaseCache(object):
     def has_url(self, url):
         """ Returns `True` if cache has `url`, `False` otherwise
         """
-        return url in self.url_map
+        return url in self.responses or url in self.url_map
 
     _response_attrs = ['_content', 'url', 'status_code', 'cookies',
                        'headers', 'encoding']
