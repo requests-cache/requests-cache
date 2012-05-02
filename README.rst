@@ -11,9 +11,9 @@ Usage example
 Just write::
 
     import requests
-    import request_cache
+    import requests_cache
     
-    request_cache.configure('demo_cache')
+    requests_cache.configure('demo_cache')
 
 And all responses with headers and cookies will be transparently cached to
 `demo_cache.sqlite` database. For example, following code will take only
