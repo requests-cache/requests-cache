@@ -31,7 +31,7 @@ Just import :mod:`requests_cache` and call :func:`configure`
     import requests
     import requests_cache
 
-    request_cache.configure()
+    requests_cache.configure()
 
 And you can use ``requests``, all responses will be cached transparently!
 
@@ -45,7 +45,7 @@ Cache can be configured with some options, such as cache filename, backend
 database (default format) named ``'test_cache.sqlite'`` with expiration
 set to 5 minutes can be configured as::
 
-    request_cache.configure('test_cache', backend='sqlite', expire_after=5)
+    requests_cache.configure('test_cache', backend='sqlite', expire_after=5)
 
 .. seealso::
     Full list of options can be found in
@@ -74,7 +74,7 @@ and delete it with :func:`requests_cache.delete_url() <requests_cache.core.delet
 
     >>> import requests
     >>> import requests_cache
-    >>> request_cache.configure()
+    >>> requests_cache.configure()
     >>> requests.get('http://httpbin.org/get')
     >>> requests_cache.has_ulr('http://httpbin.org/get')
     True
