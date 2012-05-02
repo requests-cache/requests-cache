@@ -32,6 +32,8 @@ Cache backends
 Internal modules which can be used outside
 ------------------------------------------
 
+.. _backends_dbdict:
+
 .. automodule:: requests_cache.backends.dbdict
    :members:
 
