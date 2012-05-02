@@ -31,11 +31,14 @@ class DbDict(MutableMapping):
     correspondent tables: ``table1``, ``table2`` and ``table3``
     """
 
-    def __init__(self, filename, table_name='data', reusable_dbdict=None):
+    def __init__(self, filename, table_name='data', reusable_dbdict=None, fast_save=False):
         """
         :param filename: filename for database (without extension)
         :param table_name: table name
         :param reusable_dbdict: :class:`DbDict` instance which connection will be reused
+        :param fast_save: If it's True, then sqlite will be configured with
+                          `"PRAGMA synchronous = 0;" <http://www.sqlite.org/pragma.html#pragma_synchronous>`_
+                          to speedup cache saving, but be careful, it's dangerous
         """
         self.filename = "%s.sqlite" % filename
         self.table_name = table_name
@@ -47,7 +50,8 @@ class DbDict(MutableMapping):
         else:
             self.con = sqlite.connect(self.filename)
         self.con.execute("create table if not exists `%s` (key PRIMARY KEY, value)" % self.table_name)
-
+        if fast_save:
+            self.con.execute("PRAGMA synchronous = 0;")
 
     def commit(self, force=False):
         """
