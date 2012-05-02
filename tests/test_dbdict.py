@@ -28,10 +28,11 @@ class DbdictTestCase(unittest.TestCase):
     def test_bulk_commit(self):
         d = DbDict(DB_NAME, 'table')
         d.clear()
+        n = 1000
         with d.bulk_commit():
-            for i in range(100):
+            for i in range(n):
                 d[i] = i
-        self.assertEqual(list(d.keys()), list(range(100)))
+        self.assertEqual(list(d.keys()), list(range(n)))
 
     def test_switch_commit(self):
         d = DbDict(DB_NAME)
@@ -76,11 +77,24 @@ class DbdictTestCase(unittest.TestCase):
         self.assertEqual(d[1].b, 2)
 
     def test_len(self):
-        n = 5
         d = DbDict(DB_NAME)
+        d.clear()
+        n = 5
         for i in range(n):
             d[i] = i
-        self.assertEqual(len(d), 5)
+        self.assertEqual(len(d), n)
+
+    def test_fast_save(self):
+        d1 = DbDict(DB_NAME, fast_save=True)
+        d2 = DbDict(DB_NAME, 'data2', d1)
+        d1.clear()
+        n = 1000
+        for i in range(n):
+            d1[i] = i
+            d2[i * 2] = i
+        # TODO HACK if we will not sort, fast save can produce different order of records
+        self.assertEqual(sorted(d1.keys()), list(range(n)))
+        self.assertEqual(sorted(d2.values()), list(range(n)))
 
 
 class ForPickle(object):
