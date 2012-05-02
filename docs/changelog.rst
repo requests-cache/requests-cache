@@ -1,6 +1,12 @@
 Changelog
 ---------
 
+0.1.2 (2012-05-02)
++++++++++++++++++++
+
+* Reduce number of ``sqlite`` database insert operations
+* ``fast_save`` option for ``sqlite`` backend
+
 
 0.1.1 (2012-04-11)
 +++++++++++++++++++
