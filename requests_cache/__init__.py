@@ -8,8 +8,8 @@
 
     Just write::
 
-        import request_cache
-        request_cache.configure()
+        import requests_cache
+        requests_cache.configure()
 
     And requests to resources will be cached for faster repeated access::
 
