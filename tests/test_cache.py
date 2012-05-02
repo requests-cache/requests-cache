@@ -15,12 +15,13 @@ import requests_cache
 
 CACHE_BACKEND = 'sqlite'
 CACHE_NAME = 'requests_cache_test'
+FAST_SAVE = False
 
 
 class CacheTestCase(unittest.TestCase):
 
     def setUp(self):
-        requests_cache.configure(CACHE_NAME, backend=CACHE_BACKEND)
+        requests_cache.configure(CACHE_NAME, backend=CACHE_BACKEND, fast_save=FAST_SAVE)
         requests_cache.clear()
 
     def test_speedup_and_undo_redo_patch(self):
