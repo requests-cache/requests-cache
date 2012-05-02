@@ -38,7 +38,8 @@ class DbDict(MutableMapping):
         :param reusable_dbdict: :class:`DbDict` instance which connection will be reused
         :param fast_save: If it's True, then sqlite will be configured with
                           `"PRAGMA synchronous = 0;" <http://www.sqlite.org/pragma.html#pragma_synchronous>`_
-                          to speedup cache saving, but be careful, it's dangerous
+                          to speedup cache saving, but be careful, it's dangerous.
+                          Tests showed that insertion order of records can be wrong with this option.
         """
         self.filename = "%s.sqlite" % filename
         self.table_name = table_name

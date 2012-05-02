@@ -41,7 +41,8 @@ def configure(cache_name='cache', backend='sqlite', expire_after=None,
     :type allowable_methods: tuple
     :param monkey_patch: patch ``requests.Request.send`` if `True` (default), otherwise
                          cache will not work until calling :func:`redo_patch`
-    :param backend_options: options for backend
+    :kwarg backend_options: options for chosen backend. See corresponding
+                            :ref:`sqlite <backends_sqlite>` and :ref:`mongo <backends_mongo>` backends API documentation
     """
     try:
         global _cache

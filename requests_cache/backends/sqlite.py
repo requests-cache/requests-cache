@@ -19,7 +19,7 @@ class DbCache(BaseCache):
     def __init__(self, location='cache', fast_save=False, **options):
         """
         :param location: database filename prefix (default: ``'cache'``)
-        :param fast_save: Speedup cache saving with possibility of data loss.
+        :param fast_save: Speedup cache saving up to 50 times but with possibility of data loss.
                           See :ref:`backends.DbDict <backends_dbdict>` for more info
         """
         super(DbCache, self).__init__()
