@@ -76,10 +76,10 @@ and delete it with :func:`requests_cache.delete_url() <requests_cache.core.delet
     >>> import requests_cache
     >>> requests_cache.configure()
     >>> requests.get('http://httpbin.org/get')
-    >>> requests_cache.has_ulr('http://httpbin.org/get')
+    >>> requests_cache.has_url('http://httpbin.org/get')
     True
-    >>> requests_cache.delete_ulr('http://httpbin.org/get')
-    >>> requests_cache.has_ulr('http://httpbin.org/get')
+    >>> requests_cache.delete_url('http://httpbin.org/get')
+    >>> requests_cache.has_url('http://httpbin.org/get')
     False
 
 .. seealso:: `example.py <https://github.com/reclosedev/requests-cache/blob/master/example.py>`_
