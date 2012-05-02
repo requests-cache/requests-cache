@@ -46,7 +46,8 @@ class DbDict(MutableMapping):
             self.con = reusable_dbdict.con
         else:
             self.con = sqlite.connect(self.filename)
-        self.con.execute("create table if not exists %s (key PRIMARY KEY, value)" % self.table_name)
+        self.con.execute("create table if not exists `%s` (key PRIMARY KEY, value)" % self.table_name)
+
 
     def commit(self, force=False):
         """
@@ -88,36 +89,36 @@ class DbDict(MutableMapping):
 
 
     def __getitem__(self, key):
-        row = self.con.execute("select value from %s where key=?" % self.table_name, (key,)).fetchone()
+        row = self.con.execute("select value from `%s` where key=?" % self.table_name, (key,)).fetchone()
         if not row:
             raise KeyError
         return row[0]
 
     def __setitem__(self, key, item):
-        if self.con.execute("select key from %s where key=?" % self.table_name, (key,)).fetchone():
-            self.con.execute("update %s set value=? where key=?" % self.table_name, (item, key))
+        if self.con.execute("select key from `%s` where key=?" % self.table_name, (key,)).fetchone():
+            self.con.execute("update `%s` set value=? where key=?" % self.table_name, (item, key))
         else:
-            self.con.execute("insert into %s (key,value) values (?,?)" % self.table_name, (key, item))
+            self.con.execute("insert into `%s` (key,value) values (?,?)" % self.table_name, (key, item))
         self.commit()
 
     def __delitem__(self, key):
-        if self.con.execute("select key from %s where key=?"  % self.table_name, (key,)).fetchone():
-            self.con.execute("delete from %s where key=?" % self.table_name, (key,))
+        if self.con.execute("select key from `%s` where key=?"  % self.table_name, (key,)).fetchone():
+            self.con.execute("delete from `%s` where key=?" % self.table_name, (key,))
             self.commit()
         else:
             raise KeyError
 
     def __iter__(self):
-        for row in self.con.execute("select key from %s" % self.table_name).fetchall():
+        for row in self.con.execute("select key from `%s`" % self.table_name).fetchall():
             yield row[0]
 
     def __len__(self):
-        return self.con.execute("select count(key) from %s" %
+        return self.con.execute("select count(key) from `%s`" %
                                 self.table_name).fetchone()[0]
 
     def clear(self):
-        self.con.execute("drop table %s" % self.table_name)
-        self.con.execute("create table %s (key PRIMARY KEY, value)"  % self.table_name)
+        self.con.execute("drop table `%s`" % self.table_name)
+        self.con.execute("create table `%s` (key PRIMARY KEY, value)"  % self.table_name)
         self.commit()
 
     def __str__(self):
