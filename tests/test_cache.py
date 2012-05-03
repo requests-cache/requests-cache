@@ -156,16 +156,23 @@ class CacheTestCase(unittest.TestCase):
             self.assertEqual(len(r3.history), 1)
 
     def test_post_params(self):
+        # issue #2
         requests_cache.configure(CACHE_NAME, CACHE_BACKEND, allowable_methods=('GET', 'POST'))
         def post(url, data):
-            return json.loads(requests.post(url, data=data).content)
-        d1 = {'param1': 'test1'}
-        r1 = post('http://httpbin.org/post', d1)
-        self.assertEqual(r1['form'], d1)
-        d2 = {'param1': 'test1', 'param2': 'test2'}
-        r2 = post('http://httpbin.org/post', d2)
-        self.assertEqual(r2['form'], d2)
+            return json.loads(requests.post(url, data=data).text)
+        for _ in range(5):
+            d = {'param1': 'test1'}
+            self.assertEqual(post('http://httpbin.org/post', d)['form'], d)
+            d = {'param1': 'test1', 'param2': 'test2'}
+            self.assertEqual(post('http://httpbin.org/post', d)['form'], d)
+            d = {'param1': 'test1', 'param3': 'test3'}
+            self.assertEqual(post('http://httpbin.org/post', d)['form'], d)
 
+    def test_get_params_as_argument(self):
+        for _ in range(5):
+            p = {'arg1': 'value1'}
+            r = json.loads(requests.get('http://httpbin.org/get', params=p).text)
+            self.assert_(requests_cache.has_url('http://httpbin.org/get?arg1=value1'))
 
 
     # TODO: https test
