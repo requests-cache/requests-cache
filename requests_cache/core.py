@@ -16,6 +16,7 @@ except ImportError:
     dispatch_hook = None
 
 from requests_cache import backends
+from requests_cache.compat import urlencode
 
 
 _original_request_send = Request.send
@@ -128,24 +129,30 @@ def delete_url(url):
     _cache.del_cached_url(url)
 
 
+# TODO make it possible to check if response is taken from cache
 def _request_send_hook(self, *args, **kwargs):
     if self.method not in _config['allowable_methods']:
         return _original_request_send(self, *args, **kwargs)
 
+    if self.method == 'POST':
+        cache_url = self.full_url + urlencode(getattr(self, 'data', {}))
+    else:
+        cache_url = self.full_url
+
     def send_request_and_cache_response():
         result = _original_request_send(self, *args, **kwargs)
         if result and self.response.status_code in _config['allowable_codes']:
-            _cache.save_response(self.response.url, self.response)
+            _cache.save_response(cache_url, self.response)
         return result
 
-    response, timestamp = _cache.get_response_and_time(self.url)
+    response, timestamp = _cache.get_response_and_time(cache_url)
     if response is None:
         return send_request_and_cache_response()
 
     if _config['expire_after'] is not None:
         difference = datetime.now() - timestamp
         if difference > timedelta(minutes=_config['expire_after']):
-            _cache.del_cached_url(self.url)
+            _cache.del_cached_url(cache_url)
             return send_request_and_cache_response()
 
     self.sent = True
