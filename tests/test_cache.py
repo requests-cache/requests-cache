@@ -18,6 +18,7 @@ CACHE_NAME = 'requests_cache_test'
 FAST_SAVE = False
 
 
+
 class CacheTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -153,6 +154,18 @@ class CacheTestCase(unittest.TestCase):
         with requests_cache.disabled():
             r3 = requests.get('http://httpbin.org/redirect/1')
             self.assertEqual(len(r3.history), 1)
+
+    def test_post_params(self):
+        requests_cache.configure(CACHE_NAME, CACHE_BACKEND, allowable_methods=('GET', 'POST'))
+        def post(url, data):
+            return json.loads(requests.post(url, data=data).content)
+        d1 = {'param1': 'test1'}
+        r1 = post('http://httpbin.org/post', d1)
+        self.assertEqual(r1['form'], d1)
+        d2 = {'param1': 'test1', 'param2': 'test2'}
+        r2 = post('http://httpbin.org/post', d2)
+        self.assertEqual(r2['form'], d2)
+
 
 
     # TODO: https test
