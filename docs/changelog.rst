@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+0.1.3 (2012-05-04)
++++++++++++++++++++
+
+* Thread safety for default ``sqlite`` backend
+* Take into account the POST parameters when cache is configured
+  with 'POST' in ``allowable_methods``
+
+
 0.1.2 (2012-05-02)
 +++++++++++++++++++
 
