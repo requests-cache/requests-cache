@@ -175,7 +175,15 @@ class CacheTestCase(unittest.TestCase):
             self.assert_(requests_cache.has_url('http://httpbin.org/get?arg1=value1'))
 
 
-    # TODO: https test
+    def test_https_support(self):
+        n = 10
+        delay = 1
+        url = 'https://httpbin.org/delay/%s?ar1=value1' % delay
+        t = time.time()
+        for _ in range(n):
+            r = json.loads(requests.get(url, verify=False).text)
+            self.assert_(requests_cache.has_url(url))
+        self.assertLessEqual(time.time() - t, delay * n / 2)
 
 if __name__ == '__main__':
     unittest.main()

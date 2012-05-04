@@ -89,7 +89,7 @@ class DbdictTestCase(unittest.TestCase):
         for i in range(n):
             d1[i] = i
             d2[i * 2] = i
-        # TODO HACK if we will not sort, fast save can produce different order of records
+        # HACK if we will not sort, fast save can produce different order of records
         self.assertEqual(sorted(d1.keys()), list(range(n)))
         self.assertEqual(sorted(d2.values()), list(range(n)))
 
