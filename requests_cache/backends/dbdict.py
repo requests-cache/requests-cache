@@ -10,11 +10,16 @@ from collections import MutableMapping
 import sqlite3 as sqlite
 from contextlib import contextmanager
 try:
+   import threading
+except ImportError:
+    import dummy_threading as threading
+try:
     import cPickle as pickle
 except ImportError:
     import pickle
 
 from requests_cache.compat import bytes
+
 
 
 class DbDict(MutableMapping):
@@ -47,6 +52,7 @@ class DbDict(MutableMapping):
         self._can_commit = True
         self._bulk_commit = False
         self._pending_connection = None
+        self._lock = threading.RLock()
         # TODO it's not necessary with new connection opening model
         if reusable_dbdict is not None:
             if self.filename != reusable_dbdict.filename:
@@ -60,21 +66,22 @@ class DbDict(MutableMapping):
 
     @contextmanager
     def connection(self, commit_on_success=False):
-        if self._bulk_commit:
-            if not self._pending_connection:
-                self._pending_connection = sqlite.connect(self.filename)
-            con = self._pending_connection
-        else:
-            con = sqlite.connect(self.filename)
-        try:
-            if self.fast_save:
-                con.execute("PRAGMA synchronous = 0;")
-            yield con
-            if commit_on_success and self._can_commit:
-                con.commit()
-        finally:
-            if not self._bulk_commit:
-                con.close()
+        with self._lock:
+            if self._bulk_commit:
+                if not self._pending_connection:
+                    self._pending_connection = sqlite.connect(self.filename)
+                con = self._pending_connection
+            else:
+                con = sqlite.connect(self.filename)
+            try:
+                if self.fast_save:
+                    con.execute("PRAGMA synchronous = 0;")
+                yield con
+                if commit_on_success and self._can_commit:
+                    con.commit()
+            finally:
+                if not self._bulk_commit:
+                    con.close()
 
     def commit(self, force=False):
         """
@@ -124,9 +131,9 @@ class DbDict(MutableMapping):
     def __getitem__(self, key):
         with self.connection() as con:
             row = con.execute("select value from `%s` where key=?" % self.table_name, (key,)).fetchone()
-        if not row:
-            raise KeyError
-        return row[0]
+            if not row:
+                raise KeyError
+            return row[0]
 
     def __setitem__(self, key, item):
         with self.connection(True) as con:
