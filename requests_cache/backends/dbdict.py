@@ -68,7 +68,7 @@ class DbDict(MutableMapping):
     def connection(self, commit_on_success=False):
         with self._lock:
             if self._bulk_commit:
-                if not self._pending_connection:
+                if self._pending_connection is None:
                     self._pending_connection = sqlite.connect(self.filename)
                 con = self._pending_connection
             else:
