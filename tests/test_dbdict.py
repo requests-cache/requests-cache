@@ -97,28 +97,40 @@ class DbdictTestCase(unittest.TestCase):
         self.assertEqual(sorted(d2.values()), list(range(n)))
 
     def test_usage_with_threads(self):
-        d = DbDict(DB_NAME)
-        d.clear()
-        n = 10
-        fails = []
-        def do_inserts(values):
-            try:
-                for v in values:
-                    print v
-                    d[v] = v
-            except Exception:
-                fails.append(1)
-                raise
 
-        threads = [Thread(target=do_inserts, args=(range(n),)) for i in range(n)]
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
+        def do_test_for(d, n_threads=5):
+            d.clear()
+            fails = []
+            def do_inserts(values):
+                try:
+                    for v in values:
+                        d[v] = v
+                except Exception:
+                    fails.append(1)
+                    raise
 
-        self.assert_(not fails)
-        for i in range(n):
-            self.assert_(i in d)
+            def values(x, n):
+                return [i * x for i in range(n)]
+
+            threads = [Thread(target=do_inserts, args=(values(i, n_threads),))
+                       for i in range(n_threads)]
+            for t in threads:
+                t.start()
+            for t in threads:
+                t.join()
+
+            self.assert_(not fails)
+            for i in range(n_threads):
+                for x in values(i, n_threads):
+                    self.assertEqual(d[x], x)
+
+        do_test_for(DbDict(DB_NAME, fast_save=True), 20)
+        do_test_for(DbPickleDict(DB_NAME, fast_save=True), 10)
+        d1 = DbDict(DB_NAME, fast_save=True)
+        d2 = DbDict(DB_NAME, 'table123', fast_save=True)
+        do_test_for(d1)
+        do_test_for(d2)
+        do_test_for(DbDict(DB_NAME))
 
 
 class ForPickle(object):
