@@ -72,7 +72,7 @@ class CacheTestCase(unittest.TestCase):
         try:
             from requests import async
         except Exception:
-            self.fail('gevent is not installed')
+            self.skipTest('gevent is not installed')
         n = 3
         def long_running():
             t = time.time()
