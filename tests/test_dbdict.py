@@ -4,6 +4,7 @@
 import os, sys
 sys.path.insert(0, os.path.abspath('..'))
 
+from threading import Thread
 import unittest
 from requests_cache.backends.dbdict import DbDict, DbPickleDict
 
@@ -43,7 +44,6 @@ class DbdictTestCase(unittest.TestCase):
 
         d.can_commit = False
         d[2] = 2
-        self.assertEqual(d[2], 2)
 
         d = DbDict(DB_NAME)
         self.assertNotIn(2, d)
@@ -86,7 +86,7 @@ class DbdictTestCase(unittest.TestCase):
 
     def test_fast_save(self):
         d1 = DbDict(DB_NAME, fast_save=True)
-        d2 = DbDict(DB_NAME, 'data2', d1)
+        d2 = DbDict(DB_NAME, 'data2', d1, fast_save=True)
         d1.clear()
         n = 1000
         for i in range(n):
@@ -95,6 +95,30 @@ class DbdictTestCase(unittest.TestCase):
         # TODO HACK if we will not sort, fast save can produce different order of records
         self.assertEqual(sorted(d1.keys()), list(range(n)))
         self.assertEqual(sorted(d2.values()), list(range(n)))
+
+    def test_usage_with_threads(self):
+        d = DbDict(DB_NAME)
+        d.clear()
+        n = 10
+        fails = []
+        def do_inserts(values):
+            try:
+                for v in values:
+                    print v
+                    d[v] = v
+            except Exception:
+                fails.append(1)
+                raise
+
+        threads = [Thread(target=do_inserts, args=(range(n),)) for i in range(n)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        self.assert_(not fails)
+        for i in range(n):
+            self.assert_(i in d)
 
 
 class ForPickle(object):
