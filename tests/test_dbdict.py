@@ -12,19 +12,16 @@ DB_NAME = 'test'
 
 
 class DbdictTestCase(unittest.TestCase):
-    def test_reusable_dicts(self):
+    def test_save_to_same_database(self):
         d1 = DbDict(DB_NAME, 'table1')
-        d2 = DbDict(DB_NAME, 'table2', d1)
-        d3 = DbDict(DB_NAME, 'table3', d1)
+        d2 = DbDict(DB_NAME, 'table2')
+        d3 = DbDict(DB_NAME, 'table3')
         d1[1] = 1
         d2[2] = 2
         d3[3] = 3
         self.assertEqual(list(d1.keys()), [1])
         self.assertEqual(list(d2.keys()), [2])
         self.assertEqual(list(d3.keys()), [3])
-
-        with self.assertRaises(ValueError):
-            d4 = DbDict(DB_NAME, 'table1', d1)
 
     def test_bulk_commit(self):
         d = DbDict(DB_NAME, 'table')
@@ -86,7 +83,7 @@ class DbdictTestCase(unittest.TestCase):
 
     def test_fast_save(self):
         d1 = DbDict(DB_NAME, fast_save=True)
-        d2 = DbDict(DB_NAME, 'data2', d1, fast_save=True)
+        d2 = DbDict(DB_NAME, 'data2', fast_save=True)
         d1.clear()
         n = 1000
         for i in range(n):

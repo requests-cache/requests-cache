@@ -26,21 +26,20 @@ class DbDict(MutableMapping):
     """ DbDict - a dictionary-like object for saving large datasets to `sqlite` database
 
     It's possible to create multiply DbDict instances, which will be stored as separate
-    tables in one database through the `reusable_dbdict` parameter::
+    tables in one database::
 
         d1 = DbDict('test', 'table1')
-        d2 = DbDict('test', 'table2', d1)
-        d3 = DbDict('test', 'table3', d1)
+        d2 = DbDict('test', 'table2')
+        d3 = DbDict('test', 'table3')
 
     all data will be stored in ``test.sqlite`` database into
     correspondent tables: ``table1``, ``table2`` and ``table3``
     """
 
-    def __init__(self, filename, table_name='data', reusable_dbdict=None, fast_save=False):
+    def __init__(self, filename, table_name='data', fast_save=False):
         """
         :param filename: filename for database (without extension)
         :param table_name: table name
-        :param reusable_dbdict: :class:`DbDict` instance which connection will be reused
         :param fast_save: If it's True, then sqlite will be configured with
                           `"PRAGMA synchronous = 0;" <http://www.sqlite.org/pragma.html#pragma_synchronous>`_
                           to speedup cache saving, but be careful, it's dangerous.
@@ -53,13 +52,6 @@ class DbDict(MutableMapping):
         self._bulk_commit = False
         self._pending_connection = None
         self._lock = threading.RLock()
-        # TODO it's not necessary with new connection opening model
-        if reusable_dbdict is not None:
-            if self.filename != reusable_dbdict.filename:
-                raise ValueError("reusable_dict with different filename")
-            if self.table_name == reusable_dbdict.table_name:
-                raise ValueError("table_name can't be the same as reusable_dbdict.table_name")
-
         with self.connection() as con:
             con.execute("create table if not exists `%s` (key PRIMARY KEY, value)" % self.table_name)
 
