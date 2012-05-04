@@ -43,16 +43,38 @@ class DbDict(MutableMapping):
         """
         self.filename = "%s.sqlite" % filename
         self.table_name = table_name
+        self.fast_save = fast_save
         self._can_commit = True
+        self._bulk_commit = False
+        self._pending_connection = None
+        # TODO it's not necessary with new connection opening model
         if reusable_dbdict is not None:
+            if self.filename != reusable_dbdict.filename:
+                raise ValueError("reusable_dict with different filename")
             if self.table_name == reusable_dbdict.table_name:
                 raise ValueError("table_name can't be the same as reusable_dbdict.table_name")
-            self.con = reusable_dbdict.con
+
+        with self.connection() as con:
+            con.execute("create table if not exists `%s` (key PRIMARY KEY, value)" % self.table_name)
+
+
+    @contextmanager
+    def connection(self, commit_on_success=False):
+        if self._bulk_commit:
+            if not self._pending_connection:
+                self._pending_connection = sqlite.connect(self.filename)
+            con = self._pending_connection
         else:
-            self.con = sqlite.connect(self.filename)
-        self.con.execute("create table if not exists `%s` (key PRIMARY KEY, value)" % self.table_name)
-        if fast_save:
-            self.con.execute("PRAGMA synchronous = 0;")
+            con = sqlite.connect(self.filename)
+        try:
+            if self.fast_save:
+                con.execute("PRAGMA synchronous = 0;")
+            yield con
+            if commit_on_success and self._can_commit:
+                con.commit()
+        finally:
+            if not self._bulk_commit:
+                con.close()
 
     def commit(self, force=False):
         """
@@ -61,7 +83,8 @@ class DbDict(MutableMapping):
         :param force: force commit, ignore :attr:`can_commit`
         """
         if force or self._can_commit:
-            self.con.commit()
+            if self._pending_connection is not None:
+                self._pending_connection.commit()
 
     @property
     def can_commit(self):
@@ -85,46 +108,54 @@ class DbDict(MutableMapping):
             ...         d1[i] = i * 2
 
         """
+        self._bulk_commit = True
         self._can_commit = False
         try:
             yield
             self.commit(True)
         finally:
+            self._bulk_commit = False
             self._can_commit = True
+            self._pending_connection.close()
+            self._pending_connection = None
+
 
 
     def __getitem__(self, key):
-        row = self.con.execute("select value from `%s` where key=?" % self.table_name, (key,)).fetchone()
+        with self.connection() as con:
+            row = con.execute("select value from `%s` where key=?" % self.table_name, (key,)).fetchone()
         if not row:
             raise KeyError
         return row[0]
 
     def __setitem__(self, key, item):
-        if self.con.execute("select key from `%s` where key=?" % self.table_name, (key,)).fetchone():
-            self.con.execute("update `%s` set value=? where key=?" % self.table_name, (item, key))
-        else:
-            self.con.execute("insert into `%s` (key,value) values (?,?)" % self.table_name, (key, item))
-        self.commit()
+        with self.connection(True) as con:
+            if con.execute("select key from `%s` where key=?" % self.table_name, (key,)).fetchone():
+                con.execute("update `%s` set value=? where key=?" % self.table_name, (item, key))
+            else:
+                con.execute("insert into `%s` (key,value) values (?,?)" % self.table_name, (key, item))
 
     def __delitem__(self, key):
-        if self.con.execute("select key from `%s` where key=?"  % self.table_name, (key,)).fetchone():
-            self.con.execute("delete from `%s` where key=?" % self.table_name, (key,))
-            self.commit()
-        else:
-            raise KeyError
+        with self.connection(True) as con:
+            if con.execute("select key from `%s` where key=?"  % self.table_name, (key,)).fetchone():
+                con.execute("delete from `%s` where key=?" % self.table_name, (key,))
+            else:
+                raise KeyError
 
     def __iter__(self):
-        for row in self.con.execute("select key from `%s`" % self.table_name).fetchall():
-            yield row[0]
+        with self.connection() as con:
+            for row in con.execute("select key from `%s`" % self.table_name):
+                yield row[0]
 
     def __len__(self):
-        return self.con.execute("select count(key) from `%s`" %
+        with self.connection() as con:
+            return con.execute("select count(key) from `%s`" %
                                 self.table_name).fetchone()[0]
 
     def clear(self):
-        self.con.execute("drop table `%s`" % self.table_name)
-        self.con.execute("create table `%s` (key PRIMARY KEY, value)"  % self.table_name)
-        self.commit()
+        with self.connection(True) as con:
+            con.execute("drop table `%s`" % self.table_name)
+            con.execute("create table `%s` (key PRIMARY KEY, value)"  % self.table_name)
 
     def __str__(self):
         return str(dict(self.items()))
