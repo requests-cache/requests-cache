@@ -48,7 +48,10 @@ class DbDict(MutableMapping):
         self.filename = "%s.sqlite" % filename
         self.table_name = table_name
         self.fast_save = fast_save
-        self._can_commit = True
+        
+        self.can_commit = True
+        """ Transactions can be commited if this property set to `True` """
+        
         self._bulk_commit = False
         self._pending_connection = None
         self._lock = threading.RLock()
@@ -69,7 +72,7 @@ class DbDict(MutableMapping):
                 if self.fast_save:
                     con.execute("PRAGMA synchronous = 0;")
                 yield con
-                if commit_on_success and self._can_commit:
+                if commit_on_success and self.can_commit:
                     con.commit()
             finally:
                 if not self._bulk_commit:
@@ -81,19 +84,12 @@ class DbDict(MutableMapping):
 
         :param force: force commit, ignore :attr:`can_commit`
         """
-        if force or self._can_commit:
+        if force or self.can_commit:
             if self._pending_connection is not None:
                 self._pending_connection.commit()
 
-    @property
-    def can_commit(self):
-        """ Transactions can be commited if this property set to `True`
-        """
-        return self._can_commit
-
-    @can_commit.setter
-    def can_commit(self, value):
-        self._can_commit = value
+  
+       
 
     @contextmanager
     def bulk_commit(self):
@@ -108,13 +104,13 @@ class DbDict(MutableMapping):
 
         """
         self._bulk_commit = True
-        self._can_commit = False
+        self.can_commit = False
         try:
             yield
             self.commit(True)
         finally:
             self._bulk_commit = False
-            self._can_commit = True
+            self.can_commit = True
             self._pending_connection.close()
             self._pending_connection = None
 
