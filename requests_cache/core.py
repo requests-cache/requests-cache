@@ -30,9 +30,12 @@ def configure(cache_name='cache', backend='sqlite', expire_after=None,
     """
     Configure cache storage and patch ``requests`` library to transparently cache responses
 
-    :param cache_name: cache files will start with this prefix,
-                                  e.g ``cache_urls.sqlite``, ``cache_responses.sqlite``
-    :param backend: cache backend e.g ``'sqlite'``, ``'memory'``
+    :param cache_name: for ``sqlite`` backend: cache files will start with this prefix,
+                       e.g ``cache_urls.sqlite``, ``cache_responses.sqlite``
+
+                       for ``mongodb``: it's used as database name
+    :param backend: cache backend e.g ``'sqlite'``, ``'mongodb'``, ``'memory'``.
+                    See :ref:`persistence`
     :param expire_after: number of minutes after cache will be expired
                          or `None` (default) to ignore expiration
     :type expire_after: int, float or None

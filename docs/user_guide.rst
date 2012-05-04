@@ -84,6 +84,7 @@ and delete it with :func:`requests_cache.delete_url() <requests_cache.core.delet
 
 .. seealso:: `example.py <https://github.com/reclosedev/requests-cache/blob/master/example.py>`_
 
+.. _persistence:
 
 Persistence
 -----------

@@ -49,8 +49,9 @@ class DbDict(MutableMapping):
         self.table_name = table_name
         self.fast_save = fast_save
         
+        #: Transactions can be commited if this property is set to `True`
         self.can_commit = True
-        """ Transactions can be commited if this property set to `True` """
+
         
         self._bulk_commit = False
         self._pending_connection = None
@@ -88,9 +89,6 @@ class DbDict(MutableMapping):
             if self._pending_connection is not None:
                 self._pending_connection.commit()
 
-  
-       
-
     @contextmanager
     def bulk_commit(self):
         """
@@ -114,32 +112,37 @@ class DbDict(MutableMapping):
             self._pending_connection.close()
             self._pending_connection = None
 
-
-
     def __getitem__(self, key):
         with self.connection() as con:
-            row = con.execute("select value from `%s` where key=?" % self.table_name, (key,)).fetchone()
+            row = con.execute("select value from `%s` where key=?" %
+                              self.table_name, (key,)).fetchone()
             if not row:
                 raise KeyError
             return row[0]
 
     def __setitem__(self, key, item):
         with self.connection(True) as con:
-            if con.execute("select key from `%s` where key=?" % self.table_name, (key,)).fetchone():
-                con.execute("update `%s` set value=? where key=?" % self.table_name, (item, key))
+            if con.execute("select key from `%s` where key=?" %
+                           self.table_name, (key,)).fetchone():
+                con.execute("update `%s` set value=? where key=?" %
+                            self.table_name, (item, key))
             else:
-                con.execute("insert into `%s` (key,value) values (?,?)" % self.table_name, (key, item))
+                con.execute("insert into `%s` (key,value) values (?,?)" %
+                            self.table_name, (key, item))
 
     def __delitem__(self, key):
         with self.connection(True) as con:
-            if con.execute("select key from `%s` where key=?"  % self.table_name, (key,)).fetchone():
-                con.execute("delete from `%s` where key=?" % self.table_name, (key,))
+            if con.execute("select key from `%s` where key=?" %
+                           self.table_name, (key,)).fetchone():
+                con.execute("delete from `%s` where key=?" %
+                            self.table_name, (key,))
             else:
                 raise KeyError
 
     def __iter__(self):
         with self.connection() as con:
-            for row in con.execute("select key from `%s`" % self.table_name):
+            for row in con.execute("select key from `%s`" %
+                                   self.table_name):
                 yield row[0]
 
     def __len__(self):
@@ -150,7 +153,8 @@ class DbDict(MutableMapping):
     def clear(self):
         with self.connection(True) as con:
             con.execute("drop table `%s`" % self.table_name)
-            con.execute("create table `%s` (key PRIMARY KEY, value)"  % self.table_name)
+            con.execute("create table `%s` (key PRIMARY KEY, value)" %
+                        self.table_name)
 
     def __str__(self):
         return str(dict(self.items()))
