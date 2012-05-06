@@ -45,7 +45,7 @@ class DbDict(MutableMapping):
                           to speedup cache saving, but be careful, it's dangerous.
                           Tests showed that insertion order of records can be wrong with this option.
         """
-        self.filename = "%s.sqlite" % filename
+        self.filename = filename
         self.table_name = table_name
         self.fast_save = fast_save
         
