@@ -17,7 +17,15 @@ CACHE_BACKEND = 'sqlite'
 CACHE_NAME = 'requests_cache_test'
 FAST_SAVE = False
 
+if 'HTTPBIN_URL' not in os.environ:
+    os.environ['HTTPBIN_URL'] = 'http://httpbin.org/'
 
+HTTPBIN_URL = os.environ.get('HTTPBIN_URL')
+
+
+def httpbin(*suffix):
+    """Returns url for HTTPBIN resource."""
+    return HTTPBIN_URL + '/'.join(suffix)
 
 class CacheTestCase(unittest.TestCase):
 
@@ -30,13 +38,13 @@ class CacheTestCase(unittest.TestCase):
         def long_request():
             t = time.time()
             for i in range(5):
-                r = requests.get('http://httpbin.org/delay/%s' % delay)
+                r = requests.get(httpbin('delay/%s' % delay))
             delta = time.time() - t
             self.assertLess(delta, delay * 3)
         long_request()
         requests_cache.undo_patch()
         t = time.time()
-        r = requests.get('http://httpbin.org/delay/%s' % delay)
+        r = requests.get(httpbin('delay/%s' % delay))
         delta = time.time() - t
         self.assertGreaterEqual(delta, delay)
         requests_cache.redo_patch()
@@ -44,7 +52,7 @@ class CacheTestCase(unittest.TestCase):
 
     def test_expire_cache(self):
         delay = 1
-        url = 'http://httpbin.org/delay/%s' % delay
+        url = httpbin('delay/%s' % delay)
         requests_cache.configure(CACHE_NAME, backend=CACHE_BACKEND, expire_after=0.001)
         t = time.time()
         r = requests.get(url)
@@ -57,10 +65,10 @@ class CacheTestCase(unittest.TestCase):
         self.assertGreaterEqual(delta, delay)
 
     def test_delete_urls(self):
-        url = 'http://httpbin.org/redirect/3'
+        url = httpbin('redirect/3')
         r = requests.get(url)
         for i in range(1, 4):
-            self.assert_(requests_cache.has_url('http://httpbin.org/redirect/%s' % i))
+            self.assert_(requests_cache.has_url(httpbin('redirect/%s' % i)))
         requests_cache.delete_url(url)
         self.assert_(not requests_cache.has_url(url))
 
@@ -76,7 +84,7 @@ class CacheTestCase(unittest.TestCase):
         n = 3
         def long_running():
             t = time.time()
-            rs = [async.get('http://httpbin.org/delay/%s' % i) for i in range(n + 1)]
+            rs = [async.get(httpbin('delay/%s' % i)) for i in range(n + 1)]
             async.map(rs)
             return time.time() - t
         # cache it
@@ -97,11 +105,11 @@ class CacheTestCase(unittest.TestCase):
                 return r
             n = 5
             for i in range(n):
-                r = requests.get('http://httpbin.org/get', hooks={hook: hook_func})
+                r = requests.get(httpbin('get'), hooks={hook: hook_func})
             self.assertEqual(state[hook], n)
 
     def test_post(self):
-        url = 'http://httpbin.org/post'
+        url = httpbin('post')
         r1 = json.loads(requests.post(url, data={'test1': 'test1'}).text)
         r2 = json.loads(requests.post(url, data={'test2': 'test2'}).text)
         self.assertIn('test2', r2['form'])
@@ -109,7 +117,7 @@ class CacheTestCase(unittest.TestCase):
 
     def test_disabled_enabled(self):
         delay = 1
-        url = 'http://httpbin.org/delay/%s' % delay
+        url = httpbin('delay/%s' % delay)
         with requests_cache.disabled():
             t = time.time()
             n = 2
@@ -130,29 +138,29 @@ class CacheTestCase(unittest.TestCase):
         s = requests.session()
         def js(url):
             return json.loads(s.get(url).text)
-        r1 = js('http://httpbin.org/cookies/set/test1/test2')
+        r1 = js(httpbin('cookies/set/test1/test2'))
         with requests_cache.disabled():
-            r2 = js('http://httpbin.org/cookies')
+            r2 = js(httpbin('cookies'))
         self.assertEqual(r1, r2)
-        r3 = js('http://httpbin.org/cookies')
+        r3 = js(httpbin('cookies'))
         with requests_cache.disabled():
-            r4 = js('http://httpbin.org/cookies/set/test3/test4')
+            r4 = js(httpbin('cookies/set/test3/test4'))
         # from cache
-        self.assertEqual(r3, js('http://httpbin.org/cookies'))
+        self.assertEqual(r3, js(httpbin('cookies')))
         # updated
         with requests_cache.disabled():
-            self.assertEqual(r4, js('http://httpbin.org/cookies'))
+            self.assertEqual(r4, js(httpbin('cookies')))
 
     def test_response_history(self):
-        r1 = requests.get('http://httpbin.org/redirect/3')
+        r1 = requests.get(httpbin('redirect/3'))
         def test_redirect_history(url):
             r2 = requests.get(url)
             for r11, r22 in zip(r1.history, r2.history):
                 self.assertEqual(r11.url, r22.url)
-        test_redirect_history('http://httpbin.org/redirect/3')
-        test_redirect_history('http://httpbin.org/redirect/2')
+        test_redirect_history(httpbin('redirect/3'))
+        test_redirect_history(httpbin('redirect/2'))
         with requests_cache.disabled():
-            r3 = requests.get('http://httpbin.org/redirect/1')
+            r3 = requests.get(httpbin('redirect/1'))
             self.assertEqual(len(r3.history), 1)
 
     def test_post_params(self):
@@ -162,17 +170,17 @@ class CacheTestCase(unittest.TestCase):
             return json.loads(requests.post(url, data=data).text)
         for _ in range(5):
             d = {'param1': 'test1'}
-            self.assertEqual(post('http://httpbin.org/post', d)['form'], d)
+            self.assertEqual(post(httpbin('post'), d)['form'], d)
             d = {'param1': 'test1', 'param2': 'test2'}
-            self.assertEqual(post('http://httpbin.org/post', d)['form'], d)
+            self.assertEqual(post(httpbin('post'), d)['form'], d)
             d = {'param1': 'test1', 'param3': 'test3'}
-            self.assertEqual(post('http://httpbin.org/post', d)['form'], d)
+            self.assertEqual(post(httpbin('post'), d)['form'], d)
 
     def test_get_params_as_argument(self):
         for _ in range(5):
             p = {'arg1': 'value1'}
-            r = json.loads(requests.get('http://httpbin.org/get', params=p).text)
-            self.assert_(requests_cache.has_url('http://httpbin.org/get?arg1=value1'))
+            r = json.loads(requests.get(httpbin('get'), params=p).text)
+            self.assert_(requests_cache.has_url(httpbin('get?arg1=value1')))
 
 
     def test_https_support(self):
