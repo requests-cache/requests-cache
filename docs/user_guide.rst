@@ -69,8 +69,7 @@ context managers for temporary disabling and enabling caching::
             print(requests.get('http://httpbin.org/delay/1').text)
 
 Also, you can check if url is present in cache with :func:`requests_cache.has_url() <requests_cache.core.has_url>`
-and delete it with :func:`requests_cache.delete_url() <requests_cache.core.delete_url>`
-::
+and delete it with :func:`requests_cache.delete_url() <requests_cache.core.delete_url>`: ::
 
     >>> import requests
     >>> import requests_cache
@@ -81,6 +80,49 @@ and delete it with :func:`requests_cache.delete_url() <requests_cache.core.delet
     >>> requests_cache.delete_url('http://httpbin.org/get')
     >>> requests_cache.has_url('http://httpbin.org/get')
     False
+
+.. versionadded:: 0.1.4
+    If ``Response`` is taken from cache, it will have ``from_cache`` attribute:
+
+::
+
+    >>> import requests
+    >>> import requests_cache
+    >>> requests_cache.configure()
+    >>> requests_cache.clear()
+    >>> r = requests.get('http://httpbin.org/get')
+    >>> hasattr(r, 'from_cache')
+    False
+    >>> r = requests.get('http://httpbin.org/get')
+    >>> hasattr(r, 'from_cache')
+    True
+
+It can be used, for example, for request throttling with help of ``requests`` hook system::
+
+    import time
+    import requests
+    import requests_cache
+
+    def make_throttle_hook(timeout=1.0):
+        """
+        Returns a response hook function which sleeps for ``timeout`` seconds if
+        response is not cached
+        """
+        def hook(response):
+            if not hasattr(response, 'from_cache'):
+                time.sleep(timeout)
+            return response
+        return hook
+
+    if __name__ == '__main__':
+        requests_cache.configure('wait_test')
+        requests_cache.clear()
+
+        s = requests.Session(hooks={'response': make_throttle_hook(2.0)})
+        s.get('http://httpbin.org/get')
+        s.get('http://httpbin.org/get')
+
+
 
 .. seealso:: `example.py <https://github.com/reclosedev/requests-cache/blob/master/example.py>`_
 
