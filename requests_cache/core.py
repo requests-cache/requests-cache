@@ -158,6 +158,7 @@ def _request_send_hook(self, *args, **kwargs):
             _cache.del_cached_url(cache_url)
             return send_request_and_cache_response()
 
+    response.from_cache = True
     self.sent = True
     self.response = response
     # TODO: is it stable api?

@@ -193,5 +193,15 @@ class CacheTestCase(unittest.TestCase):
             self.assert_(requests_cache.has_url(url))
         self.assertLessEqual(time.time() - t, delay * n / 2)
 
+    def test_from_cache_attribute(self):
+        url = httpbin('get?q=1')
+        self.assert_(not hasattr(requests.get(url), 'from_cache'))
+        self.assert_(hasattr(requests.get(url), 'from_cache'))
+        requests_cache.delete_url(url)
+        self.assert_(not hasattr(requests.get(url), 'from_cache'))
+
+
+
+
 if __name__ == '__main__':
     unittest.main()
