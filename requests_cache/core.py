@@ -8,6 +8,7 @@
 """
 from contextlib import contextmanager
 from datetime import datetime, timedelta
+from time import sleep
 
 from requests import Request
 try:
@@ -26,7 +27,7 @@ _cache = None
 
 def configure(cache_name='cache', backend='sqlite', expire_after=None,
               allowable_codes=(200,), allowable_methods=('GET',),
-              monkey_patch=True, **backend_options):
+              monkey_patch=True, wait = None, **backend_options):
     """
     Configure cache storage and patch ``requests`` library to transparently cache responses
 
@@ -45,6 +46,7 @@ def configure(cache_name='cache', backend='sqlite', expire_after=None,
     :type allowable_methods: tuple
     :param monkey_patch: patch ``requests.Request.send`` if `True` (default), otherwise
                          cache will not work until calling :func:`redo_patch`
+    :param sleep: the time to wait between two requests (default: None)
     :kwarg backend_options: options for chosen backend. See corresponding
                             :ref:`sqlite <backends_sqlite>` and :ref:`mongo <backends_mongo>` backends API documentation
     """
@@ -59,6 +61,7 @@ def configure(cache_name='cache', backend='sqlite', expire_after=None,
     _config['expire_after'] = expire_after
     _config['allowable_codes'] = allowable_codes
     _config['allowable_methods'] = allowable_methods
+    _config['wait'] = wait
 
 
 def has_url(url):
@@ -146,6 +149,7 @@ def _request_send_hook(self, *args, **kwargs):
         result = _original_request_send(self, *args, **kwargs)
         if result and self.response.status_code in _config['allowable_codes']:
             _cache.save_response(cache_url, self.response)
+            if _config['wait']: sleep( _config['wait'] )
         return result
 
     response, timestamp = _cache.get_response_and_time(cache_url)
