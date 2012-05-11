@@ -182,7 +182,6 @@ class CacheTestCase(unittest.TestCase):
             r = json.loads(requests.get(httpbin('get'), params=p).text)
             self.assert_(requests_cache.has_url(httpbin('get?arg1=value1')))
 
-
     def test_https_support(self):
         n = 10
         delay = 1

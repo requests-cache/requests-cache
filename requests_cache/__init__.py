@@ -25,7 +25,7 @@
 __docformat__ = 'restructuredtext'
 __version__ = '0.1.3'
 
-from requests_cache.core import(
+from .core import(
     configure, enabled, disabled, has_url, get_cache,
     delete_url,clear, redo_patch, undo_patch,
 )

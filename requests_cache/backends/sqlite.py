@@ -6,8 +6,8 @@
 
     ``sqlite3`` cache backend
 """
-from requests_cache.backends.base import BaseCache
-from requests_cache.backends.dbdict import DbDict, DbPickleDict
+from .base import BaseCache
+from .dbdict import DbDict, DbPickleDict
 
 
 class DbCache(BaseCache):

@@ -7,15 +7,15 @@
     Classes and functions for cache persistence
 """
 
-from requests_cache.backends.sqlite import DbCache
-from requests_cache.backends.base import BaseCache
+from .sqlite import DbCache
+from .base import BaseCache
 
 registry = {
     'sqlite': DbCache,
     'memory': BaseCache,
 }
 try:
-    from requests_cache.backends.mongo import MongoCache
+    from .mongo import MongoCache
     registry['mongo'] = registry['mongodb'] = MongoCache
 except ImportError:
     MongoCache = None
