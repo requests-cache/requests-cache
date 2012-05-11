@@ -30,8 +30,8 @@ def configure(cache_name='cache', backend='sqlite', expire_after=None,
     """
     Configure cache storage and patch ``requests`` library to transparently cache responses
 
-    :param cache_name: for ``sqlite`` backend: cache files will start with this prefix,
-                       e.g ``cache_urls.sqlite``, ``cache_responses.sqlite``
+    :param cache_name: for ``sqlite`` backend: cache file will start with this prefix,
+                       e.g ``cache.sqlite``
 
                        for ``mongodb``: it's used as database name
     :param backend: cache backend e.g ``'sqlite'``, ``'mongodb'``, ``'memory'``.
@@ -45,6 +45,7 @@ def configure(cache_name='cache', backend='sqlite', expire_after=None,
     :type allowable_methods: tuple
     :param monkey_patch: patch ``requests.Request.send`` if `True` (default), otherwise
                          cache will not work until calling :func:`redo_patch`
+                         or using :func:`enabled` context manager
     :kwarg backend_options: options for chosen backend. See corresponding
                             :ref:`sqlite <backends_sqlite>` and :ref:`mongo <backends_mongo>` backends API documentation
     """
