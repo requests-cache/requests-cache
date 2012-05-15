@@ -16,7 +16,7 @@ except ImportError:
     dispatch_hook = None
 
 from requests_cache import backends
-from requests_cache.compat import urlencode
+from requests_cache.compat import str
 
 
 _original_request_send = Request.send
@@ -133,13 +133,15 @@ def delete_url(url):
     _cache.del_cached_url(url)
 
 
-# TODO make it possible to check if response is taken from cache
 def _request_send_hook(self, *args, **kwargs):
     if self.method not in _config['allowable_methods']:
         return _original_request_send(self, *args, **kwargs)
 
     if self.method == 'POST':
-        cache_url = self.full_url + urlencode(getattr(self, 'data', {}))
+        data = self._encode_params(getattr(self, 'data', {}))
+        if isinstance(data, tuple): # old requests versions
+            data = data[1]
+        cache_url = self.full_url + str(data)
     else:
         cache_url = self.full_url
 

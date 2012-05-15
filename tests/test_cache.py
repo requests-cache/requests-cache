@@ -12,6 +12,7 @@ from collections import defaultdict
 import requests
 
 import requests_cache
+from requests_cache.compat import bytes, str, is_py3
 
 CACHE_BACKEND = 'sqlite'
 CACHE_NAME = 'requests_cache_test'
@@ -163,18 +164,45 @@ class CacheTestCase(unittest.TestCase):
             r3 = requests.get(httpbin('redirect/1'))
             self.assertEqual(len(r3.history), 1)
 
+    def post(self, data):
+        return json.loads(requests.post(httpbin('post'), data=data).text)
+
     def test_post_params(self):
         # issue #2
         requests_cache.configure(CACHE_NAME, CACHE_BACKEND, allowable_methods=('GET', 'POST'))
-        def post(url, data):
-            return json.loads(requests.post(url, data=data).text)
-        for _ in range(5):
+
+        for _ in range(3):
             d = {'param1': 'test1'}
-            self.assertEqual(post(httpbin('post'), d)['form'], d)
-            d = {'param1': 'test1', 'param2': 'test2'}
-            self.assertEqual(post(httpbin('post'), d)['form'], d)
+            self.assertEqual(self.post(d)['form'], d)
             d = {'param1': 'test1', 'param3': 'test3'}
-            self.assertEqual(post(httpbin('post'), d)['form'], d)
+            self.assertEqual(self.post(d)['form'], d)
+            d = {'param1': 'test1', 'param3': 'test3'}
+            self.assertEqual(self.post(d)['form'], d)
+            d = [('param1', 'test1'), ('param2', 'test2'), ('param3', 'test3')]
+            res = sorted(self.post(d)['form'].items())
+            self.assertEqual(res, d)
+
+    def test_post_data(self):
+        # issue #2, raw payload
+        requests_cache.configure(CACHE_NAME, CACHE_BACKEND,
+                                 allowable_methods=('GET', 'POST'))
+        d1 = json.dumps({'param1': 'test1'})
+        d2 = json.dumps({'param1': 'test1', 'param2': 'test2'})
+        d3 = str('some unicode data')
+        if is_py3:
+            bin_data = bytes('some binary data', 'utf8')
+        else:
+            bin_data = bytes('some binary data')
+
+        for d in (d1, d2, d3):
+            self.assertEqual(self.post(d)['data'], d)
+            r = requests.post(httpbin('post'), data=d)
+            self.assert_(hasattr(r, 'from_cache'))
+
+        self.assertEqual(self.post(bin_data)['data'],
+                         bin_data.decode('utf8'))
+        r = requests.post(httpbin('post'), data=bin_data)
+        self.assert_(hasattr(r, 'from_cache'))
 
     def test_get_params_as_argument(self):
         for _ in range(5):
