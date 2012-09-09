@@ -7,13 +7,20 @@
     Classes and functions for cache persistence
 """
 
-from .sqlite import DbCache
+
 from .base import BaseCache
 
 registry = {
-    'sqlite': DbCache,
     'memory': BaseCache,
 }
+
+try:
+    # Heroku doesn't allow the SQLite3 module to be installed
+    from .sqlite import DbCache
+    registry['sqlite'] = DbCache
+except ImportError:
+    DbCache = None
+
 try:
     from .mongo import MongoCache
     registry['mongo'] = registry['mongodb'] = MongoCache
