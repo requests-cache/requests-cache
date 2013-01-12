@@ -65,7 +65,7 @@ class BaseCache(object):
         return self.restore_response(response), timestamp
 
     def delete(self, key):
-        """ Delete `key` from cache. Also deletes all urls from response history
+        """ Delete `key` from cache. Also deletes all responses from response history
         """
         try:
             if key in self.responses:
@@ -79,6 +79,12 @@ class BaseCache(object):
         except KeyError:
             pass
 
+    def delete_url(self, url):
+        """ Delete response associated with `url` from cache.
+        Also deletes all responses from response history. Works only for GET requests
+        """
+        self.delete(self._url_to_key(url))
+
     def clear(self):
         """ Clear cache
         """
@@ -89,6 +95,16 @@ class BaseCache(object):
         """ Returns `True` if cache has `key`, `False` otherwise
         """
         return key in self.responses or key in self.keys_map
+
+    def has_url(self, url):
+        """ Returns `True` if cache has `url`, `False` otherwise.
+        Works only for GET request urls
+        """
+        return self.has_key(self._url_to_key(url))
+
+    def _url_to_key(self, url):
+        from requests import Request
+        return self.create_key(Request('GET', url).prepare())
 
     _response_attrs = ['_content', 'url', 'status_code', 'cookies',
                        'headers', 'encoding', 'request', 'reason']

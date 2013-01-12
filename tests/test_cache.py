@@ -71,12 +71,9 @@ class CacheTestCase(unittest.TestCase):
         url = httpbin('redirect/3')
         r = self.s.get(url)
         for i in range(1, 4):
-            req = Request('GET', httpbin('redirect/%s' % i)).prepare()
-            self.assert_(self.s.cache.has_key(self.s.cache.create_key(req)))
-
-        key = self.s.cache.create_key(r.request)
-        self.s.cache.delete(key)
-        self.assert_(not self.s.cache.has_key(key))
+            self.assert_(self.s.cache.has_url(httpbin('redirect/%s' % i)))
+        self.s.cache.delete_url(url)
+        self.assert_(not self.s.cache.has_url(url))
 
     def test_unregistered_backend(self):
         with self.assertRaises(ValueError):
@@ -213,9 +210,7 @@ class CacheTestCase(unittest.TestCase):
         for _ in range(5):
             p = {'arg1': 'value1'}
             r = self.s.get(httpbin('get'), params=p)
-            key = self.s.cache.create_key(
-                Request('GET', httpbin('get?arg1=value1')).prepare())
-            self.assert_(self.s.cache.has_key(key))
+            self.assert_(self.s.cache.has_url( httpbin('get?arg1=value1')))
 
     def test_https_support(self):
         n = 10
