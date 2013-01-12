@@ -10,6 +10,7 @@ import json
 from collections import defaultdict
 
 import requests
+from requests import Request
 
 import requests_cache
 from requests_cache import CachedSession
@@ -67,14 +68,11 @@ class CacheTestCase(unittest.TestCase):
         self.assertGreaterEqual(delta, delay)
 
     def test_delete_urls(self):
-        from requests import Request
-
         url = httpbin('redirect/3')
         r = self.s.get(url)
         for i in range(1, 4):
-            req = Request('GET', httpbin('redirect/%s' % i))
-            preq = req.prepare()
-            self.assert_(self.s.cache.has_key(self.s.cache.create_key(preq)))
+            req = Request('GET', httpbin('redirect/%s' % i)).prepare()
+            self.assert_(self.s.cache.has_key(self.s.cache.create_key(req)))
 
         key = self.s.cache.create_key(r.request)
         self.s.cache.delete(key)
@@ -118,10 +116,11 @@ class CacheTestCase(unittest.TestCase):
 
     def test_post(self):
         url = httpbin('post')
-        r1 = json.loads(requests.post(url, data={'test1': 'test1'}).text)
-        r2 = json.loads(requests.post(url, data={'test2': 'test2'}).text)
+        r1 = json.loads(self.s.post(url, data={'test1': 'test1'}).text)
+        r2 = json.loads(self.s.post(url, data={'test2': 'test2'}).text)
         self.assertIn('test2', r2['form'])
-        self.assert_(not requests_cache.has_url(url))
+        req = Request('POST', url).prepare()
+        self.assert_(not self.s.cache.has_key(self.s.cache.create_key(req)))
 
     def test_disabled_enabled(self):
         delay = 1
@@ -171,27 +170,27 @@ class CacheTestCase(unittest.TestCase):
         self.assertEqual(len(r3.history), 1)
 
     def post(self, data):
-        return json.loads(requests.post(httpbin('post'), data=data).text)
+        return json.loads(self.s.post(httpbin('post'), data=data).text)
 
     def test_post_params(self):
         # issue #2
-        requests_cache.configure(CACHE_NAME, CACHE_BACKEND, allowable_methods=('GET', 'POST'))
+        self.s = CachedSession(CACHE_NAME, CACHE_BACKEND,
+                               allowable_methods=('GET', 'POST'))
 
-        for _ in range(3):
-            d = {'param1': 'test1'}
+        d = {'param1': 'test1'}
+        for _ in range(2):
             self.assertEqual(self.post(d)['form'], d)
             d = {'param1': 'test1', 'param3': 'test3'}
             self.assertEqual(self.post(d)['form'], d)
-            d = {'param1': 'test1', 'param3': 'test3'}
-            self.assertEqual(self.post(d)['form'], d)
-            d = [('param1', 'test1'), ('param2', 'test2'), ('param3', 'test3')]
-            res = sorted(self.post(d)['form'].items())
-            self.assertEqual(res, d)
+
+        self.assertTrue(self.s.post(httpbin('post'), data=d).from_cache)
+        d.update({'something': 'else'})
+        self.assertFalse(self.s.post(httpbin('post'), data=d).from_cache)
 
     def test_post_data(self):
         # issue #2, raw payload
-        requests_cache.configure(CACHE_NAME, CACHE_BACKEND,
-                                 allowable_methods=('GET', 'POST'))
+        self.s = CachedSession(CACHE_NAME, CACHE_BACKEND,
+                               allowable_methods=('GET', 'POST'))
         d1 = json.dumps({'param1': 'test1'})
         d2 = json.dumps({'param1': 'test1', 'param2': 'test2'})
         d3 = str('some unicode data')
@@ -202,19 +201,21 @@ class CacheTestCase(unittest.TestCase):
 
         for d in (d1, d2, d3):
             self.assertEqual(self.post(d)['data'], d)
-            r = requests.post(httpbin('post'), data=d)
+            r = self.s.post(httpbin('post'), data=d)
             self.assert_(hasattr(r, 'from_cache'))
 
         self.assertEqual(self.post(bin_data)['data'],
                          bin_data.decode('utf8'))
-        r = requests.post(httpbin('post'), data=bin_data)
+        r = self.s.post(httpbin('post'), data=bin_data)
         self.assert_(hasattr(r, 'from_cache'))
 
     def test_get_params_as_argument(self):
         for _ in range(5):
             p = {'arg1': 'value1'}
-            r = json.loads(requests.get(httpbin('get'), params=p).text)
-            self.assert_(requests_cache.has_url(httpbin('get?arg1=value1')))
+            r = self.s.get(httpbin('get'), params=p)
+            key = self.s.cache.create_key(
+                Request('GET', httpbin('get?arg1=value1')).prepare())
+            self.assert_(self.s.cache.has_key(key))
 
     def test_https_support(self):
         n = 10
@@ -222,16 +223,15 @@ class CacheTestCase(unittest.TestCase):
         url = 'https://httpbin.org/delay/%s?ar1=value1' % delay
         t = time.time()
         for _ in range(n):
-            r = json.loads(requests.get(url, verify=False).text)
-            self.assert_(requests_cache.has_url(url))
+            r = self.s.get(url, verify=False)
         self.assertLessEqual(time.time() - t, delay * n / 2)
 
     def test_from_cache_attribute(self):
         url = httpbin('get?q=1')
-        self.assert_(not hasattr(requests.get(url), 'from_cache'))
-        self.assert_(hasattr(requests.get(url), 'from_cache'))
-        requests_cache.delete_url(url)
-        self.assert_(not hasattr(requests.get(url), 'from_cache'))
+        self.assertFalse(self.s.get(url).from_cache)
+        self.assertTrue(self.s.get(url).from_cache)
+        self.s.cache.clear()
+        self.assertFalse(self.s.get(url).from_cache)
 
 
 
