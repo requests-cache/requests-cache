@@ -8,6 +8,7 @@
     extended to support persistence.
 """
 from datetime import datetime
+import hashlib
 import requests
 
 
@@ -86,7 +87,7 @@ class BaseCache(object):
         return key in self.responses or key in self.url_map
 
     _response_attrs = ['_content', 'url', 'status_code', 'cookies',
-                       'headers', 'encoding']
+                       'headers', 'encoding', 'request', 'reason']
 
     def reduce_response(self, response):
         """ Reduce response object to make it compatible with ``pickle``
@@ -107,6 +108,14 @@ class BaseCache(object):
             setattr(result, field, getattr(response, field))
         result.history = [self.restore_response(r) for r in response.history]
         return result
+
+    def create_key(self, request):
+        cache_data = request.method.upper() + request.url
+
+        if request.body: # body?
+            cache_data += str(request.body)
+
+        return hashlib.sha256(cache_data).hexdigest()
 
     def __str__(self):
         return 'urls: %s\nresponses: %s' % (self.url_map, self.responses)

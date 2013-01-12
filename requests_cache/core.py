@@ -57,9 +57,11 @@ class CachedSession(Session):
 
     def send(self, request, **kwargs):
         if request.method not in self._cache_allowable_methods:
-            return super(CachedSession, self).send(request, **kwargs)
+            response = super(CachedSession, self).send(request, **kwargs)
+            response.from_cache = False
+            return response
 
-        cache_key = self._create_cache_key_from_request(request)
+        cache_key = self.cache.create_key(request)
 
         def send_request_and_cache_response():
             response = super(CachedSession, self).send(request, **kwargs)
@@ -90,30 +92,13 @@ class CachedSession(Session):
                                                       auth, timeout,
                                                       allow_redirects, proxies,
                                                       hooks, stream, verify, cert)
-        main_key = self._create_cache_key_from_request(response.request)
+        main_key = self.cache.create_key(response.request)
         for r in response.history:
             self.cache.add_url_mapping(
-                self._create_cache_key_from_request(r.request), main_key
+                self.cache.create_key(r.request), main_key
             )
         return response
 
-    def _create_cache_key(self, url, params=None, data=None, method=None):
-        method = method or ''
-        cache_data = method.upper() + url
-        if params:
-            cache_data += str(params)
-        if data:
-            data = self._encode_params(data)
-            if isinstance(data, tuple):  # old requests versions
-                data = data[1]
-            cache_data += str(data)
-
-        return hashlib.sha256(cache_data).hexdigest()
-
-    def _create_cache_key_from_request(self, request):
-        return self._create_cache_key(request.url,
-                                      data=getattr(request, 'data', None),
-                                      method=request.method)
 
 
 def install_cached_session(session_factory=CachedSession):
