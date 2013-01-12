@@ -8,6 +8,7 @@
 """
 from contextlib import contextmanager
 from datetime import datetime, timedelta
+import hashlib
 
 import requests
 from requests import Session
@@ -30,7 +31,7 @@ class CachedSession(Session):
                         See :ref:`persistence`
         :param expire_after: number of seconds after cache will be expired
                              or `None` (default) to ignore expiration
-        :type expire_after: int, float or None
+        :type expire_after: float
         :param allowable_codes: limit caching only for response with this codes (default: 200)
         :type allowable_codes: tuple
         :param allowable_methods: cache only requests of this methods (default: 'GET')
@@ -58,33 +59,61 @@ class CachedSession(Session):
         if request.method not in self._cache_allowable_methods:
             return super(CachedSession, self).send(request, **kwargs)
 
-        if request.method == 'POST':
-            data = self._encode_params(getattr(request, 'data', {}))
-            if isinstance(data, tuple):  # old requests versions
-                data = data[1]
-            cache_url = request.url + str(data)
-        else:
-            cache_url = request.url
+        cache_key = self._create_cache_key_from_request(request)
 
         def send_request_and_cache_response():
             response = super(CachedSession, self).send(request, **kwargs)
             if response.status_code in self._cache_allowable_codes:
-                self.cache.save_response(cache_url, response)
+                self.cache.save_response(cache_key, response)
             response.from_cache = False
             return response
 
-        response, timestamp = self.cache.get_response_and_time(cache_url)
+        response, timestamp = self.cache.get_response_and_time(cache_key)
         if response is None:
             return send_request_and_cache_response()
 
         if self._cache_expire_after is not None:
             difference = datetime.now() - timestamp
             if difference > timedelta(seconds=self._cache_expire_after):
-                self.cache.del_cached_url(cache_url)
+                self.cache.delete(cache_key)
                 return send_request_and_cache_response()
 
         response.from_cache = True
         return response
+
+    def request(self, method, url, params=None, data=None, headers=None,
+                cookies=None, files=None, auth=None, timeout=None,
+                allow_redirects=True, proxies=None, hooks=None, stream=None,
+                verify=None, cert=None):
+        response = super(CachedSession, self).request(method, url, params, data,
+                                                      headers, cookies, files,
+                                                      auth, timeout,
+                                                      allow_redirects, proxies,
+                                                      hooks, stream, verify, cert)
+        main_key = self._create_cache_key_from_request(response.request)
+        for r in response.history:
+            self.cache.add_url_mapping(
+                self._create_cache_key_from_request(r.request), main_key
+            )
+        return response
+
+    def _create_cache_key(self, url, params=None, data=None, method=None):
+        method = method or ''
+        cache_data = method.upper() + url
+        if params:
+            cache_data += str(params)
+        if data:
+            data = self._encode_params(data)
+            if isinstance(data, tuple):  # old requests versions
+                data = data[1]
+            cache_data += str(data)
+
+        return hashlib.sha256(cache_data).hexdigest()
+
+    def _create_cache_key_from_request(self, request):
+        return self._create_cache_key(request.url,
+                                      data=getattr(request, 'data', None),
+                                      method=request.method)
 
 
 def install_cached_session(session_factory=CachedSession):

@@ -68,17 +68,17 @@ context managers for temporary disabling and enabling caching::
         for i in range(10):
             print(requests.get('http://httpbin.org/delay/1').text)
 
-Also, you can check if url is present in cache with :func:`requests_cache.has_url() <requests_cache.core.has_url>`
-and delete it with :func:`requests_cache.delete_url() <requests_cache.core.delete_url>`: ::
+Also, you can check if url is present in cache with :func:`requests_cache.has_key() <requests_cache.core.has_key>`
+and delete it with :func:`requests_cache.delete() <requests_cache.core.delete>`: ::
 
     >>> import requests
     >>> import requests_cache
     >>> requests_cache.configure()
     >>> requests.get('http://httpbin.org/get')
-    >>> requests_cache.has_url('http://httpbin.org/get')
+    >>> requests_cache.has_key('http://httpbin.org/get')
     True
-    >>> requests_cache.delete_url('http://httpbin.org/get')
-    >>> requests_cache.has_url('http://httpbin.org/get')
+    >>> requests_cache.delete('http://httpbin.org/get')
+    >>> requests_cache.has_key('http://httpbin.org/get')
     False
 
 .. versionadded:: 0.1.4

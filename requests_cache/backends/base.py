@@ -35,10 +35,11 @@ class BaseCache(object):
                   to make it picklable
         """
         self.responses[url] = self.reduce_response(response), datetime.now()
-        if response.url != url:
-            self.url_map[url] = response.url
-        for r in response.history:
-            self.url_map[r.url] = response.url
+
+
+    def add_url_mapping(self, url1, url2):
+        self.url_map[url1] = url2
+
 
     def get_response_and_time(self, url, default=(None, None)):
         """ Retrieves response and timestamp for `url` if it's stored in cache,
@@ -58,16 +59,16 @@ class BaseCache(object):
             return default
         return self.restore_response(response), timestamp
 
-    def del_cached_url(self, url):
-        """ Delete `url` from cache. Also deletes all urls from response history
+    def delete(self, key):
+        """ Delete `key` from cache. Also deletes all urls from response history
         """
         try:
-            if url in self.responses:
-                response, _ = self.responses[url]
-                del self.responses[url]
+            if key in self.responses:
+                response, _ = self.responses[key]
+                del self.responses[key]
             else:
-                response, _ = self.responses[self.url_map[url]]
-                del self.url_map[url]
+                response, _ = self.responses[self.url_map[key]]
+                del self.url_map[key]
             for r in response.history:
                 del self.url_map[r.url]
         except KeyError:
@@ -79,10 +80,10 @@ class BaseCache(object):
         self.responses.clear()
         self.url_map.clear()
 
-    def has_url(self, url):
-        """ Returns `True` if cache has `url`, `False` otherwise
+    def has_key(self, key):
+        """ Returns `True` if cache has `key`, `False` otherwise
         """
-        return url in self.responses or url in self.url_map
+        return key in self.responses or key in self.url_map
 
     _response_attrs = ['_content', 'url', 'status_code', 'cookies',
                        'headers', 'encoding']
