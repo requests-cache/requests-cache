@@ -24,23 +24,27 @@ class BaseCache(object):
         #: `key_in_cache` -> `response` mapping
         self.responses = {}
 
-    def save_response(self, url, response):
+    def save_response(self, key, response):
         """ Save response to cache
 
-        :param url: url for this response
-
-                    .. note:: urls from history saved automatically
+        :param key: key for this response
         :param response: response to save
 
         .. note:: Response is reduced before saving (with :meth:`reduce_response`)
                   to make it picklable
         """
-        self.responses[url] = self.reduce_response(response), datetime.now()
+        self.responses[key] = self.reduce_response(response), datetime.now()
 
+    def add_key_mapping(self, new_key, key_to_response):
+        """
+        Adds mapping of `new_key` to `key_to_response` to make it possible to
+        associate many keys with single response
 
-    def add_key_mapping(self, url1, url2):
-        self.keys_map[url1] = url2
-
+        :param new_key: new key (e.g. url from redirect)
+        :param key_to_response: key which can be found in :attr:`responses`
+        :return:
+        """
+        self.keys_map[new_key] = key_to_response
 
     def get_response_and_time(self, key, default=(None, None)):
         """ Retrieves response and timestamp for `key` if it's stored in cache,
