@@ -71,7 +71,7 @@ class BaseCache(object):
                 response, _ = self.responses[self.url_map[key]]
                 del self.url_map[key]
             for r in response.history:
-                del self.url_map[r.url]
+                del self.url_map[self.create_key(r.request)]
         except KeyError:
             pass
 

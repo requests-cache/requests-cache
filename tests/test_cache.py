@@ -67,12 +67,18 @@ class CacheTestCase(unittest.TestCase):
         self.assertGreaterEqual(delta, delay)
 
     def test_delete_urls(self):
+        from requests import Request
+
         url = httpbin('redirect/3')
         r = self.s.get(url)
         for i in range(1, 4):
-            self.assert_(self.s.cache.has_key(httpbin('redirect/%s' % i)))
-        self.s.cache.delete(url)
-        self.assert_(not self.s.cache.has_key(url))
+            req = Request('GET', httpbin('redirect/%s' % i))
+            preq = req.prepare()
+            self.assert_(self.s.cache.has_key(self.s.cache.create_key(preq)))
+
+        key = self.s.cache.create_key(r.request)
+        self.s.cache.delete(key)
+        self.assert_(not self.s.cache.has_key(key))
 
     def test_unregistered_backend(self):
         with self.assertRaises(ValueError):
