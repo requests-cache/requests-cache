@@ -9,6 +9,7 @@ import time
 import json
 from collections import defaultdict
 
+from requests import Session
 import requests
 from requests import Request
 
@@ -23,11 +24,16 @@ FAST_SAVE = False
 
 class MonkeyPatchTestCase(unittest.TestCase):
 
-    def test_session(self):
-        requests_cache.install_cache(name=CACHE_NAME, backend=CACHE_BACKEND)
-        self.assert_(isinstance(requests.Session(), CachedSession))
-        self.assert_(isinstance(requests.sessions.Session(), CachedSession))
-        self.assert_(isinstance(requests.session(), CachedSession))
+    def test_install_uninstall(self):
+        for _ in range(2):
+            requests_cache.install_cache(name=CACHE_NAME, backend=CACHE_BACKEND)
+            self.assert_(isinstance(requests.Session(), CachedSession))
+            self.assert_(isinstance(requests.sessions.Session(), CachedSession))
+            self.assert_(isinstance(requests.session(), CachedSession))
+            requests_cache.uninstall_cache()
+            self.assert_(not isinstance(requests.Session(), CachedSession))
+            self.assert_(not isinstance(requests.sessions.Session(), CachedSession))
+            self.assert_(not isinstance(requests.session(), CachedSession))
 
 
 

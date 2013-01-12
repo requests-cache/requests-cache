@@ -117,5 +117,13 @@ def install_cache(cache_name='cache', backend='sqlite', expire_after=None,
     )
 
 
+def uninstall_cache():
+    """ Restores ``requests.Session`` and disables cache
+    :return:
+    """
+    _patch_session_factory(Session)
+
+
 def _patch_session_factory(session_factory=CachedSession):
     requests.Session = requests.sessions.Session = session_factory
+
