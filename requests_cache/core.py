@@ -28,7 +28,7 @@ class CachedSession(Session):
                            for ``mongodb``: it's used as database name
         :param backend: cache backend e.g ``'sqlite'``, ``'mongodb'``, ``'memory'``.
                         See :ref:`persistence`
-        :param expire_after: number of minutes after cache will be expired
+        :param expire_after: number of seconds after cache will be expired
                              or `None` (default) to ignore expiration
         :type expire_after: int, float or None
         :param allowable_codes: limit caching only for response with this codes (default: 200)
@@ -79,7 +79,7 @@ class CachedSession(Session):
 
         if self._cache_expire_after is not None:
             difference = datetime.now() - timestamp
-            if difference > timedelta(minutes=self._cache_expire_after):
+            if difference > timedelta(seconds=self._cache_expire_after):
                 self.cache.del_cached_url(cache_url)
                 return send_request_and_cache_response()
 
@@ -89,6 +89,7 @@ class CachedSession(Session):
 
 def install_cached_session(session_factory=CachedSession):
     requests.sessions.Session = session_factory
+
 
 def configure(*args, **kwargs):
     install_cached_session(lambda : CachedSession(*args, **kwargs))
