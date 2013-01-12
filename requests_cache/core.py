@@ -6,16 +6,13 @@
 
     Core functions for configuring cache and monkey patching ``requests``
 """
-from contextlib import contextmanager
 from datetime import datetime, timedelta
-import hashlib
 
 import requests
 from requests import Session
 
 from requests_cache import backends
 from requests_cache.compat import str
-
 
 
 class CachedSession(Session):
@@ -55,8 +52,6 @@ class CachedSession(Session):
         self._cache_allowable_codes = allowable_codes
         self._cache_allowable_methods = allowable_methods
         super(CachedSession, self).__init__()
-
-
 
     def send(self, request, **kwargs):
         if request.method not in self._cache_allowable_methods:
@@ -101,7 +96,6 @@ class CachedSession(Session):
                 self.cache.create_key(r.request), main_key
             )
         return response
-
 
 
 def install_cached_session(session_factory=CachedSession):
