@@ -99,7 +99,7 @@ class CachedSession(Session):
 
 
 def install_cached_session(session_factory=CachedSession):
-    requests.sessions.Session = session_factory
+    requests.Session = requests.sessions.Session = session_factory
 
 
 def configure(*args, **kwargs):
