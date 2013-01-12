@@ -26,6 +26,5 @@ __docformat__ = 'restructuredtext'
 __version__ = '0.2.0'
 
 from .core import(
-    configure, enabled, disabled, has_url, get_cache,
-    delete_url,clear, redo_patch, undo_patch,
+    CachedSession, configure, install_cached_session,
 )
