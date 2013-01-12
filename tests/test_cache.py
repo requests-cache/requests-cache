@@ -12,6 +12,7 @@ from collections import defaultdict
 import requests
 
 import requests_cache
+from requests_cache import CachedSession
 from requests_cache.compat import bytes, str, is_py3
 
 CACHE_BACKEND = 'sqlite'
@@ -31,82 +32,82 @@ def httpbin(*suffix):
 class CacheTestCase(unittest.TestCase):
 
     def setUp(self):
-        requests_cache.configure(CACHE_NAME, backend=CACHE_BACKEND, fast_save=FAST_SAVE)
-        requests_cache.clear()
+        self.s = CachedSession(CACHE_NAME, backend=CACHE_BACKEND, fast_save=FAST_SAVE)
+        self.s.cache.clear()
 
-    def test_speedup_and_undo_redo_patch(self):
-        delay = 1
-        def long_request():
-            t = time.time()
-            for i in range(5):
-                r = requests.get(httpbin('delay/%s' % delay))
-            delta = time.time() - t
-            self.assertLess(delta, delay * 3)
-        long_request()
-        requests_cache.undo_patch()
-        t = time.time()
-        r = requests.get(httpbin('delay/%s' % delay))
-        delta = time.time() - t
-        self.assertGreaterEqual(delta, delay)
-        requests_cache.redo_patch()
-        long_request()
+#    def test_speedup_and_undo_redo_patch(self):
+#        delay = 1
+#        def long_request():
+#            t = time.time()
+#            for i in range(5):
+#                r = requests.get(httpbin('delay/%s' % delay))
+#            delta = time.time() - t
+#            self.assertLess(delta, delay * 3)
+#        long_request()
+#        requests_cache.undo_patch()
+#        t = time.time()
+#        r = requests.get(httpbin('delay/%s' % delay))
+#        delta = time.time() - t
+#        self.assertGreaterEqual(delta, delay)
+#        requests_cache.redo_patch()
+#        long_request()
 
     def test_expire_cache(self):
         delay = 1
         url = httpbin('delay/%s' % delay)
-        requests_cache.configure(CACHE_NAME, backend=CACHE_BACKEND, expire_after=0.001)
+        s = CachedSession(CACHE_NAME, backend=CACHE_BACKEND, expire_after=0.06)
         t = time.time()
-        r = requests.get(url)
+        r = s.get(url)
         delta = time.time() - t
         self.assertGreaterEqual(delta, delay)
         time.sleep(0.5)
         t = time.time()
-        r = requests.get(url)
+        r = s.get(url)
         delta = time.time() - t
         self.assertGreaterEqual(delta, delay)
 
     def test_delete_urls(self):
         url = httpbin('redirect/3')
-        r = requests.get(url)
+        r = self.s.get(url)
         for i in range(1, 4):
-            self.assert_(requests_cache.has_url(httpbin('redirect/%s' % i)))
-        requests_cache.delete_url(url)
-        self.assert_(not requests_cache.has_url(url))
+            self.assert_(self.s.cache.has_key(httpbin('redirect/%s' % i)))
+        self.s.cache.delete(url)
+        self.assert_(not self.s.cache.has_key(url))
 
     def test_unregistered_backend(self):
         with self.assertRaises(ValueError):
-            requests_cache.configure(CACHE_NAME, backend='nonexistent')
+            CachedSession(CACHE_NAME, backend='nonexistent')
 
-    def test_async_compatibility(self):
-        try:
-            import grequests
-        except Exception:
-            self.skipTest('gevent is not installed')
-        n = 3
-        def long_running():
-            t = time.time()
-            rs = [grequests.get(httpbin('delay/%s' % i)) for i in range(n + 1)]
-            grequests.map(rs)
-            return time.time() - t
-        # cache it
-        delta = long_running()
-        self.assertGreaterEqual(delta, n)
-        # fast from cache
-        delta = 0
-        for i in range(n):
-            delta += long_running()
-        self.assertLessEqual(delta, 1)
+#    def test_async_compatibility(self):
+#        try:
+#            import grequests
+#        except Exception:
+#            self.skipTest('gevent is not installed')
+#        n = 3
+#        def long_running():
+#            t = time.time()
+#            rs = [grequests.get(httpbin('delay/%s' % i)) for i in range(n + 1)]
+#            grequests.map(rs)
+#            return time.time() - t
+#        # cache it
+#        delta = long_running()
+#        self.assertGreaterEqual(delta, n)
+#        # fast from cache
+#        delta = 0
+#        for i in range(n):
+#            delta += long_running()
+#        self.assertLessEqual(delta, 1)
 
     def test_hooks(self):
         state = defaultdict(int)
-        for hook in ('response', 'post_request'):
+        for hook in ('response',):  # TODO it's only one hook here
 
             def hook_func(r):
                 state[hook] += 1
                 return r
             n = 5
             for i in range(n):
-                r = requests.get(httpbin('get'), hooks={hook: hook_func})
+                r = self.s.get(httpbin('get'), hooks={hook: hook_func})
             self.assertEqual(state[hook], n)
 
     def test_post(self):
