@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import requests
-from requests_cache.core import CachedSession
+from requests_cache import CachedSession
 
 cs = CachedSession(allowable_methods=('GET', 'POST'))
 cs.cache.clear()

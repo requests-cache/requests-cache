@@ -94,7 +94,7 @@ class CachedSession(Session):
                                                       hooks, stream, verify, cert)
         main_key = self.cache.create_key(response.request)
         for r in response.history:
-            self.cache.add_url_mapping(
+            self.cache.add_key_mapping(
                 self.cache.create_key(r.request), main_key
             )
         return response

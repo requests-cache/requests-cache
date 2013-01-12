@@ -16,11 +16,11 @@ class BaseCache(object):
     """ Base class for cache implementations, can be used as in-memory cache.
 
     To extend it you can provide dictionary-like objects for
-    :attr:`url_map` and :attr:`responses` or override public methods.
+    :attr:`keys_map` and :attr:`responses` or override public methods.
     """
     def __init__(self, location='memory', *args, **kwargs):
-        #: `url` -> `key_in_cache` mapping
-        self.url_map = {}
+        #: `key` -> `key_in_responses` mapping
+        self.keys_map = {}
         #: `key_in_cache` -> `response` mapping
         self.responses = {}
 
@@ -38,24 +38,24 @@ class BaseCache(object):
         self.responses[url] = self.reduce_response(response), datetime.now()
 
 
-    def add_url_mapping(self, url1, url2):
-        self.url_map[url1] = url2
+    def add_key_mapping(self, url1, url2):
+        self.keys_map[url1] = url2
 
 
-    def get_response_and_time(self, url, default=(None, None)):
-        """ Retrieves response and timestamp for `url` if it's stored in cache,
+    def get_response_and_time(self, key, default=(None, None)):
+        """ Retrieves response and timestamp for `key` if it's stored in cache,
         otherwise returns `default`
 
-        :param url: url of resource
-        :param default: return this if `url` not found in cache
+        :param key: key of resource
+        :param default: return this if `key` not found in cache
         :returns: tuple (response, datetime)
 
         .. note:: Response is restored after unpickling with :meth:`restore_response`
         """
         try:
-            if url not in self.responses:
-                url = self.url_map[url]
-            response, timestamp = self.responses[url]
+            if key not in self.responses:
+                key = self.keys_map[key]
+            response, timestamp = self.responses[key]
         except KeyError:
             return default
         return self.restore_response(response), timestamp
@@ -68,10 +68,10 @@ class BaseCache(object):
                 response, _ = self.responses[key]
                 del self.responses[key]
             else:
-                response, _ = self.responses[self.url_map[key]]
-                del self.url_map[key]
+                response, _ = self.responses[self.keys_map[key]]
+                del self.keys_map[key]
             for r in response.history:
-                del self.url_map[self.create_key(r.request)]
+                del self.keys_map[self.create_key(r.request)]
         except KeyError:
             pass
 
@@ -79,12 +79,12 @@ class BaseCache(object):
         """ Clear cache
         """
         self.responses.clear()
-        self.url_map.clear()
+        self.keys_map.clear()
 
     def has_key(self, key):
         """ Returns `True` if cache has `key`, `False` otherwise
         """
-        return key in self.responses or key in self.url_map
+        return key in self.responses or key in self.keys_map
 
     _response_attrs = ['_content', 'url', 'status_code', 'cookies',
                        'headers', 'encoding', 'request', 'reason']
@@ -111,14 +111,12 @@ class BaseCache(object):
 
     def create_key(self, request):
         cache_data = request.method.upper() + request.url
-
-        if request.body: # body?
+        if request.body:
             cache_data += str(request.body)
-
         return hashlib.sha256(cache_data).hexdigest()
 
     def __str__(self):
-        return 'urls: %s\nresponses: %s' % (self.url_map, self.responses)
+        return 'keys: %s\nresponses: %s' % (self.keys_map, self.responses)
 
 
 # used for saving response attributes
