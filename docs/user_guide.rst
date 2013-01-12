@@ -25,13 +25,13 @@ Usage
 
 .. currentmodule:: requests_cache.core
 
-Just import :mod:`requests_cache` and call :func:`configure`
+Just import :mod:`requests_cache` and call :func:`install_cache`
 ::
 
     import requests
     import requests_cache
 
-    requests_cache.configure()
+    requests_cache.install_cache()
 
 And you can use ``requests``, all responses will be cached transparently!
 
@@ -45,15 +45,15 @@ Cache can be configured with some options, such as cache filename, backend
 database (default format) named ``'test_cache.sqlite'`` with expiration
 set to 5 minutes can be configured as::
 
-    requests_cache.configure('test_cache', backend='sqlite', expire_after=5)
+    requests_cache.install_cache('test_cache', backend='sqlite', expire_after=5)
 
 .. seealso::
     Full list of options can be found in
-    :func:`requests_cache.configure() <requests_cache.core.configure>` reference
+    :func:`requests_cache.install_cache() <requests_cache.core.install_cache>` reference
 
 
 Transparent caching is achieved by monkey-patching ``requests`` library
-(it can be disabled, see ``monkey_patch`` argument for :func:`configure`) ,
+(it can be disabled, see ``monkey_patch`` argument for :func:`install_cache`) ,
 It is possible to undo this patch, and redo it again with :func:`undo_patch` and
 :func:`redo_patch`. But preferable way is to use
 :func:`requests_cache.disabled() <requests_cache.core.disabled>`
@@ -73,7 +73,7 @@ and delete it with :func:`requests_cache.delete() <requests_cache.core.delete>`:
 
     >>> import requests
     >>> import requests_cache
-    >>> requests_cache.configure()
+    >>> requests_cache.install_cache()
     >>> requests.get('http://httpbin.org/get')
     >>> requests_cache.has_key('http://httpbin.org/get')
     True
@@ -88,7 +88,7 @@ and delete it with :func:`requests_cache.delete() <requests_cache.core.delete>`:
 
     >>> import requests
     >>> import requests_cache
-    >>> requests_cache.configure()
+    >>> requests_cache.install_cache()
     >>> requests_cache.clear()
     >>> r = requests.get('http://httpbin.org/get')
     >>> hasattr(r, 'from_cache')
@@ -115,7 +115,7 @@ It can be used, for example, for request throttling with help of ``requests`` ho
         return hook
 
     if __name__ == '__main__':
-        requests_cache.configure('wait_test')
+        requests_cache.install_cache('wait_test')
         requests_cache.clear()
 
         s = requests.Session(hooks={'response': make_throttle_hook(2.0)})
@@ -132,7 +132,7 @@ Persistence
 -----------
 
 :mod:`requests_cache` designed to support different backends for persistent storage.
-By default it uses ``sqlite`` database. Type of storage can be selected with ``backend`` argument of :func:`configure`.
+By default it uses ``sqlite`` database. Type of storage can be selected with ``backend`` argument of :func:`install_cache`.
 
 List of available backends:
 

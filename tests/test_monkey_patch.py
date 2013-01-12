@@ -24,7 +24,7 @@ FAST_SAVE = False
 class MonkeyPatchTestCase(unittest.TestCase):
 
     def test_session(self):
-        requests_cache.configure(name=CACHE_NAME, backend=CACHE_BACKEND)
+        requests_cache.install_cache(name=CACHE_NAME, backend=CACHE_BACKEND)
         self.assert_(isinstance(requests.Session(), CachedSession))
         self.assert_(isinstance(requests.sessions.Session(), CachedSession))
         self.assert_(isinstance(requests.session(), CachedSession))

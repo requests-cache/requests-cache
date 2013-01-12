@@ -98,9 +98,24 @@ class CachedSession(Session):
         return response
 
 
-def install_cached_session(session_factory=CachedSession):
+def install_cache(cache_name='cache', backend='sqlite', expire_after=None,
+                 allowable_codes=(200,), allowable_methods=('GET',),
+                 session_factory=CachedSession, **backend_options):
+    """
+    Installs cache for all ``Requests`` requests by monkey-patching ``Session``
+
+    Parameters are the same as in :class:`CachedSession`.
+    :param session_factory: Session factory. It should inherit CachedSession (default)
+    """
+    _patch_session_factory(
+        lambda : session_factory(cache_name=cache_name,
+                                  backend=backend,
+                                  expire_after=expire_after,
+                                  allowable_codes=allowable_codes,
+                                  allowable_methods=allowable_methods,
+                                  **backend_options)
+    )
+
+
+def _patch_session_factory(session_factory=CachedSession):
     requests.Session = requests.sessions.Session = session_factory
-
-
-def configure(*args, **kwargs):
-    install_cached_session(lambda : CachedSession(*args, **kwargs))

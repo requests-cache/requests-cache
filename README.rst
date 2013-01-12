@@ -13,7 +13,7 @@ Just write::
     import requests
     import requests_cache
     
-    requests_cache.configure('demo_cache')
+    requests_cache.install_cache('demo_cache')
 
 And all responses with headers and cookies will be transparently cached to
 `demo_cache.sqlite` database. For example, following code will take only

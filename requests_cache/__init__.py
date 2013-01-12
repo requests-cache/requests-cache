@@ -9,7 +9,7 @@
     Just write::
 
         import requests_cache
-        requests_cache.configure()
+        requests_cache.install_cache()
 
     And requests to resources will be cached for faster repeated access::
 
@@ -26,5 +26,5 @@ __docformat__ = 'restructuredtext'
 __version__ = '0.3.0'
 
 from .core import(
-    CachedSession, configure, install_cached_session,
+    CachedSession, install_cache
 )
