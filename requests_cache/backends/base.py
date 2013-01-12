@@ -101,7 +101,7 @@ class BaseCache(object):
         response.content
         for field in self._response_attrs:
             setattr(result, field, getattr(response, field))
-        result.history = [self.reduce_response(r) for r in response.history]
+        result.history = tuple(self.reduce_response(r) for r in response.history)
         return result
 
     def restore_response(self, response):
@@ -110,7 +110,7 @@ class BaseCache(object):
         result = requests.Response()
         for field in self._response_attrs:
             setattr(result, field, getattr(response, field))
-        result.history = [self.restore_response(r) for r in response.history]
+        result.history = tuple(self.restore_response(r) for r in response.history)
         return result
 
     def create_key(self, request):
