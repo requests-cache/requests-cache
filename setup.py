@@ -18,7 +18,7 @@ if sys.argv[-1] == 'test':
 setup(
     name='requests-cache',
     packages=['requests_cache', 'requests_cache.backends'],
-    version='0.1.3',
+    version='0.2.0',
     description='Persistent cache for requests library',
     author='Roman Haritonov',
     author_email='reclosedev@gmail.com',
@@ -36,10 +36,7 @@ setup(
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.0',
-        'Programming Language :: Python :: 3.1',
-        'Programming Language :: Python :: 3.2',
-        ],
+    ],
     long_description=open('README.rst').read() + '\n\n' +
                      open('HISTORY.rst').read(),
 )
