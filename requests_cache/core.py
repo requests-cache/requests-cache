@@ -27,8 +27,8 @@ class CachedSession(Session):
         :param cache_name: for ``sqlite`` backend: cache file will start with this prefix,
                            e.g ``cache.sqlite``
                            for ``mongodb``: it's used as database name
-        :param backend: cache backend e.g ``'sqlite'``, ``'mongodb'``, ``'memory'``.
-                        See :ref:`persistence`
+        :param backend: cache backend name e.g ``'sqlite'``, ``'mongodb'``, ``'memory'``.
+                        Or instance of backend implementation. See :ref:`persistence`
         :param expire_after: number of seconds after cache will be expired
                              or `None` (default) to ignore expiration
         :type expire_after: float
@@ -42,11 +42,14 @@ class CachedSession(Session):
         :kwarg backend_options: options for chosen backend. See corresponding
                                 :ref:`sqlite <backends_sqlite>` and :ref:`mongo <backends_mongo>` backends API documentation
         """
-        try:
-            self.cache = backends.registry[backend](cache_name, **backend_options)
-        except KeyError:
-            raise ValueError('Unsupported backend "%s" try one of: %s' %
-                             (backend, ', '.join(backends.registry.keys())))
+        if isinstance(backend, str):
+            try:
+                self.cache = backends.registry[backend](cache_name, **backend_options)
+            except KeyError:
+                raise ValueError('Unsupported backend "%s" try one of: %s' %
+                                 (backend, ', '.join(backends.registry.keys())))
+        else:
+            self.cache = backend
 
         self._cache_expire_after = expire_after
         self._cache_allowable_codes = allowable_codes
