@@ -7,7 +7,7 @@
     ``sqlite3`` cache backend
 """
 from .base import BaseCache
-from .dbdict import DbDict, DbPickleDict
+from .storage.dbdict import DbDict, DbPickleDict
 
 
 class DbCache(BaseCache):

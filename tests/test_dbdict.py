@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.abspath('..'))
 
 from threading import Thread
 import unittest
-from requests_cache.backends.dbdict import DbDict, DbPickleDict
+from requests_cache.backends.storage.dbdict import DbDict, DbPickleDict
 
 DB_NAME = 'test'
 

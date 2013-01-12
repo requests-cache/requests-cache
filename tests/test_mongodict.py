@@ -5,7 +5,7 @@ import os, sys
 sys.path.insert(0, os.path.abspath('..'))
 
 import unittest
-from requests_cache.backends.mongodict import MongoDict, MongoPickleDict
+from requests_cache.backends.storage.mongodict import MongoDict, MongoPickleDict
 
 DB_NAME = 'requests-cache-temporary-db-test-will-be-deleted'
 

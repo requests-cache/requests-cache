@@ -7,7 +7,7 @@
     ``mongo`` cache backend
 """
 from .base import BaseCache
-from .mongodict import MongoDict, MongoPickleDict
+from .storage.mongodict import MongoDict, MongoPickleDict
 
 
 class MongoCache(BaseCache):
