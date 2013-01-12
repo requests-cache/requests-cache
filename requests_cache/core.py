@@ -12,7 +12,7 @@ import requests
 from requests import Session
 
 from requests_cache import backends
-from requests_cache.compat import str
+from requests_cache.compat import str, basestring
 
 
 class CachedSession(Session):
@@ -39,7 +39,7 @@ class CachedSession(Session):
         :kwarg backend_options: options for chosen backend. See corresponding
                                 :ref:`sqlite <backends_sqlite>` and :ref:`mongo <backends_mongo>` backends API documentation
         """
-        if isinstance(backend, str):
+        if isinstance(backend, basestring):
             try:
                 self.cache = backends.registry[backend](cache_name, **backend_options)
             except KeyError:
