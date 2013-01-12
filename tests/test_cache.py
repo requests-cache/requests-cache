@@ -35,23 +35,7 @@ class CacheTestCase(unittest.TestCase):
     def setUp(self):
         self.s = CachedSession(CACHE_NAME, backend=CACHE_BACKEND, fast_save=FAST_SAVE)
         self.s.cache.clear()
-
-#    def test_speedup_and_undo_redo_patch(self):
-#        delay = 1
-#        def long_request():
-#            t = time.time()
-#            for i in range(5):
-#                r = requests.get(httpbin('delay/%s' % delay))
-#            delta = time.time() - t
-#            self.assertLess(delta, delay * 3)
-#        long_request()
-#        requests_cache.undo_patch()
-#        t = time.time()
-#        r = requests.get(httpbin('delay/%s' % delay))
-#        delta = time.time() - t
-#        self.assertGreaterEqual(delta, delay)
-#        requests_cache.redo_patch()
-#        long_request()
+        requests_cache.uninstall_cache()
 
     def test_expire_cache(self):
         delay = 1
@@ -119,7 +103,7 @@ class CacheTestCase(unittest.TestCase):
         req = Request('POST', url).prepare()
         self.assert_(not self.s.cache.has_key(self.s.cache.create_key(req)))
 
-    def test_disabled_enabled(self):
+    def test_disabled(self):
         delay = 1
         url = httpbin('delay/%s' % delay)
         with requests_cache.disabled():
@@ -130,15 +114,8 @@ class CacheTestCase(unittest.TestCase):
             delta = time.time() - t
             self.assertGreaterEqual(delta, delay * n)
 
-        with requests_cache.enabled():
-            t = time.time()
-            n = 5
-            for i in range(n):
-                requests.get(url)
-            delta = time.time() - t
-            self.assertLessEqual(delta, delay * n)
-
     def test_content_and_cookies(self):
+        requests_cache.install_cache(CACHE_NAME, CACHE_BACKEND)
         s = requests.session()
         def js(url):
             return json.loads(s.get(url).text)

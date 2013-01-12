@@ -6,16 +6,17 @@
 
     Core functions for configuring cache and monkey patching ``requests``
 """
+from contextlib import contextmanager
 from datetime import datetime, timedelta
 
 import requests
-from requests import Session
+from requests import Session as OriginalSession
 
 from requests_cache import backends
 from requests_cache.compat import str, basestring
 
 
-class CachedSession(Session):
+class CachedSession(OriginalSession):
     def __init__(self, cache_name='cache', backend='sqlite', expire_after=None,
                  allowable_codes=(200,), allowable_methods=('GET',),
                  monkey_patch=True, **backend_options):
@@ -121,8 +122,25 @@ def uninstall_cache():
     """ Restores ``requests.Session`` and disables cache
     :return:
     """
-    _patch_session_factory(Session)
+    _patch_session_factory(OriginalSession)
 
+@contextmanager
+def disabled():
+    """
+    Context manager for temporary disabling globally installed cache
+    ::
+
+        >>> with requests_cache.disabled():
+        ...     request.get('http://httpbin.org/ip')
+        ...     request.get('http://httpbin.org/get')
+
+    """
+    previous = requests.Session
+    _patch_session_factory(OriginalSession)
+    try:
+        yield
+    finally:
+        _patch_session_factory(previous)
 
 def _patch_session_factory(session_factory=CachedSession):
     requests.Session = requests.sessions.Session = session_factory
