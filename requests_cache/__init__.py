@@ -23,7 +23,7 @@
     :license: BSD, see LICENSE for more details.
 """
 __docformat__ = 'restructuredtext'
-__version__ = '0.2.0'
+__version__ = '0.3.0'
 
 from .core import(
     CachedSession, configure, install_cached_session,

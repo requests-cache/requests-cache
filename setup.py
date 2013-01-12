@@ -17,8 +17,10 @@ if sys.argv[-1] == 'test':
 
 setup(
     name='requests-cache',
-    packages=['requests_cache', 'requests_cache.backends'],
-    version='0.2.0',
+    packages=['requests_cache',
+              'requests_cache.backends',
+              'requests_cache.backends.storage'],
+    version='0.3.0',
     description='Persistent cache for requests library',
     author='Roman Haritonov',
     author_email='reclosedev@gmail.com',
