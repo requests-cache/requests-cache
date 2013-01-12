@@ -9,17 +9,13 @@
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 
-from requests import Request
-try:
-    from requests.hooks import dispatch_hook
-except ImportError:
-    dispatch_hook = None
+from requests import Session
 
 from requests_cache import backends
 from requests_cache.compat import str
 
 
-_original_request_send = Request.send
+_original_request_send = Session.send
 _config = {}
 _cache = None
 
@@ -29,10 +25,8 @@ def configure(cache_name='cache', backend='sqlite', expire_after=None,
               monkey_patch=True, **backend_options):
     """
     Configure cache storage and patch ``requests`` library to transparently cache responses
-
     :param cache_name: for ``sqlite`` backend: cache file will start with this prefix,
                        e.g ``cache.sqlite``
-
                        for ``mongodb``: it's used as database name
     :param backend: cache backend e.g ``'sqlite'``, ``'mongodb'``, ``'memory'``.
                     See :ref:`persistence`
@@ -43,7 +37,7 @@ def configure(cache_name='cache', backend='sqlite', expire_after=None,
     :type allowable_codes: tuple
     :param allowable_methods: cache only requests of this methods (default: 'GET')
     :type allowable_methods: tuple
-    :param monkey_patch: patch ``requests.Request.send`` if `True` (default), otherwise
+    :param monkey_patch: patch ``requests.Session.send`` if `True` (default), otherwise
                          cache will not work until calling :func:`redo_patch`
                          or using :func:`enabled` context manager
     :kwarg backend_options: options for chosen backend. See corresponding
@@ -78,12 +72,12 @@ def disabled():
         ...     request.get('http://httpbin.org/get')
 
     """
-    previous = Request.send
+    previous = Session.send
     undo_patch()
     try:
         yield
     finally:
-        Request.send = previous
+        Session.send = previous
 
 @contextmanager
 def enabled():
@@ -96,12 +90,12 @@ def enabled():
         ...     request.get('http://httpbin.org/get')
 
     """
-    previous = Request.send
+    previous = Session.send
     redo_patch()
     try:
         yield
     finally:
-        Request.send = previous
+        Session.send = previous
 
 def clear():
     """ Clear cache
@@ -112,13 +106,13 @@ def clear():
 def undo_patch():
     """ Undo ``requests`` monkey patch
     """
-    Request.send = _original_request_send
+    Session.send = _original_request_send
 
 
 def redo_patch():
     """ Redo ``requests`` monkey patch
     """
-    Request.send = _request_send_hook
+    Session.send = _request_send_hook
 
 
 def get_cache():
@@ -133,23 +127,23 @@ def delete_url(url):
     _cache.del_cached_url(url)
 
 
-def _request_send_hook(self, *args, **kwargs):
-    if self.method not in _config['allowable_methods']:
-        return _original_request_send(self, *args, **kwargs)
+def _request_send_hook(self, request, *args, **kwargs):
+    if request.method not in _config['allowable_methods']:
+        return _original_request_send(self, request, *args, **kwargs)
 
-    if self.method == 'POST':
-        data = self._encode_params(getattr(self, 'data', {}))
-        if isinstance(data, tuple): # old requests versions
+    if request.method == 'POST':
+        data = self._encode_params(getattr(request, 'data', {}))
+        if isinstance(data, tuple):  # old requests versions
             data = data[1]
-        cache_url = self.full_url + str(data)
+        cache_url = request.url + str(data)
     else:
-        cache_url = self.full_url
+        cache_url = request.url
 
     def send_request_and_cache_response():
-        result = _original_request_send(self, *args, **kwargs)
-        if result and self.response.status_code in _config['allowable_codes']:
-            _cache.save_response(cache_url, self.response)
-        return result
+        response = _original_request_send(self, request, *args, **kwargs)
+        if response.status_code in _config['allowable_codes']:
+            _cache.save_response(cache_url, response)
+        return response
 
     response, timestamp = _cache.get_response_and_time(cache_url)
     if response is None:
@@ -162,11 +156,4 @@ def _request_send_hook(self, *args, **kwargs):
             return send_request_and_cache_response()
 
     response.from_cache = True
-    self.sent = True
-    self.response = response
-    # TODO: is it stable api?
-    if dispatch_hook is not None:
-        dispatch_hook('response', self.hooks, self.response)
-        r = dispatch_hook('post_request', self.hooks, self)
-        self.__dict__.update(r.__dict__)
-    return True
+    return response
