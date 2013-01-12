@@ -23,7 +23,7 @@ setup(
     author='Roman Haritonov',
     author_email='reclosedev@gmail.com',
     url='https://github.com/reclosedev/requests-cache',
-    install_requires=['requests==0.14.2'],
+    install_requires=['requests>=1.1.0'],
     keywords=['requests', 'cache', 'persistence'],
     license='BSD License',
     include_package_data=True,
