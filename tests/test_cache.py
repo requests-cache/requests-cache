@@ -79,14 +79,14 @@ class CacheTestCase(unittest.TestCase):
 
     def test_async_compatibility(self):
         try:
-            from requests import async
+            import grequests
         except Exception:
             self.skipTest('gevent is not installed')
         n = 3
         def long_running():
             t = time.time()
-            rs = [async.get(httpbin('delay/%s' % i)) for i in range(n + 1)]
-            async.map(rs)
+            rs = [grequests.get(httpbin('delay/%s' % i)) for i in range(n + 1)]
+            grequests.map(rs)
             return time.time() - t
         # cache it
         delta = long_running()
