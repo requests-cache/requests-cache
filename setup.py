@@ -40,5 +40,6 @@ setup(
         'Programming Language :: Python :: 3.1',
         'Programming Language :: Python :: 3.2',
         ],
-    long_description=open('README.rst').read(),
+    long_description=open('README.rst').read() + '\n\n' +
+                     open('HISTORY.rst').read(),
 )
