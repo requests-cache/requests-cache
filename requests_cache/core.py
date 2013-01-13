@@ -124,6 +124,7 @@ def uninstall_cache():
     """
     _patch_session_factory(OriginalSession)
 
+
 @contextmanager
 def disabled():
     """
@@ -136,12 +137,18 @@ def disabled():
 
     """
     previous = requests.Session
-    _patch_session_factory(OriginalSession)
+    uninstall_cache()
     try:
         yield
     finally:
         _patch_session_factory(previous)
 
+
+def get_cache():
+    """ Returns internal cache object from globally installed ``CachedSession``
+    """
+    return requests.Session().cache
+
+
 def _patch_session_factory(session_factory=CachedSession):
     requests.Session = requests.sessions.Session = session_factory
-
