@@ -104,15 +104,20 @@ class CacheTestCase(unittest.TestCase):
         self.assert_(not self.s.cache.has_key(self.s.cache.create_key(req)))
 
     def test_disabled(self):
-        delay = 1
-        url = httpbin('delay/%s' % delay)
+
+        url = httpbin('get')
+        requests_cache.install_cache(CACHE_NAME, backend=CACHE_BACKEND, fast_save=FAST_SAVE)
+        requests.get(url)
         with requests_cache.disabled():
-            t = time.time()
-            n = 2
-            for i in range(n):
-                requests.get(url)
-            delta = time.time() - t
-            self.assertGreaterEqual(delta, delay * n)
+            for i in range(2):
+                r = requests.get(url)
+                self.assertFalse(getattr(r, 'from_cache', False))
+        with self.s.cache_disabled():
+            for i in range(2):
+                r = self.s.get(url)
+                self.assertFalse(getattr(r, 'from_cache', False))
+        r = self.s.get(url)
+        self.assertTrue(getattr(r, 'from_cache', False))
 
     def test_content_and_cookies(self):
         requests_cache.install_cache(CACHE_NAME, CACHE_BACKEND)

@@ -52,10 +52,12 @@ class CachedSession(OriginalSession):
         self._cache_expire_after = expire_after
         self._cache_allowable_codes = allowable_codes
         self._cache_allowable_methods = allowable_methods
+        self._is_cache_disabled = False
         super(CachedSession, self).__init__()
 
     def send(self, request, **kwargs):
-        if request.method not in self._cache_allowable_methods:
+        if (self._is_cache_disabled
+            or request.method not in self._cache_allowable_methods):
             response = super(CachedSession, self).send(request, **kwargs)
             response.from_cache = False
             return response
@@ -78,7 +80,6 @@ class CachedSession(OriginalSession):
             if difference > timedelta(seconds=self._cache_expire_after):
                 self.cache.delete(cache_key)
                 return send_request_and_cache_response()
-
         response.from_cache = True
         return response
 
@@ -91,12 +92,31 @@ class CachedSession(OriginalSession):
                                                       auth, timeout,
                                                       allow_redirects, proxies,
                                                       hooks, stream, verify, cert)
+        if self._is_cache_disabled:
+            return response
+
         main_key = self.cache.create_key(response.request)
         for r in response.history:
             self.cache.add_key_mapping(
                 self.cache.create_key(r.request), main_key
             )
         return response
+
+    @contextmanager
+    def cache_disabled(self):
+        """
+        Context manager for temporary disabling cache
+        ::
+
+            >>> s = CachedSession()
+            >>> with s.cache_disabled():
+            ...     s.get('http://httpbin.org/ip')
+        """
+        self._is_cache_disabled = True
+        try:
+            yield
+        finally:
+            self._is_cache_disabled = False
 
 
 def install_cache(cache_name='cache', backend='sqlite', expire_after=None,
