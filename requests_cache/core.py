@@ -169,5 +169,11 @@ def get_cache():
     return requests.Session().cache
 
 
+def clear():
+    """ Clears globally installed cache
+    """
+    get_cache().clear()
+
+
 def _patch_session_factory(session_factory=CachedSession):
     requests.Session = requests.sessions.Session = session_factory
