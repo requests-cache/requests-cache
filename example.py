@@ -3,7 +3,6 @@
 import time
 
 import requests
-#from requests import async
 import requests_cache
 
 requests_cache.install_cache('example_cache')
@@ -15,11 +14,6 @@ def main():
         requests.get('http://httpbin.org/delay/2')
         r = requests.get('http://httpbin.org/redirect/5')
         print(r.text)
-
-    # What about async? It's also supported!
-#    rs = [async.get('http://httpbin.org/delay/%s' % i) for i in range(5)]
-#    for r in async.map(rs):
-#        print(r.text)
 
     # And if we need to get fresh page or don't want to cache it?
 #    with requests_cache.disabled():
