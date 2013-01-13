@@ -30,7 +30,9 @@ There is two ways of using :mod:`requests_cache`:
  - Using :class:`CachedSession` instead ``requests.Session``
  - Monkey patching ``requests`` to use :class:`CachedSession` by default
 
-Just import :mod:`requests_cache` and call :func:`install_cache`
+Monkey-patching allows to add caching to existent program by adding just two lines:
+
+Import :mod:`requests_cache` and call :func:`install_cache`
 ::
 
     import requests
@@ -58,7 +60,7 @@ set to 300 seconds can be configured as::
 
 
 Transparent caching is achieved by monkey-patching ``requests`` library
-It is possible to uninstall this patch with :func:`uninstall_patch`.
+It is possible to uninstall this patch with :func:`requests_cache.uninstall_cache() <requests_cache.core.uninstall_cache>`.
 
 Also, you can use :func:`requests_cache.disabled() <requests_cache.core.disabled>`
 context manager for temporary disabling caching::
@@ -129,7 +131,8 @@ List of available backends:
             but there is some workarounds, see question on
             `StackOverflow <http://stackoverflow.com/questions/7166998/pymongo-gevent-throw-me-a-banana-and-just-monkey-patch>`_.
 
-You can write your own. See :ref:`cache_backends` API documentation and sources.
+You can write your own and pass instance to :func:`install_cache` or :class:`CachedSession` constructor.
+See :ref:`cache_backends` API documentation and sources.
 
 ----------------------
 

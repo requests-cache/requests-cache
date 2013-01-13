@@ -148,6 +148,9 @@ def uninstall_cache():
 def disabled():
     """
     Context manager for temporary disabling globally installed cache
+
+    .. warning:: not thread-safe
+
     ::
 
         >>> with requests_cache.disabled():
