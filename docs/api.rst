@@ -38,8 +38,8 @@ Internal modules which can be used outside
 
 .. _backends_dbdict:
 
-.. automodule:: requests_cache.backends.dbdict
+.. automodule:: requests_cache.backends.storage.dbdict
    :members:
 
-.. automodule:: requests_cache.backends.mongodict
+.. automodule:: requests_cache.backends.storage.mongodict
    :members:

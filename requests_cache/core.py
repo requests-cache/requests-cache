@@ -17,16 +17,18 @@ from requests_cache.compat import str, basestring
 
 
 class CachedSession(OriginalSession):
+    """ Requests ``Sessions`` with caching support.
+    """
+
     def __init__(self, cache_name='cache', backend='sqlite', expire_after=None,
                  allowable_codes=(200,), allowable_methods=('GET',),
-                 monkey_patch=True, **backend_options):
+                 **backend_options):
         """
-        Configure cache storage and patch ``requests`` library to transparently cache responses
         :param cache_name: for ``sqlite`` backend: cache file will start with this prefix,
                            e.g ``cache.sqlite``
                            for ``mongodb``: it's used as database name
         :param backend: cache backend name e.g ``'sqlite'``, ``'mongodb'``, ``'memory'``.
-                        Or instance of backend implementation. See :ref:`persistence`
+                        (see :ref:`persistence`). Or instance of backend implementation.
         :param expire_after: number of seconds after cache will be expired
                              or `None` (default) to ignore expiration
         :type expire_after: float
@@ -34,9 +36,6 @@ class CachedSession(OriginalSession):
         :type allowable_codes: tuple
         :param allowable_methods: cache only requests of this methods (default: 'GET')
         :type allowable_methods: tuple
-        :param monkey_patch: patch ``requests.Session.send`` if `True` (default), otherwise
-                             cache will not work until calling :func:`redo_patch`
-                             or using :func:`enabled` context manager
         :kwarg backend_options: options for chosen backend. See corresponding
                                 :ref:`sqlite <backends_sqlite>` and :ref:`mongo <backends_mongo>` backends API documentation
         """
@@ -125,8 +124,9 @@ def install_cache(cache_name='cache', backend='sqlite', expire_after=None,
     """
     Installs cache for all ``Requests`` requests by monkey-patching ``Session``
 
-    Parameters are the same as in :class:`CachedSession`.
-    :param session_factory: Session factory. It should inherit CachedSession (default)
+    Parameters are the same as in :class:`CachedSession`. Additional parameters:
+
+    :param session_factory: Session factory. It should inherit :class:`CachedSession` (default)
     """
     _patch_session_factory(
         lambda : session_factory(cache_name=cache_name,
@@ -140,7 +140,6 @@ def install_cache(cache_name='cache', backend='sqlite', expire_after=None,
 
 def uninstall_cache():
     """ Restores ``requests.Session`` and disables cache
-    :return:
     """
     _patch_session_factory(OriginalSession)
 
