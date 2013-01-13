@@ -25,6 +25,11 @@ Usage
 
 .. currentmodule:: requests_cache.core
 
+There is two ways of using :mod:`requests_cache`:
+
+ - Using :class:`CachedSession` instead ``requests.Session``
+ - Monkey patching ``requests`` to use :class:`CachedSession` by default
+
 Just import :mod:`requests_cache` and call :func:`install_cache`
 ::
 
@@ -43,9 +48,9 @@ For example, following code will take only 1-2 seconds instead 10::
 Cache can be configured with some options, such as cache filename, backend
 (sqlite, mongodb, memory), expiration time, etc. E.g. cache stored in sqlite
 database (default format) named ``'test_cache.sqlite'`` with expiration
-set to 5 minutes can be configured as::
+set to 300 seconds can be configured as::
 
-    requests_cache.install_cache('test_cache', backend='sqlite', expire_after=5)
+    requests_cache.install_cache('test_cache', backend='sqlite', expire_after=300)
 
 .. seealso::
     Full list of options can be found in
@@ -53,37 +58,16 @@ set to 5 minutes can be configured as::
 
 
 Transparent caching is achieved by monkey-patching ``requests`` library
-(it can be disabled, see ``monkey_patch`` argument for :func:`install_cache`) ,
-It is possible to undo this patch, and redo it again with :func:`undo_patch` and
-:func:`redo_patch`. But preferable way is to use
-:func:`requests_cache.disabled() <requests_cache.core.disabled>`
-and :func:`requests_cache.enabled <requests_cache.core.enabled>`
-context managers for temporary disabling and enabling caching::
+It is possible to uninstall this patch with :func:`uninstall_patch`.
+
+Also, you can use :func:`requests_cache.disabled() <requests_cache.core.disabled>`
+context manager for temporary disabling caching::
 
     with requests_cache.disabled():
-        for i in range(3):
-            print(requests.get('http://httpbin.org/ip').text)
+        print(requests.get('http://httpbin.org/ip').text)
 
-    with requests_cache.enabled():
-        for i in range(10):
-            print(requests.get('http://httpbin.org/delay/1').text)
 
-Also, you can check if url is present in cache with :func:`requests_cache.has_key() <requests_cache.core.has_key>`
-and delete it with :func:`requests_cache.delete() <requests_cache.core.delete>`: ::
-
-    >>> import requests
-    >>> import requests_cache
-    >>> requests_cache.install_cache()
-    >>> requests.get('http://httpbin.org/get')
-    >>> requests_cache.has_key('http://httpbin.org/get')
-    True
-    >>> requests_cache.delete('http://httpbin.org/get')
-    >>> requests_cache.has_key('http://httpbin.org/get')
-    False
-
-.. versionadded:: 0.1.4
-    If ``Response`` is taken from cache, it will have ``from_cache`` attribute:
-
+If ``Response`` is taken from cache, ``from_cache`` attribute will be ``True``:
 ::
 
     >>> import requests
@@ -91,40 +75,41 @@ and delete it with :func:`requests_cache.delete() <requests_cache.core.delete>`:
     >>> requests_cache.install_cache()
     >>> requests_cache.clear()
     >>> r = requests.get('http://httpbin.org/get')
-    >>> hasattr(r, 'from_cache')
+    >>> r.from_cache
     False
     >>> r = requests.get('http://httpbin.org/get')
-    >>> hasattr(r, 'from_cache')
+    >>> r.from_cache
     True
 
 It can be used, for example, for request throttling with help of ``requests`` hook system::
 
-    import time
-    import requests
-    import requests_cache
+        import time
+        import requests
+        import requests_cache
 
-    def make_throttle_hook(timeout=1.0):
-        """
-        Returns a response hook function which sleeps for ``timeout`` seconds if
-        response is not cached
-        """
-        def hook(response):
-            if not hasattr(response, 'from_cache'):
-                time.sleep(timeout)
-            return response
-        return hook
+        def make_throttle_hook(timeout=1.0):
+            """
+            Returns a response hook function which sleeps for `timeout` seconds if
+            response is not cached
+            """
+            def hook(response):
+                if not getattr(response, 'from_cache', False):
+                    print 'sleeping'
+                    time.sleep(timeout)
+                return response
+            return hook
 
-    if __name__ == '__main__':
-        requests_cache.install_cache('wait_test')
-        requests_cache.clear()
+        if __name__ == '__main__':
+            requests_cache.install_cache('wait_test')
+            requests_cache.clear()
 
-        s = requests.Session(hooks={'response': make_throttle_hook(2.0)})
-        s.get('http://httpbin.org/get')
-        s.get('http://httpbin.org/get')
-
-
+            s = requests_cache.CachedSession()
+            s.hooks = {'response': make_throttle_hook(0.1)}
+            s.get('http://httpbin.org/delay/get')
+            s.get('http://httpbin.org/delay/get')
 
 .. seealso:: `example.py <https://github.com/reclosedev/requests-cache/blob/master/example.py>`_
+
 
 .. _persistence:
 
@@ -140,14 +125,12 @@ List of available backends:
 - ``'memory'``  - not persistent,  stores all data in Python ``dict`` in memory
 - ``'mongodb'`` - (**experimental**) MongoDB database (``pymongo`` required)
 
-  .. note:: ``pymongo`` doesn't work fine with `gevent <http://www.gevent.org/>`_ which powers ``requests.async``,
+  .. note:: ``pymongo`` doesn't work fine with `gevent <http://www.gevent.org/>`_ which powers `grequests <https://github.com/kennethreitz/grequests>`_,
             but there is some workarounds, see question on
             `StackOverflow <http://stackoverflow.com/questions/7166998/pymongo-gevent-throw-me-a-banana-and-just-monkey-patch>`_.
 
-Also, you can write your own. See :ref:`cache_backends` API documentation and sources.
+You can write your own. See :ref:`cache_backends` API documentation and sources.
 
 ----------------------
 
 For more information see :doc:`API reference <api>` .
-
-
