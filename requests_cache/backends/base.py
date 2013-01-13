@@ -9,7 +9,10 @@
 """
 from datetime import datetime
 import hashlib
+
 import requests
+
+from ..compat import is_py2
 
 
 class BaseCache(object):
@@ -130,10 +133,12 @@ class BaseCache(object):
         return result
 
     def create_key(self, request):
-        cache_data = request.method.upper() + request.url
+        key = hashlib.sha256()
+        key.update(_to_bytes(request.method.upper()))
+        key.update(_to_bytes(request.url))
         if request.body:
-            cache_data += str(request.body)
-        return hashlib.sha256(cache_data).hexdigest()
+            key.update(_to_bytes(request.body))
+        return key.hexdigest()
 
     def __str__(self):
         return 'keys: %s\nresponses: %s' % (self.keys_map, self.responses)
@@ -142,3 +147,11 @@ class BaseCache(object):
 # used for saving response attributes
 class _Store(object):
     pass
+
+
+def _to_bytes(s, encoding='utf-8'):
+    if is_py2:
+        return s
+    if isinstance(s, bytes):
+        return s
+    return bytes(s, encoding)
