@@ -21,7 +21,7 @@ class BaseCache(object):
     To extend it you can provide dictionary-like objects for
     :attr:`keys_map` and :attr:`responses` or override public methods.
     """
-    def __init__(self, location='memory', *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         #: `key` -> `key_in_responses` mapping
         self.keys_map = {}
         #: `key_in_cache` -> `response` mapping
@@ -150,8 +150,6 @@ class _Store(object):
 
 
 def _to_bytes(s, encoding='utf-8'):
-    if is_py2:
-        return s
-    if isinstance(s, bytes):
+    if is_py2 or isinstance(s, bytes):
         return s
     return bytes(s, encoding)
