@@ -75,7 +75,7 @@ class CachedSession(OriginalSession):
             return send_request_and_cache_response()
 
         if self._cache_expire_after is not None:
-            difference = datetime.now() - timestamp
+            difference = datetime.utcnow() - timestamp
             if difference > timedelta(seconds=self._cache_expire_after):
                 self.cache.delete(cache_key)
                 return send_request_and_cache_response()

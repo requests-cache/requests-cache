@@ -36,7 +36,7 @@ class BaseCache(object):
         .. note:: Response is reduced before saving (with :meth:`reduce_response`)
                   to make it picklable
         """
-        self.responses[key] = self.reduce_response(response), datetime.now()
+        self.responses[key] = self.reduce_response(response), datetime.utcnow()
 
     def add_key_mapping(self, new_key, key_to_response):
         """
