@@ -26,6 +26,12 @@ It can be useful when you are creating some simple data scraper with constantly
 changing parsing logic or data format, and don't want to redownload pages or
 write complex error handling and persistence.
 
+Note
+----
+
+``requests-cache`` ignores all cache headers, it just caches the data for the
+time you specify.
+
 Links
 -----
 
