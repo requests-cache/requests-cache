@@ -3,6 +3,13 @@
 History
 -------
 
+0.3.0 (2013-02-24)
++++++++++++++++++++
+
+* Support for ``Requests`` 1.x.x
+* ``CachedSession``
+* Many backward incompatible changes
+
 0.2.1 (2013-01-13)
 +++++++++++++++++++
 

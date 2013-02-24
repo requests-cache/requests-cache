@@ -7,7 +7,8 @@ Requests-cache documentation
 ============================
 
 `Requests-cache <http://pypi.python.org/pypi/requests-cache>`_
-is a transparent persistent cache for requests_ (version >= 1.1.0) library.
+is a transparent persistent cache for requests_ (version >= 1.1.0
+see :ref:`incompatible_changes`) library.
 
 Source code and issue tracking can be found at
 `GitHub <https://github.com/reclosedev/requests-cache>`_.

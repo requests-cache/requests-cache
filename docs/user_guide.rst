@@ -134,6 +134,21 @@ List of available backends:
 You can write your own and pass instance to :func:`install_cache` or :class:`CachedSession` constructor.
 See :ref:`cache_backends` API documentation and sources.
 
+
+.. _incompatible_changes:
+
+Backward incompatible changes
+-----------------------------
+
+There is backward incompatible changes introduced in version 0.3.0:
+
+* `expire_after` is now seconds
+* UTC time in cache
+* Deleted ``requests_cache.enabled()`` context manager
+* Storage backends are now using hash for keys
+* Renamed methods in backends
+
+
 ----------------------
 
 For more information see :doc:`API reference <api>` .
