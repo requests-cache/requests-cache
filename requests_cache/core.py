@@ -138,6 +138,10 @@ def install_cache(cache_name='cache', backend='sqlite', expire_after=None,
     )
 
 
+# backward compatibility
+configure = install_cache
+
+
 def uninstall_cache():
     """ Restores ``requests.Session`` and disables cache
     """
