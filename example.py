@@ -5,7 +5,7 @@ import time
 import requests
 import requests_cache
 
-requests_cache.configure('example_cache')
+requests_cache.install_cache('example_cache')
 
 def main():
     # Once cached, delayed page will be taken from cache

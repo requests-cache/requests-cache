@@ -9,68 +9,152 @@
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 
-from requests import Request
-try:
-    from requests.hooks import dispatch_hook
-except ImportError:
-    dispatch_hook = None
+import requests
+from requests import Session as OriginalSession
 
 from requests_cache import backends
-from requests_cache.compat import str
+from requests_cache.compat import str, basestring
 
 
-_original_request_send = Request.send
-_config = {}
-_cache = None
-
-
-def configure(cache_name='cache', backend='sqlite', expire_after=None,
-              allowable_codes=(200,), allowable_methods=('GET',),
-              monkey_patch=True, **backend_options):
+class CachedSession(OriginalSession):
+    """ Requests ``Sessions`` with caching support.
     """
-    Configure cache storage and patch ``requests`` library to transparently cache responses
 
-    :param cache_name: for ``sqlite`` backend: cache file will start with this prefix,
-                       e.g ``cache.sqlite``
+    def __init__(self, cache_name='cache', backend='sqlite', expire_after=None,
+                 allowable_codes=(200,), allowable_methods=('GET',),
+                 **backend_options):
+        """
+        :param cache_name: for ``sqlite`` backend: cache file will start with this prefix,
+                           e.g ``cache.sqlite``
+                           for ``mongodb``: it's used as database name
+        :param backend: cache backend name e.g ``'sqlite'``, ``'mongodb'``, ``'memory'``.
+                        (see :ref:`persistence`). Or instance of backend implementation.
+        :param expire_after: number of seconds after cache will be expired
+                             or `None` (default) to ignore expiration
+        :type expire_after: float
+        :param allowable_codes: limit caching only for response with this codes (default: 200)
+        :type allowable_codes: tuple
+        :param allowable_methods: cache only requests of this methods (default: 'GET')
+        :type allowable_methods: tuple
+        :kwarg backend_options: options for chosen backend. See corresponding
+                                :ref:`sqlite <backends_sqlite>` and :ref:`mongo <backends_mongo>` backends API documentation
+        """
+        if isinstance(backend, basestring):
+            try:
+                self.cache = backends.registry[backend](cache_name, **backend_options)
+            except KeyError:
+                raise ValueError('Unsupported backend "%s" try one of: %s' %
+                                 (backend, ', '.join(backends.registry.keys())))
+        else:
+            self.cache = backend
 
-                       for ``mongodb``: it's used as database name
-    :param backend: cache backend e.g ``'sqlite'``, ``'mongodb'``, ``'memory'``.
-                    See :ref:`persistence`
-    :param expire_after: number of minutes after cache will be expired
-                         or `None` (default) to ignore expiration
-    :type expire_after: int, float or None
-    :param allowable_codes: limit caching only for response with this codes (default: 200)
-    :type allowable_codes: tuple
-    :param allowable_methods: cache only requests of this methods (default: 'GET')
-    :type allowable_methods: tuple
-    :param monkey_patch: patch ``requests.Request.send`` if `True` (default), otherwise
-                         cache will not work until calling :func:`redo_patch`
-                         or using :func:`enabled` context manager
-    :kwarg backend_options: options for chosen backend. See corresponding
-                            :ref:`sqlite <backends_sqlite>` and :ref:`mongo <backends_mongo>` backends API documentation
+        self._cache_expire_after = expire_after
+        self._cache_allowable_codes = allowable_codes
+        self._cache_allowable_methods = allowable_methods
+        self._is_cache_disabled = False
+        super(CachedSession, self).__init__()
+
+    def send(self, request, **kwargs):
+        if (self._is_cache_disabled
+            or request.method not in self._cache_allowable_methods):
+            response = super(CachedSession, self).send(request, **kwargs)
+            response.from_cache = False
+            return response
+
+        cache_key = self.cache.create_key(request)
+
+        def send_request_and_cache_response():
+            response = super(CachedSession, self).send(request, **kwargs)
+            if response.status_code in self._cache_allowable_codes:
+                self.cache.save_response(cache_key, response)
+            response.from_cache = False
+            return response
+
+        response, timestamp = self.cache.get_response_and_time(cache_key)
+        if response is None:
+            return send_request_and_cache_response()
+
+        if self._cache_expire_after is not None:
+            difference = datetime.utcnow() - timestamp
+            if difference > timedelta(seconds=self._cache_expire_after):
+                self.cache.delete(cache_key)
+                return send_request_and_cache_response()
+        response.from_cache = True
+        return response
+
+    def request(self, method, url, params=None, data=None, headers=None,
+                cookies=None, files=None, auth=None, timeout=None,
+                allow_redirects=True, proxies=None, hooks=None, stream=None,
+                verify=None, cert=None):
+        response = super(CachedSession, self).request(method, url, params, data,
+                                                      headers, cookies, files,
+                                                      auth, timeout,
+                                                      allow_redirects, proxies,
+                                                      hooks, stream, verify, cert)
+        if self._is_cache_disabled:
+            return response
+
+        main_key = self.cache.create_key(response.request)
+        for r in response.history:
+            self.cache.add_key_mapping(
+                self.cache.create_key(r.request), main_key
+            )
+        return response
+
+    @contextmanager
+    def cache_disabled(self):
+        """
+        Context manager for temporary disabling cache
+        ::
+
+            >>> s = CachedSession()
+            >>> with s.cache_disabled():
+            ...     s.get('http://httpbin.org/ip')
+        """
+        self._is_cache_disabled = True
+        try:
+            yield
+        finally:
+            self._is_cache_disabled = False
+
+
+def install_cache(cache_name='cache', backend='sqlite', expire_after=None,
+                 allowable_codes=(200,), allowable_methods=('GET',),
+                 session_factory=CachedSession, **backend_options):
     """
-    try:
-        global _cache
-        _cache = backends.registry[backend](cache_name, **backend_options)
-    except KeyError:
-        raise ValueError('Unsupported backend "%s" try one of: %s' %
-                         (backend, ', '.join(backends.registry.keys())))
-    if monkey_patch:
-        redo_patch()
-    _config['expire_after'] = expire_after
-    _config['allowable_codes'] = allowable_codes
-    _config['allowable_methods'] = allowable_methods
+    Installs cache for all ``Requests`` requests by monkey-patching ``Session``
 
+    Parameters are the same as in :class:`CachedSession`. Additional parameters:
 
-def has_url(url):
-    """ Returns `True` if cache has `url`, `False` otherwise
+    :param session_factory: Session factory. It should inherit :class:`CachedSession` (default)
     """
-    return _cache.has_url(url)
+    _patch_session_factory(
+        lambda : session_factory(cache_name=cache_name,
+                                  backend=backend,
+                                  expire_after=expire_after,
+                                  allowable_codes=allowable_codes,
+                                  allowable_methods=allowable_methods,
+                                  **backend_options)
+    )
+
+
+# backward compatibility
+configure = install_cache
+
+
+def uninstall_cache():
+    """ Restores ``requests.Session`` and disables cache
+    """
+    _patch_session_factory(OriginalSession)
+
 
 @contextmanager
 def disabled():
     """
-    Context manager for temporary disabling cache
+    Context manager for temporary disabling globally installed cache
+
+    .. warning:: not thread-safe
+
     ::
 
         >>> with requests_cache.disabled():
@@ -78,95 +162,25 @@ def disabled():
         ...     request.get('http://httpbin.org/get')
 
     """
-    previous = Request.send
-    undo_patch()
+    previous = requests.Session
+    uninstall_cache()
     try:
         yield
     finally:
-        Request.send = previous
-
-@contextmanager
-def enabled():
-    """
-    Context manager for temporary enabling cache
-    ::
-
-        >>> with requests_cache.enabled():
-        ...     request.get('http://httpbin.org/ip')
-        ...     request.get('http://httpbin.org/get')
-
-    """
-    previous = Request.send
-    redo_patch()
-    try:
-        yield
-    finally:
-        Request.send = previous
-
-def clear():
-    """ Clear cache
-    """
-    _cache.clear()
-
-
-def undo_patch():
-    """ Undo ``requests`` monkey patch
-    """
-    Request.send = _original_request_send
-
-
-def redo_patch():
-    """ Redo ``requests`` monkey patch
-    """
-    Request.send = _request_send_hook
+        _patch_session_factory(previous)
 
 
 def get_cache():
-    """ Returns internal cache object
+    """ Returns internal cache object from globally installed ``CachedSession``
     """
-    return _cache
+    return requests.Session().cache
 
 
-def delete_url(url):
-    """ Deletes all cache for `url`
+def clear():
+    """ Clears globally installed cache
     """
-    _cache.del_cached_url(url)
+    get_cache().clear()
 
 
-def _request_send_hook(self, *args, **kwargs):
-    if self.method not in _config['allowable_methods']:
-        return _original_request_send(self, *args, **kwargs)
-
-    if self.method == 'POST':
-        data = self._encode_params(getattr(self, 'data', {}))
-        if isinstance(data, tuple): # old requests versions
-            data = data[1]
-        cache_url = self.full_url + str(data)
-    else:
-        cache_url = self.full_url
-
-    def send_request_and_cache_response():
-        result = _original_request_send(self, *args, **kwargs)
-        if result and self.response.status_code in _config['allowable_codes']:
-            _cache.save_response(cache_url, self.response)
-        return result
-
-    response, timestamp = _cache.get_response_and_time(cache_url)
-    if response is None:
-        return send_request_and_cache_response()
-
-    if _config['expire_after'] is not None:
-        difference = datetime.now() - timestamp
-        if difference > timedelta(minutes=_config['expire_after']):
-            _cache.del_cached_url(cache_url)
-            return send_request_and_cache_response()
-
-    response.from_cache = True
-    self.sent = True
-    self.response = response
-    # TODO: is it stable api?
-    if dispatch_hook is not None:
-        dispatch_hook('response', self.hooks, self.response)
-        r = dispatch_hook('post_request', self.hooks, self)
-        self.__dict__.update(r.__dict__)
-    return True
+def _patch_session_factory(session_factory=CachedSession):
+    requests.Session = requests.sessions.Session = session_factory

@@ -7,7 +7,7 @@
     ``sqlite3`` cache backend
 """
 from .base import BaseCache
-from .dbdict import DbDict, DbPickleDict
+from .storage.dbdict import DbDict, DbPickleDict
 
 
 class DbCache(BaseCache):
@@ -26,5 +26,5 @@ class DbCache(BaseCache):
         """
         super(DbCache, self).__init__()
         self.responses = DbPickleDict(location + extension, 'responses', fast_save=fast_save)
-        self.url_map = DbDict(location + extension, 'urls')
+        self.keys_map = DbDict(location + extension, 'urls')
 

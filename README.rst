@@ -1,7 +1,7 @@
 requests-cache
 ---------------
 
-Requests-cache is a transparent persistent cache for requests_ (version <= 0.14.2) library.
+Requests-cache is a transparent persistent cache for requests_ (version >= 1.1.0) library.
 
 .. _requests: http://python-requests.org/
 
@@ -13,7 +13,7 @@ Just write::
     import requests
     import requests_cache
     
-    requests_cache.configure('demo_cache')
+    requests_cache.install_cache('demo_cache')
 
 And all responses with headers and cookies will be transparently cached to
 `demo_cache.sqlite` database. For example, following code will take only
@@ -25,6 +25,12 @@ And all responses with headers and cookies will be transparently cached to
 It can be useful when you are creating some simple data scraper with constantly
 changing parsing logic or data format, and don't want to redownload pages or
 write complex error handling and persistence.
+
+Note
+----
+
+``requests-cache`` ignores all cache headers, it just caches the data for the
+time you specify.
 
 Links
 -----

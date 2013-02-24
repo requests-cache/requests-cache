@@ -17,13 +17,15 @@ if sys.argv[-1] == 'test':
 
 setup(
     name='requests-cache',
-    packages=['requests_cache', 'requests_cache.backends'],
-    version='0.2.1',
+    packages=['requests_cache',
+              'requests_cache.backends',
+              'requests_cache.backends.storage'],
+    version='0.3.0',
     description='Persistent cache for requests library',
     author='Roman Haritonov',
     author_email='reclosedev@gmail.com',
     url='https://github.com/reclosedev/requests-cache',
-    install_requires=['requests==0.14.2'],
+    install_requires=['requests>=1.1.0'],
     keywords=['requests', 'cache', 'persistence'],
     license='BSD License',
     include_package_data=True,
