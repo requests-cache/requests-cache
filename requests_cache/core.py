@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 
 import requests
 from requests import Session as OriginalSession
+from requests.hooks import dispatch_hook
 
 from requests_cache import backends
 from requests_cache.compat import str, basestring
@@ -79,6 +80,8 @@ class CachedSession(OriginalSession):
             if difference > timedelta(seconds=self._cache_expire_after):
                 self.cache.delete(cache_key)
                 return send_request_and_cache_response()
+        # dispatch hook here, because we've removed it before pickling
+        response = dispatch_hook('response', request.hooks, response, **kwargs)
         response.from_cache = True
         return response
 

@@ -9,6 +9,7 @@
 """
 from datetime import datetime
 import hashlib
+from copy import copy
 
 import requests
 
@@ -119,9 +120,16 @@ class BaseCache(object):
         # prefetch
         response.content
         for field in self._response_attrs:
-            setattr(result, field, getattr(response, field))
+            setattr(result, field, self._picklable_field(response, field))
         result.history = tuple(self.reduce_response(r) for r in response.history)
         return result
+
+    def _picklable_field(self, response, name):
+        value = getattr(response, name)
+        if name == 'request':
+            value = copy(value)
+            value.hooks = []
+        return value
 
     def restore_response(self, response):
         """ Restore response object after unpickling
