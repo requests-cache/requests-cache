@@ -87,7 +87,7 @@ class CacheTestCase(unittest.TestCase):
         state = defaultdict(int)
         for hook in ('response',):  # TODO it's only one hook here
 
-            def hook_func(r):
+            def hook_func(r, *args, **kwargs):
                 state[hook] += 1
                 return r
             n = 5
@@ -141,12 +141,20 @@ class CacheTestCase(unittest.TestCase):
         r1 = self.s.get(httpbin('redirect/3'))
         def test_redirect_history(url):
             r2 = self.s.get(url)
+            self.assertTrue(r2.from_cache)
             for r11, r22 in zip(r1.history, r2.history):
                 self.assertEqual(r11.url, r22.url)
         test_redirect_history(httpbin('redirect/3'))
         test_redirect_history(httpbin('redirect/2'))
         r3 = requests.get(httpbin('redirect/1'))
         self.assertEqual(len(r3.history), 1)
+
+    def test_response_history_simple(self):
+        r1 = self.s.get(httpbin('redirect/2'))
+        for r in r1.history:
+            print r.url, r.request.url
+        r2 = self.s.get(httpbin('redirect/1'))
+        self.assertTrue(r2.from_cache)
 
     def post(self, data):
         return json.loads(self.s.post(httpbin('post'), data=data).text)
