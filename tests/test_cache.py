@@ -151,8 +151,6 @@ class CacheTestCase(unittest.TestCase):
 
     def test_response_history_simple(self):
         r1 = self.s.get(httpbin('redirect/2'))
-        for r in r1.history:
-            print r.url, r.request.url
         r2 = self.s.get(httpbin('redirect/1'))
         self.assertTrue(r2.from_cache)
 
