@@ -31,6 +31,11 @@ Cache backends
 .. automodule:: requests_cache.backends.mongo
    :members:
 
+.. _backends_redis:
+
+.. automodule:: requests_cache.backends.redis
+   :members:
+
 ----------------------------------------------
 
 Internal modules which can be used outside
@@ -42,4 +47,7 @@ Internal modules which can be used outside
    :members:
 
 .. automodule:: requests_cache.backends.storage.mongodict
+   :members:
+
+.. automodule:: requests_cache.backends.storage.redisdict
    :members:

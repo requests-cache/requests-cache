@@ -24,10 +24,10 @@ class RedisDict(MutableMapping):
         ``namespace``:``collection_name``
 
         In order to deal with how redis stores data/keys,
-        everything, keys and data, must be pickled.
+        everything, i.e. keys and data, must be pickled.
 
         :param namespace: namespace to use
-        :param collection_name: name of the hash stored in redis
+        :param collection_name: name of the hash map stored in redis
                                 (default: redis_dict_data)
         :param connection: ``redis.StrictRedis`` instance.
                            If it's ``None`` (default), a new connection with
