@@ -37,8 +37,12 @@ class CachedSession(OriginalSession):
         """
         :param cache_name: for ``sqlite`` backend: cache file will start with this prefix,
                            e.g ``cache.sqlite``
+
                            for ``mongodb``: it's used as database name
-        :param backend: cache backend name e.g ``'sqlite'``, ``'mongodb'``, ``'memory'``.
+                           
+                           for ``redis``: it's used as the namespace. This means all keys
+                           are prefixed with ``'cache_name:'``
+        :param backend: cache backend name e.g ``'sqlite'``, ``'mongodb'``, ``'redis'``, ``'memory'``.
                         (see :ref:`persistence`). Or instance of backend implementation.
         :param expire_after: number of seconds after cache will be expired
                              or `None` (default) to ignore expiration
@@ -48,7 +52,8 @@ class CachedSession(OriginalSession):
         :param allowable_methods: cache only requests of this methods (default: 'GET')
         :type allowable_methods: tuple
         :kwarg backend_options: options for chosen backend. See corresponding
-                                :ref:`sqlite <backends_sqlite>` and :ref:`mongo <backends_mongo>` backends API documentation
+                                :ref:`sqlite <backends_sqlite>`, :ref:`mongo <backends_mongo>` 
+                                and :ref:`redis <backends_redis>` backends API documentation
         """
         if isinstance(backend, basestring):
             try:

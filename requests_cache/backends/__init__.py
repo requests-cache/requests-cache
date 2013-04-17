@@ -26,3 +26,9 @@ try:
     registry['mongo'] = registry['mongodb'] = MongoCache
 except ImportError:
     MongoCache = None
+
+try:
+    from .redis import RedisCache
+    registry['redis'] = RedisCache
+except ImportError:
+    RedisCache = None

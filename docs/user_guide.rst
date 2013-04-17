@@ -48,7 +48,7 @@ For example, following code will take only 1-2 seconds instead 10::
         requests.get('http://httpbin.org/delay/1')
 
 Cache can be configured with some options, such as cache filename, backend
-(sqlite, mongodb, memory), expiration time, etc. E.g. cache stored in sqlite
+(sqlite, mongodb, redis, memory), expiration time, etc. E.g. cache stored in sqlite
 database (default format) named ``'test_cache.sqlite'`` with expiration
 set to 300 seconds can be configured as::
 
@@ -126,6 +126,7 @@ List of available backends:
 - ``'sqlite'``  - sqlite database (**default**)
 - ``'memory'``  - not persistent,  stores all data in Python ``dict`` in memory
 - ``'mongodb'`` - (**experimental**) MongoDB database (``pymongo`` required)
+- ``'redis'``   - stores all data on a redis data store (``redis`` required)
 
   .. note:: ``pymongo`` doesn't work fine with `gevent <http://www.gevent.org/>`_ which powers `grequests <https://github.com/kennethreitz/grequests>`_,
             but there is some workarounds, see question on
