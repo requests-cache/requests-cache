@@ -3,6 +3,13 @@
 History
 -------
 
+0.4.0 (2013-0x-xx)
++++++++++++++++++++
+
+* Redis backend. Thanks to @michaelbeaumont
+* Fix for changes in Requests 1.2.0 hooks dispatching
+
+
 0.3.0 (2013-02-24)
 +++++++++++++++++++
 
