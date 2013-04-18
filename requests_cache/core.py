@@ -176,8 +176,8 @@ def disabled():
     ::
 
         >>> with requests_cache.disabled():
-        ...     request.get('http://httpbin.org/ip')
-        ...     request.get('http://httpbin.org/get')
+        ...     requests.get('http://httpbin.org/ip')
+        ...     requests.get('http://httpbin.org/get')
 
     """
     previous = requests.Session
