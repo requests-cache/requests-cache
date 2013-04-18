@@ -9,13 +9,11 @@ import unittest
 from tests.test_custom_dict import BaseCustomDictTestCase
 from requests_cache.backends.storage.dbdict import DbDict, DbPickleDict
 
-DB_NAME = 'test'
-
 
 class DbdictTestCase(BaseCustomDictTestCase, unittest.TestCase):
 
     def test_bulk_commit(self):
-        d = DbDict(DB_NAME, 'table')
+        d = DbDict(self.NAMESPACE, self.TABLES[0])
         d.clear()
         n = 1000
         with d.bulk_commit():
@@ -24,22 +22,22 @@ class DbdictTestCase(BaseCustomDictTestCase, unittest.TestCase):
         self.assertEqual(list(d.keys()), list(range(n)))
 
     def test_switch_commit(self):
-        d = DbDict(DB_NAME)
+        d = DbDict(self.NAMESPACE)
         d.clear()
         d[1] = 1
-        d = DbDict(DB_NAME)
+        d = DbDict(self.NAMESPACE)
         self.assertIn(1, d)
 
         d.can_commit = False
         d[2] = 2
 
-        d = DbDict(DB_NAME)
+        d = DbDict(self.NAMESPACE)
         self.assertNotIn(2, d)
         self.assert_(d.can_commit)
 
     def test_fast_save(self):
-        d1 = DbDict(DB_NAME, fast_save=True)
-        d2 = DbDict(DB_NAME, 'data2', fast_save=True)
+        d1 = DbDict(self.NAMESPACE, fast_save=True)
+        d2 = DbDict(self.NAMESPACE, self.TABLES[1], fast_save=True)
         d1.clear()
         n = 1000
         for i in range(n):
@@ -77,13 +75,13 @@ class DbdictTestCase(BaseCustomDictTestCase, unittest.TestCase):
                 for x in values(i, n_threads):
                     self.assertEqual(d[x], x)
 
-        do_test_for(DbDict(DB_NAME, fast_save=True), 20)
-        do_test_for(DbPickleDict(DB_NAME, fast_save=True), 10)
-        d1 = DbDict(DB_NAME, fast_save=True)
-        d2 = DbDict(DB_NAME, 'table123', fast_save=True)
+        do_test_for(DbDict(self.NAMESPACE, fast_save=True), 20)
+        do_test_for(DbPickleDict(self.NAMESPACE, fast_save=True), 10)
+        d1 = DbDict(self.NAMESPACE, fast_save=True)
+        d2 = DbDict(self.NAMESPACE, self.TABLES[1], fast_save=True)
         do_test_for(d1)
         do_test_for(d2)
-        do_test_for(DbDict(DB_NAME))
+        do_test_for(DbDict(self.NAMESPACE))
 
 
 if __name__ == '__main__':
