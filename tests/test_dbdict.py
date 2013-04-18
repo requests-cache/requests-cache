@@ -6,22 +6,13 @@ sys.path.insert(0, os.path.abspath('..'))
 
 from threading import Thread
 import unittest
+from tests.test_custom_dict import BaseCustomDictTestCase
 from requests_cache.backends.storage.dbdict import DbDict, DbPickleDict
 
 DB_NAME = 'test'
 
 
-class DbdictTestCase(unittest.TestCase):
-    def test_save_to_same_database(self):
-        d1 = DbDict(DB_NAME, 'table1')
-        d2 = DbDict(DB_NAME, 'table2')
-        d3 = DbDict(DB_NAME, 'table3')
-        d1[1] = 1
-        d2[2] = 2
-        d3[3] = 3
-        self.assertEqual(list(d1.keys()), [1])
-        self.assertEqual(list(d2.keys()), [2])
-        self.assertEqual(list(d3.keys()), [3])
+class DbdictTestCase(BaseCustomDictTestCase, unittest.TestCase):
 
     def test_bulk_commit(self):
         d = DbDict(DB_NAME, 'table')
@@ -45,41 +36,6 @@ class DbdictTestCase(unittest.TestCase):
         d = DbDict(DB_NAME)
         self.assertNotIn(2, d)
         self.assert_(d.can_commit)
-
-    def test_str(self):
-        d = DbDict(DB_NAME)
-        d.clear()
-        d[1] = 1
-        d[2] = 2
-        self.assertEqual(str(d), '{1: 1, 2: 2}')
-
-    def test_del(self):
-        d = DbDict(DB_NAME)
-        d.clear()
-        for i in range(5):
-            d[i] = i
-        del d[0]
-        del d[1]
-        del d[2]
-        self.assertEqual(list(d.keys()), list(range(3, 5)))
-
-        with self.assertRaises(KeyError):
-            del d[0]
-
-    def test_picklable_dict(self):
-        d = DbPickleDict(DB_NAME)
-        d[1] = ForPickle()
-        d = DbPickleDict(DB_NAME)
-        self.assertEqual(d[1].a, 1)
-        self.assertEqual(d[1].b, 2)
-
-    def test_len(self):
-        d = DbDict(DB_NAME)
-        d.clear()
-        n = 5
-        for i in range(n):
-            d[i] = i
-        self.assertEqual(len(d), n)
 
     def test_fast_save(self):
         d1 = DbDict(DB_NAME, fast_save=True)
@@ -129,10 +85,6 @@ class DbdictTestCase(unittest.TestCase):
         do_test_for(d2)
         do_test_for(DbDict(DB_NAME))
 
-
-class ForPickle(object):
-    a = 1
-    b = 2
 
 if __name__ == '__main__':
     unittest.main()
