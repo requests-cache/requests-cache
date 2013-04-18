@@ -7,7 +7,7 @@
     ``redis`` cache backend
 """
 from .base import BaseCache
-from .storage.redisdict import RedisDict, RedisPickleDict
+from .storage.redisdict import RedisDict
 
 
 class RedisCache(BaseCache):
@@ -19,6 +19,6 @@ class RedisCache(BaseCache):
         :param connection: (optional) ``redis.StrictRedis``
         """
         super(RedisCache, self).__init__()
-        self.responses = RedisPickleDict(namespace, 'responses',
+        self.responses = RedisDict(namespace, 'responses',
                                          options.get('connection'))
         self.keys_map = RedisDict(namespace, 'urls', self.responses.connection)

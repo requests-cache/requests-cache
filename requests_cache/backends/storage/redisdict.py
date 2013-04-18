@@ -66,9 +66,3 @@ class RedisDict(MutableMapping):
 
     def __str__(self):
         return str(dict(self.items()))
-
-
-class RedisPickleDict(RedisDict):
-    """ Same as :class:`RedisDict`
-    """
-    pass
