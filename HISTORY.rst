@@ -3,7 +3,7 @@
 History
 -------
 
-0.4.0 (2013-0x-xx)
+0.4.0 (2013-04-25)
 +++++++++++++++++++
 
 * Redis backend. Thanks to @michaelbeaumont
