@@ -111,7 +111,7 @@ class BaseCache(object):
         return self.create_key(Request('GET', url).prepare())
 
     _response_attrs = ['_content', 'url', 'status_code', 'cookies',
-                       'headers', 'encoding', 'request', 'reason']
+                       'headers', 'encoding', 'request', 'reason', 'raw']
 
     def reduce_response(self, response):
         """ Reduce response object to make it compatible with ``pickle``
@@ -129,6 +129,8 @@ class BaseCache(object):
         if name == 'request':
             value = copy(value)
             value.hooks = []
+        elif name == 'raw':
+            value._pool = None
         return value
 
     def restore_response(self, response):
