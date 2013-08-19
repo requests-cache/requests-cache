@@ -138,7 +138,7 @@ class BaseCache(object):
         """
         result = requests.Response()
         for field in self._response_attrs:
-            setattr(result, field, getattr(response, field))
+            setattr(result, field, getattr(response, field, None))
         result.history = tuple(self.restore_response(r) for r in response.history)
         return result
 
