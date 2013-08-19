@@ -188,6 +188,28 @@ def disabled():
         _patch_session_factory(previous)
 
 
+@contextmanager
+def enabled(*args, **kwargs):
+    """
+    Context manager for temporary installing global cache.
+
+    Accepts same arguments as :func:`install_cache`
+
+    .. warning:: not thread-safe
+
+    ::
+
+        >>> with requests_cache.enabled('cache_db'):
+        ...     requests.get('http://httpbin.org/get')
+
+    """
+    install_cache(*args, **kwargs)
+    try:
+        yield
+    finally:
+        uninstall_cache()
+
+
 def get_cache():
     """ Returns internal cache object from globally installed ``CachedSession``
     """

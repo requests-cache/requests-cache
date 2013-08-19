@@ -119,6 +119,19 @@ class CacheTestCase(unittest.TestCase):
         r = self.s.get(url)
         self.assertTrue(getattr(r, 'from_cache', False))
 
+    def test_enabled(self):
+        url = httpbin('get')
+        options = dict(cache_name=CACHE_NAME, backend=CACHE_BACKEND,
+                       fast_save=FAST_SAVE)
+        with requests_cache.enabled(**options):
+            r = requests.get(url)
+            self.assertFalse(getattr(r, 'from_cache', False))
+            for i in range(2):
+                r = requests.get(url)
+                self.assertTrue(getattr(r, 'from_cache', False))
+        r = requests.get(url)
+        self.assertFalse(getattr(r, 'from_cache', False))
+
     def test_content_and_cookies(self):
         requests_cache.install_cache(CACHE_NAME, CACHE_BACKEND)
         s = requests.session()
