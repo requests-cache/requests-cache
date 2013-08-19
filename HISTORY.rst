@@ -3,6 +3,13 @@
 History
 -------
 
+0.4.1 (2013-08-19)
++++++++++++++++++++
+
+* ``requests_cache.enabled()`` context manager
+* Compatibility with Requests 1.2.3 cookies handling
+
+
 0.4.0 (2013-04-25)
 +++++++++++++++++++
 
