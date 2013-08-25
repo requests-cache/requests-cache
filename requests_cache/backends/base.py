@@ -113,6 +113,9 @@ class BaseCache(object):
     _response_attrs = ['_content', 'url', 'status_code', 'cookies',
                        'headers', 'encoding', 'request', 'reason', 'raw']
 
+    _raw_response_attrs = ['_original_response', 'decode_content', 'headers',
+                            'reason', 'status', 'strict', 'version']
+
     def reduce_response(self, response):
         """ Reduce response object to make it compatible with ``pickle``
         """
@@ -130,7 +133,10 @@ class BaseCache(object):
             value = copy(value)
             value.hooks = []
         elif name == 'raw':
-            value._pool = None
+            result = _Store()
+            for field in self._raw_response_attrs:
+                setattr(result, field, getattr(value, field, None))
+            value = result
         return value
 
     def restore_response(self, response):

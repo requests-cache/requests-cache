@@ -229,7 +229,10 @@ class CacheTestCase(unittest.TestCase):
         self.s.cache.clear()
         self.assertFalse(self.s.get(url).from_cache)
 
-
+    def test_gzip_response(self):
+        url = httpbin('gzip')
+        self.assertFalse(self.s.get(url).from_cache)
+        self.assertTrue(self.s.get(url).from_cache)
 
 
 if __name__ == '__main__':
