@@ -95,6 +95,20 @@ class CacheTestCase(unittest.TestCase):
                 r = self.s.get(httpbin('get'), hooks={hook: hook_func})
             self.assertEqual(state[hook], n)
 
+    def test_attr_from_cache_in_hook(self):
+        state = defaultdict(int)
+        hook = 'response'
+
+        def hook_func(r, *args, **kwargs):
+            if state[hook] > 0:
+                self.assert_(r.from_cache, True)
+            state[hook] += 1
+            return r
+        n = 5
+        for i in range(n):
+            r = self.s.get(httpbin('get'), hooks={hook: hook_func})
+        self.assertEqual(state[hook], n)
+
     def test_post(self):
         url = httpbin('post')
         r1 = json.loads(self.s.post(url, data={'test1': 'test1'}).text)
