@@ -96,8 +96,8 @@ class CachedSession(OriginalSession):
                 self.cache.delete(cache_key)
                 return send_request_and_cache_response()
         # dispatch hook here, because we've removed it before pickling
-        response = dispatch_hook('response', request.hooks, response, **kwargs)
         response.from_cache = True
+        response = dispatch_hook('response', request.hooks, response, **kwargs)
         return response
 
     def request(self, method, url, params=None, data=None, headers=None,
