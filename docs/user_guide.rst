@@ -145,7 +145,6 @@ There is backward incompatible changes introduced in version 0.3.0:
 
 * `expire_after` is now seconds
 * UTC time in cache
-* Deleted ``requests_cache.enabled()`` context manager
 * Storage backends are now using hash for keys
 * Renamed methods in backends
 
