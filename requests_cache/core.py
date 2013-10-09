@@ -31,7 +31,7 @@ class CachedSession(OriginalSession):
     """ Requests ``Sessions`` with caching support.
     """
 
-    def __init__(self, cache_name='cache', backend='sqlite', expire_after=None,
+    def __init__(self, cache_name='cache', backend=None, expire_after=None,
                  allowable_codes=(200,), allowable_methods=('GET',),
                  **backend_options):
         """
@@ -44,6 +44,8 @@ class CachedSession(OriginalSession):
                            are prefixed with ``'cache_name:'``
         :param backend: cache backend name e.g ``'sqlite'``, ``'mongodb'``, ``'redis'``, ``'memory'``.
                         (see :ref:`persistence`). Or instance of backend implementation.
+                        Default value is ``None``, which means use ``'sqlite'`` if available,
+                        otherwise fallback to ``'memory'``.
         :param expire_after: number of seconds after cache will be expired
                              or `None` (default) to ignore expiration
         :type expire_after: float
@@ -55,12 +57,9 @@ class CachedSession(OriginalSession):
                                 :ref:`sqlite <backends_sqlite>`, :ref:`mongo <backends_mongo>` 
                                 and :ref:`redis <backends_redis>` backends API documentation
         """
-        if isinstance(backend, basestring):
-            try:
-                self.cache = backends.registry[backend](cache_name, **backend_options)
-            except KeyError:
-                raise ValueError('Unsupported backend "%s" try one of: %s' %
-                                 (backend, ', '.join(backends.registry.keys())))
+        if backend is None or isinstance(backend, basestring):
+            self.cache = backends.create_backend(backend, cache_name,
+                                                 backend_options)
         else:
             self.cache = backend
 
@@ -136,7 +135,7 @@ class CachedSession(OriginalSession):
             self._is_cache_disabled = False
 
 
-def install_cache(cache_name='cache', backend='sqlite', expire_after=None,
+def install_cache(cache_name='cache', backend=None, expire_after=None,
                  allowable_codes=(200,), allowable_methods=('GET',),
                  session_factory=CachedSession, **backend_options):
     """
@@ -146,6 +145,8 @@ def install_cache(cache_name='cache', backend='sqlite', expire_after=None,
 
     :param session_factory: Session factory. It should inherit :class:`CachedSession` (default)
     """
+    if backend:
+        backend = backends.create_backend(backend, cache_name, backend_options)
     _patch_session_factory(
         lambda : session_factory(cache_name=cache_name,
                                   backend=backend,
