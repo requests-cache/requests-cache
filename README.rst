@@ -32,6 +32,10 @@ Note
 ``requests-cache`` ignores all cache headers, it just caches the data for the
 time you specify.
 
+If you need library which knows how to use HTTP headers and status codes,
+take a look at `httpcache <https://github.com/Lukasa/httpcache>`_ and
+`CacheControl <https://github.com/ionrock/cachecontrol>`_.
+
 Links
 -----
 
