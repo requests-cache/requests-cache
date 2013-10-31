@@ -3,6 +3,14 @@
 History
 -------
 
+
+0.4.4 (2013-10-31)
++++++++++++++++++++
+
+* Check for backend availability in install_cache(), not at the first request
+* Default storage fallbacks to memory if ``sqlite`` is not available
+
+
 0.4.3 (2013-09-12)
 +++++++++++++++++++
 
