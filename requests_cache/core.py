@@ -39,7 +39,7 @@ class CachedSession(OriginalSession):
                            e.g ``cache.sqlite``
 
                            for ``mongodb``: it's used as database name
-                           
+
                            for ``redis``: it's used as the namespace. This means all keys
                            are prefixed with ``'cache_name:'``
         :param backend: cache backend name e.g ``'sqlite'``, ``'mongodb'``, ``'redis'``, ``'memory'``.
@@ -54,7 +54,7 @@ class CachedSession(OriginalSession):
         :param allowable_methods: cache only requests of this methods (default: 'GET')
         :type allowable_methods: tuple
         :kwarg backend_options: options for chosen backend. See corresponding
-                                :ref:`sqlite <backends_sqlite>`, :ref:`mongo <backends_mongo>` 
+                                :ref:`sqlite <backends_sqlite>`, :ref:`mongo <backends_mongo>`
                                 and :ref:`redis <backends_redis>` backends API documentation
         """
         if backend is None or isinstance(backend, basestring):
@@ -74,6 +74,7 @@ class CachedSession(OriginalSession):
             or request.method not in self._cache_allowable_methods):
             response = super(CachedSession, self).send(request, **kwargs)
             response.from_cache = False
+            response.cache_date = None
             return response
 
         cache_key = self.cache.create_key(request)
@@ -83,6 +84,7 @@ class CachedSession(OriginalSession):
             if response.status_code in self._cache_allowable_codes:
                 self.cache.save_response(cache_key, response)
             response.from_cache = False
+            response.cache_date = None
             return response
 
         response, timestamp = self.cache.get_response_and_time(cache_key)
@@ -96,6 +98,7 @@ class CachedSession(OriginalSession):
                 return send_request_and_cache_response()
         # dispatch hook here, because we've removed it before pickling
         response.from_cache = True
+        response.cache_date = timestamp
         response = dispatch_hook('response', request.hooks, response, **kwargs)
         return response
 
