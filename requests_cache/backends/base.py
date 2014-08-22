@@ -162,7 +162,8 @@ class BaseCache(object):
 
 # used for saving response attributes
 class _Store(object):
-    pass
+    def release_conn(self):
+        pass
 
 
 def _to_bytes(s, encoding='utf-8'):
