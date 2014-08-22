@@ -248,6 +248,11 @@ class CacheTestCase(unittest.TestCase):
         self.assertFalse(self.s.get(url).from_cache)
         self.assertTrue(self.s.get(url).from_cache)
 
+    def test_close_response(self):
+        for _ in range(3):
+            r = self.s.get(httpbin("get"))
+            r.close()
+
 
 if __name__ == '__main__':
     unittest.main()
