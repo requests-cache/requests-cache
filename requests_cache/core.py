@@ -143,18 +143,23 @@ def install_cache(cache_name='cache', backend=None, expire_after=None,
 
     Parameters are the same as in :class:`CachedSession`. Additional parameters:
 
-    :param session_factory: Session factory. It should inherit :class:`CachedSession` (default)
+    :param session_factory: Session factory. It must be class which inherits :class:`CachedSession` (default)
     """
     if backend:
         backend = backends.create_backend(backend, cache_name, backend_options)
-    _patch_session_factory(
-        lambda : session_factory(cache_name=cache_name,
-                                  backend=backend,
-                                  expire_after=expire_after,
-                                  allowable_codes=allowable_codes,
-                                  allowable_methods=allowable_methods,
-                                  **backend_options)
-    )
+
+    class _ConfiguredCachedSession(session_factory):
+        def __init__(self):
+            super(_ConfiguredCachedSession, self).__init__(
+                cache_name=cache_name,
+                backend=backend,
+                expire_after=expire_after,
+                allowable_codes=allowable_codes,
+                allowable_methods=allowable_methods,
+                **backend_options
+            )
+
+    _patch_session_factory(_ConfiguredCachedSession)
 
 
 # backward compatibility

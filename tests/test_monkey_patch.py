@@ -7,6 +7,7 @@ sys.path.insert(0, os.path.abspath('..'))
 import unittest
 
 import requests
+from requests.sessions import Session as OriginalSession
 
 import requests_cache
 from requests_cache import CachedSession
@@ -39,6 +40,28 @@ class MonkeyPatchTestCase(unittest.TestCase):
         self.assertFalse(r.from_cache)
         r = requests.get('http://httpbin.org/get')
         self.assertTrue(r.from_cache)
+
+    def test_session_is_a_class_with_original_attributes(self):
+        requests_cache.install_cache(name=CACHE_NAME, backend=CACHE_BACKEND)
+        self.assertTrue(isinstance(requests.Session, type))
+        for attribute in dir(OriginalSession):
+            self.assertTrue(hasattr(requests.Session, attribute))
+        self.assertTrue(isinstance(requests.Session(), CachedSession))
+
+    def test_inheritance_after_monkey_patch(self):
+        requests_cache.install_cache(name=CACHE_NAME, backend=CACHE_BACKEND)
+
+        class FooSession(requests.Session):
+            __attrs__ = requests.Session.__attrs__ + ["new_one"]
+
+            def __init__(self, param):
+                self.param = param
+                super(FooSession, self).__init__()
+
+        s = FooSession(1)
+        self.assertEquals(s.param, 1)
+        self.assertIn("new_one", s.__attrs__)
+        self.assertTrue(isinstance(s, CachedSession))
 
 
 if __name__ == '__main__':
