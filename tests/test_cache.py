@@ -253,6 +253,35 @@ class CacheTestCase(unittest.TestCase):
             r = self.s.get(httpbin("get"))
             r.close()
 
+    def test_get_parameters_normalization(self):
+        url = httpbin("get")
+        params = {"a": "a", "b": ["1", "2", "3"], "c": "4"}
+
+        self.assertFalse(self.s.get(url, params=params).from_cache)
+        r = self.s.get(url, params=params)
+        self.assertTrue(r.from_cache)
+        self.assertEquals(r.json()["args"], params)
+        self.assertFalse(self.s.get(url, params={"a": "b"}).from_cache)
+        self.assertTrue(self.s.get(url, params=sorted(params.items())).from_cache)
+
+        class UserSubclass(dict):
+            def items(self):
+                return sorted(super(UserSubclass, self).items(), reverse=True)
+
+        custom_dict = UserSubclass(params)
+        self.assertFalse(self.s.get(url, params=custom_dict).from_cache)
+        self.assertTrue(self.s.get(url, params=custom_dict).from_cache)
+
+    def test_post_parameters_normalization(self):
+        params = {"a": "a", "b": ["1", "2", "3"], "c": "4"}
+        url = httpbin("post")
+        s = CachedSession(CACHE_NAME, CACHE_BACKEND,
+                          allowable_methods=('GET', 'POST'))
+        self.assertFalse(s.post(url, data=params).from_cache)
+        self.assertTrue(s.post(url, data=params).from_cache)
+        self.assertTrue(s.post(url, data=sorted(params.items())).from_cache)
+        self.assertFalse(s.post(url, data=sorted(params.items(), reverse=True)).from_cache)
+
 
 if __name__ == '__main__':
     unittest.main()

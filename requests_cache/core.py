@@ -8,6 +8,7 @@
 """
 from contextlib import contextmanager
 from datetime import datetime, timedelta
+from operator import itemgetter
 
 import requests
 from requests import Session as OriginalSession
@@ -103,11 +104,15 @@ class CachedSession(OriginalSession):
                 cookies=None, files=None, auth=None, timeout=None,
                 allow_redirects=True, proxies=None, hooks=None, stream=None,
                 verify=None, cert=None):
-        response = super(CachedSession, self).request(method, url, params, data,
-                                                      headers, cookies, files,
-                                                      auth, timeout,
-                                                      allow_redirects, proxies,
-                                                      hooks, stream, verify, cert)
+        response = super(CachedSession, self).request(
+            method, url,
+            _normalize_parameters(params),
+            _normalize_parameters(data),
+            headers, cookies, files,
+            auth, timeout,
+            allow_redirects, proxies,
+            hooks, stream, verify, cert
+        )
         if self._is_cache_disabled:
             return response
 
@@ -230,3 +235,13 @@ def clear():
 
 def _patch_session_factory(session_factory=CachedSession):
     requests.Session = requests.sessions.Session = session_factory
+
+
+def _normalize_parameters(params):
+    """ If builtin dict is passed as parameter, returns sorted list
+    of key-value pairs
+    """
+
+    if type(params) is dict:
+        return sorted(params.items(), key=itemgetter(0))
+    return params
