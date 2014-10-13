@@ -23,7 +23,7 @@
     :license: BSD, see LICENSE for more details.
 """
 __docformat__ = 'restructuredtext'
-__version__ = '0.4.5'
+__version__ = '0.4.6'
 
 from .core import(
     CachedSession, install_cache, uninstall_cache,
