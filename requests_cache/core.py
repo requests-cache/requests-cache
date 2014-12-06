@@ -100,18 +100,12 @@ class CachedSession(OriginalSession):
         response = dispatch_hook('response', request.hooks, response, **kwargs)
         return response
 
-    def request(self, method, url, params=None, data=None, headers=None,
-                cookies=None, files=None, auth=None, timeout=None,
-                allow_redirects=True, proxies=None, hooks=None, stream=None,
-                verify=None, cert=None):
+    def request(self, method, url, params=None, data=None, **kwargs):
         response = super(CachedSession, self).request(
             method, url,
             _normalize_parameters(params),
             _normalize_parameters(data),
-            headers, cookies, files,
-            auth, timeout,
-            allow_redirects, proxies,
-            hooks, stream, verify, cert
+            **kwargs
         )
         if self._is_cache_disabled:
             return response
