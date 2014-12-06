@@ -116,15 +116,22 @@ class BaseCache(object):
     _raw_response_attrs = ['_original_response', 'decode_content', 'headers',
                             'reason', 'status', 'strict', 'version']
 
-    def reduce_response(self, response):
+    def reduce_response(self, response, seen=None):
         """ Reduce response object to make it compatible with ``pickle``
         """
+        if seen is None:
+            seen = {}
+        try:
+            return seen[id(response)]
+        except KeyError:
+            pass
         result = _Store()
         # prefetch
         response.content
         for field in self._response_attrs:
             setattr(result, field, self._picklable_field(response, field))
-        result.history = tuple(self.reduce_response(r) for r in response.history)
+        seen[id(response)] = result
+        result.history = tuple(self.reduce_response(r, seen) for r in response.history)
         return result
 
     def _picklable_field(self, response, name):
@@ -139,13 +146,20 @@ class BaseCache(object):
             value = result
         return value
 
-    def restore_response(self, response):
+    def restore_response(self, response, seen=None):
         """ Restore response object after unpickling
         """
+        if seen is None:
+            seen = {}
+        try:
+            return seen[id(response)]
+        except KeyError:
+            pass
         result = requests.Response()
         for field in self._response_attrs:
             setattr(result, field, getattr(response, field, None))
-        result.history = tuple(self.restore_response(r) for r in response.history)
+        seen[id(response)] = result
+        result.history = tuple(self.restore_response(r, seen) for r in response.history)
         return result
 
     def create_key(self, request):
