@@ -1,4 +1,5 @@
 pytest
+unittest2
 pymongo
 redis
 requests

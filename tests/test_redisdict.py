@@ -4,7 +4,10 @@
 import os, sys
 sys.path.insert(0, os.path.abspath('..'))
 
-import unittest
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 from tests.test_custom_dict import BaseCustomDictTestCase
 try:

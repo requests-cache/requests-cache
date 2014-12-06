@@ -4,10 +4,12 @@
 import os, sys
 sys.path.insert(0, os.path.abspath('..'))
 
-from threading import Thread
-import unittest
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
-import requests
+from threading import Thread
 from requests_cache import CachedSession
 
 CACHE_NAME = 'requests_cache_test'

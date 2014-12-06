@@ -4,8 +4,12 @@
 import os, sys
 sys.path.insert(0, os.path.abspath('..'))
 
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
+
 from threading import Thread
-import unittest
 from tests.test_custom_dict import BaseCustomDictTestCase
 from requests_cache.backends.storage.dbdict import DbDict, DbPickleDict
 
