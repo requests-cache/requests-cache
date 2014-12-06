@@ -5,6 +5,9 @@ Requests-cache is a transparent persistent cache for requests_ (version >= 1.1.0
 
 .. _requests: http://python-requests.org/
 
+.. image:: https://travis-ci.org/reclosedev/requests-cache.svg?branch=master
+    :target: https://travis-ci.org/reclosedev/requests-cache
+
 Usage example
 -------------
 
