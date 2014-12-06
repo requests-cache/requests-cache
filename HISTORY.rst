@@ -3,6 +3,12 @@
 History
 -------
 
+0.4.7 (2014-12-06)
+++++++++++++++++++
+
+* Fix compatibility with Requests > 2.4.1 (json arg, response history)
+
+
 0.4.6 (2014-10-13)
 ++++++++++++++++++
 
