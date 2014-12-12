@@ -112,6 +112,7 @@ It can be used, for example, for request throttling with help of ``requests`` ho
 
 .. seealso:: `example.py <https://github.com/reclosedev/requests-cache/blob/master/example.py>`_
 
+.. note:: requests_cache prefetchs response content, be aware if your code uses streaming requests.
 
 .. _persistence:
 

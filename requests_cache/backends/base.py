@@ -10,6 +10,7 @@
 from datetime import datetime
 import hashlib
 from copy import copy
+from io import BytesIO
 
 import requests
 
@@ -140,7 +141,7 @@ class BaseCache(object):
             value = copy(value)
             value.hooks = []
         elif name == 'raw':
-            result = _Store()
+            result = _RawStore()
             for field in self._raw_response_attrs:
                 setattr(result, field, getattr(value, field, None))
             value = result
@@ -158,6 +159,7 @@ class BaseCache(object):
         result = requests.Response()
         for field in self._response_attrs:
             setattr(result, field, getattr(response, field, None))
+        result.raw._cached_content_ = result.content
         seen[id(response)] = result
         result.history = tuple(self.restore_response(r, seen) for r in response.history)
         return result
@@ -176,8 +178,19 @@ class BaseCache(object):
 
 # used for saving response attributes
 class _Store(object):
+    pass
+
+
+class _RawStore(object):
+    # noop for cached response
     def release_conn(self):
         pass
+
+    # for streaming requests support
+    def read(self, chunk_size=1):
+        if not hasattr(self, "_io_with_content_"):
+            self._io_with_content_ = BytesIO(self._cached_content_)
+        return self._io_with_content_.read(chunk_size)
 
 
 def _to_bytes(s, encoding='utf-8'):

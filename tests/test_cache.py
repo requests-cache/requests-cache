@@ -34,6 +34,7 @@ def httpbin(*suffix):
     """Returns url for HTTPBIN resource."""
     return HTTPBIN_URL + '/'.join(suffix)
 
+
 class CacheTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -285,6 +286,19 @@ class CacheTestCase(unittest.TestCase):
         self.assertTrue(s.post(url, data=params).from_cache)
         self.assertTrue(s.post(url, data=sorted(params.items())).from_cache)
         self.assertFalse(s.post(url, data=sorted(params.items(), reverse=True)).from_cache)
+
+    def test_stream_requests_support(self):
+        n = 100
+        url = httpbin("stream/%s" % n)
+        r = self.s.get(url, stream=True)
+        lines = list(r.iter_lines())
+        self.assertEquals(len(lines), n)
+
+        for i in range(2):
+            r = self.s.get(url, stream=True)
+            self.assertTrue(r.from_cache)
+            cached_lines = list(r.iter_lines())
+            self.assertEquals(cached_lines, lines)
 
 
 if __name__ == '__main__':
