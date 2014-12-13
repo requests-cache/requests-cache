@@ -15,7 +15,9 @@ Requests-cache is a transparent persistent cache for requests_ (version >= 1.1.0
 Usage example
 -------------
 
-Just write::
+Just write:
+
+.. code-block:: python
 
     import requests
     import requests_cache
@@ -24,7 +26,9 @@ Just write::
 
 And all responses with headers and cookies will be transparently cached to
 `demo_cache.sqlite` database. For example, following code will take only
-1-2 seconds instead 10, and will run instantly on next launch::
+1-2 seconds instead 10, and will run instantly on next launch:
+
+.. code-block:: python
 
     for i in range(10):
         requests.get('http://httpbin.org/delay/1')
