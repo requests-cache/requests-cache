@@ -273,6 +273,7 @@ class CacheTestCase(unittest.TestCase):
             def items(self):
                 return sorted(super(UserSubclass, self).items(), reverse=True)
 
+        params["z"] = "5"
         custom_dict = UserSubclass(params)
         self.assertFalse(self.s.get(url, params=custom_dict).from_cache)
         self.assertTrue(self.s.get(url, params=custom_dict).from_cache)
