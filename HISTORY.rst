@@ -3,6 +3,13 @@
 History
 -------
 
+
+0.4.8 (2014-12-13)
+++++++++++++++++++
+
+* Fix bug in reading cached streaming response
+
+
 0.4.7 (2014-12-06)
 ++++++++++++++++++
 
