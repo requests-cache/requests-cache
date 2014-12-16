@@ -64,7 +64,10 @@ class CachedSession(OriginalSession):
         else:
             self.cache = backend
 
+        if expire_after is not None and not isinstance(expire_after, timedelta):
+            expire_after = timedelta(seconds=expire_after)
         self._cache_expire_after = expire_after
+
         self._cache_allowable_codes = allowable_codes
         self._cache_allowable_methods = allowable_methods
         self._is_cache_disabled = False
@@ -92,7 +95,7 @@ class CachedSession(OriginalSession):
 
         if self._cache_expire_after is not None:
             difference = datetime.utcnow() - timestamp
-            if difference > timedelta(seconds=self._cache_expire_after):
+            if difference > self._cache_expire_after:
                 self.cache.delete(cache_key)
                 return send_request_and_cache_response()
         # dispatch hook here, because we've removed it before pickling
