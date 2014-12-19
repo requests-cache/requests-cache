@@ -54,3 +54,4 @@ Links
 
 - **Source code and issue tracking** at `GitHub <https://github.com/reclosedev/requests-cache>`_.
 
+- **Working example** at `Real Python <https://realpython.com/blog/python/caching-external-api-requests>`_.
