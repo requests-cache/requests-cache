@@ -170,6 +170,8 @@ class BaseCache(object):
         key.update(_to_bytes(request.url))
         if request.body:
             key.update(_to_bytes(request.body))
+        if request.headers and 'Accept' in request.headers:
+            key.update(request.headers['Accept'])            
         return key.hexdigest()
 
     def __str__(self):
