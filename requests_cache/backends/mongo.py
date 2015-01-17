@@ -22,4 +22,3 @@ class MongoCache(BaseCache):
         self.responses = MongoPickleDict(db_name, 'responses',
                                          options.get('connection'))
         self.keys_map = MongoDict(db_name, 'urls', self.responses.connection)
-

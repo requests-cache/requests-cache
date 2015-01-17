@@ -27,4 +27,3 @@ class DbCache(BaseCache):
         super(DbCache, self).__init__()
         self.responses = DbPickleDict(location + extension, 'responses', fast_save=fast_save)
         self.keys_map = DbDict(location + extension, 'urls')
-
