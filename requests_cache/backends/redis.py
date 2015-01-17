@@ -18,7 +18,7 @@ class RedisCache(BaseCache):
         :param namespace: redis namespace (default: ``'requests-cache'``)
         :param connection: (optional) ``redis.StrictRedis``
         """
-        super(RedisCache, self).__init__()
+        super(RedisCache, self).__init__(**options)
         self.responses = RedisDict(namespace, 'responses',
                                    options.get('connection'))
         self.keys_map = RedisDict(namespace, 'urls', self.responses.connection)

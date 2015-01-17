@@ -18,7 +18,7 @@ class MongoCache(BaseCache):
         :param db_name: database name (default: ``'requests-cache'``)
         :param connection: (optional) ``pymongo.Connection``
         """
-        super(MongoCache, self).__init__()
+        super(MongoCache, self).__init__(**options)
         self.responses = MongoPickleDict(db_name, 'responses',
                                          options.get('connection'))
         self.keys_map = MongoDict(db_name, 'urls', self.responses.connection)

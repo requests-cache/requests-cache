@@ -57,10 +57,10 @@ class CacheTestCase(unittest.TestCase):
         self.assertGreaterEqual(delta, delay)
 
     def test_delete_urls(self):
-        url = httpbin('redirect/3')
+        url = httpbin('relative-redirect/3')
         r = self.s.get(url)
         for i in range(1, 4):
-            self.assert_(self.s.cache.has_url(httpbin('redirect/%s' % i)))
+            self.assert_(self.s.cache.has_url(httpbin('relative-redirect/%s' % i)))
         self.s.cache.delete_url(url)
         self.assert_(not self.s.cache.has_url(url))
 
@@ -170,20 +170,20 @@ class CacheTestCase(unittest.TestCase):
             self.assertEqual(r4, js(httpbin('cookies')))
 
     def test_response_history(self):
-        r1 = self.s.get(httpbin('redirect/3'))
+        r1 = self.s.get(httpbin('relative-redirect/3'))
         def test_redirect_history(url):
             r2 = self.s.get(url)
             self.assertTrue(r2.from_cache)
             for r11, r22 in zip(r1.history, r2.history):
                 self.assertEqual(r11.url, r22.url)
-        test_redirect_history(httpbin('redirect/3'))
-        test_redirect_history(httpbin('redirect/2'))
-        r3 = requests.get(httpbin('redirect/1'))
+        test_redirect_history(httpbin('relative-redirect/3'))
+        test_redirect_history(httpbin('relative-redirect/2'))
+        r3 = requests.get(httpbin('relative-redirect/1'))
         self.assertEqual(len(r3.history), 1)
 
     def test_response_history_simple(self):
-        r1 = self.s.get(httpbin('redirect/2'))
-        r2 = self.s.get(httpbin('redirect/1'))
+        r1 = self.s.get(httpbin('relative-redirect/2'))
+        r2 = self.s.get(httpbin('relative-redirect/1'))
         self.assertTrue(r2.from_cache)
 
     def post(self, data):
@@ -300,6 +300,24 @@ class CacheTestCase(unittest.TestCase):
             self.assertTrue(r.from_cache)
             cached_lines = list(r.iter_lines())
             self.assertEquals(cached_lines, lines)
+
+    def test_headers_in_get_query(self):
+        url = httpbin("get")
+        s = CachedSession(CACHE_NAME, CACHE_BACKEND, include_get_headers=True)
+        headers = {"Accept": "text/json"}
+        self.assertFalse(s.get(url, headers=headers).from_cache)
+        self.assertTrue(s.get(url, headers=headers).from_cache)
+
+        headers["Accept"] = "text/xml"
+        self.assertFalse(s.get(url, headers=headers).from_cache)
+        self.assertTrue(s.get(url, headers=headers).from_cache)
+
+        headers["X-custom-header"] = "custom"
+        self.assertFalse(s.get(url, headers=headers).from_cache)
+        self.assertTrue(s.get(url, headers=headers).from_cache)
+
+        self.assertFalse(s.get(url).from_cache)
+        self.assertTrue(s.get(url).from_cache)
 
 
 if __name__ == '__main__':

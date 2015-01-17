@@ -17,6 +17,9 @@ import requests
 from ..compat import is_py2
 
 
+_DEFAULT_HEADERS = requests.utils.default_headers()
+
+
 class BaseCache(object):
     """ Base class for cache implementations, can be used as in-memory cache.
 
@@ -28,6 +31,7 @@ class BaseCache(object):
         self.keys_map = {}
         #: `key_in_cache` -> `response` mapping
         self.responses = {}
+        self._include_get_headers = kwargs.get("include_get_headers", False)
 
     def save_response(self, key, response):
         """ Save response to cache
@@ -108,8 +112,8 @@ class BaseCache(object):
         return self.has_key(self._url_to_key(url))
 
     def _url_to_key(self, url):
-        from requests import Request
-        return self.create_key(Request('GET', url).prepare())
+        session = requests.Session()
+        return self.create_key(session.prepare_request(requests.Request('GET', url)))
 
     _response_attrs = ['_content', 'url', 'status_code', 'cookies',
                        'headers', 'encoding', 'request', 'reason', 'raw']
@@ -170,6 +174,11 @@ class BaseCache(object):
         key.update(_to_bytes(request.url))
         if request.body:
             key.update(_to_bytes(request.body))
+        else:
+            if self._include_get_headers and request.headers != _DEFAULT_HEADERS:
+                for name, value in sorted(request.headers.items()):
+                    key.update(_to_bytes(name))
+                    key.update(_to_bytes(value))
         return key.hexdigest()
 
     def __str__(self):
