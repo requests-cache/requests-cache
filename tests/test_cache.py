@@ -319,6 +319,11 @@ class CacheTestCase(unittest.TestCase):
         self.assertFalse(s.get(url).from_cache)
         self.assertTrue(s.get(url).from_cache)
 
+    def test_str_and_repr(self):
+        s = repr(CachedSession(CACHE_NAME, CACHE_BACKEND, expire_after=10))
+        self.assertIn(CACHE_NAME, s)
+        self.assertIn("10", s)
+
 
 if __name__ == '__main__':
     unittest.main()

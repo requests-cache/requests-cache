@@ -66,6 +66,7 @@ class CachedSession(OriginalSession):
                                                  backend_options)
         else:
             self.cache = backend
+        self._cache_name = cache_name
 
         if expire_after is not None and not isinstance(expire_after, timedelta):
             expire_after = timedelta(seconds=expire_after)
@@ -138,6 +139,15 @@ class CachedSession(OriginalSession):
             yield
         finally:
             self._is_cache_disabled = False
+
+    def __repr__(self):
+        return (
+            "<CachedSession(%s('%s', ...), expire_after=%s, "
+            "allowable_methods=%s)>" % (
+                self.cache.__class__.__name__, self._cache_name,
+                self._cache_expire_after, self._cache_allowable_methods
+            )
+        )
 
 
 def install_cache(cache_name='cache', backend=None, expire_after=None,
