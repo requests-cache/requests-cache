@@ -4,6 +4,14 @@ History
 -------
 
 
+0.4.9 (2015-01-17)
+++++++++++++++++++
+
+* ``expire_after`` now also accepts ``timedelta``, thanks to @femtotrader
+* Added Ability to include headers to cache key (``include_get_headers`` option)
+* Added string representation for ``CachedSession``
+
+
 0.4.8 (2014-12-13)
 ++++++++++++++++++
 
