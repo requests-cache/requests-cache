@@ -47,7 +47,7 @@ class CachedSession(OriginalSession):
                         (see :ref:`persistence`). Or instance of backend implementation.
                         Default value is ``None``, which means use ``'sqlite'`` if available,
                         otherwise fallback to ``'memory'``.
-        :param expire_after: number of seconds after cache will be expired
+        :param expire_after: ``timedelta`` or number of seconds after cache will be expired
                              or `None` (default) to ignore expiration
         :type expire_after: float
         :param allowable_codes: limit caching only for response with this codes (default: 200)
