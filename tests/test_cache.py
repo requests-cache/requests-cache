@@ -13,6 +13,7 @@ import time
 import json
 from collections import defaultdict
 
+import mock
 import requests
 from requests import Request
 
@@ -323,6 +324,43 @@ class CacheTestCase(unittest.TestCase):
         s = repr(CachedSession(CACHE_NAME, CACHE_BACKEND, expire_after=10))
         self.assertIn(CACHE_NAME, s)
         self.assertIn("10", s)
+
+    @mock.patch("time.time")
+    def test_return_old_data_on_error(self, time_mock):
+        time_mock.return_value = 1
+        expire_after = 100
+        url = httpbin("get")
+        s = CachedSession(CACHE_NAME, CACHE_BACKEND, old_data_on_error=True, expire_after=100)
+        header = "X-Tst"
+
+        def get(n):
+            return s.get(url, headers={header: n}).json()["headers"][header]
+
+        get("expired")
+        self.assertEquals(get("2"), "expired")
+        time_mock.return_value = expire_after * 2
+
+        with mock.patch.object(s.cache, "save_response", side_effect=Exception):
+            self.assertEquals(get("3"), "expired")
+
+        with mock.patch("requests_cache.core.OriginalSession.send") as send_mock:
+            resp_mock = requests.Response()
+            request = requests.Request("GET", url)
+            resp_mock.request = request.prepare()
+            resp_mock.status_code = 400
+            resp_mock._content = "{}"
+            send_mock.return_value = resp_mock
+            self.assertEquals(get("3"), "expired")
+
+            resp_mock.status_code = 200
+            self.assertIs(s.get(url), resp_mock)
+
+        # default behaviour
+        time_mock.return_value = expire_after * 4
+        s = CachedSession(CACHE_NAME, CACHE_BACKEND, old_data_on_error=False, expire_after=100)
+        with mock.patch.object(s.cache, "save_response", side_effect=Exception):
+            with self.assertRaises(Exception):
+                s.get(url)
 
 
 if __name__ == '__main__':

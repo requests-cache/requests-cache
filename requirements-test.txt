@@ -3,3 +3,4 @@ unittest2
 pymongo
 redis
 requests
+mock
