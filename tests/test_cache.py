@@ -348,12 +348,12 @@ class CacheTestCase(unittest.TestCase):
             request = requests.Request("GET", url)
             resp_mock.request = request.prepare()
             resp_mock.status_code = 400
-            resp_mock._content = "{}"
+            resp_mock._content = '{"other": "content"}'
             send_mock.return_value = resp_mock
             self.assertEquals(get("3"), "expired")
 
             resp_mock.status_code = 200
-            self.assertIs(s.get(url), resp_mock)
+            self.assertIs(s.get(url).content, resp_mock.content)
 
         # default behaviour
         time_mock.return_value = expire_after * 4
