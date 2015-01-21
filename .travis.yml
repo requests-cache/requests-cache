@@ -9,7 +9,7 @@ services:
   - redis-server
 
 install:
-  - "pip install ."
-  - "pip install -r requirements-test.txt"
+  - "pip install --upgrade ."
+  - "pip install --upgrade -r requirements-test.txt"
 
 script: py.test tests
