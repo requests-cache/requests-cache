@@ -26,7 +26,7 @@ Just write:
 
 And all responses with headers and cookies will be transparently cached to
 `demo_cache.sqlite` database. For example, following code will take only
-1-2 seconds instead 10, and will run instantly on next launch:
+1-2 seconds instead of 10, and will run instantly on next launch:
 
 .. code-block:: python
 
