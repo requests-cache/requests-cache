@@ -362,6 +362,21 @@ class CacheTestCase(unittest.TestCase):
             with self.assertRaises(Exception):
                 s.get(url)
 
+    def test_ignore_parameters(self):
+        url = httpbin("get")
+        ignored_param = "ignored"
+        usual_param = "some"
+        s = CachedSession(CACHE_NAME, CACHE_BACKEND, ignored_parameters=[ignored_param])
+
+        params = {ignored_param: "1", usual_param: "1"}
+        s.get(url, params=params)
+        self.assertTrue(s.get(url, params=params).from_cache)
+
+        params[ignored_param] = "new"
+        self.assertTrue(s.get(url, params=params).from_cache)
+
+        params[usual_param] = "new"
+        self.assertFalse(s.get(url, params=params).from_cache)
 
 if __name__ == '__main__':
     unittest.main()
