@@ -3,6 +3,11 @@
 History
 -------
 
+0.4.10 (2015-04-28)
++++++++++++++++++++
+* Better transactional handling in sqlite #50, thanks to @rgant
+* Compatibility with streaming in requests >= 2.6.x
+
 
 0.4.9 (2015-01-17)
 ++++++++++++++++++
