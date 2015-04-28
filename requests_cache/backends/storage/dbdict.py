@@ -6,7 +6,6 @@
 
     Dictionary-like objects for saving large data sets to `sqlite` database
 """
-import logging
 from collections import MutableMapping
 import sqlite3 as sqlite
 from contextlib import contextmanager
@@ -48,10 +47,6 @@ class DbDict(MutableMapping):
         self.filename = filename
         self.table_name = table_name
         self.fast_save = fast_save
-        
-        if self.fast_save:
-            logger = logging.getLogger(__name__)
-            logger.debug('Fast Saves for sqlite')
         
         #: Transactions can be commited if this property is set to `True`
         self.can_commit = True
