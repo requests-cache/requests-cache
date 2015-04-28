@@ -69,26 +69,6 @@ class CacheTestCase(unittest.TestCase):
         with self.assertRaises(ValueError):
             CachedSession(CACHE_NAME, backend='nonexistent')
 
-#    def test_async_compatibility(self):
-#        try:
-#            import grequests
-#        except Exception:
-#            self.skipTest('gevent is not installed')
-#        n = 3
-#        def long_running():
-#            t = time.time()
-#            rs = [grequests.get(httpbin('delay/%s' % i)) for i in range(n + 1)]
-#            grequests.map(rs)
-#            return time.time() - t
-#        # cache it
-#        delta = long_running()
-#        self.assertGreaterEqual(delta, n)
-#        # fast from cache
-#        delta = 0
-#        for i in range(n):
-#            delta += long_running()
-#        self.assertLessEqual(delta, 1)
-
     def test_hooks(self):
         state = defaultdict(int)
         for hook in ('response',):  # TODO it's only one hook here
