@@ -12,4 +12,4 @@ install:
   - "pip install --upgrade ."
   - "pip install --upgrade -r requirements-test.txt"
 
-script: py.test tests
+script: py.test -s -v tests

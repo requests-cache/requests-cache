@@ -12,6 +12,7 @@ except ImportError:
 import time
 import json
 from collections import defaultdict
+from datetime import datetime, timedelta
 
 import mock
 import requests
@@ -305,12 +306,12 @@ class CacheTestCase(unittest.TestCase):
         self.assertIn(CACHE_NAME, s)
         self.assertIn("10", s)
 
-    @mock.patch("time.time")
-    def test_return_old_data_on_error(self, time_mock):
-        time_mock.return_value = 1
+    @mock.patch("requests_cache.core.datetime")
+    def test_return_old_data_on_error(self, datetime_mock):
+        datetime_mock.utcnow.return_value = datetime.utcnow()
         expire_after = 100
         url = httpbin("get")
-        s = CachedSession(CACHE_NAME, CACHE_BACKEND, old_data_on_error=True, expire_after=100)
+        s = CachedSession(CACHE_NAME, CACHE_BACKEND, old_data_on_error=True, expire_after=expire_after)
         header = "X-Tst"
 
         def get(n):
@@ -318,7 +319,7 @@ class CacheTestCase(unittest.TestCase):
 
         get("expired")
         self.assertEquals(get("2"), "expired")
-        time_mock.return_value = expire_after * 2
+        datetime_mock.utcnow.return_value = datetime.utcnow() + timedelta(seconds=expire_after * 2)
 
         with mock.patch.object(s.cache, "save_response", side_effect=Exception):
             self.assertEquals(get("3"), "expired")
@@ -336,7 +337,7 @@ class CacheTestCase(unittest.TestCase):
             self.assertIs(s.get(url).content, resp_mock.content)
 
         # default behaviour
-        time_mock.return_value = expire_after * 4
+        datetime_mock.return_value = datetime.utcnow() + timedelta(seconds=expire_after * 2)
         s = CachedSession(CACHE_NAME, CACHE_BACKEND, old_data_on_error=False, expire_after=100)
         with mock.patch.object(s.cache, "save_response", side_effect=Exception):
             with self.assertRaises(Exception):

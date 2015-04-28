@@ -148,6 +148,8 @@ class BaseCache(object):
             result = _RawStore()
             for field in self._raw_response_attrs:
                 setattr(result, field, getattr(value, field, None))
+            if result._original_response is not None:
+                setattr(result._original_response, "fp", None)  # _io.BufferedReader is not picklable
             value = result
         return value
 

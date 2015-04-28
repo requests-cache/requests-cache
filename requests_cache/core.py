@@ -15,7 +15,7 @@ from requests import Session as OriginalSession
 from requests.hooks import dispatch_hook
 
 from requests_cache import backends
-from requests_cache.compat import str, basestring
+from requests_cache.compat import basestring
 
 try:
     ver = tuple(map(int, requests.__version__.split(".")))
