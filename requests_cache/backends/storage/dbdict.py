@@ -10,7 +10,7 @@ from collections import MutableMapping
 import sqlite3 as sqlite
 from contextlib import contextmanager
 try:
-   import threading
+    import threading
 except ImportError:
     import dummy_threading as threading
 try:
@@ -19,7 +19,6 @@ except ImportError:
     import pickle
 
 from requests_cache.compat import bytes
-
 
 
 class DbDict(MutableMapping):
@@ -122,21 +121,14 @@ class DbDict(MutableMapping):
 
     def __setitem__(self, key, item):
         with self.connection(True) as con:
-            if con.execute("select key from `%s` where key=?" %
-                           self.table_name, (key,)).fetchone():
-                con.execute("update `%s` set value=? where key=?" %
-                            self.table_name, (item, key))
-            else:
-                con.execute("insert into `%s` (key,value) values (?,?)" %
-                            self.table_name, (key, item))
+            con.execute("insert or replace into `%s` (key,value) values (?,?)" %
+                        self.table_name, (key, item))
 
     def __delitem__(self, key):
         with self.connection(True) as con:
-            if con.execute("select key from `%s` where key=?" %
-                           self.table_name, (key,)).fetchone():
-                con.execute("delete from `%s` where key=?" %
-                            self.table_name, (key,))
-            else:
+            cur = con.execute("delete from `%s` where key=?" %
+                              self.table_name, (key,))
+            if not cur.rowcount:
                 raise KeyError
 
     def __iter__(self):
@@ -148,7 +140,7 @@ class DbDict(MutableMapping):
     def __len__(self):
         with self.connection() as con:
             return con.execute("select count(key) from `%s`" %
-                                self.table_name).fetchone()[0]
+                               self.table_name).fetchone()[0]
 
     def clear(self):
         with self.connection(True) as con:
