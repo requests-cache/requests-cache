@@ -6,6 +6,7 @@
 
     Core functions for configuring cache and monkey patching ``requests``
 """
+import collections
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from operator import itemgetter
@@ -264,17 +265,19 @@ def clear():
 def _patch_session_factory(session_factory=CachedSession):
     requests.Session = requests.sessions.Session = session_factory
 
-def _normalize_parameters(params, ignored_parameters=None):
+
+def _normalize_parameters(params, ignored_params=None):
     """ If builtin dict is passed as parameter, returns sorted list
     of key-value pairs
     """
     if type(params) is dict:
         params = sorted(params.items(), key=itemgetter(0))
+    elif isinstance(params, collections.Mapping):
+        params = params.items()
 
-    if ignored_parameters:
+    if ignored_params:
         try:
-            params = [(key, value) for key, value in params \
-                    if key not in ignored_parameters]
+            params = [(k, v) for k, v in params if k not in ignored_params]
         except (AttributeError, ValueError, TypeError):
             pass
     return params
