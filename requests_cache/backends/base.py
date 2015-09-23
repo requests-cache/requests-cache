@@ -14,7 +14,7 @@ from io import BytesIO
 
 import requests
 
-from ..compat import is_py2
+from ..compat import is_py2, urlencode, urlparse, urlunparse, parse_qsl
 
 
 _DEFAULT_HEADERS = requests.utils.default_headers()
@@ -32,6 +32,7 @@ class BaseCache(object):
         #: `key_in_cache` -> `response` mapping
         self.responses = {}
         self._include_get_headers = kwargs.get("include_get_headers", False)
+        self._ignored_parameters = set(kwargs.get("ignored_parameters") or [])
 
     def save_response(self, key, response):
         """ Save response to cache
@@ -170,12 +171,40 @@ class BaseCache(object):
         result.history = tuple(self.restore_response(r, seen) for r in response.history)
         return result
 
+    def _remove_ignored_parameters(self, request):
+
+        def filter_ignored_parameters(data):
+            return [(k, v) for k, v in data if k not in self._ignored_parameters]
+
+        url = urlparse(request.url)
+        query = parse_qsl(url.query)
+        query = filter_ignored_parameters(query)
+        query = urlencode(query)
+        url = urlunparse((url.scheme, url.netloc, url.path, url.params, query, url.fragment))
+        body = request.body
+        content_type = request.headers.get('content-type')
+        if body and content_type:
+            if content_type == 'application/x-www-form-urlencoded':
+                body = parse_qsl(body)
+                body = filter_ignored_parameters(body)
+                body = urlencode(body)
+            elif content_type == 'application/json':
+                import json
+                body = json.loads(body)
+                body = filter_ignored_parameters(sorted(body.items()))
+                body = json.dumps(body)
+        return url, body
+
     def create_key(self, request):
+        if self._ignored_parameters:
+            url, body = self._remove_ignored_parameters(request)
+        else:
+            url, body = request.url, request.body
         key = hashlib.sha256()
         key.update(_to_bytes(request.method.upper()))
-        key.update(_to_bytes(request.url))
+        key.update(_to_bytes(url))
         if request.body:
-            key.update(_to_bytes(request.body))
+            key.update(_to_bytes(body))
         else:
             if self._include_get_headers and request.headers != _DEFAULT_HEADERS:
                 for name, value in sorted(request.headers.items()):
