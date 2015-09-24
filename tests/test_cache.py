@@ -343,14 +343,19 @@ class CacheTestCase(unittest.TestCase):
             with self.assertRaises(Exception):
                 s.get(url)
 
-    def test_ignore_parameters(self):
+    def test_ignore_parameters_get(self):
         url = httpbin("get")
         ignored_param = "ignored"
         usual_param = "some"
-        s = CachedSession(CACHE_NAME, CACHE_BACKEND, ignored_parameters=[ignored_param])
-
         params = {ignored_param: "1", usual_param: "1"}
-        s.get(url, params=params)
+
+        s = CachedSession(CACHE_NAME, CACHE_BACKEND,
+                          ignored_parameters=[ignored_param])
+
+        r = s.get(url, params=params)
+        self.assertIn(ignored_param, r.json()['args'].keys())
+        self.assertFalse(r.from_cache)
+
         self.assertTrue(s.get(url, params=params).from_cache)
 
         params[ignored_param] = "new"
@@ -358,6 +363,65 @@ class CacheTestCase(unittest.TestCase):
 
         params[usual_param] = "new"
         self.assertFalse(s.get(url, params=params).from_cache)
+
+    def test_ignore_parameters_post(self):
+        url = httpbin("post")
+        ignored_param = "ignored"
+        usual_param = "some"
+        d = {ignored_param: "1", usual_param: "1"}
+
+        s = CachedSession(CACHE_NAME, CACHE_BACKEND,
+                          allowable_methods=('POST'),
+                          ignored_parameters=[ignored_param])
+
+        r = s.post(url, data=d)
+        self.assertIn(ignored_param, r.json()['form'].keys())
+        self.assertFalse(r.from_cache)
+
+        self.assertTrue(s.post(url, data=d).from_cache)
+
+        d[ignored_param] = "new"
+        self.assertTrue(s.post(url, data=d).from_cache)
+
+        d[usual_param] = "new"
+        self.assertFalse(s.post(url, data=d).from_cache)
+
+    def test_ignore_parameters_post_json(self):
+        url = httpbin("post")
+        ignored_param = "ignored"
+        usual_param = "some"
+        d = {ignored_param: "1", usual_param: "1"}
+
+        s = CachedSession(CACHE_NAME, CACHE_BACKEND,
+                          allowable_methods=('POST'),
+                          ignored_parameters=[ignored_param])
+
+        r = s.post(url, json=d)
+        self.assertIn(ignored_param, json.loads(r.json()['data']).keys())
+        self.assertFalse(r.from_cache)
+
+        self.assertTrue(s.post(url, json=d).from_cache)
+
+        d[ignored_param] = "new"
+        self.assertTrue(s.post(url, json=d).from_cache)
+
+        d[usual_param] = "new"
+        self.assertFalse(s.post(url, json=d).from_cache)
+
+    def test_ignore_parameters_post_raw(self):
+        url = httpbin("post")
+        ignored_param = "ignored"
+        raw_data = "raw test data"
+
+        s = CachedSession(CACHE_NAME, CACHE_BACKEND,
+                          allowable_methods=('POST'),
+                          ignored_parameters=[ignored_param])
+
+        self.assertFalse(s.post(url, data=raw_data).from_cache)
+        self.assertTrue(s.post(url, data=raw_data).from_cache)
+
+        raw_data = "new raw data"
+        self.assertFalse(s.post(url, data=raw_data).from_cache)
 
 if __name__ == '__main__':
     unittest.main()

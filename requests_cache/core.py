@@ -35,8 +35,7 @@ class CachedSession(OriginalSession):
 
     def __init__(self, cache_name='cache', backend=None, expire_after=None,
                  allowable_codes=(200,), allowable_methods=('GET',),
-                 ignored_parameters=None, old_data_on_error=False,
-                 **backend_options):
+                 old_data_on_error=False, **backend_options):
         """
         :param cache_name: for ``sqlite`` backend: cache file will start with this prefix,
                            e.g ``cache.sqlite``
@@ -80,7 +79,6 @@ class CachedSession(OriginalSession):
 
         self._cache_allowable_codes = allowable_codes
         self._cache_allowable_methods = allowable_methods
-        self._cache_ignored_parameters = ignored_parameters
         self._return_old_data_on_error = old_data_on_error
         self._is_cache_disabled = False
         super(CachedSession, self).__init__()
@@ -128,8 +126,8 @@ class CachedSession(OriginalSession):
     def request(self, method, url, params=None, data=None, **kwargs):
         response = super(CachedSession, self).request(
             method, url,
-            _normalize_parameters(params, self._cache_ignored_parameters),
-            _normalize_parameters(data, self._cache_ignored_parameters),
+            _normalize_parameters(params),
+            _normalize_parameters(data),
             **kwargs
         )
         if self._is_cache_disabled:
@@ -170,7 +168,7 @@ class CachedSession(OriginalSession):
 
 def install_cache(cache_name='cache', backend=None, expire_after=None,
                  allowable_codes=(200,), allowable_methods=('GET',),
-                 session_factory=CachedSession, ignored_parameters=None, **backend_options):
+                 session_factory=CachedSession, **backend_options):
     """
     Installs cache for all ``Requests`` requests by monkey-patching ``Session``
 
@@ -189,7 +187,6 @@ def install_cache(cache_name='cache', backend=None, expire_after=None,
                 expire_after=expire_after,
                 allowable_codes=allowable_codes,
                 allowable_methods=allowable_methods,
-                ignored_parameters=ignored_parameters,
                 **backend_options
             )
 
@@ -266,19 +263,11 @@ def _patch_session_factory(session_factory=CachedSession):
     requests.Session = requests.sessions.Session = session_factory
 
 
-def _normalize_parameters(params, ignored_params=None):
+def _normalize_parameters(params):
     """ If builtin dict is passed as parameter, returns sorted list
     of key-value pairs
     """
     if type(params) is dict:
-        params = sorted(params.items(), key=itemgetter(0))
-    elif isinstance(params, collections.Mapping):
-        params = params.items()
-
-    if ignored_params:
-        try:
-            params = [(k, v) for k, v in params if k not in ignored_params]
-        except (AttributeError, ValueError, TypeError):
-            pass
+        return sorted(params.items(), key=itemgetter(0))
     return params
 
