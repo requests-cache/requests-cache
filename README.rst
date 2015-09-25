@@ -8,9 +8,6 @@ Requests-cache is a transparent persistent cache for requests_ (version >= 1.1.0
 .. image:: https://travis-ci.org/reclosedev/requests-cache.svg?branch=master
     :target: https://travis-ci.org/reclosedev/requests-cache
 
-.. image:: https://pypip.in/version/requests-cache/badge.svg
-    :target: https://pypi.python.org/pypi/requests-cache/
-    :alt: Latest Version
 
 Usage example
 -------------
