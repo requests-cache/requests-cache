@@ -11,7 +11,11 @@ services:
   - redis-server
 
 install:
-  - "pip install --upgrade ."
-  - "pip install --upgrade -r requirements-test.txt"
+  - pip install --upgrade .
+  - pip install --upgrade -r requirements-test.txt
+  - pip install coveralls
 
-script: py.test -s -v tests
+script: py.test -s -v tests --cov request_cache
+
+after_success:
+  coveralls
