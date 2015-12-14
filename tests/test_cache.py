@@ -444,7 +444,7 @@ class CacheTestCase(unittest.TestCase):
         s.remove_expired_responses()
         self.assertEqual(len(s.cache.responses), 1)
         self.assertEqual(len(s.cache.keys_map), 0)
-        self.assertIn(ok_url, s.cache.responses.values()[0][0].url)
+        self.assertIn(ok_url, list(s.cache.responses.values())[0][0].url)
 
 
 if __name__ == '__main__':
