@@ -17,6 +17,12 @@ or download latest version from version control::
     cd requests-cache
     python setup.py install
 
+
+.. warning:: Version updates of ``requests``, ``urllib3`` or ``requests_cache`` itself can break existing
+            cache database (see https://github.com/reclosedev/requests-cache/issues/56 ).
+            So if your code relies on cache, or is expensive in terms of time and traffic, please be sure to use
+            something like ``virtualenv`` and pin your requirements.
+
 .. _pip: http://pypi.python.org/pypi/pip/
 .. _easy_install: http://pypi.python.org/pypi/setuptools
 
