@@ -101,6 +101,21 @@ class BaseCache(object):
         self.responses.clear()
         self.keys_map.clear()
 
+    def remove_old_entries(self, created_before):
+        """ Deletes entries from cache with creation time older than ``created_before``
+        """
+        keys_to_delete = set()
+        for key in self.responses:
+            try:
+                response, created_at = self.responses[key]
+            except KeyError:
+                continue
+            if created_at < created_before:
+                keys_to_delete.add(key)
+
+        for key in keys_to_delete:
+            self.delete(key)
+
     def has_key(self, key):
         """ Returns `True` if cache has `key`, `False` otherwise
         """

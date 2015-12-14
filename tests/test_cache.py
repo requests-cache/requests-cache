@@ -423,5 +423,29 @@ class CacheTestCase(unittest.TestCase):
         raw_data = "new raw data"
         self.assertFalse(s.post(url, data=raw_data).from_cache)
 
+    @mock.patch("requests_cache.backends.base.datetime")
+    @mock.patch("requests_cache.core.datetime")
+    def test_remove_expired_entries(self, datetime_mock, datetime_mock2):
+        expire_after = timedelta(minutes=10)
+        start_time = datetime.utcnow().replace(year=2010, minute=0)
+        datetime_mock.utcnow.return_value = start_time
+        datetime_mock2.utcnow.return_value = start_time
+
+        s = CachedSession(CACHE_NAME, CACHE_BACKEND, expire_after=expire_after)
+        s.get(httpbin('get'))
+        s.get(httpbin('relative-redirect/3'))
+        datetime_mock.utcnow.return_value = start_time + expire_after * 2
+        datetime_mock2.utcnow.return_value = datetime_mock.utcnow.return_value
+
+        ok_url = 'get?x=1'
+        s.get(httpbin(ok_url))
+        self.assertEqual(len(s.cache.responses), 3)
+        self.assertEqual(len(s.cache.keys_map), 3)
+        s.remove_expired_responses()
+        self.assertEqual(len(s.cache.responses), 1)
+        self.assertEqual(len(s.cache.keys_map), 0)
+        self.assertIn(ok_url, s.cache.responses.values()[0][0].url)
+
+
 if __name__ == '__main__':
     unittest.main()

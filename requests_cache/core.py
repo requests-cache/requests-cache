@@ -6,7 +6,6 @@
 
     Core functions for configuring cache and monkey patching ``requests``
 """
-import collections
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from operator import itemgetter
@@ -156,6 +155,13 @@ class CachedSession(OriginalSession):
         finally:
             self._is_cache_disabled = False
 
+    def remove_expired_responses(self):
+        """ Removes expired responses from storage
+        """
+        if not self._cache_expire_after:
+            return
+        self.cache.remove_old_entries(datetime.utcnow() - self._cache_expire_after)
+
     def __repr__(self):
         return (
             "<CachedSession(%s('%s', ...), expire_after=%s, "
@@ -259,6 +265,12 @@ def clear():
     get_cache().clear()
 
 
+def remove_expired_responses():
+    """ Removes expired responses from storage
+    """
+    return requests.Session().remove_expired_responses()
+
+
 def _patch_session_factory(session_factory=CachedSession):
     requests.Session = requests.sessions.Session = session_factory
 
@@ -270,4 +282,3 @@ def _normalize_parameters(params):
     if type(params) is dict:
         return sorted(params.items(), key=itemgetter(0))
     return params
-
