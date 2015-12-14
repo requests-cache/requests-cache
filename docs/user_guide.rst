@@ -138,5 +138,27 @@ List of available backends:
 You can write your own and pass instance to :func:`install_cache` or :class:`CachedSession` constructor.
 See :ref:`cache_backends` API documentation and sources.
 
+.. _expiration:
 
-For more information see :doc:`API reference <api>` .
+Expiration
+----------
+
+If you are using cache with ``expire_after`` parameter set, responses are removed from the storage only when the same
+request is made. Since the store sizes can get out of control pretty quickly with expired items
+you can remove them using :func:`remove_expired_responses`
+or :meth:`BaseCache.remove_old_entries(created_before) <requests_cache.backends.base.BaseCache.remove_old_entries>`.
+::
+
+    expire_after = timedelta(hours=1)
+    requests_cache.install_cache(expire_after=expire_after)
+    ...
+    requests_cache.remove_expired_responses()
+    # or
+    remove_old_entries.get_cache().remove_old_entries(datetime.utcnow() - expire_after)
+    # when used as session
+    session = CachedSession(..., expire_after=expire_after)
+    ...
+    session.cache.remove_old_entries(datetime.utcnow() - expire_after)
+
+
+For more information see :doc:`API reference <api>`.
