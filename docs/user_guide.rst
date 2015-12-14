@@ -126,30 +126,11 @@ List of available backends:
 
 - ``'sqlite'``  - sqlite database (**default**)
 - ``'memory'``  - not persistent,  stores all data in Python ``dict`` in memory
-- ``'mongodb'`` - (**experimental**) MongoDB database (``pymongo`` required)
+- ``'mongodb'`` - (**experimental**) MongoDB database (``pymongo < 3.0`` required)
 - ``'redis'``   - stores all data on a redis data store (``redis`` required)
-
-  .. note:: ``pymongo`` doesn't work fine with `gevent <http://www.gevent.org/>`_ which powers `grequests <https://github.com/kennethreitz/grequests>`_,
-            but there is some workarounds, see question on
-            `StackOverflow <http://stackoverflow.com/questions/7166998/pymongo-gevent-throw-me-a-banana-and-just-monkey-patch>`_.
 
 You can write your own and pass instance to :func:`install_cache` or :class:`CachedSession` constructor.
 See :ref:`cache_backends` API documentation and sources.
 
-
-.. _incompatible_changes:
-
-Backward incompatible changes
------------------------------
-
-There is backward incompatible changes introduced in version 0.3.0:
-
-* `expire_after` is now seconds
-* UTC time in cache
-* Storage backends are now using hash for keys
-* Renamed methods in backends
-
-
-----------------------
 
 For more information see :doc:`API reference <api>` .
