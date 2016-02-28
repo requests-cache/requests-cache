@@ -14,6 +14,12 @@ registry = {
     'memory': BaseCache,
 }
 
+_backend_dependencies = {
+    'sqlite': 'sqlite3',
+    'mongo': 'pymongo',
+    'redis': 'redis'
+}
+
 try:
     # Heroku doesn't allow the SQLite3 module to be installed
     from .sqlite import DbCache
@@ -40,11 +46,16 @@ def create_backend(backend_name, cache_name, options):
     try:
         return registry[backend_name](cache_name, **options)
     except KeyError:
-        raise ValueError('Unsupported backend "%s" try one of: %s' %
-                         (backend_name, ', '.join(registry.keys())))
+        if backend_name in _backend_dependencies:
+            raise ImportError('You must install the python package: %s' %
+                             _backend_dependencies[backend_name])
+        else:
+            raise ValueError('Unsupported backend "%s" try one of: %s' %
+                             (backend_name, ', '.join(registry.keys())))
 
 
 def _get_default_backend_name():
     if 'sqlite' in registry:
         return 'sqlite'
     return 'memory'
+
