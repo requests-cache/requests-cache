@@ -70,6 +70,15 @@ class CacheTestCase(unittest.TestCase):
         with self.assertRaises(ValueError):
             CachedSession(CACHE_NAME, backend='nonexistent')
 
+    @mock.patch('requests_cache.backends.registry')
+    def test_missing_backend_dependency(self, mocked_registry):
+        # Testing that the correct error is thrown when a user does not have
+        # the Python package `redis` installed.  We mock out the registry
+        # to simulate `redis` not being installed.
+        mocked_registry.__getitem__.side_effect = KeyError
+        with self.assertRaises(ImportError):
+            CachedSession(CACHE_NAME, backend='redis')
+
     def test_hooks(self):
         state = defaultdict(int)
         for hook in ('response',):  # TODO it's only one hook here
