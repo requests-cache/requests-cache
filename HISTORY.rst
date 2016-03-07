@@ -3,6 +3,12 @@
 History
 -------
 
+0.4.11 (2016-03-07)
++++++++++++++++++++
+* ``ignore_parameters`` feature, thanks to @themiurgo and @YetAnotherNerd (#52, #55)
+* More informative message for missing backend dependencies, thanks to @Garrett-R (#60)
+
+
 0.4.10 (2015-04-28)
 +++++++++++++++++++
 * Better transactional handling in sqlite #50, thanks to @rgant
