@@ -14,6 +14,8 @@ from requests.sessions import Session as OriginalSession
 
 import requests_cache
 from requests_cache import CachedSession
+from requests_cache.backends import BaseCache
+
 
 CACHE_NAME = 'requests_cache_test'
 CACHE_BACKEND = 'sqlite'
@@ -65,6 +67,18 @@ class MonkeyPatchTestCase(unittest.TestCase):
         self.assertEquals(s.param, 1)
         self.assertIn("new_one", s.__attrs__)
         self.assertTrue(isinstance(s, CachedSession))
+
+    def test_passing_backend_instance_support(self):
+
+        class MyCache(BaseCache):
+            pass
+
+        backend = MyCache()
+        requests_cache.install_cache(name=CACHE_NAME, backend=backend)
+        self.assertIs(requests.Session().cache, backend)
+
+        session = CachedSession(backend=backend)
+        self.assertIs(session.cache, backend)
 
 
 if __name__ == '__main__':

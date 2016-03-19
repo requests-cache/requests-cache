@@ -65,11 +65,7 @@ class CachedSession(OriginalSession):
                                    credentials or access tokens, passed as parameters.
         :param old_data_on_error: If `True` it will return expired cached response if update fails
         """
-        if backend is None or isinstance(backend, basestring):
-            self.cache = backends.create_backend(backend, cache_name,
-                                                 backend_options)
-        else:
-            self.cache = backend
+        self.cache = backends.create_backend(backend, cache_name, backend_options)
         self._cache_name = cache_name
 
         if expire_after is not None and not isinstance(expire_after, timedelta):
@@ -173,8 +169,8 @@ class CachedSession(OriginalSession):
 
 
 def install_cache(cache_name='cache', backend=None, expire_after=None,
-                 allowable_codes=(200,), allowable_methods=('GET',),
-                 session_factory=CachedSession, **backend_options):
+                  allowable_codes=(200,), allowable_methods=('GET',),
+                  session_factory=CachedSession, **backend_options):
     """
     Installs cache for all ``Requests`` requests by monkey-patching ``Session``
 

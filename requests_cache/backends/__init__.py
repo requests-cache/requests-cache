@@ -41,6 +41,9 @@ except ImportError:
 
 
 def create_backend(backend_name, cache_name, options):
+    if isinstance(backend_name, BaseCache):
+        return backend_name
+
     if backend_name is None:
         backend_name = _get_default_backend_name()
     try:
@@ -48,7 +51,7 @@ def create_backend(backend_name, cache_name, options):
     except KeyError:
         if backend_name in _backend_dependencies:
             raise ImportError('You must install the python package: %s' %
-                             _backend_dependencies[backend_name])
+                              _backend_dependencies[backend_name])
         else:
             raise ValueError('Unsupported backend "%s" try one of: %s' %
                              (backend_name, ', '.join(registry.keys())))
@@ -58,4 +61,3 @@ def _get_default_backend_name():
     if 'sqlite' in registry:
         return 'sqlite'
     return 'memory'
-
