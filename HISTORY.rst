@@ -3,6 +3,11 @@
 History
 -------
 
+0.4.12 (2016-03-19)
++++++++++++++++++++
+* Fix ability to pass backend instance in ``install_cache`` #61
+
+
 0.4.11 (2016-03-07)
 +++++++++++++++++++
 * ``ignore_parameters`` feature, thanks to @themiurgo and @YetAnotherNerd (#52, #55)
