@@ -100,9 +100,9 @@ It can be used, for example, for request throttling with help of ``requests`` ho
             Returns a response hook function which sleeps for `timeout` seconds if
             response is not cached
             """
-            def hook(response):
+            def hook(response, *args, **kwargs):
                 if not getattr(response, 'from_cache', False):
-                    print 'sleeping'
+                    print('sleeping')
                     time.sleep(timeout)
                 return response
             return hook
