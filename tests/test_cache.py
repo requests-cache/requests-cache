@@ -26,10 +26,7 @@ CACHE_BACKEND = 'sqlite'
 CACHE_NAME = 'requests_cache_test'
 FAST_SAVE = False
 
-if 'HTTPBIN_URL' not in os.environ:
-    os.environ['HTTPBIN_URL'] = 'http://httpbin.org/'
-
-HTTPBIN_URL = os.environ.get('HTTPBIN_URL')
+HTTPBIN_URL = os.getenv('HTTPBIN_URL', 'http://httpbin.org/')
 
 
 def httpbin(*suffix):
