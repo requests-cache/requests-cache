@@ -283,14 +283,18 @@ class CacheTestCase(unittest.TestCase):
         n = 100
         url = httpbin("stream/%s" % n)
         r = self.s.get(url, stream=True)
+        first_char = r.raw.read(1)
         lines = list(r.iter_lines())
+        self.assertTrue(first_char)
         self.assertEquals(len(lines), n)
 
         for i in range(2):
             r = self.s.get(url, stream=True)
+            first_char_cached = r.raw.read(1)
             self.assertTrue(r.from_cache)
             cached_lines = list(r.iter_lines())
             self.assertEquals(cached_lines, lines)
+            self.assertEquals(first_char, first_char_cached)
 
     def test_headers_in_get_query(self):
         url = httpbin("get")

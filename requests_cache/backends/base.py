@@ -148,11 +148,14 @@ class BaseCache(object):
             pass
         result = _Store()
         # prefetch
-        response.content
+        content = response.content
         for field in self._response_attrs:
             setattr(result, field, self._picklable_field(response, field))
         seen[id(response)] = result
         result.history = tuple(self.reduce_response(r, seen) for r in response.history)
+        # Emulate stream fp is not consumed yet. See #68
+        if response.raw is not None:
+            response.raw._fp = BytesIO(content)
         return result
 
     def _picklable_field(self, response, name):
