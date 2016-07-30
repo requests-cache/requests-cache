@@ -44,7 +44,7 @@ class CacheTestCase(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         super(CacheTestCase, cls).tearDownClass()
-        filename = "{}.{}".format(CACHE_NAME, CACHE_BACKEND)
+        filename = "{0}.{1}".format(CACHE_NAME, CACHE_BACKEND)
         if os.path.exists(filename):
             try:
                 os.unlink(filename)
