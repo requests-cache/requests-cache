@@ -41,6 +41,16 @@ class CacheTestCase(unittest.TestCase):
         self.s.cache.clear()
         requests_cache.uninstall_cache()
 
+    @classmethod
+    def tearDownClass(cls):
+        super(CacheTestCase, cls).tearDownClass()
+        filename = "{}.{}".format(CACHE_NAME, CACHE_BACKEND)
+        if os.path.exists(filename):
+            try:
+                os.unlink(filename)
+            except OSError:
+                pass
+
     def test_expire_cache(self):
         delay = 1
         url = httpbin('delay/%s' % delay)
