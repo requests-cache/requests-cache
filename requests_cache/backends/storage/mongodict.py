@@ -6,13 +6,18 @@
 
     Dictionary-like objects for saving large data sets to ``mongodb`` database
 """
+
 from collections import MutableMapping
 try:
     import cPickle as pickle
 except ImportError:
     import pickle
 
-from pymongo import Connection
+# Use PyMongo 3 if present
+try:
+    from pymongo import MongoClient
+except AttributeError:
+    from pymongo import Connection as MongoClient
 
 
 class MongoDict(MutableMapping):
@@ -30,7 +35,7 @@ class MongoDict(MutableMapping):
         if connection is not None:
             self.connection = connection
         else:
-            self.connection = Connection()
+            self.connection = MongoClient()
         self.db = self.connection[db_name]
         self.collection = self.db[collection_name]
 
@@ -45,7 +50,7 @@ class MongoDict(MutableMapping):
 
     def __delitem__(self, key):
         spec = {'_id': key}
-        if self.collection.find_one(spec, fields=['_id']):
+        if self.collection.find_one(spec, {'_id': True}):
             self.collection.remove(spec)
         else:
             raise KeyError
@@ -54,7 +59,7 @@ class MongoDict(MutableMapping):
         return self.collection.count()
 
     def __iter__(self):
-        for d in self.collection.find(fields=['_id']):
+        for d in self.collection.find({}, {'_id': True}):
             yield d['_id']
 
     def clear(self):
@@ -62,7 +67,6 @@ class MongoDict(MutableMapping):
 
     def __str__(self):
         return str(dict(self.items()))
-
 
 class MongoPickleDict(MongoDict):
     """ Same as :class:`MongoDict`, but pickles values before saving
