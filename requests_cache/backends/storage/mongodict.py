@@ -6,14 +6,28 @@
 
     Dictionary-like objects for saving large data sets to ``mongodb`` database
 """
+import pymongo
+
 from collections import MutableMapping
 try:
     import cPickle as pickle
 except ImportError:
     import pickle
 
-from pymongo import Connection
+def is_pymongo_v3():
+    """
+    Determine which version of pymongo is present
+    """
+    return int(pymongo.version[0]) > 2
 
+def create_mongo_client():
+    """
+    Create a mongo connection
+    """
+    if is_pymongo_v3():
+        return pymongo.MongoClient()
+    else:
+        return pymongo.Connection()
 
 class MongoDict(MutableMapping):
     """ MongoDict - a dictionary-like interface for ``mongo`` database
@@ -30,9 +44,10 @@ class MongoDict(MutableMapping):
         if connection is not None:
             self.connection = connection
         else:
-            self.connection = Connection()
+            self.connection = create_mongo_client()
         self.db = self.connection[db_name]
         self.collection = self.db[collection_name]
+        self.projection = 'projection' if is_pymongo_v3() else 'fields'
 
     def __getitem__(self, key):
         result = self.collection.find_one({'_id': key})
@@ -45,7 +60,7 @@ class MongoDict(MutableMapping):
 
     def __delitem__(self, key):
         spec = {'_id': key}
-        if self.collection.find_one(spec, fields=['_id']):
+        if self.collection.find_one(spec, **{self.projection: ['_id']}):
             self.collection.remove(spec)
         else:
             raise KeyError
@@ -54,7 +69,7 @@ class MongoDict(MutableMapping):
         return self.collection.count()
 
     def __iter__(self):
-        for d in self.collection.find(fields=['_id']):
+        for d in self.collection.find(**{self.projection: ['_id']}):
             yield d['_id']
 
     def clear(self):
@@ -62,7 +77,6 @@ class MongoDict(MutableMapping):
 
     def __str__(self):
         return str(dict(self.items()))
-
 
 class MongoPickleDict(MongoDict):
     """ Same as :class:`MongoDict`, but pickles values before saving
