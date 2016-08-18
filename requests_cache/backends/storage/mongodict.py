@@ -50,9 +50,12 @@ class MongoDict(MutableMapping):
 
     def __delitem__(self, key):
         spec = {'_id': key}
-        if self.collection.find_one(spec, {'_id': True}):
-            self.collection.remove(spec)
+        if hasattr(self.collection, "find_one_and_delete"):
+            res = self.collection.find_one_and_delete(spec, {'_id': True})
         else:
+            res = self.collection.find_and_modify(spec, remove=True, fields={'_id': True})
+
+        if res is None:
             raise KeyError
 
     def __len__(self):
@@ -67,6 +70,7 @@ class MongoDict(MutableMapping):
 
     def __str__(self):
         return str(dict(self.items()))
+
 
 class MongoPickleDict(MongoDict):
     """ Same as :class:`MongoDict`, but pickles values before saving
