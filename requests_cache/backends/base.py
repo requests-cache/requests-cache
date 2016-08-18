@@ -14,7 +14,7 @@ from io import BytesIO
 
 import requests
 
-from ..compat import is_py2, urlencode, urlparse, urlunparse, parse_qsl
+from ..compat import is_py2, urlencode, urlparse, urlunparse, parse_qsl, bytes, str
 
 
 _DEFAULT_HEADERS = requests.utils.default_headers()
@@ -208,6 +208,8 @@ class BaseCache(object):
                 body = urlencode(body)
             elif content_type == 'application/json':
                 import json
+                if not is_py2 and isinstance(body, bytes):
+                    body = str(body, "utf8")  # TODO how to get body encoding?
                 body = json.loads(body)
                 body = filter_ignored_parameters(sorted(body.items()))
                 body = json.dumps(body)
