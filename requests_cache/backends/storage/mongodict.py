@@ -16,7 +16,7 @@ except ImportError:
 # Use PyMongo 3 if present
 try:
     from pymongo import MongoClient
-except AttributeError:
+except ImportError:
     from pymongo import Connection as MongoClient
 
 
