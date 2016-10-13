@@ -50,7 +50,7 @@ take a look at `httpcache <https://github.com/Lukasa/httpcache>`_ and
 Links
 -----
 
-- **Documentation** at `readthedocs.org <http://readthedocs.org/docs/requests-cache/>`_
+- **Documentation** at `readthedocs.org <https://requests-cache.readthedocs.io/>`_
 
 - **Source code and issue tracking** at `GitHub <https://github.com/reclosedev/requests-cache>`_.
 
