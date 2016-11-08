@@ -81,17 +81,17 @@ class CachedSession(OriginalSession):
     def send(self, request, **kwargs):
         if (self._is_cache_disabled
             or request.method not in self._cache_allowable_methods):
-            response = super(CachedSession, self).send(request, **kwargs)
             response.from_cache = False
+            response = super(CachedSession, self).send(request, **kwargs)
             return response
 
         cache_key = self.cache.create_key(request)
 
         def send_request_and_cache_response():
+            response.from_cache = False
             response = super(CachedSession, self).send(request, **kwargs)
             if response.status_code in self._cache_allowable_codes:
                 self.cache.save_response(cache_key, response)
-            response.from_cache = False
             return response
 
         response, timestamp = self.cache.get_response_and_time(cache_key)
