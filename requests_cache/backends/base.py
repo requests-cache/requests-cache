@@ -105,7 +105,7 @@ class BaseCache(object):
         """ Deletes entries from cache with creation time older than ``created_before``
         """
         keys_to_delete = set()
-        for key in self.responses:
+        for key in self.responses.keys():
             try:
                 response, created_at = self.responses[key]
             except KeyError:
