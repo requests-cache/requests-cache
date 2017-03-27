@@ -10,7 +10,7 @@ from sys import version_info
 from collections import MutableMapping
 import sqlite3 as sqlite
 from contextlib import contextmanager
-if version_info.major < 3:
+if version_info[0] < 3:
     try:
         import threading
     except ImportError:
