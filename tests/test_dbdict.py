@@ -18,6 +18,8 @@ class DbdictTestCase(BaseCustomDictTestCase, unittest.TestCase):
 
     def test_bulk_commit(self):
         d = DbDict(self.NAMESPACE, self.TABLES[0])
+        with d.bulk_commit():
+            pass
         d.clear()
         n = 1000
         with d.bulk_commit():

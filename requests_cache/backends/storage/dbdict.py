@@ -108,8 +108,9 @@ class DbDict(MutableMapping):
         finally:
             self._bulk_commit = False
             self.can_commit = True
-            self._pending_connection.close()
-            self._pending_connection = None
+            if self._pending_connection is not None:
+                self._pending_connection.close()
+                self._pending_connection = None
 
     def __getitem__(self, key):
         with self.connection() as con:
