@@ -33,6 +33,13 @@ try:
 except ImportError:
     MongoCache = None
 
+
+try:
+    from .gridfs import GridFSCache
+    registry['gridfs'] = GridFSCache
+except ImportError:
+    GridFSCache = None
+
 try:
     from .redis import RedisCache
     registry['redis'] = RedisCache
