@@ -230,6 +230,7 @@ class CacheTestCase(unittest.TestCase):
             r = self.s.get(httpbin('get'), params=p)
             self.assert_(self.s.cache.has_url( httpbin('get?arg1=value1')))
 
+    @unittest.skipIf(sys.version_info < (2, 7), "No https in 2.6")
     def test_https_support(self):
         n = 10
         delay = 1
