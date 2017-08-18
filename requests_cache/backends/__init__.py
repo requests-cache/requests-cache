@@ -53,6 +53,13 @@ try:
 except ImportError:
     DynamoDbCache = None
 
+try:
+    from .filesystem import FilesystemCache
+    registry['filesystem'] = FilesystemCache
+except ImportError:
+    FilesystemCache = None
+
+
 def create_backend(backend_name, cache_name, options):
     if isinstance(backend_name, BaseCache):
         return backend_name
