@@ -34,13 +34,14 @@ class CachedSession(OriginalSession):
 
     def __init__(self, cache_name='cache', backend=None, expire_after=None,
                  allowable_codes=(200,), allowable_methods=('GET',),
-                 old_data_on_error=False, **backend_options):
+                 filter_fn=lambda r: True, old_data_on_error=False,
+                 **backend_options):
         """
         :param cache_name: for ``sqlite`` backend: cache file will start with this prefix,
                            e.g ``cache.sqlite``
 
                            for ``mongodb``: it's used as database name
-                           
+
                            for ``redis``: it's used as the namespace. This means all keys
                            are prefixed with ``'cache_name:'``
         :param backend: cache backend name e.g ``'sqlite'``, ``'mongodb'``, ``'redis'``, ``'memory'``.
@@ -54,8 +55,12 @@ class CachedSession(OriginalSession):
         :type allowable_codes: tuple
         :param allowable_methods: cache only requests of this methods (default: 'GET')
         :type allowable_methods: tuple
+        :param filter_fn: function to apply to each response; the response is only cached if
+                          this returns `True`. Note that this function does not not modify
+                          the cached response in any way.
+        :type filter_fn: function
         :kwarg backend_options: options for chosen backend. See corresponding
-                                :ref:`sqlite <backends_sqlite>`, :ref:`mongo <backends_mongo>` 
+                                :ref:`sqlite <backends_sqlite>`, :ref:`mongo <backends_mongo>`
                                 and :ref:`redis <backends_redis>` backends API documentation
         :param include_get_headers: If `True` headers will be part of cache key.
                                     E.g. after get('some_link', headers={'Accept':'application/json'})
@@ -74,6 +79,7 @@ class CachedSession(OriginalSession):
 
         self._cache_allowable_codes = allowable_codes
         self._cache_allowable_methods = allowable_methods
+        self._filter_fn = filter_fn
         self._return_old_data_on_error = old_data_on_error
         self._is_cache_disabled = False
         super(CachedSession, self).__init__()
@@ -129,6 +135,11 @@ class CachedSession(OriginalSession):
             return response
 
         main_key = self.cache.create_key(response.request)
+
+        if not response.from_cache and self._filter_fn(response) is not True:
+            self.cache.delete(main_key)
+            return response
+
         for r in response.history:
             self.cache.add_key_mapping(
                 self.cache.create_key(r.request), main_key
@@ -170,7 +181,8 @@ class CachedSession(OriginalSession):
 
 def install_cache(cache_name='cache', backend=None, expire_after=None,
                   allowable_codes=(200,), allowable_methods=('GET',),
-                  session_factory=CachedSession, **backend_options):
+                  filter_fn=lambda r: True, session_factory=CachedSession,
+                  **backend_options):
     """
     Installs cache for all ``Requests`` requests by monkey-patching ``Session``
 
@@ -189,6 +201,7 @@ def install_cache(cache_name='cache', backend=None, expire_after=None,
                 expire_after=expire_after,
                 allowable_codes=allowable_codes,
                 allowable_methods=allowable_methods,
+                filter_fn=filter_fn,
                 **backend_options
             )
 
