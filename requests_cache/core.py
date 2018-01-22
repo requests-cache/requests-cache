@@ -136,7 +136,10 @@ class CachedSession(OriginalSession):
 
         main_key = self.cache.create_key(response.request)
 
-        if not response.from_cache and self._filter_fn(response) is not True:
+        # If self._return_old_data_on_error is set,
+        # responses won't always have the from_cache attribute.
+        if (hasattr(response, "from_cache") and not response.from_cache
+            and self._filter_fn(response) is not True):
             self.cache.delete(main_key)
             return response
 
