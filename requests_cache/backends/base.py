@@ -226,9 +226,9 @@ class BaseCache(object):
         if request.body:
             key.update(_to_bytes(body))
         if self._include_headers and request.headers != _DEFAULT_HEADERS:
-                for name, value in sorted(request.headers.items()):
-                    key.update(_to_bytes(name))
-                    key.update(_to_bytes(value))
+            for name, value in sorted(request.headers.items()):
+                key.update(_to_bytes(name))
+                key.update(_to_bytes(value))
         return key.hexdigest()
 
     def __str__(self):
