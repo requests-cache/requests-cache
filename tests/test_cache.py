@@ -306,7 +306,7 @@ class CacheTestCase(unittest.TestCase):
 
     def test_headers_in_get_query(self):
         url = httpbin("get")
-        s = CachedSession(CACHE_NAME, CACHE_BACKEND, include_get_headers=True)
+        s = CachedSession(CACHE_NAME, CACHE_BACKEND, include_headers=True)
         headers = {"Accept": "text/json"}
         self.assertFalse(s.get(url, headers=headers).from_cache)
         self.assertTrue(s.get(url, headers=headers).from_cache)

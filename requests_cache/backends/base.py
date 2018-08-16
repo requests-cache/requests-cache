@@ -31,7 +31,7 @@ class BaseCache(object):
         self.keys_map = {}
         #: `key_in_cache` -> `response` mapping
         self.responses = {}
-        self._include_get_headers = kwargs.get("include_get_headers", False)
+        self._include_headers = kwargs.get("include_headers", False)
         self._ignored_parameters = set(kwargs.get("ignored_parameters") or [])
 
     def save_response(self, key, response):
@@ -225,8 +225,7 @@ class BaseCache(object):
         key.update(_to_bytes(url))
         if request.body:
             key.update(_to_bytes(body))
-        else:
-            if self._include_get_headers and request.headers != _DEFAULT_HEADERS:
+        if self._include_headers and request.headers != _DEFAULT_HEADERS:
                 for name, value in sorted(request.headers.items()):
                     key.update(_to_bytes(name))
                     key.update(_to_bytes(value))

@@ -57,7 +57,7 @@ class CachedSession(OriginalSession):
         :kwarg backend_options: options for chosen backend. See corresponding
                                 :ref:`sqlite <backends_sqlite>`, :ref:`mongo <backends_mongo>` 
                                 and :ref:`redis <backends_redis>` backends API documentation
-        :param include_get_headers: If `True` headers will be part of cache key.
+        :param include_headers: If `True` headers will be part of cache key.
                                     E.g. after get('some_link', headers={'Accept':'application/json'})
                                     get('some_link', headers={'Accept':'application/xml'}) is not from cache.
         :param ignored_parameters: List of parameters to be excluded from the cache key.
