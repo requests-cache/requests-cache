@@ -32,7 +32,14 @@ And all responses with headers and cookies will be transparently cached to
 
     for i in range(10):
         requests.get('http://httpbin.org/delay/1')
-    
+
+We can test if a request was from the cache:
+
+.. code-block:: python
+
+    r = requests.get('http://jasonrigden.com')
+    print(r.from_cache)
+
 It can be useful when you are creating some simple data scraper with constantly
 changing parsing logic or data format, and don't want to redownload pages or
 write complex error handling and persistence.
