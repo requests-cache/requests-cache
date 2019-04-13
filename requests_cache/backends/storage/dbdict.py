@@ -6,7 +6,11 @@
 
     Dictionary-like objects for saving large data sets to `sqlite` database
 """
-from collections import MutableMapping
+try:
+    from collections.abc import MutableMapping
+except ImportError:
+    from collections import MutableMapping
+
 import sqlite3 as sqlite
 from contextlib import contextmanager
 try:
