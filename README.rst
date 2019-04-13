@@ -11,6 +11,10 @@ Requests-cache is a transparent persistent cache for requests_ (version >= 1.1.0
 .. image:: https://coveralls.io/repos/reclosedev/requests-cache/badge.svg?branch=master&service=github
     :target: https://coveralls.io/github/reclosedev/requests-cache?branch=master
 
+.. image:: https://www.codeshelter.co/static/badges/badge-flat.svg
+    :target: https://www.codeshelter.co/
+    :alt: Code Shelter
+
 
 Usage example
 -------------
