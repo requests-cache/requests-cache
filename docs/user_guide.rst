@@ -152,7 +152,7 @@ or :meth:`BaseCache.remove_old_entries(created_before) <requests_cache.backends.
     expire_after = timedelta(hours=1)
     requests_cache.install_cache(expire_after=expire_after)
     ...
-    requests_cache.remove_expired_responses()
+    requests_cache.core.remove_expired_responses()
     # or
     remove_old_entries.get_cache().remove_old_entries(datetime.utcnow() - expire_after)
     # when used as session
