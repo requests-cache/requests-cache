@@ -20,7 +20,7 @@ setup(
     packages=['requests_cache',
               'requests_cache.backends',
               'requests_cache.backends.storage'],
-    version='0.4.13',
+    version='0.5.0',
     description='Persistent cache for requests library',
     author='Roman Haritonov',
     author_email='reclosedev@gmail.com',

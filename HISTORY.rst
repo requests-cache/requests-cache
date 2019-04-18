@@ -3,6 +3,18 @@
 History
 -------
 
+0.5.0 (2019-04-18)
+++++++++++++++++++
+Project is now added to https://www.codeshelter.co/
+
+* Add gridfs support, thanks to @chengguangnan 
+* Add dynamodb support, thanks to @ar90n
+* Add response filter #104, thanks to @christopher-dG
+* Fix bulk_commit #78
+* Fix remove_expired_responses missed in __init__.py #93
+* Fix deprecation warnings #122, thanks to mbarkhau 
+
+
 0.4.13 (2016-12-23)
 +++++++++++++++++++
 * Support PyMongo3, thanks to @craigls #72
