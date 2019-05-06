@@ -3,8 +3,6 @@
 """
 pythoncompat
 """
-
-
 import sys
 
 # -------
@@ -89,7 +87,6 @@ if is_py2:
     basestring = basestring
 
 
-
 elif is_py3:
     from urllib.parse import urlparse, urlunparse, urljoin, urlsplit, urlencode, quote, unquote, parse_qsl
     from urllib.request import parse_http_list
@@ -100,4 +97,3 @@ elif is_py3:
     str = str
     bytes = bytes
     basestring = (str,bytes)
-
