@@ -100,7 +100,11 @@ class CachedSession(OriginalSession):
             response.from_cache = False
             return response
 
-        response, timestamp = self.cache.get_response_and_time(cache_key)
+        try:
+            response, timestamp = self.cache.get_response_and_time(cache_key)
+        except (ImportError, TypeError):
+            return send_request_and_cache_response()
+
         if response is None:
             return send_request_and_cache_response()
 
