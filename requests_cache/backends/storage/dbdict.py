@@ -22,7 +22,7 @@ try:
 except ImportError:
     import pickle
 
-from requests_cache.compat import bytes
+from ...compat import bytes
 
 
 class DbDict(MutableMapping):
