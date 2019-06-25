@@ -467,6 +467,17 @@ class CacheTestCase(unittest.TestCase):
         self.assertEqual(len(s.cache.keys_map), 0)
         self.assertIn(ok_url, list(s.cache.responses.values())[0][0].url)
 
+    def test_cache_unpickle_errors(self):
+        url = httpbin('get?q=1')
+        self.assertFalse(self.s.get(url).from_cache)
+        with mock.patch("requests_cache.backends.base.BaseCache.restore_response", side_effect=TypeError):
+            resp = self.s.get(url)
+            self.assertFalse(resp.from_cache)
+            self.assertEquals(resp.json()["args"]["q"], "1")
+        resp = self.s.get(url)
+        self.assertTrue(resp.from_cache)
+        self.assertEquals(resp.json()["args"]["q"], "1")
+
 
 if __name__ == '__main__':
     unittest.main()
