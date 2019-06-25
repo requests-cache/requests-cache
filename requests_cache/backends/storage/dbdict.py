@@ -152,6 +152,7 @@ class DbDict(MutableMapping):
             con.execute("drop table `%s`" % self.table_name)
             con.execute("create table `%s` (key PRIMARY KEY, value)" %
                         self.table_name)
+            con.execute("vacuum")
 
     def __str__(self):
         return str(dict(self.items()))
