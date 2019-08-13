@@ -7,7 +7,10 @@
     Dictionary-like objects for saving large data sets to ``mongodb`` database
 """
 
-from collections import MutableMapping
+try:
+    from collections.abc import MutableMapping
+except ImportError:
+    from collections import MutableMapping
 try:
     import cPickle as pickle
 except ImportError:
