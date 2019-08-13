@@ -2,6 +2,14 @@
 
 History
 -------
+0.5.1 (2019-08-13)
+++++++++++++++++++
+
+* Remove Python 2.6 Testing from travis #133
+* Fix DeprecationWarning from collections #131
+* vacuum the sqlite database after clearing a table #134
+* Fix handling of unpickle errors #128
+
 
 0.5.0 (2019-04-18)
 ++++++++++++++++++
