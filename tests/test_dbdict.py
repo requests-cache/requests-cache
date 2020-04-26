@@ -53,6 +53,14 @@ class DbdictTestCase(BaseCustomDictTestCase, unittest.TestCase):
         self.assertEqual(sorted(d1.keys()), list(range(n)))
         self.assertEqual(sorted(d2.values()), list(range(n)))
 
+    def test_timeout(self):
+        d = DbDict(self.NAMESPACE, timeout=30.0)
+        d.clear()
+        d[1] = 'A'*10000
+        del d[1]
+        with self.assertRaises(KeyError):
+            nothing = d[1]
+
     def test_usage_with_threads(self):
 
         def do_test_for(d, n_threads=5):
