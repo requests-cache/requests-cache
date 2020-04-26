@@ -39,7 +39,7 @@ class DbDict(MutableMapping):
     correspondent tables: ``table1``, ``table2`` and ``table3``
     """
 
-    def __init__(self, filename, table_name='data', fast_save=False, **options):
+    def __init__(self, filename, table_name='data', fast_save=False, timeout=5.0, **options):
         """
         :param filename: filename for database (without extension)
         :param table_name: table name
@@ -51,6 +51,7 @@ class DbDict(MutableMapping):
         self.filename = filename
         self.table_name = table_name
         self.fast_save = fast_save
+        self.timeout = timeout
         
         #: Transactions can be committed if this property is set to `True`
         self.can_commit = True
@@ -68,10 +69,10 @@ class DbDict(MutableMapping):
         with self._lock:
             if self._bulk_commit:
                 if self._pending_connection is None:
-                    self._pending_connection = sqlite.connect(self.filename)
+                    self._pending_connection = sqlite.connect(self.filename, self.timeout)
                 con = self._pending_connection
             else:
-                con = sqlite.connect(self.filename)
+                con = sqlite.connect(self.filename, self.timeout)
             try:
                 if self.fast_save:
                     con.execute("PRAGMA synchronous = 0;")
