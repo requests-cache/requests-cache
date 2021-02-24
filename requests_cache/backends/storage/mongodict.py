@@ -50,7 +50,8 @@ class MongoDict(MutableMapping):
         return result['data']
 
     def __setitem__(self, key, item):
-        self.collection.save({'_id': key, 'data': item})
+        doc = {'_id': key, 'data': item}
+        self.collection.replace_one({'_id': key}, doc, upsert=True)
 
     def __delitem__(self, key):
         spec = {'_id': key}
