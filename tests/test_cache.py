@@ -9,12 +9,13 @@ try:
 except ImportError:
     import unittest
 
+import pytest
 import time
 import json
 from collections import defaultdict
 from datetime import datetime, timedelta
+from unittest import mock
 
-import mock
 import requests
 from requests import Request
 
@@ -66,12 +67,11 @@ class CacheTestCase(unittest.TestCase):
         self.assertGreaterEqual(delta, delay)
 
     def test_delete_urls(self):
-        url = httpbin('relative-redirect/3')
+        url = httpbin('get')
         r = self.s.get(url)
-        for i in range(1, 4):
-            self.assert_(self.s.cache.has_url(httpbin('relative-redirect/%s' % i)))
+        assert self.s.cache.has_url(url)
         self.s.cache.delete_url(url)
-        self.assert_(not self.s.cache.has_url(url))
+        assert not self.s.cache.has_url(url)
 
     def test_unregistered_backend(self):
         with self.assertRaises(ValueError):
@@ -167,6 +167,8 @@ class CacheTestCase(unittest.TestCase):
         with requests_cache.disabled():
             self.assertEqual(r4, js(httpbin('cookies')))
 
+    # TODO: Create mock responses instead of depending on httpbin
+    @pytest.mark.skip(reason='httpbin.org/relative-redirect no longer returns redirects')
     def test_response_history(self):
         r1 = self.s.get(httpbin('relative-redirect/3'))
         def test_redirect_history(url):
@@ -179,6 +181,8 @@ class CacheTestCase(unittest.TestCase):
         r3 = requests.get(httpbin('relative-redirect/1'))
         self.assertEqual(len(r3.history), 1)
 
+    # TODO: Create mock responses instead of depending on httpbin
+    @pytest.mark.skip(reason='httpbin.org/relative-redirect no longer returns redirects')
     def test_response_history_simple(self):
         r1 = self.s.get(httpbin('relative-redirect/2'))
         r2 = self.s.get(httpbin('relative-redirect/1'))
@@ -444,6 +448,8 @@ class CacheTestCase(unittest.TestCase):
         raw_data = "new raw data"
         self.assertFalse(s.post(url, data=raw_data).from_cache)
 
+    # TODO: Create mock responses instead of depending on httpbin
+    @pytest.mark.skip(reason='httpbin.org/relative-redirect no longer returns redirects')
     @mock.patch("requests_cache.backends.base.datetime")
     @mock.patch("requests_cache.core.datetime")
     def test_remove_expired_entries(self, datetime_mock, datetime_mock2):
