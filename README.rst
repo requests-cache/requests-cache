@@ -1,7 +1,7 @@
 requests-cache
 ---------------
 
-Requests-cache is a transparent persistent cache for requests_ (version >= 1.1.0) library.
+Requests-cache is a transparent persistent cache for the requests_ library (version 2+).
 
 .. _requests: http://python-requests.org/
 
@@ -25,7 +25,7 @@ Just write:
 
     import requests
     import requests_cache
-    
+
     requests_cache.install_cache('demo_cache')
 
 And all responses with headers and cookies will be transparently cached to
@@ -36,13 +36,13 @@ And all responses with headers and cookies will be transparently cached to
 
     for i in range(10):
         requests.get('http://httpbin.org/delay/1')
-    
+
 It can be useful when you are creating some simple data scraper with constantly
 changing parsing logic or data format, and don't want to redownload pages or
 write complex error handling and persistence.
 
-Note
-----
+Note on cache headers
+---------------------
 
 ``requests-cache`` ignores all cache headers, it just caches the data for the
 time you specify.
@@ -51,10 +51,26 @@ If you need library which knows how to use HTTP headers and status codes,
 take a look at `httpcache <https://github.com/Lukasa/httpcache>`_ and
 `CacheControl <https://github.com/ionrock/cachecontrol>`_.
 
+Development status
+------------------
+
+While the original author no longer has time to work on requests-cache
+(`see note here <https://github.com/reclosedev/requests-cache/blob/master/CODESHELTER.md>`_),
+one or more maintainers are available via `Code Shelter <https://www.codeshelter.co>`_ to help keep
+this project going.
+
+Maintenance will mainly focus on bugfixes, security and compatibility updates, etc.
+If there is a new feature you would like to see, the best way to make that happen is to submit a PR
+for it!
+
+If you have an issue or PR that hasn't recieved a response in a timely manner, or if you want to
+discuss ideas about the project in general, please reach out on the Code Shelter chat server, under
+`projects/requests-cache <https://codeshelter.zulipchat.com/#narrow/stream/186993-projects/topic/requests-cache>`_.
+
 Links
 -----
 
-- **Documentation** at `readthedocs.org <https://requests-cache.readthedocs.io/>`_
+- **Documentation** at `readthedocs <https://requests-cache.readthedocs.io/>`_
 
 - **Source code and issue tracking** at `GitHub <https://github.com/reclosedev/requests-cache>`_.
 
