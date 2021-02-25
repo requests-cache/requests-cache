@@ -7,25 +7,25 @@
     Contains BaseCache class which can be used as in-memory cache backend or
     extended to support persistence.
 """
-from datetime import datetime
 import hashlib
 from copy import copy
+from datetime import datetime
 from io import BytesIO
 
 import requests
 
-from ..compat import is_py2, urlencode, urlparse, urlunparse, parse_qsl, bytes, str
-
+from ..compat import bytes, is_py2, parse_qsl, str, urlencode, urlparse, urlunparse
 
 _DEFAULT_HEADERS = requests.utils.default_headers()
 
 
 class BaseCache(object):
-    """ Base class for cache implementations, can be used as in-memory cache.
+    """Base class for cache implementations, can be used as in-memory cache.
 
     To extend it you can provide dictionary-like objects for
     :attr:`keys_map` and :attr:`responses` or override public methods.
     """
+
     def __init__(self, *args, **kwargs):
         #: `key` -> `key_in_responses` mapping
         self.keys_map = {}
@@ -35,7 +35,7 @@ class BaseCache(object):
         self._ignored_parameters = set(kwargs.get("ignored_parameters") or [])
 
     def save_response(self, key, response):
-        """ Save response to cache
+        """Save response to cache
 
         :param key: key for this response
         :param response: response to save
@@ -57,7 +57,7 @@ class BaseCache(object):
         self.keys_map[new_key] = key_to_response
 
     def get_response_and_time(self, key, default=(None, None)):
-        """ Retrieves response and timestamp for `key` if it's stored in cache,
+        """Retrieves response and timestamp for `key` if it's stored in cache,
         otherwise returns `default`
 
         :param key: key of resource
@@ -75,8 +75,7 @@ class BaseCache(object):
         return self.restore_response(response), timestamp
 
     def delete(self, key):
-        """ Delete `key` from cache. Also deletes all responses from response history
-        """
+        """Delete `key` from cache. Also deletes all responses from response history"""
         try:
             if key in self.responses:
                 response, _ = self.responses[key]
@@ -90,20 +89,18 @@ class BaseCache(object):
             pass
 
     def delete_url(self, url):
-        """ Delete response associated with `url` from cache.
+        """Delete response associated with `url` from cache.
         Also deletes all responses from response history. Works only for GET requests
         """
         self.delete(self._url_to_key(url))
 
     def clear(self):
-        """ Clear cache
-        """
+        """Clear cache"""
         self.responses.clear()
         self.keys_map.clear()
 
     def remove_old_entries(self, created_before):
-        """ Deletes entries from cache with creation time older than ``created_before``
-        """
+        """Deletes entries from cache with creation time older than ``created_before``"""
         keys_to_delete = set()
         for key, (response, created_at) in self.responses.items():
             if created_at < created_before:
@@ -113,12 +110,11 @@ class BaseCache(object):
             self.delete(key)
 
     def has_key(self, key):
-        """ Returns `True` if cache has `key`, `False` otherwise
-        """
+        """Returns `True` if cache has `key`, `False` otherwise"""
         return key in self.responses or key in self.keys_map
 
     def has_url(self, url):
-        """ Returns `True` if cache has `url`, `False` otherwise.
+        """Returns `True` if cache has `url`, `False` otherwise.
         Works only for GET request urls
         """
         return self.has_key(self._url_to_key(url))
@@ -127,15 +123,30 @@ class BaseCache(object):
         session = requests.Session()
         return self.create_key(session.prepare_request(requests.Request('GET', url)))
 
-    _response_attrs = ['_content', 'url', 'status_code', 'cookies',
-                       'headers', 'encoding', 'request', 'reason', 'raw']
+    _response_attrs = [
+        '_content',
+        'url',
+        'status_code',
+        'cookies',
+        'headers',
+        'encoding',
+        'request',
+        'reason',
+        'raw',
+    ]
 
-    _raw_response_attrs = ['_original_response', 'decode_content', 'headers',
-                            'reason', 'status', 'strict', 'version']
+    _raw_response_attrs = [
+        '_original_response',
+        'decode_content',
+        'headers',
+        'reason',
+        'status',
+        'strict',
+        'version',
+    ]
 
     def reduce_response(self, response, seen=None):
-        """ Reduce response object to make it compatible with ``pickle``
-        """
+        """Reduce response object to make it compatible with ``pickle``"""
         if seen is None:
             seen = {}
         try:
@@ -169,8 +180,7 @@ class BaseCache(object):
         return value
 
     def restore_response(self, response, seen=None):
-        """ Restore response object after unpickling
-        """
+        """Restore response object after unpickling"""
         if seen is None:
             seen = {}
         try:
@@ -186,7 +196,6 @@ class BaseCache(object):
         return result
 
     def _remove_ignored_parameters(self, request):
-
         def filter_ignored_parameters(data):
             return [(k, v) for k, v in data if k not in self._ignored_parameters]
 
@@ -204,6 +213,7 @@ class BaseCache(object):
                 body = urlencode(body)
             elif content_type == 'application/json':
                 import json
+
                 if not is_py2 and isinstance(body, bytes):
                     body = str(body, "utf8")  # TODO how to get body encoding?
                 body = json.loads(body)

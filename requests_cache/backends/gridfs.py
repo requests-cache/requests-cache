@@ -16,13 +16,13 @@
         requests_cache.install_cache(backend='gridfs', connection=MongoClient('another-host.local'))
 """
 from .base import BaseCache
-from .storage.mongodict import MongoDict
 from .storage.gridfspickledict import GridFSPickleDict
+from .storage.mongodict import MongoDict
 
 
 class GridFSCache(BaseCache):
-    """ ``gridfs`` cache backend.
-    """
+    """``gridfs`` cache backend."""
+
     def __init__(self, db_name, **options):
         """
         :param db_name: database name
@@ -31,4 +31,3 @@ class GridFSCache(BaseCache):
         super(GridFSCache, self).__init__(**options)
         self.responses = GridFSPickleDict(db_name, options.get('connection'))
         self.keys_map = MongoDict(db_name, 'http_redirects', self.responses.connection)
-

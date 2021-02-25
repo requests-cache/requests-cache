@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Path hack
-import os, sys
+import os
+import sys
+
 sys.path.insert(0, os.path.abspath('..'))
 
 try:
@@ -15,7 +17,6 @@ from requests.sessions import Session as OriginalSession
 import requests_cache
 from requests_cache import CachedSession
 from requests_cache.backends import BaseCache
-
 
 CACHE_NAME = 'requests_cache_test'
 CACHE_BACKEND = 'sqlite'
@@ -69,7 +70,6 @@ class MonkeyPatchTestCase(unittest.TestCase):
         self.assertTrue(isinstance(s, CachedSession))
 
     def test_passing_backend_instance_support(self):
-
         class MyCache(BaseCache):
             pass
 

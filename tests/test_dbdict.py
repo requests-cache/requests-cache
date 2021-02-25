@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Path hack
-import os, sys
+import os
+import sys
+
 sys.path.insert(0, os.path.abspath('..'))
 
 try:
@@ -10,12 +12,12 @@ except ImportError:
     import unittest
 
 from threading import Thread
-from tests.test_custom_dict import BaseCustomDictTestCase
+
 from requests_cache.backends.storage.dbdict import DbDict, DbPickleDict
+from tests.test_custom_dict import BaseCustomDictTestCase
 
 
 class DbdictTestCase(BaseCustomDictTestCase, unittest.TestCase):
-
     def test_bulk_commit(self):
         d = DbDict(self.NAMESPACE, self.TABLES[0])
         with d.bulk_commit():
@@ -54,10 +56,10 @@ class DbdictTestCase(BaseCustomDictTestCase, unittest.TestCase):
         self.assertEqual(sorted(d2.values()), list(range(n)))
 
     def test_usage_with_threads(self):
-
         def do_test_for(d, n_threads=5):
             d.clear()
             fails = []
+
             def do_inserts(values):
                 try:
                     for v in values:
@@ -69,8 +71,7 @@ class DbdictTestCase(BaseCustomDictTestCase, unittest.TestCase):
             def values(x, n):
                 return [i * x for i in range(n)]
 
-            threads = [Thread(target=do_inserts, args=(values(i, n_threads),))
-                       for i in range(n_threads)]
+            threads = [Thread(target=do_inserts, args=(values(i, n_threads),)) for i in range(n_threads)]
             for t in threads:
                 t.start()
             for t in threads:

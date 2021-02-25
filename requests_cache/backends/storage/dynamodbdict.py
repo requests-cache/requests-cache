@@ -14,21 +14,25 @@ try:
     import cPickle as pickle
 except ImportError:
     import pickle
+
 import boto3
-from boto3.dynamodb.conditions import Key, Attr
+from boto3.dynamodb.conditions import Attr, Key
 from botocore.exceptions import ClientError
 
 
 class DynamoDbDict(MutableMapping):
-    """ DynamoDbDict - a dictionary-like interface for ``dynamodb`` key-stores
-    """
+    """DynamoDbDict - a dictionary-like interface for ``dynamodb`` key-stores"""
 
-    def __init__(self, table_name, namespace='dynamodb_dict_data',
-                 connection=None,
-                 endpoint_url=None,
-                 region_name='us-east-1',
-                 read_capacity_units=1,
-                 write_capacity_units=1):
+    def __init__(
+        self,
+        table_name,
+        namespace='dynamodb_dict_data',
+        connection=None,
+        endpoint_url=None,
+        region_name='us-east-1',
+        read_capacity_units=1,
+        write_capacity_units=1,
+    ):
 
         """
         The actual key name on the dynamodb server will be
@@ -50,9 +54,7 @@ class DynamoDbDict(MutableMapping):
         if connection is not None:
             self.connection = connection
         else:
-            self.connection = boto3.resource('dynamodb',
-                                             endpoint_url=endpoint_url,
-                                             region_name=region_name)
+            self.connection = boto3.resource('dynamodb', endpoint_url=endpoint_url, region_name=region_name)
         try:
             self.connection.create_table(
                 AttributeDefinitions=[
@@ -63,23 +65,17 @@ class DynamoDbDict(MutableMapping):
                     {
                         'AttributeName': 'key',
                         'AttributeType': 'S',
-                    }
+                    },
                 ],
                 TableName=table_name,
                 KeySchema=[
-                    {
-                        'AttributeName': 'namespace',
-                        'KeyType': 'HASH'
-                    },
-                    {
-                        'AttributeName': 'key',
-                        'KeyType': 'RANGE'
-                    }
+                    {'AttributeName': 'namespace', 'KeyType': 'HASH'},
+                    {'AttributeName': 'key', 'KeyType': 'RANGE'},
                 ],
                 ProvisionedThroughput={
                     'ReadCapacityUnits': read_capacity_units,
-                    'WriteCapacityUnits': write_capacity_units
-                }
+                    'WriteCapacityUnits': write_capacity_units,
+                },
             )
         except ClientError:
             pass
@@ -94,15 +90,12 @@ class DynamoDbDict(MutableMapping):
         return pickle.loads(result['Item']['value'].value)
 
     def __setitem__(self, key, item):
-        item = {'namespace': self._self_key,
-                'key': str(key),
-                'value': pickle.dumps(item)}
+        item = {'namespace': self._self_key, 'key': str(key), 'value': pickle.dumps(item)}
         self._table.put_item(Item=item)
 
     def __delitem__(self, key):
         composite_key = {'namespace': self._self_key, 'key': str(key)}
-        response = self._table.delete_item(Key=composite_key,
-                                           ReturnValues='ALL_OLD')
+        response = self._table.delete_item(Key=composite_key, ReturnValues='ALL_OLD')
         if not 'Attributes' in response:
             raise KeyError
 
@@ -127,14 +120,19 @@ class DynamoDbDict(MutableMapping):
         expression_attribute_values = {':Namespace': self._self_key}
         expression_attribute_names = {'#N': 'namespace'}
         key_condition_expression = '#N = :Namespace'
-        return self._table.query(ExpressionAttributeValues=expression_attribute_values,
-                                 ExpressionAttributeNames=expression_attribute_names,
-                                 KeyConditionExpression=key_condition_expression)
+        return self._table.query(
+            ExpressionAttributeValues=expression_attribute_values,
+            ExpressionAttributeNames=expression_attribute_names,
+            KeyConditionExpression=key_condition_expression,
+        )
+
     def __count_table(self):
         expression_attribute_values = {':Namespace': self._self_key}
         expression_attribute_names = {'#N': 'namespace'}
         key_condition_expression = '#N = :Namespace'
-        return self._table.query(Select='COUNT',
-                                 ExpressionAttributeValues=expression_attribute_values,
-                                 ExpressionAttributeNames=expression_attribute_names,
-                                 KeyConditionExpression=key_condition_expression)['Count']
+        return self._table.query(
+            Select='COUNT',
+            ExpressionAttributeValues=expression_attribute_values,
+            ExpressionAttributeNames=expression_attribute_names,
+            KeyConditionExpression=key_condition_expression,
+        )['Count']

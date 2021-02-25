@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import sys
-import os
 import glob
+import os
+import sys
+
 try:
     from setuptools import setup
 except ImportError:
@@ -17,9 +18,7 @@ if sys.argv[-1] == 'test':
 
 setup(
     name='requests-cache',
-    packages=['requests_cache',
-              'requests_cache.backends',
-              'requests_cache.backends.storage'],
+    packages=['requests_cache', 'requests_cache.backends', 'requests_cache.backends.storage'],
     version='0.5.2',
     description='Persistent cache for requests library',
     author='Roman Haritonov',
@@ -38,6 +37,5 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
     ],
-    long_description=open('README.rst').read() + '\n\n' +
-                     open('HISTORY.rst').read(),
+    long_description=open('README.rst').read() + '\n\n' + open('HISTORY.rst').read(),
 )

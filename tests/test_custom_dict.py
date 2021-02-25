@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Path hack
-import os, sys
+import os
+import sys
+
 sys.path.insert(0, os.path.abspath('..'))
 
 from requests_cache.backends.storage.dbdict import DbDict, DbPickleDict

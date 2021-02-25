@@ -13,6 +13,7 @@ except ImportError:
 
 import sqlite3 as sqlite
 from contextlib import contextmanager
+
 try:
     import threading
 except ImportError:
@@ -26,7 +27,7 @@ from ...compat import bytes
 
 
 class DbDict(MutableMapping):
-    """ DbDict - a dictionary-like object for saving large datasets to `sqlite` database
+    """DbDict - a dictionary-like object for saving large datasets to `sqlite` database
 
     It's possible to create multiply DbDict instances, which will be stored as separate
     tables in one database::
@@ -51,17 +52,15 @@ class DbDict(MutableMapping):
         self.filename = filename
         self.table_name = table_name
         self.fast_save = fast_save
-        
+
         #: Transactions can be committed if this property is set to `True`
         self.can_commit = True
 
-        
         self._bulk_commit = False
         self._pending_connection = None
         self._lock = threading.RLock()
         with self.connection() as con:
             con.execute("create table if not exists `%s` (key PRIMARY KEY, value)" % self.table_name)
-
 
     @contextmanager
     def connection(self, commit_on_success=False):
@@ -118,40 +117,37 @@ class DbDict(MutableMapping):
 
     def __getitem__(self, key):
         with self.connection() as con:
-            row = con.execute("select value from `%s` where key=?" %
-                              self.table_name, (key,)).fetchone()
+            row = con.execute("select value from `%s` where key=?" % self.table_name, (key,)).fetchone()
             if not row:
                 raise KeyError
             return row[0]
 
     def __setitem__(self, key, item):
         with self.connection(True) as con:
-            con.execute("insert or replace into `%s` (key,value) values (?,?)" %
-                        self.table_name, (key, item))
+            con.execute(
+                "insert or replace into `%s` (key,value) values (?,?)" % self.table_name,
+                (key, item),
+            )
 
     def __delitem__(self, key):
         with self.connection(True) as con:
-            cur = con.execute("delete from `%s` where key=?" %
-                              self.table_name, (key,))
+            cur = con.execute("delete from `%s` where key=?" % self.table_name, (key,))
             if not cur.rowcount:
                 raise KeyError
 
     def __iter__(self):
         with self.connection() as con:
-            for row in con.execute("select key from `%s`" %
-                                   self.table_name):
+            for row in con.execute("select key from `%s`" % self.table_name):
                 yield row[0]
 
     def __len__(self):
         with self.connection() as con:
-            return con.execute("select count(key) from `%s`" %
-                               self.table_name).fetchone()[0]
+            return con.execute("select count(key) from `%s`" % self.table_name).fetchone()[0]
 
     def clear(self):
         with self.connection(True) as con:
             con.execute("drop table `%s`" % self.table_name)
-            con.execute("create table `%s` (key PRIMARY KEY, value)" %
-                        self.table_name)
+            con.execute("create table `%s` (key PRIMARY KEY, value)" % self.table_name)
             con.execute("vacuum")
 
     def __str__(self):
@@ -159,11 +155,10 @@ class DbDict(MutableMapping):
 
 
 class DbPickleDict(DbDict):
-    """ Same as :class:`DbDict`, but pickles values before saving
-    """
+    """Same as :class:`DbDict`, but pickles values before saving"""
+
     def __setitem__(self, key, item):
-        super(DbPickleDict, self).__setitem__(key,
-                                              sqlite.Binary(pickle.dumps(item)))
+        super(DbPickleDict, self).__setitem__(key, sqlite.Binary(pickle.dumps(item)))
 
     def __getitem__(self, key):
         return pickle.loads(bytes(super(DbPickleDict, self).__getitem__(key)))
