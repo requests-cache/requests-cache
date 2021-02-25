@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
     requests_cache
     ~~~~~~~~~~~~~~
@@ -28,7 +27,6 @@ __version__ = '0.5.2'
 from .core import (
     CachedSession,
     clear,
-    configure,
     disabled,
     enabled,
     get_cache,

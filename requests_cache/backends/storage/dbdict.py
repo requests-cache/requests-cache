@@ -1,29 +1,15 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 """
     requests_cache.backends.dbdict
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Dictionary-like objects for saving large data sets to `sqlite` database
 """
-try:
-    from collections.abc import MutableMapping
-except ImportError:
-    from collections import MutableMapping
-
-import sqlite3 as sqlite
+import pickle
+import sqlite3
+import threading
+from collections.abc import MutableMapping
 from contextlib import contextmanager
-
-try:
-    import threading
-except ImportError:
-    import dummy_threading as threading
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
-
-from ...compat import bytes
 
 
 class DbDict(MutableMapping):
@@ -67,10 +53,10 @@ class DbDict(MutableMapping):
         with self._lock:
             if self._bulk_commit:
                 if self._pending_connection is None:
-                    self._pending_connection = sqlite.connect(self.filename)
+                    self._pending_connection = sqlite3.connect(self.filename)
                 con = self._pending_connection
             else:
-                con = sqlite.connect(self.filename)
+                con = sqlite3.connect(self.filename)
             try:
                 if self.fast_save:
                     con.execute("PRAGMA synchronous = 0;")
@@ -158,7 +144,7 @@ class DbPickleDict(DbDict):
     """Same as :class:`DbDict`, but pickles values before saving"""
 
     def __setitem__(self, key, item):
-        super(DbPickleDict, self).__setitem__(key, sqlite.Binary(pickle.dumps(item)))
+        super(DbPickleDict, self).__setitem__(key, sqlite3.Binary(pickle.dumps(item)))
 
     def __getitem__(self, key):
         return pickle.loads(bytes(super(DbPickleDict, self).__getitem__(key)))

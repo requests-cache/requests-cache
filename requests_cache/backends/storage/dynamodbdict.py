@@ -1,22 +1,14 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
     requests_cache.backends.dynamodbdict
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Dictionary-like objects for saving large data sets to ``dynamodb`` key-store
 """
-try:
-    from collections.abc import MutableMapping
-except ImportError:
-    from collections import MutableMapping
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
+import pickle
+from collections.abc import MutableMapping
 
 import boto3
-from boto3.dynamodb.conditions import Attr, Key
 from botocore.exceptions import ClientError
 
 
@@ -85,7 +77,7 @@ class DynamoDbDict(MutableMapping):
     def __getitem__(self, key):
         composite_key = {'namespace': self._self_key, 'key': str(key)}
         result = self._table.get_item(Key=composite_key)
-        if not 'Item' in result:
+        if 'Item' not in result:
             raise KeyError
         return pickle.loads(result['Item']['value'].value)
 
@@ -96,7 +88,7 @@ class DynamoDbDict(MutableMapping):
     def __delitem__(self, key):
         composite_key = {'namespace': self._self_key, 'key': str(key)}
         response = self._table.delete_item(Key=composite_key, ReturnValues='ALL_OLD')
-        if not 'Attributes' in response:
+        if 'Attributes' not in response:
             raise KeyError
 
     def __len__(self):

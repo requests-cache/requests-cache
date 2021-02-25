@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
     requests_cache.core
     ~~~~~~~~~~~~~~~~~~~
@@ -15,17 +14,6 @@ from requests import Session as OriginalSession
 from requests.hooks import dispatch_hook
 
 from . import backends
-from .compat import basestring
-
-try:
-    ver = tuple(map(int, requests.__version__.split(".")))
-except ValueError:
-    pass
-else:
-    # We don't need to dispatch hook in Requests <= 1.1.0
-    if ver < (1, 2, 0):
-        dispatch_hook = lambda key, hooks, hook_data, *a, **kw: hook_data
-    del ver
 
 
 class CachedSession(OriginalSession):
@@ -219,10 +207,6 @@ def install_cache(
             )
 
     _patch_session_factory(_ConfiguredCachedSession)
-
-
-# backward compatibility
-configure = install_cache
 
 
 def uninstall_cache():

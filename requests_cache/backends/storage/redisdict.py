@@ -1,19 +1,13 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
     requests_cache.backends.redisdict
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Dictionary-like objects for saving large data sets to ``redis`` key-store
 """
-try:
-    from collections.abc import MutableMapping
-except ImportError:
-    from collections import MutableMapping
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
+import pickle
+from collections.abc import MutableMapping
+
 from redis import StrictRedis as Redis
 
 

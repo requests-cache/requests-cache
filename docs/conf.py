@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # requests-cache documentation build configuration file, created by
 # sphinx-quickstart on Sun Apr 08 20:51:24 2012.
 #

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
     requests_cache.backends.base
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -11,10 +10,9 @@ import hashlib
 from copy import copy
 from datetime import datetime
 from io import BytesIO
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 import requests
-
-from ..compat import bytes, is_py2, parse_qsl, str, urlencode, urlparse, urlunparse
 
 _DEFAULT_HEADERS = requests.utils.default_headers()
 
@@ -214,7 +212,7 @@ class BaseCache(object):
             elif content_type == 'application/json':
                 import json
 
-                if not is_py2 and isinstance(body, bytes):
+                if isinstance(body, bytes):
                     body = str(body, "utf8")  # TODO how to get body encoding?
                 body = json.loads(body)
                 body = filter_ignored_parameters(sorted(body.items()))
@@ -260,6 +258,4 @@ class _RawStore(object):
 
 
 def _to_bytes(s, encoding='utf-8'):
-    if is_py2 or isinstance(s, bytes):
-        return s
-    return bytes(s, encoding)
+    return s if isinstance(s, bytes) else bytes(s, encoding)

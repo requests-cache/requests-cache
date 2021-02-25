@@ -1,27 +1,14 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
     requests_cache.backends.mongodict
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Dictionary-like objects for saving large data sets to ``mongodb`` database
 """
+import pickle
+from collections.abc import MutableMapping
 
-try:
-    from collections.abc import MutableMapping
-except ImportError:
-    from collections import MutableMapping
-
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
-
-# Use PyMongo 3 if present
-try:
-    from pymongo import MongoClient
-except ImportError:
-    from pymongo import Connection as MongoClient
+from pymongo import MongoClient
 
 
 class MongoDict(MutableMapping):
