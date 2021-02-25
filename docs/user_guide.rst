@@ -112,7 +112,7 @@ It can be used, for example, for request throttling with help of ``requests`` ho
             requests_cache.clear()
 
             s = requests_cache.CachedSession()
-            s.hooks = {'response': make_throttle_hook(0.1)}
+            s.hooks['response'].append(make_throttle_hook(0.1))
             s.get('http://httpbin.org/delay/get')
             s.get('http://httpbin.org/delay/get')
 
