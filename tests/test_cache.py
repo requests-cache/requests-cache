@@ -483,6 +483,15 @@ class CacheTestCase(unittest.TestCase):
         resp = self.s.get(url)
         self.assertTrue(resp.from_cache)
         self.assertEquals(resp.json()["args"]["q"], "1")
+        
+    def test_cache_date(self):
+        url = httpbin('get')
+        response1 = self.s.get(url)
+        response2 = self.s.get(url)
+        response3 = self.s.get(url)
+        self.assertEqual(response1.cache_date, None)
+        self.assertTrue(isinstance(response2.cache_date, datetime))
+        self.assertEqual(response2.cache_date, response3.cache_date)
 
 
 if __name__ == '__main__':
