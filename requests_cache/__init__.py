@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
     requests_cache
     ~~~~~~~~~~~~~~
@@ -26,6 +25,12 @@ __docformat__ = 'restructuredtext'
 __version__ = '0.5.2'
 
 from .core import (
-    CachedSession, install_cache, uninstall_cache,
-    disabled, enabled, get_cache, clear, configure, remove_expired_responses
+    CachedSession,
+    clear,
+    disabled,
+    enabled,
+    get_cache,
+    install_cache,
+    remove_expired_responses,
+    uninstall_cache,
 )

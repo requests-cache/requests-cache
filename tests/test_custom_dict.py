@@ -1,8 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# Path hack
-import os, sys
-sys.path.insert(0, os.path.abspath('..'))
+import os
 
 from requests_cache.backends.storage.dbdict import DbDict, DbPickleDict
 
@@ -19,7 +16,7 @@ class BaseCustomDictTestCase(object):
         if self.dict_class is DbDict:
             try:
                 os.unlink(self.NAMESPACE)
-            except:
+            except Exception:
                 pass
             return
         for table in self.TABLES:

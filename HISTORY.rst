@@ -2,6 +2,13 @@
 
 History
 -------
+
+0.6.0 (TBD)
+++++++++++++++++++
+* Drop support for python <= 3.5
+* Fix TypeError with DbPickleDict initialization
+
+
 0.5.2 (2019-08-14)
 ++++++++++++++++++
 
@@ -21,12 +28,12 @@ History
 ++++++++++++++++++
 Project is now added to https://www.codeshelter.co/
 
-* Add gridfs support, thanks to @chengguangnan 
+* Add gridfs support, thanks to @chengguangnan
 * Add dynamodb support, thanks to @ar90n
 * Add response filter #104, thanks to @christopher-dG
 * Fix bulk_commit #78
 * Fix remove_expired_responses missed in __init__.py #93
-* Fix deprecation warnings #122, thanks to mbarkhau 
+* Fix deprecation warnings #122, thanks to mbarkhau
 
 
 0.4.13 (2016-12-23)

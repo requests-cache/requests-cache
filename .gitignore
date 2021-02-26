@@ -1,9 +1,23 @@
-*.pyc
-*.pyo
-*.idea
+*.py[cod]
 *.sqlite
+*.egg
 *.egg-info
-build
-_build
-dist
-MANIFEST
+build/
+dist/
+venv/
+
+# Editors
+.~*
+.idea/
+.vim/
+.vscode/
+
+# Test / coverage reports
+.coverage
+.tox
+.mypy_cache/
+test-reports/
+
+# Sphinx
+docs/_build/
+docs/modules/

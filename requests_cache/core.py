@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
     requests_cache.core
     ~~~~~~~~~~~~~~~~~~~
@@ -15,27 +14,22 @@ from requests import Session as OriginalSession
 from requests.hooks import dispatch_hook
 
 from . import backends
-from .compat import basestring
-
-try:
-    ver = tuple(map(int, requests.__version__.split(".")))
-except ValueError:
-    pass
-else:
-    # We don't need to dispatch hook in Requests <= 1.1.0
-    if ver < (1, 2, 0):
-        dispatch_hook = lambda key, hooks, hook_data, *a, **kw: hook_data
-    del ver
 
 
 class CachedSession(OriginalSession):
-    """ Requests ``Sessions`` with caching support.
-    """
+    """Requests ``Sessions`` with caching support."""
 
-    def __init__(self, cache_name='cache', backend=None, expire_after=None,
-                 allowable_codes=(200,), allowable_methods=('GET',),
-                 filter_fn=lambda r: True, old_data_on_error=False,
-                 **backend_options):
+    def __init__(
+        self,
+        cache_name='cache',
+        backend=None,
+        expire_after=None,
+        allowable_codes=(200,),
+        allowable_methods=('GET',),
+        filter_fn=lambda r: True,
+        old_data_on_error=False,
+        **backend_options
+    ):
         """
         :param cache_name: for ``sqlite`` backend: cache file will start with this prefix,
                            e.g ``cache.sqlite``
@@ -85,8 +79,7 @@ class CachedSession(OriginalSession):
         super(CachedSession, self).__init__()
 
     def send(self, request, **kwargs):
-        if (self._is_cache_disabled
-            or request.method not in self._cache_allowable_methods):
+        if self._is_cache_disabled or request.method not in self._cache_allowable_methods:
             response = super(CachedSession, self).send(request, **kwargs)
             response.from_cache = False
             response.cache_date = None
@@ -133,10 +126,7 @@ class CachedSession(OriginalSession):
 
     def request(self, method, url, params=None, data=None, **kwargs):
         response = super(CachedSession, self).request(
-            method, url,
-            _normalize_parameters(params),
-            _normalize_parameters(data),
-            **kwargs
+            method, url, _normalize_parameters(params), _normalize_parameters(data), **kwargs
         )
         if self._is_cache_disabled:
             return response
@@ -145,15 +135,12 @@ class CachedSession(OriginalSession):
 
         # If self._return_old_data_on_error is set,
         # responses won't always have the from_cache attribute.
-        if (hasattr(response, "from_cache") and not response.from_cache
-            and self._filter_fn(response) is not True):
+        if hasattr(response, "from_cache") and not response.from_cache and self._filter_fn(response) is not True:
             self.cache.delete(main_key)
             return response
 
         for r in response.history:
-            self.cache.add_key_mapping(
-                self.cache.create_key(r.request), main_key
-            )
+            self.cache.add_key_mapping(self.cache.create_key(r.request), main_key)
         return response
 
     @contextmanager
@@ -173,26 +160,30 @@ class CachedSession(OriginalSession):
             self._is_cache_disabled = False
 
     def remove_expired_responses(self):
-        """ Removes expired responses from storage
-        """
+        """Removes expired responses from storage"""
         if not self._cache_expire_after:
             return
         self.cache.remove_old_entries(datetime.utcnow() - self._cache_expire_after)
 
     def __repr__(self):
-        return (
-            "<CachedSession(%s('%s', ...), expire_after=%s, "
-            "allowable_methods=%s)>" % (
-                self.cache.__class__.__name__, self._cache_name,
-                self._cache_expire_after, self._cache_allowable_methods
-            )
+        return "<CachedSession(%s('%s', ...), expire_after=%s, " "allowable_methods=%s)>" % (
+            self.cache.__class__.__name__,
+            self._cache_name,
+            self._cache_expire_after,
+            self._cache_allowable_methods,
         )
 
 
-def install_cache(cache_name='cache', backend=None, expire_after=None,
-                  allowable_codes=(200,), allowable_methods=('GET',),
-                  filter_fn=lambda r: True, session_factory=CachedSession,
-                  **backend_options):
+def install_cache(
+    cache_name='cache',
+    backend=None,
+    expire_after=None,
+    allowable_codes=(200,),
+    allowable_methods=('GET',),
+    filter_fn=lambda r: True,
+    session_factory=CachedSession,
+    **backend_options
+):
     """
     Installs cache for all ``Requests`` requests by monkey-patching ``Session``
 
@@ -218,13 +209,8 @@ def install_cache(cache_name='cache', backend=None, expire_after=None,
     _patch_session_factory(_ConfiguredCachedSession)
 
 
-# backward compatibility
-configure = install_cache
-
-
 def uninstall_cache():
-    """ Restores ``requests.Session`` and disables cache
-    """
+    """Restores ``requests.Session`` and disables cache"""
     _patch_session_factory(OriginalSession)
 
 
@@ -273,20 +259,17 @@ def enabled(*args, **kwargs):
 
 
 def get_cache():
-    """ Returns internal cache object from globally installed ``CachedSession``
-    """
+    """Returns internal cache object from globally installed ``CachedSession``"""
     return requests.Session().cache
 
 
 def clear():
-    """ Clears globally installed cache
-    """
+    """Clears globally installed cache"""
     get_cache().clear()
 
 
 def remove_expired_responses():
-    """ Removes expired responses from storage
-    """
+    """Removes expired responses from storage"""
     return requests.Session().remove_expired_responses()
 
 
@@ -295,7 +278,7 @@ def _patch_session_factory(session_factory=CachedSession):
 
 
 def _normalize_parameters(params):
-    """ If builtin dict is passed as parameter, returns sorted list
+    """If builtin dict is passed as parameter, returns sorted list
     of key-value pairs
     """
     if type(params) is dict:

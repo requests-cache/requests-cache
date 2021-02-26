@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
     requests_cache.backends.redis
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -11,14 +10,13 @@ from .storage.redisdict import RedisDict
 
 
 class RedisCache(BaseCache):
-    """ ``redis`` cache backend.
-    """
+    """``redis`` cache backend."""
+
     def __init__(self, namespace='requests-cache', **options):
         """
         :param namespace: redis namespace (default: ``'requests-cache'``)
         :param connection: (optional) ``redis.StrictRedis``
         """
         super(RedisCache, self).__init__(**options)
-        self.responses = RedisDict(namespace, 'responses',
-                                   options.get('connection'))
+        self.responses = RedisDict(namespace, 'responses', options.get('connection'))
         self.keys_map = RedisDict(namespace, 'urls', self.responses.connection)

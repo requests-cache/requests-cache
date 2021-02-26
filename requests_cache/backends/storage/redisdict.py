@@ -1,27 +1,20 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
     requests_cache.backends.redisdict
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Dictionary-like objects for saving large data sets to ``redis`` key-store
 """
-try:
-    from collections.abc import MutableMapping
-except ImportError:
-    from collections import MutableMapping
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
+import pickle
+from collections.abc import MutableMapping
+
 from redis import StrictRedis as Redis
 
 
 class RedisDict(MutableMapping):
-    """ RedisDict - a dictionary-like interface for ``redis`` key-stores
-    """
-    def __init__(self, namespace, collection_name='redis_dict_data',
-                 connection=None):
+    """RedisDict - a dictionary-like interface for ``redis`` key-stores"""
+
+    def __init__(self, namespace, collection_name='redis_dict_data', connection=None):
         """
         The actual key name on the redis server will be
         ``namespace``:``collection_name``
@@ -50,8 +43,7 @@ class RedisDict(MutableMapping):
         return pickle.loads(bytes(result))
 
     def __setitem__(self, key, item):
-        self.connection.hset(self._self_key, pickle.dumps(key),
-                             pickle.dumps(item))
+        self.connection.hset(self._self_key, pickle.dumps(key), pickle.dumps(item))
 
     def __delitem__(self, key):
         if not self.connection.hdel(self._self_key, pickle.dumps(key)):
