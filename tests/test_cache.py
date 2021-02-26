@@ -490,7 +490,7 @@ class CacheTestCase(unittest.TestCase):
         response2 = self.s.get(url)
         response3 = self.s.get(url)
         self.assertEqual(response1.cache_date, None)
-        self.assertTrue(isinstance(response2.cache_date, datetime.datetime))
+        self.assertTrue(isinstance(response2.cache_date, datetime))
         self.assertEqual(response2.cache_date, response3.cache_date)
 
 
