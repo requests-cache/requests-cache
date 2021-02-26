@@ -89,6 +89,7 @@ class CachedSession(OriginalSession):
             or request.method not in self._cache_allowable_methods):
             response = super(CachedSession, self).send(request, **kwargs)
             response.from_cache = False
+            response.cache_date = None
             return response
 
         cache_key = self.cache.create_key(request)
@@ -98,6 +99,7 @@ class CachedSession(OriginalSession):
             if response.status_code in self._cache_allowable_codes:
                 self.cache.save_response(cache_key, response)
             response.from_cache = False
+            response.cache_date = None
             return response
 
         try:
@@ -125,6 +127,7 @@ class CachedSession(OriginalSession):
 
         # dispatch hook here, because we've removed it before pickling
         response.from_cache = True
+        response.cache_date = timestamp
         response = dispatch_hook('response', request.hooks, response, **kwargs)
         return response
 
