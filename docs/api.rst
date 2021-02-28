@@ -10,6 +10,12 @@ Public api
 .. automodule:: requests_cache.core
    :members:
 
+.. automodule:: requests_cache.per_request
+.. autoclass:: PerRequestCachedSession
+   :members:
+
+.. autoclass:: requests_cache.per_request.RequestRegistry
+   :special-members: __setitem__
 
 ----------------------------------------------
 

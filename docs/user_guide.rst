@@ -120,6 +120,34 @@ It can be used, for example, for request throttling with help of ``requests`` ho
 
 .. note:: requests_cache prefetchs response content, be aware if your code uses streaming requests.
 
+
+.. _request_caching:
+
+Request caching
+---------------
+
+If you want to cache on a per request basis, you can pass :class:`PerRequestCachedSession <requests_cache.per_request.PerRequestCachedSession>` as a ``session_factory``::
+
+    import requests_cache
+
+    requests_cache.install_cache('test', backend='sqlite',
+                                 session_factory=requests_cache.PerRequestCachedSession)
+
+Now all requests support the ``expire_after`` keyword argument, which takes
+an expiration time in seconds::
+
+    requests.get('https://httpbin.org/get', expire_after=10)
+
+Alternatively, ``expire_after`` accepts :class:`None`, ``'default'``, or a :class:`~datetime.timedelta`. :class:`None` enables infinite caching, ``'default'`` uses the expiry defined in :func:`install_cache`, and the timedelta is used as is. Negative values disable caching.
+
+.. note:: Internally, numbers are converted to :class:`~datetime.timedelta` instances as well.
+
+It is possible to remove old request cache entries based on their individual
+caching preferences by calling :meth:`PerRequestCachedSession.remove_expired_responses() <requests_cache.per_request.PerRequestCachedSession.remove_expired_responses>`.
+
+.. seealso:: `example_request.py <https://github.com/reclosedev/requests-cache/blob/master/example_request.py>`_
+
+
 .. _persistence:
 
 Persistence
