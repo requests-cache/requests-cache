@@ -22,6 +22,14 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      # Start integration test databases (for per-python version tests)
+      - uses: supercharge/mongodb-github-action@1.3.0
+        with:
+          mongodb-version: 4.4
+      - uses: supercharge/redis-github-action@1.2.0
+        with:
+          redis-version: '6'
+
       # Cache packages per python version, and reuse until setup.py changes
       - name: Cache pip packages
         uses: actions/cache@v2
