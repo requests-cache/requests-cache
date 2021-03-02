@@ -1,0 +1,36 @@
+name: Build
+
+on:
+  push:
+    branches: [master, dev]
+    tags: ['v*']
+  pull_request:
+    branches: [master, dev]
+  workflow_dispatch:
+
+jobs:
+  # Run unit tests for each supported python version
+  test:
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8, 3.9]
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Cache packages per python version, and reuse until setup.py changes
+      - name: Cache pip packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('setup.py') }}
+          restore-keys: ${{ runner.os }}-pip-${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: pip install ".[dev]"
+      - name: Run unit tests
+        run: pytest
