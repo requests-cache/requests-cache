@@ -42,3 +42,39 @@ jobs:
         run: pip install ".[dev]"
       - name: Run unit tests
         run: pytest
+
+  # Run code analysis checks, reports, etc.
+  analyze:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+      - name: Cache pip packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-3.8-${{ hashFiles('setup.py') }}
+          restore-keys: ${{ runner.os }}-pip-3.8
+
+      # Start integration test databases (for generating code coverage report)
+      - uses: supercharge/mongodb-github-action@1.3.0
+        with:
+          mongodb-version: 4.4
+      - uses: supercharge/redis-github-action@1.2.0
+        with:
+          redis-version: '6'
+
+      - name: Install dependencies
+        run: pip install ".[dev]"
+      - name: Run style checks
+        run: |
+          black --check --diff .
+          isort --check --diff .
+      - name: Generate code coverage report
+        run: pytest tests --cov=requests_cache --cov-report=term --cov-report=html
+      - name: Send code coverage report to Coveralls
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: coveralls --service=github
