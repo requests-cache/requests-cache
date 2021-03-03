@@ -28,6 +28,24 @@ It can be useful when you are creating some simple data scraper with constantly
 changing parsing logic or data format, and don't want to redownload pages or
 write complex error handling and persistence.
 
+## Related Projects
+If `requests-cache` isn't quite what you need, you can help make it better! See the
+[Contributing Guide](https://github.com/reclosedev/requests-cache/blob/master/CONTRIBUTING.md)
+for details.
+
+You can also check out these other python cache projects:
+
+* [CacheControl](https://github.com/ionrock/cachecontrol): An HTTP cache for `requests` that caches
+  according to uses HTTP headers and status codes
+* [aiohttp-client-cache](https://github.com/JWCook/aiohttp-client-cache): An async HTTP cache for
+  `aiohttp`, based on `requests-cache`
+* [aiohttp-cache](https://github.com/cr0hn/aiohttp-cache): A server-side async HTTP cache for the
+  `aiohttp` web server
+* [diskcache](https://github.com/grantjenks/python-diskcache): A general-purpose (not HTTP-specific)
+  file-based cache built on SQLite
+* [aiocache](https://github.com/aio-libs/aiocache): General-purpose (not HTTP-specific) async cache
+  backends
+
 ## Links
 - **Documentation** at [readthedocs](https://requests-cache.readthedocs.io)
 - **Source code and issue tracking** at [GitHub](https://github.com/reclosedev/requests-cache)
