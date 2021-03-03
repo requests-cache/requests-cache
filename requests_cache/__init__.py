@@ -22,15 +22,19 @@
     :license: BSD, see LICENSE for more details.
 """
 __docformat__ = 'restructuredtext'
-__version__ = '0.5.2'
+__version__ = '0.6.0'
 
-from .core import (
-    CachedSession,
-    clear,
-    disabled,
-    enabled,
-    get_cache,
-    install_cache,
-    remove_expired_responses,
-    uninstall_cache,
-)
+# Quietly ignore importerror, if setup.py is invoked outside a virtualenv
+try:
+    from .core import (
+        CachedSession,
+        clear,
+        disabled,
+        enabled,
+        get_cache,
+        install_cache,
+        remove_expired_responses,
+        uninstall_cache,
+    )
+except ImportError:
+    pass

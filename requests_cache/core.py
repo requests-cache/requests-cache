@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
     requests_cache.core
     ~~~~~~~~~~~~~~~~~~~
@@ -8,6 +7,7 @@
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from operator import itemgetter
+from typing import Callable, Iterable, Union
 
 import requests
 from requests import Session as OriginalSession
@@ -17,53 +17,46 @@ from . import backends
 
 
 class CachedSession(OriginalSession):
-    """Requests ``Sessions`` with caching support."""
+    """Requests ``Sessions`` with caching support
+
+    Args:
+        cache_name: Cache prefix or namespace, depending on backend; see notes below
+        backend: Cache backend name; one of ``['sqlite', 'mongodb', 'gridfs', 'redis', 'dynamodb', 'memory']``.
+                Default behavior is to use ``'sqlite'`` if available, otherwise fallback to ``'memory'``.
+        expire_after: Number of seconds after which a cache entry will expire; set to ``None`` to
+            never expire
+        allowable_codes: Only cache responses with one of these codes
+        allowable_methods: Cache only responses for one of these HTTP methods
+        include_headers: Make request headers part of the cache key
+        ignored_parameters: List of request parameters to be excluded from the cache key.
+        filter_fn: function that takes a :py:class:`aiohttp.ClientResponse` object and
+            returns a boolean indicating whether or not that response should be cached. Will be
+            applied to both new and previously cached responses
+        old_data_on_error: Return expired cached responses if new request fails
+
+    The ``cache_name`` parameter will be used as follows depending on the backend:
+
+        * ``sqlite``: Cache filename prefix, e.g ``my_cache.sqlite``
+        * ``mongodb``: Database name
+        * ``redis``: Namespace, meaning all keys will be prefixed with ``'cache_name:'``
+
+    Note on cache key parameters: Set ``include_get_headers=True`` if you want responses to be
+    cached under different keys if they only differ by headers. You may also provide
+    ``ignored_parameters`` to ignore specific request params. This is useful, for example, when
+    requesting the same resource with different credentials or access tokens.
+    """
 
     def __init__(
         self,
-        cache_name='cache',
-        backend=None,
-        expire_after=None,
-        allowable_codes=(200,),
-        allowable_methods=('GET',),
-        filter_fn=lambda r: True,
-        old_data_on_error=False,
+        cache_name: str = 'cache',
+        backend: str = None,
+        expire_after: Union[int, float, timedelta] = None,
+        allowable_codes: Iterable[int] = (200,),
+        allowable_methods: Iterable['str'] = ('GET',),
+        filter_fn: Callable = None,
+        old_data_on_error: bool = False,
         **backend_options
     ):
-        """
-        :param cache_name: for ``sqlite`` backend: cache file will start with this prefix,
-                           e.g ``cache.sqlite``
-
-                           for ``mongodb``: it's used as database name
-
-                           for ``redis``: it's used as the namespace. This means all keys
-                           are prefixed with ``'cache_name:'``
-        :param backend: cache backend name e.g ``'sqlite'``, ``'mongodb'``, ``'redis'``, ``'memory'``.
-                        (see :ref:`persistence`). Or instance of backend implementation.
-                        Default value is ``None``, which means use ``'sqlite'`` if available,
-                        otherwise fallback to ``'memory'``.
-        :param expire_after: ``timedelta`` or number of seconds after cache will be expired
-                             or `None` (default) to ignore expiration
-        :type expire_after: float
-        :param allowable_codes: limit caching only for response with this codes (default: 200)
-        :type allowable_codes: tuple
-        :param allowable_methods: cache only requests of this methods (default: 'GET')
-        :type allowable_methods: tuple
-        :param filter_fn: function to apply to each response; the response is only cached if
-                          this returns `True`. Note that this function does not not modify
-                          the cached response in any way.
-        :type filter_fn: function
-        :kwarg backend_options: options for chosen backend. See corresponding
-                                :ref:`sqlite <backends_sqlite>`, :ref:`mongo <backends_mongo>`
-                                and :ref:`redis <backends_redis>` backends API documentation
-        :param include_get_headers: If `True` headers will be part of cache key.
-                                    E.g. after get('some_link', headers={'Accept':'application/json'})
-                                    get('some_link', headers={'Accept':'application/xml'}) is not from cache.
-        :param ignored_parameters: List of parameters to be excluded from the cache key.
-                                   Useful when requesting the same resource through different
-                                   credentials or access tokens, passed as parameters.
-        :param old_data_on_error: If `True` it will return expired cached response if update fails
-        """
         self.cache = backends.create_backend(backend, cache_name, backend_options)
         self._cache_name = cache_name
 
@@ -73,7 +66,7 @@ class CachedSession(OriginalSession):
 
         self._cache_allowable_codes = allowable_codes
         self._cache_allowable_methods = allowable_methods
-        self._filter_fn = filter_fn
+        self._filter_fn = filter_fn or (lambda r: True)
         self._return_old_data_on_error = old_data_on_error
         self._is_cache_disabled = False
         super(CachedSession, self).__init__()
@@ -175,12 +168,13 @@ class CachedSession(OriginalSession):
 
 
 def install_cache(
-    cache_name='cache',
-    backend=None,
-    expire_after=None,
-    allowable_codes=(200,),
-    allowable_methods=('GET',),
-    filter_fn=lambda r: True,
+    cache_name: str = 'cache',
+    backend: str = None,
+    expire_after: Union[int, float, timedelta] = None,
+    allowable_codes: Iterable[int] = (200,),
+    allowable_methods: Iterable['str'] = ('GET',),
+    filter_fn: Callable = None,
+    old_data_on_error: bool = False,
     session_factory=CachedSession,
     **backend_options
 ):
@@ -203,6 +197,7 @@ def install_cache(
                 allowable_codes=allowable_codes,
                 allowable_methods=allowable_methods,
                 filter_fn=filter_fn,
+                old_data_on_error=old_data_on_error,
                 **backend_options
             )
 
