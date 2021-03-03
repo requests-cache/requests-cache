@@ -9,8 +9,8 @@
 import pickle
 from collections.abc import MutableMapping
 
-from pymongo import MongoClient
 from gridfs import GridFS
+from pymongo import MongoClient
 
 
 class GridFSPickleDict(MutableMapping):
