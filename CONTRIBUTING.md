@@ -63,6 +63,21 @@ $ open docs/_build/index.html
 $ xdg-open docs/_build/index.html
 ```
 
+### Readthedocs
+Sometimes, there are differences in the Readthedocs build environment that can cause builds to
+succeed locally but fail remotely. To help debug this, you can use the Readthedocs Docker container
+(`readthedocs/build`) to perform the build. Example:
+```bash
+docker pull readthedocs/build
+docker run --rm -ti \
+  -v (pwd):/home/docs/project \
+  readthedocs/build \
+  /bin/bash -c \
+  "cd /home/docs/project \
+    && pip3 install '.[dev]' \
+    && make -C docs html"
+```
+
 ## Pull Requests
 Here are some general guidelines for submitting a pull request:
 
