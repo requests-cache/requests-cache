@@ -1,0 +1,41 @@
+# Containers needed to test all backend services locally
+version: '3'
+
+services:
+  dynamodb:
+    image: amazon/dynamodb-local
+    hostname: dynamodb-local
+    container_name: dynamodb-local
+    ports:
+      - 8000:8000
+    command: "-jar DynamoDBLocal.jar -sharedDb -optimizeDbBeforeStartup -dbPath ./data"
+    volumes:
+      - 'dynamodb_data:/home/dynamodblocal/data'
+    working_dir: /home/dynamodblocal
+
+  mongo:
+    image: mongo
+    environment:
+      MONGO_INITDB_DATABASE: aiohttp_client_cache_pytest
+    ports:
+      - 27017:27017
+    volumes:
+      - 'mongodb_data:/data/db'
+
+  redis:
+    image: docker.io/bitnami/redis
+    environment:
+      ALLOW_EMPTY_PASSWORD: 'yes'
+      # REDIS_DISABLE_COMMANDS: 'FLUSHDB,FLUSHALL'
+    ports:
+      - 6379:6379
+    volumes:
+      - 'redis_data:/bitnami/redis/data'
+
+volumes:
+  dynamodb_data:
+    driver: local
+  mongodb_data:
+    driver: local
+  redis_data:
+    driver: local
