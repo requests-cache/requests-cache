@@ -7,7 +7,7 @@
 """
 
 
-from .base import BaseCache
+from .base import BACKEND_KWARGS, BaseCache
 
 registry = {
     'memory': BaseCache,

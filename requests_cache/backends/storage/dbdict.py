@@ -144,7 +144,7 @@ class DbPickleDict(DbDict):
     """Same as :class:`DbDict`, but pickles values before saving"""
 
     def __setitem__(self, key, item):
-        super(DbPickleDict, self).__setitem__(key, sqlite3.Binary(pickle.dumps(item)))
+        super().__setitem__(key, sqlite3.Binary(pickle.dumps(item)))
 
     def __getitem__(self, key):
-        return pickle.loads(bytes(super(DbPickleDict, self).__getitem__(key)))
+        return pickle.loads(bytes(super().__getitem__(key)))

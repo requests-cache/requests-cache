@@ -27,6 +27,6 @@ class GridFSCache(BaseCache):
         :param db_name: database name
         :param connection: (optional) ``pymongo.Connection``
         """
-        super(GridFSCache, self).__init__(**options)
+        super().__init__(**options)
         self.responses = GridFSPickleDict(db_name, options.get('connection'))
         self.keys_map = MongoDict(db_name, 'http_redirects', self.responses.connection)

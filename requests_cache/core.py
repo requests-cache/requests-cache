@@ -7,6 +7,7 @@
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from operator import itemgetter
+from requests_cache.backends.base import BACKEND_KWARGS
 from typing import Callable, Iterable, Union
 
 import requests
@@ -16,8 +17,8 @@ from requests.hooks import dispatch_hook
 from . import backends
 
 
-class CachedSession(OriginalSession):
-    """Requests ``Sessions`` with caching support
+class CacheMixin:
+    """Mixin class that extends ``requests.Session`` with caching features.
 
     Args:
         cache_name: Cache prefix or namespace, depending on backend; see notes below
@@ -27,12 +28,14 @@ class CachedSession(OriginalSession):
             never expire
         allowable_codes: Only cache responses with one of these codes
         allowable_methods: Cache only responses for one of these HTTP methods
-        include_headers: Make request headers part of the cache key
+        include_get_headers: Make request headers part of the cache key
         ignored_parameters: List of request parameters to be excluded from the cache key.
         filter_fn: function that takes a :py:class:`aiohttp.ClientResponse` object and
             returns a boolean indicating whether or not that response should be cached. Will be
             applied to both new and previously cached responses
         old_data_on_error: Return expired cached responses if new request fails
+
+    See individual backend classes for additional backend-specific arguments.
 
     The ``cache_name`` parameter will be used as follows depending on the backend:
 
@@ -55,9 +58,9 @@ class CachedSession(OriginalSession):
         allowable_methods: Iterable['str'] = ('GET',),
         filter_fn: Callable = None,
         old_data_on_error: bool = False,
-        **backend_options
+        **kwargs
     ):
-        self.cache = backends.create_backend(backend, cache_name, backend_options)
+        self.cache = backends.create_backend(backend, cache_name, kwargs)
         self._cache_name = cache_name
 
         if expire_after is not None and not isinstance(expire_after, timedelta):
@@ -69,41 +72,36 @@ class CachedSession(OriginalSession):
         self._filter_fn = filter_fn or (lambda r: True)
         self._return_old_data_on_error = old_data_on_error
         self._is_cache_disabled = False
-        super(CachedSession, self).__init__()
+
+        # Remove any requests-cache-specific kwargs before passing along to superclass
+        session_kwargs = {k: v for k, v in kwargs.items() if k not in BACKEND_KWARGS}
+        super().__init__(**session_kwargs)
 
     def send(self, request, **kwargs):
         if self._is_cache_disabled or request.method not in self._cache_allowable_methods:
-            response = super(CachedSession, self).send(request, **kwargs)
+            response = super().send(request, **kwargs)
             response.from_cache = False
             response.cache_date = None
             return response
 
         cache_key = self.cache.create_key(request)
 
-        def send_request_and_cache_response():
-            response = super(CachedSession, self).send(request, **kwargs)
-            if response.status_code in self._cache_allowable_codes:
-                self.cache.save_response(cache_key, response)
-            response.from_cache = False
-            response.cache_date = None
-            return response
-
         try:
             response, timestamp = self.cache.get_response_and_time(cache_key)
         except (ImportError, TypeError):
-            return send_request_and_cache_response()
+            response, timestamp = None, None
 
         if response is None:
-            return send_request_and_cache_response()
+            return self.send_request_and_cache_response(request, cache_key, **kwargs)
 
         if self._cache_expire_after is not None:
             is_expired = datetime.utcnow() - timestamp > self._cache_expire_after
             if is_expired:
                 if not self._return_old_data_on_error:
                     self.cache.delete(cache_key)
-                    return send_request_and_cache_response()
+                    return self.send_request_and_cache_response(request, cache_key, **kwargs)
                 try:
-                    new_response = send_request_and_cache_response()
+                    new_response = self.send_request_and_cache_response(request, cache_key, **kwargs)
                 except Exception:
                     return response
                 else:
@@ -117,8 +115,16 @@ class CachedSession(OriginalSession):
         response = dispatch_hook('response', request.hooks, response, **kwargs)
         return response
 
+    def send_request_and_cache_response(self, request, cache_key, **kwargs):
+        response = super().send(request, **kwargs)
+        if response.status_code in self._cache_allowable_codes:
+            self.cache.save_response(cache_key, response)
+        response.from_cache = False
+        response.cache_date = None
+        return response
+
     def request(self, method, url, params=None, data=None, **kwargs):
-        response = super(CachedSession, self).request(
+        response = super().request(
             method, url, _normalize_parameters(params), _normalize_parameters(data), **kwargs
         )
         if self._is_cache_disabled:
@@ -167,6 +173,10 @@ class CachedSession(OriginalSession):
         )
 
 
+class CachedSession(CacheMixin, OriginalSession):
+    pass
+
+
 def install_cache(
     cache_name: str = 'cache',
     backend: str = None,
@@ -176,7 +186,7 @@ def install_cache(
     filter_fn: Callable = None,
     old_data_on_error: bool = False,
     session_factory=CachedSession,
-    **backend_options
+    **kwargs
 ):
     """
     Installs cache for all ``Requests`` requests by monkey-patching ``Session``
@@ -186,11 +196,11 @@ def install_cache(
     :param session_factory: Session factory. It must be class which inherits :class:`CachedSession` (default)
     """
     if backend:
-        backend = backends.create_backend(backend, cache_name, backend_options)
+        backend = backends.create_backend(backend, cache_name, kwargs)
 
     class _ConfiguredCachedSession(session_factory):
         def __init__(self):
-            super(_ConfiguredCachedSession, self).__init__(
+            super().__init__(
                 cache_name=cache_name,
                 backend=backend,
                 expire_after=expire_after,
@@ -198,7 +208,7 @@ def install_cache(
                 allowable_methods=allowable_methods,
                 filter_fn=filter_fn,
                 old_data_on_error=old_data_on_error,
-                **backend_options
+                **kwargs
             )
 
     _patch_session_factory(_ConfiguredCachedSession)
