@@ -25,7 +25,7 @@ extras_require = {
         'isort',
         'pre-commit',
         'pytest>=5.0',
-        'pytest-cov',
+        'pytest-cov>=2.11',
     ],
 }
 # All development/testing packages combined

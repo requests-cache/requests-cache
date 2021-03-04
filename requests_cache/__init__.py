@@ -28,11 +28,13 @@ __version__ = '0.6.0'
 try:
     from .core import (
         CachedSession,
+        CacheMixin,
         clear,
         disabled,
         enabled,
         get_cache,
         install_cache,
+        is_installed,
         remove_expired_responses,
         uninstall_cache,
     )

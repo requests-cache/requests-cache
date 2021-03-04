@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# noqa: F401
 """
     requests_cache.backends
     ~~~~~~~~~~~~~~~~~~~~~~~

@@ -7,12 +7,13 @@
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from operator import itemgetter
-from requests_cache.backends.base import BACKEND_KWARGS
 from typing import Callable, Iterable, Union
 
 import requests
 from requests import Session as OriginalSession
 from requests.hooks import dispatch_hook
+
+from requests_cache.backends.base import BACKEND_KWARGS
 
 from . import backends
 
@@ -124,9 +125,7 @@ class CacheMixin:
         return response
 
     def request(self, method, url, params=None, data=None, **kwargs):
-        response = super().request(
-            method, url, _normalize_parameters(params), _normalize_parameters(data), **kwargs
-        )
+        response = super().request(method, url, _normalize_parameters(params), _normalize_parameters(data), **kwargs)
         if self._is_cache_disabled:
             return response
 
@@ -193,7 +192,9 @@ def install_cache(
 
     Parameters are the same as in :class:`CachedSession`. Additional parameters:
 
-    :param session_factory: Session factory. It must be class which inherits :class:`CachedSession` (default)
+    Args:
+        session_factory: Session class to use. It must inherit from either :py:class:`CachedSession`
+            or :py:class:`CacheMixin`
     """
     if backend:
         backend = backends.create_backend(backend, cache_name, kwargs)
@@ -265,17 +266,24 @@ def enabled(*args, **kwargs):
 
 def get_cache():
     """Returns internal cache object from globally installed ``CachedSession``"""
-    return requests.Session().cache
+    return requests.Session().cache if is_installed() else None
+
+
+def is_installed():
+    """Indicate whether or not requests-cache is installed"""
+    return isinstance(requests.Session(), CachedSession)
 
 
 def clear():
     """Clears globally installed cache"""
-    get_cache().clear()
+    if get_cache():
+        get_cache().clear()
 
 
 def remove_expired_responses():
     """Removes expired responses from storage"""
-    return requests.Session().remove_expired_responses()
+    if is_installed():
+        return requests.Session().remove_expired_responses()
 
 
 def _patch_session_factory(session_factory=CachedSession):
