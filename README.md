@@ -52,10 +52,6 @@ requests_cache.install_cache('demo_cache')
 for i in range(10):
     requests.get('http://httpbin.org/delay/1', expire_after=1)
     time.sleep(0.2)
-
-# Disable caching (and invalidate cache)
-requests.get('http://httpbin.org/delay/1', expire_after=-1)  # always from URL
-requests.get('http://httpbin.org/delay/1')  # always from URL
 ```
 
 
