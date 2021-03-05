@@ -130,7 +130,7 @@ If you want to cache on a per request basis, all requests support the ``expire_a
 
     requests.get('https://httpbin.org/get', expire_after=10)
 
-Alternatively, ``expire_after`` accepts :class:`None`, ``'default'``, or a :class:`~datetime.timedelta`. :class:`None` enables infinite caching, ``'default'`` uses the expiry defined in :func:`install_cache`, and the timedelta is used as is. Negative values disable caching.
+Alternatively, ``expire_after`` accepts :class:`None`, ``'default'``, or a :class:`~datetime.timedelta`. :class:`None` enables infinite caching, ``'default'`` uses the expiry defined in :func:`install_cache`, and the timedelta is used as is.
 
 .. note:: Internally, numbers are converted to :class:`~datetime.timedelta` instances as well.
 
