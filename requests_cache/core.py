@@ -5,7 +5,7 @@
     Core functions for configuring cache and monkey patching ``requests``
 """
 from contextlib import contextmanager
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from operator import itemgetter
 from typing import Callable, Iterable, Union
 
@@ -71,18 +71,94 @@ class CachedSession(OriginalSession):
         self._is_cache_disabled = False
         super(CachedSession, self).__init__()
 
+    def _determine_expiration_datetime(self, response, relative_to=None):
+        """Determines the absolute expiration datetime for a response.
+        Requires :attr:`self._cache_expire_after` and :attr:`self._request_expire_after` to be set.
+
+        Given
+            - the expire_after from the cache (cache default)
+            - the expire_after passed to an individual request
+            - the expire_after stored inside the cache (from response)
+        the following rules hold:
+
+        +-----------------------------------+----------------------------------------------+
+        |                                   | request(..., expire_after=X)                 |
+        |                                   +===============+===============+==============+
+        |                                   | 'default'     | 'cached'      | other        |
+        +-----------------------+-----------+---------------+---------------+--------------+
+        | response.expire_after | 'default' | cache default | cache default | from request |
+        |                       +-----------+---------------+---------------+--------------+
+        |                       | 'cached'  | cache default | cache default | from request |
+        |                       +-----------+---------------+---------------+--------------+
+        |                       | other     | cache default | from response | from request |
+        +-----------------------+-----------+---------------+---------------+--------------+
+
+        That is, if the request's expire_after is set to 'default', the default
+        cache behavior is used.
+
+        If the request's expire_after is set to 'cached' (which is the default
+        value), the value from the response (potentially stored inside the
+        cache) will be used, unless that one is 'default' or 'cached', in which
+        case the default cache behavior will be used.
+
+        Whenever the request's expire_after is anything else (a number, None,
+        datetime, or timedelta), that value will be used.
+
+        Unless the value is an explicit datetime (which is returned as is),
+        it will be considered a relative time in the future, or None for
+        no expiration.
+
+        :param response: the response (potentially loaded from the cache)
+        :type response: requests.Response
+        :param relative_to: Parameter for easy unit testing to fix ``now``,
+                            defaults to ``datetime.now(timezone.utc)`` for normal use.
+        :type relative_to: Union[None, datetime.datetime]
+        :return: The absolute expiration date
+        :rtype: datetime.datetime
+        """
+        now = datetime.now(timezone.utc) if relative_to is None else relative_to
+
+        cache_expire_after = self._cache_expire_after
+        request_expire_after = self._request_expire_after
+        response_expire_after = getattr(response, 'expire_after', 'default')
+
+        def to_absolute(expire_after):
+            if expire_after is None:
+                return None
+            if isinstance(expire_after, timedelta):
+                return now + expire_after
+            if isinstance(expire_after, datetime):
+                return expire_after
+            return now + timedelta(seconds=expire_after)
+
+        if request_expire_after == 'cached' and response_expire_after not in ['cached', 'default']:
+            return to_absolute(response_expire_after)
+        if request_expire_after in ['default', 'cached']:
+            return to_absolute(cache_expire_after)
+        return to_absolute(request_expire_after)
+
     def send(self, request, **kwargs):
-        if self._is_cache_disabled or request.method not in self._cache_allowable_methods:
+        do_not_cache = (
+            self._is_cache_disabled or
+            request.method not in self._cache_allowable_methods or
+            self._request_expire_after is None
+        )
+        if do_not_cache:
             response = super(CachedSession, self).send(request, **kwargs)
             response.from_cache = False
             response.cache_date = None
+            response.expiration_date = None
+            response.expire_after = 'default'
             return response
+
 
         cache_key = self.cache.create_key(request)
 
         def send_request_and_cache_response():
             response = super(CachedSession, self).send(request, **kwargs)
             if response.status_code in self._cache_allowable_codes:
+                response.expire_after = self._request_expire_after
+                response.expiration_date = self._determine_expiration_datetime(response)
                 self.cache.save_response(cache_key, response)
             response.from_cache = False
             response.cache_date = None
@@ -96,20 +172,25 @@ class CachedSession(OriginalSession):
         if response is None:
             return send_request_and_cache_response()
 
-        if self._cache_expire_after is not None:
-            is_expired = datetime.utcnow() - timestamp > self._cache_expire_after
-            if is_expired:
-                if not self._return_old_data_on_error:
-                    self.cache.delete(cache_key)
-                    return send_request_and_cache_response()
-                try:
-                    new_response = send_request_and_cache_response()
-                except Exception:
+        if getattr(response, 'expiration_date', None) is not None:
+            now = datetime.now(timezone.utc)
+            is_expired = now > response.expiration_date
+        else:
+            is_expired = False
+
+        cache_invalid = response.expire_after != self._request_expire_after and self._request_expire_after != 'default'
+        if cache_invalid or is_expired:
+            if not self._return_old_data_on_error:
+                self.cache.delete(cache_key)
+                return send_request_and_cache_response()
+            try:
+                new_response = send_request_and_cache_response()
+            except Exception:
+                return response
+            else:
+                if new_response.status_code not in self._cache_allowable_codes:
                     return response
-                else:
-                    if new_response.status_code not in self._cache_allowable_codes:
-                        return response
-                    return new_response
+                return new_response
 
         # dispatch hook here, because we've removed it before pickling
         response.from_cache = True
@@ -117,12 +198,39 @@ class CachedSession(OriginalSession):
         response = dispatch_hook('response', request.hooks, response, **kwargs)
         return response
 
-    def request(self, method, url, params=None, data=None, **kwargs):
+    def request(self, method, url, params=None, data=None, expire_after='default', **kwargs):
+        """This method prepares and sends a request while automatically
+        performing any necessary caching operations.
+
+        If a cache is installed, whenever a standard ``requests`` function is
+        called, e.g. :func:`requests.get`, this method is called to handle caching
+        and calling the original :func:`requests.request` method.
+
+        This method adds an additional keyword argument to :func:`requests.request`, ``expire_after``.
+        It is used to set the expiry time for a specific request to override
+        the cache default, and can be omitted on subsequent calls. Subsequent
+        calls with different values invalidate the cache, calls with the same values (or without any values) don't.
+
+        :param expire_after: Specifies when the cache for a particular response
+                             expires. Accepts multiple argument types:
+
+                             - ``'default'`` to use the default expiry from the installed cache. This is the default.
+                             - :const:`None` to disable caching for this request
+                             - :class:`~datetime.timedelta` to set relative expiry times
+                             - :class:`float` values as time in seconds for :class:`~datetime.timedelta`
+                             - :class:`~datetime.datetime` to set an explicit expiration date
+
+        :type expire_after: Union[None, str, float, datetime.timedelta, datetime.datetime]
+        """
+        self._request_expire_after = expire_after  # store expire_after so we can handle it in the send-method
         response = super(CachedSession, self).request(
             method, url, _normalize_parameters(params), _normalize_parameters(data), **kwargs
         )
         if self._is_cache_disabled:
-            return response
+            try:
+                return response
+            finally:
+                self._request_expire_after = 'default'
 
         main_key = self.cache.create_key(response.request)
 
@@ -130,11 +238,17 @@ class CachedSession(OriginalSession):
         # responses won't always have the from_cache attribute.
         if hasattr(response, "from_cache") and not response.from_cache and self._filter_fn(response) is not True:
             self.cache.delete(main_key)
-            return response
+            try:
+                return response
+            finally:
+                self._request_expire_after = 'default'
 
         for r in response.history:
             self.cache.add_key_mapping(self.cache.create_key(r.request), main_key)
-        return response
+        try:
+            return response
+        finally:
+            self._request_expire_after = 'default'
 
     @contextmanager
     def cache_disabled(self):
@@ -154,9 +268,7 @@ class CachedSession(OriginalSession):
 
     def remove_expired_responses(self):
         """Removes expired responses from storage"""
-        if not self._cache_expire_after:
-            return
-        self.cache.remove_old_entries(datetime.utcnow() - self._cache_expire_after)
+        self.cache.remove_old_entries(datetime.now(timezone.utc))
 
     def __repr__(self):
         return "<CachedSession(%s('%s', ...), expire_after=%s, " "allowable_methods=%s)>" % (
