@@ -115,16 +115,14 @@ class BaseCache(object):
 
     def remove_old_entries(self, expires_before):
         """Deletes entries from cache with expiration time older than ``expires_before``"""
+        if expires_before.tzinfo is None:
+            # if expires_before is not timezone-aware, assume local time
+            expires_before = expires_before.astimezone()
+
         keys_to_delete = set()
         for key, (response, _) in self.responses.items():
-            if response.expiration_date is None:
-                continue
-            try:
-                if response.expiration_date < expires_before:
-                    keys_to_delete.add(key)
-            except TypeError:  # if expires_before is not timezone-aware, assume local time
-                if response.expiration_date < expires_before.astimezone():
-                    keys_to_delete.add(key)
+            if response.expiration_date is not None and response.expiration_date < expires_before:
+                keys_to_delete.add(key)
 
         for key in keys_to_delete:
             self.delete(key)
