@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import unittest
+from unittest.mock import patch
 
 import requests
 from requests.sessions import Session as OriginalSession
@@ -69,6 +70,26 @@ class MonkeyPatchTestCase(unittest.TestCase):
 
         session = CachedSession(backend=backend)
         self.assertIs(session.cache, backend)
+
+    @patch.object(BaseCache, 'remove_old_entries')
+    def test_remove_expired_responses(self, remove_old_entries):
+        requests_cache.install_cache(expire_after=360)
+        requests_cache.remove_expired_responses()
+        assert remove_old_entries.called is True
+
+    @patch.object(BaseCache, 'remove_old_entries')
+    def test_remove_expired_responses__cache_not_installed(self, remove_old_entries):
+        requests_cache.remove_expired_responses()
+        assert remove_old_entries.called is False
+
+    @patch.object(BaseCache, 'remove_old_entries')
+    def test_remove_expired_responses__no_expiration(self, remove_old_entries):
+        requests_cache.install_cache()
+        requests_cache.remove_expired_responses()
+        # Before https://github.com/reclosedev/requests-cache/pull/177, this
+        # was False, but with per-request caching, remove_old_entries must
+        # always be called
+        assert remove_old_entries.called is True
 
 
 if __name__ == '__main__':

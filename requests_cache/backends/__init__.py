@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# noqa: F401
 """
     requests_cache.backends
     ~~~~~~~~~~~~~~~~~~~~~~~
@@ -7,7 +7,7 @@
 """
 
 
-from .base import BaseCache
+from .base import BACKEND_KWARGS, BaseCache
 
 registry = {
     'memory': BaseCache,

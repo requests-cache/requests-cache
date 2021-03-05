@@ -67,7 +67,7 @@ class MongoPickleDict(MongoDict):
     """Same as :class:`MongoDict`, but pickles values before saving"""
 
     def __setitem__(self, key, item):
-        super(MongoPickleDict, self).__setitem__(key, pickle.dumps(item))
+        super().__setitem__(key, pickle.dumps(item))
 
     def __getitem__(self, key):
-        return pickle.loads(bytes(super(MongoPickleDict, self).__getitem__(key)))
+        return pickle.loads(bytes(super().__getitem__(key)))

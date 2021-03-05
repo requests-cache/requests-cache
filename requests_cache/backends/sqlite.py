@@ -23,6 +23,6 @@ class DbCache(BaseCache):
                           See :ref:`backends.DbDict <backends_dbdict>` for more info
         :param extension: extension for filename (default: ``'.sqlite'``)
         """
-        super(DbCache, self).__init__(**options)
+        super().__init__(**options)
         self.responses = DbPickleDict(str(location) + extension, 'responses', fast_save=fast_save)
         self.keys_map = DbDict(location + extension, 'urls')

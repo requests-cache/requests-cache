@@ -95,7 +95,7 @@ progress on major and minor releases.
 on the `master` branch.
   
 Release steps:
-- Update the version in `pyinaturalist/__init__.py`
+- Update the version in `requests_cache/__init__.py`
 - Update the release notes in `HISTORY.md`
 - Merge changes into the `master` branch
 - Push a new tag, e.g.: `git tag v0.1 && git push origin --tags`
