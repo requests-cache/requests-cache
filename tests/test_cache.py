@@ -43,6 +43,9 @@ class CacheTestCase(unittest.TestCase):
             except OSError:
                 pass
 
+    def tearDown(self):
+        self.s.close()
+
     def test_expire_cache(self):
         delay = 1
         url = httpbin('delay/%s' % delay)
@@ -56,6 +59,7 @@ class CacheTestCase(unittest.TestCase):
         r = s.get(url)
         delta = time.time() - t
         self.assertGreaterEqual(delta, delay)
+        s.close()
 
     def test_delete_urls(self):
         url = httpbin('get')
@@ -96,7 +100,7 @@ class CacheTestCase(unittest.TestCase):
 
         def hook_func(r, *args, **kwargs):
             if state[hook] > 0:
-                self.assert_(r.from_cache, True)
+                self.assertTrue(r.from_cache)
             state[hook] += 1
             return r
 
@@ -111,7 +115,7 @@ class CacheTestCase(unittest.TestCase):
         r2 = json.loads(self.s.post(url, data={'test2': 'test2'}).text)
         self.assertIn('test2', r2['form'])
         req = Request('POST', url).prepare()
-        self.assert_(not self.s.cache.has_key(self.s.cache.create_key(req)))
+        self.assertFalse(self.s.cache.has_key(self.s.cache.create_key(req)))
 
     def test_disabled(self):
 
@@ -160,6 +164,7 @@ class CacheTestCase(unittest.TestCase):
         # updated
         with requests_cache.disabled():
             self.assertEqual(r4, js(httpbin('cookies')))
+        s.close()
 
     # TODO: Create mock responses instead of depending on httpbin
     @pytest.mark.skip(reason='httpbin.org/relative-redirect no longer returns redirects')
@@ -212,17 +217,17 @@ class CacheTestCase(unittest.TestCase):
         for d in (d1, d2, d3):
             self.assertEqual(self.post(d)['data'], d)
             r = self.s.post(httpbin('post'), data=d)
-            self.assert_(hasattr(r, 'from_cache'))
+            self.assertTrue(hasattr(r, 'from_cache'))
 
         self.assertEqual(self.post(bin_data)['data'], bin_data.decode('utf8'))
         r = self.s.post(httpbin('post'), data=bin_data)
-        self.assert_(hasattr(r, 'from_cache'))
+        self.assertTrue(hasattr(r, 'from_cache'))
 
     def test_get_params_as_argument(self):
         for _ in range(5):
             p = {'arg1': 'value1'}
             r = self.s.get(httpbin('get'), params=p)
-            self.assert_(self.s.cache.has_url(httpbin('get?arg1=value1')))
+            self.assertTrue(self.s.cache.has_url(httpbin('get?arg1=value1')))
 
     @unittest.skipIf(sys.version_info < (2, 7), "No https in 2.6")
     def test_https_support(self):
@@ -258,7 +263,7 @@ class CacheTestCase(unittest.TestCase):
         self.assertFalse(self.s.get(url, params=params).from_cache)
         r = self.s.get(url, params=params)
         self.assertTrue(r.from_cache)
-        self.assertEquals(r.json()["args"], params)
+        self.assertEqual(r.json()["args"], params)
         self.assertFalse(self.s.get(url, params={"a": "b"}).from_cache)
         self.assertTrue(self.s.get(url, params=sorted(params.items())).from_cache)
 
@@ -287,15 +292,15 @@ class CacheTestCase(unittest.TestCase):
         first_char = r.raw.read(1)
         lines = list(r.iter_lines())
         self.assertTrue(first_char)
-        self.assertEquals(len(lines), n)
+        self.assertEqual(len(lines), n)
 
         for i in range(2):
             r = self.s.get(url, stream=True)
             first_char_cached = r.raw.read(1)
             self.assertTrue(r.from_cache)
             cached_lines = list(r.iter_lines())
-            self.assertEquals(cached_lines, lines)
-            self.assertEquals(first_char, first_char_cached)
+            self.assertEqual(cached_lines, lines)
+            self.assertEqual(first_char, first_char_cached)
 
     def test_headers_in_get_query(self):
         url = httpbin("get")
@@ -332,11 +337,11 @@ class CacheTestCase(unittest.TestCase):
             return s.get(url, headers={header: n}).json()["headers"][header]
 
         get("expired")
-        self.assertEquals(get("2"), "expired")
+        self.assertEqual(get("2"), "expired")
         datetime_mock.utcnow.return_value = datetime.utcnow() + timedelta(seconds=expire_after * 2)
 
         with mock.patch.object(s.cache, "save_response", side_effect=Exception):
-            self.assertEquals(get("3"), "expired")
+            self.assertEqual(get("3"), "expired")
 
         with mock.patch("requests_cache.core.OriginalSession.send") as send_mock:
             resp_mock = requests.Response()
@@ -476,10 +481,10 @@ class CacheTestCase(unittest.TestCase):
         with mock.patch("requests_cache.backends.base.BaseCache.restore_response", side_effect=TypeError):
             resp = self.s.get(url)
             self.assertFalse(resp.from_cache)
-            self.assertEquals(resp.json()["args"]["q"], "1")
+            self.assertEqual(resp.json()["args"]["q"], "1")
         resp = self.s.get(url)
         self.assertTrue(resp.from_cache)
-        self.assertEquals(resp.json()["args"]["q"], "1")
+        self.assertEqual(resp.json()["args"]["q"], "1")
 
     def test_cache_date(self):
         url = httpbin('get')

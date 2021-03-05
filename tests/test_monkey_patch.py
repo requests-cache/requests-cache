@@ -55,7 +55,7 @@ class MonkeyPatchTestCase(unittest.TestCase):
                 super(FooSession, self).__init__()
 
         s = FooSession(1)
-        self.assertEquals(s.param, 1)
+        self.assertEqual(s.param, 1)
         self.assertIn("new_one", s.__attrs__)
         self.assertTrue(isinstance(s, CachedSession))
 
