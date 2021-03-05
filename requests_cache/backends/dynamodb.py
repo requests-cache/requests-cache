@@ -17,7 +17,7 @@ class DynamoDbCache(BaseCache):
         :param namespace: dynamodb table name (default: ``'requests-cache'``)
         :param connection: (optional) ``boto3.resource('dynamodb')``
         """
-        super(DynamoDbCache, self).__init__(**options)
+        super().__init__(**options)
         self.responses = DynamoDbDict(
             table_name,
             'responses',

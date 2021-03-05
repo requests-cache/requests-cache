@@ -162,3 +162,50 @@ or :meth:`BaseCache.remove_old_entries(created_before) <requests_cache.backends.
 
 
 For more information see :doc:`API reference <api>`.
+
+Usage with other libraries that modify requests.Session
+-------------------------------------------------------
+This library works by patching ``requests.Session``. Many other libraries out there do the same
+thing, making it difficult to combine them. For that case, a mixin class is provided, so you can
+create a custom class with behavior from multiple Session-modifying libraries::
+
+    from requests import Session
+    from requests_cache import CacheMixin
+    from some_other_lib import SomeOtherMixin
+
+    class CustomSession(CacheMixin, SomeOtherMixin ClientSession):
+        """Session class with features from both requests-html and requests-cache"""
+
+
+Example with `requests-html <https://github.com/psf/requests-html>`_::
+
+    import requests
+    from requests_cache import CacheMixin, install_cache
+    from requests_html import HTMLSession
+
+    class CachedHTMLSession(CacheMixin, HTMLSession):
+        """Session with features from both CachedSession and HTMLSession"""
+
+    session = CachedHTMLSession()
+    r = session.get("https://github.com/")
+    print(r.from_cache, r.html.links)
+
+Or, using the monkey-patch method::
+
+    install_cache(session_factory=CachedHTMLSession)
+    r = requests.get("https://github.com/")
+    print(r.from_cache, r.html.links)
+
+The same approach can be used with other libraries that subclass ``requests.Session``.
+
+Example with `requests-mock <https://github.com/jamielennox/requests-mock>`_::
+
+    import requests
+    from requests_mock import Mocker
+    from requests_cache import CachedSession
+
+    session = CachedSession()
+    with Mocker(session=session) as m:
+        m.get('http://test.com', text='mock_response')
+        response = session.get('http://test.com')
+        print(response.text)

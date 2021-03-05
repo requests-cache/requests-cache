@@ -14,7 +14,23 @@ from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 import requests
 
-_DEFAULT_HEADERS = requests.utils.default_headers()
+# All backend-specific keyword arguments combined
+BACKEND_KWARGS = [
+    'connection',
+    'db_name',
+    'endpont_url',
+    'extension',
+    'fast_save',
+    'ignored_parameters',
+    'include_get_headers',
+    'location',
+    'name',
+    'namespace',
+    'read_capacity_units',
+    'region_name',
+    'write_capacity_units',
+]
+DEFAULT_HEADERS = requests.utils.default_headers()
 
 
 class BaseCache(object):
@@ -230,7 +246,7 @@ class BaseCache(object):
         if request.body:
             key.update(_to_bytes(body))
         else:
-            if self._include_get_headers and request.headers != _DEFAULT_HEADERS:
+            if self._include_get_headers and request.headers != DEFAULT_HEADERS:
                 for name, value in sorted(request.headers.items()):
                     key.update(_to_bytes(name))
                     key.update(_to_bytes(value))

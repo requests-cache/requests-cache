@@ -4,12 +4,12 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     ``gridfs`` cache backend
-    
+
     Use MongoDB GridFS to support documents greater than 16MB.
-    
+
     Usage:
         requests_cache.install_cache(backend='gridfs')
-    
+
     Or:
         from pymongo import MongoClient
         requests_cache.install_cache(backend='gridfs', connection=MongoClient('another-host.local'))
@@ -27,6 +27,6 @@ class GridFSCache(BaseCache):
         :param db_name: database name
         :param connection: (optional) ``pymongo.Connection``
         """
-        super(GridFSCache, self).__init__(**options)
+        super().__init__(**options)
         self.responses = GridFSPickleDict(db_name, options.get('connection'))
         self.keys_map = MongoDict(db_name, 'http_redirects', self.responses.connection)

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import unittest
+from unittest.mock import patch
 
 import requests
 from requests.sessions import Session as OriginalSession
@@ -55,7 +56,7 @@ class MonkeyPatchTestCase(unittest.TestCase):
                 super(FooSession, self).__init__()
 
         s = FooSession(1)
-        self.assertEquals(s.param, 1)
+        self.assertEqual(s.param, 1)
         self.assertIn("new_one", s.__attrs__)
         self.assertTrue(isinstance(s, CachedSession))
 
@@ -69,6 +70,23 @@ class MonkeyPatchTestCase(unittest.TestCase):
 
         session = CachedSession(backend=backend)
         self.assertIs(session.cache, backend)
+
+    @patch.object(BaseCache, 'remove_old_entries')
+    def test_remove_expired_responses(self, remove_old_entries):
+        requests_cache.install_cache(expire_after=360)
+        requests_cache.remove_expired_responses()
+        assert remove_old_entries.called is True
+
+    @patch.object(BaseCache, 'remove_old_entries')
+    def test_remove_expired_responses__cache_not_installed(self, remove_old_entries):
+        requests_cache.remove_expired_responses()
+        assert remove_old_entries.called is False
+
+    @patch.object(BaseCache, 'remove_old_entries')
+    def test_remove_expired_responses__no_expiration(self, remove_old_entries):
+        requests_cache.install_cache()
+        requests_cache.remove_expired_responses()
+        assert remove_old_entries.called is False
 
 
 if __name__ == '__main__':
