@@ -36,8 +36,5 @@ try:
         remove_expired_responses,
         uninstall_cache,
     )
-    from .per_request import (
-        PerRequestCachedSession,
-    )
 except ImportError:
     pass

@@ -38,12 +38,15 @@ write complex error handling and persistence.
 
 For more complex workflows, it is possible to cache different requests with different expiration times, or disable caching for a specific request completely:
 
+
+For more complex workflows, it is possible to cache different requests with different expiry times, or disable caching for a specific request completely:
+
 ```python
 import time
 import requests
 import requests_cache
 
-requests_cache.install_cache('demo_cache', session_factory=requests_cache.PerRequestCachedSession)
+requests_cache.install_cache('demo_cache')
 
 # Hits the URL only 2 times
 for i in range(10):

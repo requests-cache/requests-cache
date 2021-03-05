@@ -6,26 +6,13 @@ import requests
 import requests_cache
 
 
-requests_cache.install_cache('example_cache', backend='memory',
-                             session_factory=requests_cache.PerRequestCachedSession)
+requests_cache.install_cache('example_cache', backend='memory')
 
 
 def main():
     # Normal caching forever
     response = requests.get('https://httpbin.org/get')
     assert not response.from_cache
-    response = requests.get('https://httpbin.org/get')
-    assert response.from_cache
-
-    # Disable caching for /anything
-    response = requests.get('https://httpbin.org/anything', expire_after=-1)
-    assert not response.from_cache
-    response = requests.get('https://httpbin.org/anything')
-    assert not response.from_cache
-    response = requests.get('https://httpbin.org/anything')
-    assert not response.from_cache
-
-    # It still works for /get
     response = requests.get('https://httpbin.org/get')
     assert response.from_cache
 
