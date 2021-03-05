@@ -8,7 +8,7 @@
 """
 import hashlib
 from copy import copy
-from datetime import datetime
+from datetime import datetime, timezone
 from io import BytesIO
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
@@ -41,7 +41,7 @@ class BaseCache(object):
         .. note:: Response is reduced before saving (with :meth:`reduce_response`)
                   to make it picklable
         """
-        self.responses[key] = self.reduce_response(response), datetime.utcnow()
+        self.responses[key] = self.reduce_response(response), datetime.now(timezone.utc)
 
     def add_key_mapping(self, new_key, key_to_response):
         """
@@ -97,12 +97,18 @@ class BaseCache(object):
         self.responses.clear()
         self.keys_map.clear()
 
-    def remove_old_entries(self, created_before):
-        """Deletes entries from cache with creation time older than ``created_before``"""
+    def remove_old_entries(self, expires_before):
+        """Deletes entries from cache with expiration time older than ``expires_before``"""
         keys_to_delete = set()
-        for key, (response, created_at) in self.responses.items():
-            if created_at < created_before:
-                keys_to_delete.add(key)
+        for key, (response, _) in self.responses.items():
+            if response.expiration_date is None:
+                continue
+            try:
+                if response.expiration_date < expires_before:
+                    keys_to_delete.add(key)
+            except TypeError:  # if expires_before is not timezone-aware, assume local time
+                if response.expiration_date < expires_before.astimezone():
+                    keys_to_delete.add(key)
 
         for key in keys_to_delete:
             self.delete(key)
@@ -131,6 +137,8 @@ class BaseCache(object):
         'request',
         'reason',
         'raw',
+        'expiration_date',
+        'expire_after',
     ]
 
     _raw_response_attrs = [
@@ -164,7 +172,7 @@ class BaseCache(object):
         return result
 
     def _picklable_field(self, response, name):
-        value = getattr(response, name)
+        value = getattr(response, name, None)
         if name == 'request':
             value = copy(value)
             value.hooks = []
