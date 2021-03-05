@@ -6,7 +6,7 @@ import sys
 import time
 import unittest
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest import mock
 
 import requests
@@ -326,8 +326,12 @@ class CacheTestCase(unittest.TestCase):
         self.assertIn("10", s)
 
     @mock.patch("requests_cache.core.datetime")
-    def test_return_old_data_on_error(self, datetime_mock):
-        datetime_mock.utcnow.return_value = datetime.utcnow()
+    @mock.patch("requests_cache.backends.base.datetime")
+    def test_return_old_data_on_error(self, datetime_mock_backend, datetime_mock):
+        now = datetime(2021, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+        datetime_mock_backend.now.return_value = now
+
+        datetime_mock.now.return_value = now
         expire_after = 100
         url = httpbin("get")
         s = CachedSession(CACHE_NAME, CACHE_BACKEND, old_data_on_error=True, expire_after=expire_after)
@@ -338,7 +342,7 @@ class CacheTestCase(unittest.TestCase):
 
         get("expired")
         self.assertEqual(get("2"), "expired")
-        datetime_mock.utcnow.return_value = datetime.utcnow() + timedelta(seconds=expire_after * 2)
+        datetime_mock.now.return_value = now + timedelta(seconds=expire_after * 2)
 
         with mock.patch.object(s.cache, "save_response", side_effect=Exception):
             self.assertEqual(get("3"), "expired")
@@ -350,14 +354,14 @@ class CacheTestCase(unittest.TestCase):
             resp_mock.status_code = 400
             resp_mock._content = '{"other": "content"}'
             send_mock.return_value = resp_mock
-            self.assertEquals(get("3"), "expired")
+            self.assertEqual(get("4"), "expired")
 
             resp_mock.status_code = 200
             self.assertIs(s.get(url).content, resp_mock.content)
 
         # default behaviour
-        datetime_mock.return_value = datetime.utcnow() + timedelta(seconds=expire_after * 2)
-        s = CachedSession(CACHE_NAME, CACHE_BACKEND, old_data_on_error=False, expire_after=100)
+        datetime_mock.now.return_value = now + timedelta(seconds=expire_after * 5)
+        s = CachedSession(CACHE_NAME, CACHE_BACKEND, old_data_on_error=False, expire_after=expire_after)
         with mock.patch.object(s.cache, "save_response", side_effect=Exception):
             with self.assertRaises(Exception):
                 s.get(url)
