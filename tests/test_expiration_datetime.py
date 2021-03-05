@@ -23,7 +23,9 @@ class ExpirationTimeTest(unittest.TestCase):
         in_five_seconds = datetime.datetime(2021, 2, 28, 16, 40, 5)
         expire_afters = ['default', 'cached', None, 5, datetime.timedelta(seconds=5), in_five_seconds]
 
-        for cache_expire_after, request_expire_after, response_expire_after in itertools.product(expire_afters, expire_afters, expire_afters):
+        for cache_expire_after, request_expire_after, response_expire_after in itertools.product(
+            expire_afters, expire_afters, expire_afters
+        ):
             if cache_expire_after in ['default', 'cached']:
                 continue  # cache can never be default or cached
 
@@ -49,4 +51,3 @@ class ExpirationTimeTest(unittest.TestCase):
         – this might also take the cache default into account... have to think
         about that tomorrow)
         """
-

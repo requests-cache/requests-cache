@@ -146,9 +146,9 @@ class CacheMixin:
 
     def send(self, request, **kwargs):
         do_not_cache = (
-            self._is_cache_disabled or
-            request.method not in self._cache_allowable_methods or
-            self._request_expire_after is None
+            self._is_cache_disabled
+            or request.method not in self._cache_allowable_methods
+            or self._request_expire_after is None
         )
         if do_not_cache:
             response = super().send(request, **kwargs)

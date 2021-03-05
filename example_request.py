@@ -5,7 +5,6 @@ import requests
 
 import requests_cache
 
-
 requests_cache.install_cache('example_cache', backend='memory')
 
 

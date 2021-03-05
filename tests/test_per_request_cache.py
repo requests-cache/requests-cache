@@ -7,7 +7,6 @@ import requests
 
 import requests_cache
 
-
 HTTPBIN_URL = os.getenv('HTTPBIN_URL', 'http://httpbin.org/')
 
 
