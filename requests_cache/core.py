@@ -81,39 +81,7 @@ class CacheMixin:
     def _determine_expiration_datetime(self, response, relative_to=None):
         """Determines the absolute expiration datetime for a response.
         Requires :attr:`self._cache_expire_after` and :attr:`self._request_expire_after` to be set.
-
-        Given
-            - the expire_after from the cache (cache default)
-            - the expire_after passed to an individual request
-            - the expire_after stored inside the cache (from response)
-        the following rules hold:
-
-        +-----------------------------------+----------------------------------------------+
-        |                                   | request(..., expire_after=X)                 |
-        |                                   +===============+===============+==============+
-        |                                   | 'default'     | 'cached'      | other        |
-        +-----------------------+-----------+---------------+---------------+--------------+
-        | response.expire_after | 'default' | cache default | cache default | from request |
-        |                       +-----------+---------------+---------------+--------------+
-        |                       | 'cached'  | cache default | cache default | from request |
-        |                       +-----------+---------------+---------------+--------------+
-        |                       | other     | cache default | from response | from request |
-        +-----------------------+-----------+---------------+---------------+--------------+
-
-        That is, if the request's expire_after is set to 'default', the default
-        cache behavior is used.
-
-        If the request's expire_after is set to 'cached' (which is the default
-        value), the value from the response (potentially stored inside the
-        cache) will be used, unless that one is 'default' or 'cached', in which
-        case the default cache behavior will be used.
-
-        Whenever the request's expire_after is anything else (a number, None,
-        datetime, or timedelta), that value will be used.
-
-        Unless the value is an explicit datetime (which is returned as is),
-        it will be considered a relative time in the future, or None for
-        no expiration.
+        See :meth:`request` for more information.
 
         :param response: the response (potentially loaded from the cache)
         :type response: requests.Response
@@ -207,10 +175,50 @@ class CacheMixin:
         the cache default, and can be omitted on subsequent calls. Subsequent
         calls with different values invalidate the cache, calls with the same values (or without any values) don't.
 
+        Given
+
+        - the `expire_after` from the installed cache (the ``'default'``)
+        - the `expire_after` passed to an individual request
+        - the `expire_after` stored inside the cache (the ``'cached'`` value)
+
+        the following rules hold for which `expire_after` is used:
+
+        +-----------------------------------+----------------------------------------------+
+        |                       |           | request(..., expire_after=X)                 |
+        +=======================+===========+===============+===============+==============+
+        |                       |           | 'default'     | 'cached'      | other        |
+        +-----------------------+-----------+---------------+---------------+--------------+
+        | response.expire_after | 'default' | cache default | cache default | from request |
+        |                       +-----------+---------------+---------------+--------------+
+        |                       | 'cached'  | cache default | cache default | from request |
+        |                       +-----------+---------------+---------------+--------------+
+        |                       | other     | cache default | from response | from request |
+        +-----------------------+-----------+---------------+---------------+--------------+
+
+        That is, if the request's ``expire_after`` is set to ``'default'``
+        (which is the default value) the default caching behavior is used.
+
+        If the request's ``expire_after`` is set to ``'cached'``, the value from
+        the response (potentially stored inside the cache) will be used, unless
+        that one is 'default' or 'cached', in which case the default cache
+        behavior will be used.
+
+        .. note::
+            Setting ``expire_after`` to ``'cached'`` usually leads to unexpected results,
+            as it recalculates the expiration date from a cached value.
+
+        Whenever the request's expire_after is anything else (a number, None,
+        datetime, or timedelta), that value will be used.
+
+        In all cases, if the value is an explicit datetime it returned as is.
+        If it is None, it is also returned as is and caches forever.
+        All other values will be considered a relative time in the future.
+
         :param expire_after: Specifies when the cache for a particular response
                              expires. Accepts multiple argument types:
 
                              - ``'default'`` to use the default expiry from the installed cache. This is the default.
+                             - ``'cached'`` to use the expiry from the stored response cache.
                              - :const:`None` to disable caching for this request
                              - :class:`~datetime.timedelta` to set relative expiry times
                              - :class:`float` values as time in seconds for :class:`~datetime.timedelta`
