@@ -78,7 +78,7 @@ class CacheMixin:
         session_kwargs = {k: v for k, v in kwargs.items() if k not in BACKEND_KWARGS}
         super().__init__(**session_kwargs)
 
-    def _determine_expiration_datetime(self, response, relative_to=None):
+    def _determine_expiration_datetime(self, relative_to=None):
         """Determines the absolute expiration datetime for a response.
         Requires :attr:`self._cache_expire_after` and :attr:`self._request_expire_after` to be set.
         See :meth:`request` for more information.
@@ -95,7 +95,6 @@ class CacheMixin:
 
         cache_expire_after = self._cache_expire_after
         request_expire_after = self._request_expire_after
-        response_expire_after = getattr(response, 'expire_after', 'default')
 
         def to_absolute(expire_after):
             if expire_after is None:
@@ -106,9 +105,7 @@ class CacheMixin:
                 return expire_after
             return now + timedelta(seconds=expire_after)
 
-        if request_expire_after == 'cached' and response_expire_after not in ['cached', 'default']:
-            return to_absolute(response_expire_after)
-        if request_expire_after in ['default', 'cached']:
+        if request_expire_after == 'default':
             return to_absolute(cache_expire_after)
         return to_absolute(request_expire_after)
 
@@ -179,33 +176,22 @@ class CacheMixin:
 
         - the `expire_after` from the installed cache (the ``'default'``)
         - the `expire_after` passed to an individual request
-        - the `expire_after` stored inside the cache (the ``'cached'`` value)
+        - the `expire_after` stored inside the cache
 
         the following rules hold for which `expire_after` is used:
 
-        +-----------------------------------+----------------------------------------------+
-        |                       |           | request(..., expire_after=X)                 |
-        +=======================+===========+===============+===============+==============+
-        |                       |           | 'default'     | 'cached'      | other        |
-        +-----------------------+-----------+---------------+---------------+--------------+
-        | response.expire_after | 'default' | cache default | cache default | from request |
-        |                       +-----------+---------------+---------------+--------------+
-        |                       | 'cached'  | cache default | cache default | from request |
-        |                       +-----------+---------------+---------------+--------------+
-        |                       | other     | cache default | from response | from request |
-        +-----------------------+-----------+---------------+---------------+--------------+
+        +-----------------------------------+------------------------------+
+        |                       |           | request(..., expire_after=X) |
+        +=======================+===========+===============+==============+
+        |                       |           | 'default'     | other        |
+        +-----------------------+-----------+---------------+--------------+
+        | response.expire_after | 'default' | cache default | from request |
+        |                       +-----------+---------------+--------------+
+        |                       | other     | cache default | from request |
+        +-----------------------+-----------+---------------+--------------+
 
         That is, if the request's ``expire_after`` is set to ``'default'``
         (which is the default value) the default caching behavior is used.
-
-        If the request's ``expire_after`` is set to ``'cached'``, the value from
-        the response (potentially stored inside the cache) will be used, unless
-        that one is 'default' or 'cached', in which case the default cache
-        behavior will be used.
-
-        .. note::
-            Setting ``expire_after`` to ``'cached'`` usually leads to unexpected results,
-            as it recalculates the expiration date from a cached value.
 
         Whenever the request's expire_after is anything else (a number, None,
         datetime, or timedelta), that value will be used.
@@ -218,7 +204,6 @@ class CacheMixin:
                              expires. Accepts multiple argument types:
 
                              - ``'default'`` to use the default expiry from the installed cache. This is the default.
-                             - ``'cached'`` to use the expiry from the stored response cache.
                              - :const:`None` to disable caching for this request
                              - :class:`~datetime.timedelta` to set relative expiry times
                              - :class:`float` values as time in seconds for :class:`~datetime.timedelta`
@@ -257,7 +242,7 @@ class CacheMixin:
         response = super().send(request, **kwargs)
         if response.status_code in self._cache_allowable_codes:
             response.expire_after = self._request_expire_after
-            response.expiration_date = self._determine_expiration_datetime(response)
+            response.expiration_date = self._determine_expiration_datetime()
             self.cache.save_response(cache_key, response)
         response.from_cache = False
         response.cache_date = None
