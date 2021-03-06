@@ -27,7 +27,7 @@ class ThreadSafetyTestCase(unittest.TestCase):
                     t.join()
 
                 for i in range(n_threads):
-                    self.assert_(s.cache.has_url('%s?param=%s' % (url, i)))
+                    self.assertTrue(s.cache.has_url('%s?param=%s' % (url, i)))
 
         for backend in ('sqlite', 'mongodb'):
             try:

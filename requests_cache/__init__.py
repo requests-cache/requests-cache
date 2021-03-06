@@ -15,7 +15,7 @@
         import requests
         for i in range(10):
             r = requests.get('http://httpbin.org/delay/5')
-        # will took  approximately 5 seconds instead 50
+        # will take approximately 5 seconds instead 50
 
 
     :copyright: (c) 2012 by Roman Haritonov.

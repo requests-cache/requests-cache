@@ -86,7 +86,10 @@ class MonkeyPatchTestCase(unittest.TestCase):
     def test_remove_expired_responses__no_expiration(self, remove_old_entries):
         requests_cache.install_cache()
         requests_cache.remove_expired_responses()
-        assert remove_old_entries.called is False
+        # Before https://github.com/reclosedev/requests-cache/pull/177, this
+        # was False, but with per-request caching, remove_old_entries must
+        # always be called
+        assert remove_old_entries.called is True
 
 
 if __name__ == '__main__':

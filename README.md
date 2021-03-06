@@ -36,6 +36,25 @@ It can be useful when you are creating some simple data scraper with constantly
 changing parsing logic or data format, and don't want to redownload pages or
 write complex error handling and persistence.
 
+For more complex workflows, it is possible to cache different requests with different expiration times, or disable caching for a specific request completely:
+
+
+For more complex workflows, it is possible to cache different requests with different expiry times, or disable caching for a specific request completely:
+
+```python
+import time
+import requests
+import requests_cache
+
+requests_cache.install_cache('demo_cache')
+
+# Hits the URL only 2 times
+for i in range(10):
+    requests.get('http://httpbin.org/delay/1', expire_after=1)
+    time.sleep(0.2)
+```
+
+
 ## Related Projects
 If `requests-cache` isn't quite what you need, you can help make it better! See the
 [Contributing Guide](https://github.com/reclosedev/requests-cache/blob/master/CONTRIBUTING.md)
