@@ -5,8 +5,16 @@ History
 
 0.6.0 (TBD)
 ++++++++++++++++++
+`See all included issues and PRs <https://github.com/reclosedev/requests-cache/milestone/1?closed=1>`_
+
 * Drop support for python <= 3.5
-* Fix TypeError with DbPickleDict initialization
+* Fix TypeError with ``DbPickleDict`` initialization
+* Update usage of deprecated MongoClient ``save()`` method
+* Fix non-thread-safe iteration in ``BaseCache``
+* Add support for setting ``expire_after`` per request
+* Refactor CachedSession to be usable as a mixin class, for compatibility with other ``requests.Session`` extensions
+* Fix get_cache, clear, and remove_expired_responses to do nothing if requests-cache is not installed
+* Add ``HEAD`` to default ``allowable_methods``
 
 
 0.5.2 (2019-08-14)
