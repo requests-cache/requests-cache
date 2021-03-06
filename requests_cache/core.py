@@ -56,7 +56,7 @@ class CacheMixin:
         backend: str = None,
         expire_after: Union[int, float, timedelta] = None,
         allowable_codes: Iterable[int] = (200,),
-        allowable_methods: Iterable['str'] = ('GET',),
+        allowable_methods: Iterable['str'] = ('GET', 'HEAD'),
         filter_fn: Callable = None,
         old_data_on_error: bool = False,
         **kwargs
@@ -286,7 +286,7 @@ def install_cache(
     backend: str = None,
     expire_after: Union[int, float, timedelta] = None,
     allowable_codes: Iterable[int] = (200,),
-    allowable_methods: Iterable['str'] = ('GET',),
+    allowable_methods: Iterable['str'] = ('GET', 'HEAD'),
     filter_fn: Callable = None,
     old_data_on_error: bool = False,
     session_factory=CachedSession,
