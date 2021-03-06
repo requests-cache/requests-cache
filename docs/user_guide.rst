@@ -120,6 +120,23 @@ It can be used, for example, for request throttling with help of ``requests`` ho
 
 .. note:: requests_cache prefetchs response content, be aware if your code uses streaming requests.
 
+
+.. _request_caching:
+
+Request caching
+---------------
+
+If you want to cache on a per request basis, all requests support the ``expire_after`` keyword argument, which takes an expiration time in seconds::
+
+    requests.get('https://httpbin.org/get', expire_after=10)
+
+Alternatively, ``expire_after`` accepts :class:`None`, ``'default'``, or a :class:`~datetime.timedelta`. :class:`None` enables infinite caching, ``'default'`` uses the expiry defined in :func:`install_cache`, and the timedelta is used as is.
+
+.. note:: Internally, numbers are converted to :class:`~datetime.timedelta` instances as well.
+
+.. seealso:: `example_request.py <https://github.com/reclosedev/requests-cache/blob/master/example_request.py>`_
+
+
 .. _persistence:
 
 Persistence

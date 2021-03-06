@@ -30,7 +30,7 @@ class DbdictTestCase(BaseCustomDictTestCase, unittest.TestCase):
 
         d = DbDict(self.NAMESPACE)
         self.assertNotIn(2, d)
-        self.assert_(d.can_commit)
+        self.assertTrue(d.can_commit)
 
     def test_fast_save(self):
         d1 = DbDict(self.NAMESPACE, fast_save=True)
@@ -66,7 +66,7 @@ class DbdictTestCase(BaseCustomDictTestCase, unittest.TestCase):
             for t in threads:
                 t.join()
 
-            self.assert_(not fails)
+            self.assertFalse(fails)
             for i in range(n_threads):
                 for x in values(i, n_threads):
                     self.assertEqual(d[x], x)

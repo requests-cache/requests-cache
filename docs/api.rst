@@ -10,7 +10,6 @@ Public api
 .. automodule:: requests_cache.core
    :members:
 
-
 ----------------------------------------------
 
 .. _cache_backends:

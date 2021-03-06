@@ -9,3 +9,4 @@ Patches and Suggestions
 - `@michaelbeaumont <https://github.com/michaelbeaumont>`_
 - `Alex Morega <https://github.com/mgax>`_
 - `@paulfurley <https://github.com/paulfurley>`_
+- `Sebastian Höffner <https://github.com/shoeffner>`_
