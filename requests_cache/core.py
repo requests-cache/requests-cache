@@ -159,6 +159,12 @@ class CacheMixin:
         response = dispatch_hook('response', request.hooks, response, **kwargs)
         return response
 
+    def prepare_request(self, request):
+        prepped = super().prepare_request(request)
+        self._request_expire_after='default'
+        return prepped
+
+
     def request(self, method, url, params=None, data=None, expire_after='default', **kwargs):
         """This method prepares and sends a request while automatically
         performing any necessary caching operations.
