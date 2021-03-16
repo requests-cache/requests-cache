@@ -251,18 +251,21 @@ class CacheMixin:
     @contextmanager
     def cache_disabled(self):
         """
-        Context manager for temporary disabling cache
+        Context manager for temporary disabling the cache
         ::
 
             >>> s = CachedSession()
             >>> with s.cache_disabled():
             ...     s.get('http://httpbin.org/ip')
         """
-        self._is_cache_disabled = True
-        try:
+        if self._is_cache_disabled:
             yield
-        finally:
-            self._is_cache_disabled = False
+        else:
+            self._is_cache_disabled = True
+            try:
+                yield
+            finally:
+                self._is_cache_disabled = False
 
     def remove_expired_responses(self):
         """Removes expired responses from storage"""

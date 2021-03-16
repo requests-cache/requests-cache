@@ -9,6 +9,7 @@ History
 
 * Drop support for python <= 3.5
 * Fix TypeError with ``DbPickleDict`` initialization
+* Fix usage of `CachedSession.cache_disabled` if used within another contextmanager
 * Update usage of deprecated MongoClient ``save()`` method
 * Fix non-thread-safe iteration in ``BaseCache``
 * Add support for setting ``expire_after`` per request
