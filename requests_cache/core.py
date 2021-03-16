@@ -67,6 +67,7 @@ class CacheMixin:
         if expire_after is not None and not isinstance(expire_after, timedelta):
             expire_after = timedelta(seconds=expire_after)
         self._cache_expire_after = expire_after
+        self._request_expire_after = 'default'
 
         self._cache_allowable_codes = allowable_codes
         self._cache_allowable_methods = allowable_methods
