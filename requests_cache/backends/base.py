@@ -113,15 +113,11 @@ class BaseCache(object):
         self.responses.clear()
         self.keys_map.clear()
 
-    def remove_old_entries(self, expires_before):
-        """Deletes entries from cache with expiration time older than ``expires_before``"""
-        if expires_before.tzinfo is None:
-            # if expires_before is not timezone-aware, assume local time
-            expires_before = expires_before.astimezone()
-
+    def remove_old_entries(self):
+        """Deletes expired entries from the cache"""
         keys_to_delete = set()
         for key, (response, _) in self.responses.items():
-            if response.expiration_date is not None and response.expiration_date < expires_before:
+            if _is_expired(response):
                 keys_to_delete.add(key)
 
         for key in keys_to_delete:
@@ -277,6 +273,13 @@ class _RawStore(object):
         if not hasattr(self, "_io_with_content_"):
             self._io_with_content_ = BytesIO(self._cached_content_)
         return self._io_with_content_.read(chunk_size)
+
+
+def _is_expired(response):
+    """Check a cached response to see if it's expired"""
+    if getattr(response, 'expire_after', None) is not None:
+        return datetime.now(timezone.utc) > response.expire_after
+    return False
 
 
 def _to_bytes(s, encoding='utf-8'):
