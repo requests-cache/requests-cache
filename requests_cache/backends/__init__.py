@@ -1,13 +1,28 @@
-# noqa: F401
+# flake8: noqa: F401
 """
     requests_cache.backends
     ~~~~~~~~~~~~~~~~~~~~~~~
 
     Classes and functions for cache persistence
 """
+from .base import BaseCache
 
-
-from .base import BACKEND_KWARGS, BaseCache
+# All backend-specific keyword arguments combined
+BACKEND_KWARGS = [
+    'connection',
+    'db_name',
+    'endpont_url',
+    'extension',
+    'fast_save',
+    'ignored_parameters',
+    'include_get_headers',
+    'location',
+    'name',
+    'namespace',
+    'read_capacity_units',
+    'region_name',
+    'write_capacity_units',
+]
 
 registry = {
     'memory': BaseCache,

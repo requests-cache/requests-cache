@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# flake8: noqa: E402,F401
 """
     requests_cache
     ~~~~~~~~~~~~~~
@@ -18,15 +19,17 @@
         # will take approximately 5 seconds instead 50
 
 
-    :copyright: (c) 2012 by Roman Haritonov.
+    :copyright: (c) 2021 by Roman Haritonov.
     :license: BSD, see LICENSE for more details.
 """
 __docformat__ = 'restructuredtext'
 __version__ = '0.6.0'
 
-# Quietly ignore importerror, if setup.py is invoked outside a virtualenv
+# Quietly ignore ImportError, if setup.py is invoked outside a virtualenv
 try:
+    from .response import AnyResponse, CachedHTTPResponse, CachedResponse, ExpirationTime
     from .core import (
+        ALL_METHODS,
         CachedSession,
         CacheMixin,
         clear,
