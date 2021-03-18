@@ -16,6 +16,7 @@ source = ['requests_cache']
 profile = "black"
 line_length = 100
 skip_gitignore = true
+skip = ['requests_cache/__init__.py']
 known_first_party = ['test']
 # Things that are common enough they may as well be grouped with stdlib imports
 extra_standard_library = ['pytest', 'setuptools']
