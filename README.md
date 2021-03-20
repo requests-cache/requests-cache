@@ -1,6 +1,4 @@
 # requests-cache
-Requests-cache is a transparent persistent cache for the [requests](http://python-requests.org) library (version 2+).
-
 [![Build](https://github.com/reclosedev/requests-cache/actions/workflows/build.yml/badge.svg)](https://github.com/reclosedev/requests-cache/actions/workflows/build.yml)
 [![Coverage](https://coveralls.io/repos/github/reclosedev/requests-cache/badge.svg?branch=master)](https://coveralls.io/github/reclosedev/requests-cache?branch=master)
 [![Documentation](https://img.shields.io/readthedocs/requests-cache/latest)](https://requests-cache.readthedocs.io/en/latest/)
@@ -9,51 +7,145 @@ Requests-cache is a transparent persistent cache for the [requests](http://pytho
 [![PyPI - Format](https://img.shields.io/pypi/format/requests-cache?color=blue)](https://pypi.org/project/requests-cache)
 [![Code Shelter](https://www.codeshelter.co/static/badges/badge-flat.svg)](https://www.codeshelter.co/)
 
+## Summary
+**Requests-cache** is a transparent persistent HTTP cache for the python [requests](http://python-requests.org)
+library. It is especially useful for web scraping, consuming REST APIs, slow or rate-limited
+sites, or any other scenario in which you're making lots of requests that are likely to be sent
+more than once.
+
+Several storage backends are included: **SQLite**, **Redis**, **MongoDB**, and **DynamoDB**.
+
+See full project documentation at: https://requests-cache.readthedocs.io
+
 ## Installation
 Install with pip:
-```
+```bash
 pip install requests-cache
 ```
 
-## Usage example
-```python
-import requests_cache
-
-requests_cache.install_cache('demo_cache')
+Requirements:
+Requires python 3.6+.
+You may need additional dependencies depending on which backend you want to use.
+To install with extra dependencies for all supported backends:
+```bash
+pip install requests-cache[backends]
 ```
 
-And all responses with headers and cookies will be transparently cached to `demo_cache.sqlite`.
-For example, following the code will take only 1-2 seconds instead of 10, and will run instantly on next launch:
+See [Contributing Guide](https://github.com/reclosedev/requests-cache/blob/master/CONTRIBUTING.md)
+for setup info for local development.
 
+## Full Examples
+* You can find a working example at Real Python:
+[Caching External API Requests](https://realpython.com/blog/python/caching-external-api-requests)
+* There are some additional examples in the [examples/](https://github.com/reclosedev/requests-cache/tree/master/examples) folder
+
+## General Usage
+There are two main ways of using `requests-cache`:
+* Using [CachedSession](https://requests-cache.readthedocs.io/en/latest/api.html#requests_cache.core.CachedSession) (recommended)
+* Globally patching `requests` using [install_cache](https://requests-cache.readthedocs.io/en/latest/api.html#requests_cache.core.install_cache)
+
+### Sessions
+`CachedSession` wraps `requests.Session` with caching features, and otherwise behaves the same as a
+normal session.
+
+Basic example:
+```python
+from requests_cache import CachedSession
+
+session = CachedSession('demo_cache', backend='sqlite')
+for i in range(100):
+    session.get('http://httpbin.org/delay/1')
+```
+The URL in this example adds a delay of 1 second, but all 100 requests will complete in just over 1
+second. The response will be fetched once, saved to `demo_cache.sqlite`, and subsequent requests
+will return the cached response near-instantly.
+
+There are many ways to customize caching behavior; see
+[Advanced Usage](https://requests-cache.readthedocs.io/en/latest/advanced_usage.html) for details.
+
+### Patching
+Patching with `requests_cache.install_cache()` will add caching to all `requests` functions:
 ```python
 import requests
-
-for i in range(10):
-    requests.get('http://httpbin.org/delay/1')
-```
-
-It can be useful when you are creating some simple data scraper with constantly
-changing parsing logic or data format, and don't want to redownload pages or
-write complex error handling and persistence.
-
-For more complex workflows, it is possible to cache different requests with different expiration times, or disable caching for a specific request completely:
-
-
-For more complex workflows, it is possible to cache different requests with different expiry times, or disable caching for a specific request completely:
-
-```python
-import time
-import requests
 import requests_cache
 
-requests_cache.install_cache('demo_cache')
-
-# Hits the URL only 2 times
-for i in range(10):
-    requests.get('http://httpbin.org/delay/1', expire_after=1)
-    time.sleep(0.2)
+requests_cache.install_cache()
+requests.get('http://httpbin.org/get')
+session = requests.Session()
+session.get('http://httpbin.org/get')
 ```
 
+`install_cache()` takes all the same parameters as `CachedSession`. It can be temporarily disabled
+with `disabled()`, and completely removed with `uninstall_cache()`:
+```python
+# Neither of these requests will use the cache
+with requests_cache.disabled():
+    requests.get('http://httpbin.org/get')
+
+requests_cache.uninstall_cache()
+requests.get('http://httpbin.org/get')
+```
+
+**Limitations:**
+
+Like any other utility that uses global patching, there are some scenarios where you won't want to
+use this:
+* In a multi-threaded or multiprocess applications
+* In an application that uses other packages that extend or modify `requests.Session`
+* In a package that will be used by other packages or applications
+
+### Cache Backends
+Several cache backends are included, which can be selected with the `backend` parameter to
+`CachedSession` or `install_cache()`:
+
+* `'memory'` : Not persistent, just stores responses with an in-memory dict
+* `'sqlite'` : [SQLite](https://www.sqlite.org) database (**default**)
+* `'redis'` : [Redis](https://redis.io/) cache (requires `redis`)
+* `'mongodb'` : [MongoDB](https://www.mongodb.com/) database (requires `pymongo`)
+* `'dynamodb'` : [Amazon DynamoDB](https://aws.amazon.com/dynamodb/) database (requires `boto3`)
+
+### Cache Expiration
+By default, cached responses will be stored indefinitely. There are a number of ways you can handle
+cache expiration. The simplest is using the `expire_after` param with a value in seconds:
+```python
+# Expire after 30 seconds
+session = CachedSession(expire_after=30)
+```
+
+Or a `timedelta`:
+```python
+from datetime import timedelta
+
+# Expire after 30 days
+session = CachedSession(expire_after=timedelta(days=30))
+```
+
+You can also set expiration on a per-request basis, which will override any session settings:
+```python
+# Expire after 6 minutes
+session.get('http://httpbin.org/get', expire_after=360)
+```
+
+If a per-session expiration is set but you want to temporarily disable it, use ```-1```:
+```python
+# Never expire
+session.get('http://httpbin.org/get', expire_after=-1)
+```
+
+For better performance, expired responses won't be removed immediately, but will be removed
+(or replaced) the next time they are accessed. To manually clear all expired responses:
+```python
+session.remove_expired_responses()
+```
+Or, when using patching:
+```python
+requests_cache.remove_expired_responses()
+```
+
+Or, to revalidate the cache with a new expiration:
+```python
+session.remove_expired_responses(expire_after=360)
+```
 
 ## Related Projects
 If `requests-cache` isn't quite what you need, you can help make it better! See the
@@ -72,8 +164,3 @@ You can also check out these other python cache projects:
   file-based cache built on SQLite
 * [aiocache](https://github.com/aio-libs/aiocache): General-purpose (not HTTP-specific) async cache
   backends
-
-## Links
-- **Documentation** at [readthedocs](https://requests-cache.readthedocs.io)
-- **Source code and issue tracking** at [GitHub](https://github.com/reclosedev/requests-cache)
-- **Working example** at [Real Python](https://realpython.com/blog/python/caching-external-api-requests)

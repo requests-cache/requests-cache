@@ -21,19 +21,21 @@ templates_path = ['_templates']
 # Sphinx extension modules
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosectionlabel',
     'sphinx.ext.intersphinx',
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
     'sphinx_autodoc_typehints',
     'sphinx_copybutton',
     # 'sphinxcontrib.apidoc',
-    # 'm2r2',
+    'm2r2',
 ]
 
 # Enable automatic links to other projects' Sphinx docs
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
     'requests': ('https://requests.readthedocs.io/en/master/', None),
+    'urllib3': ('http://urllib3.readthedocs.org/en/latest', None),
 }
 
 # Enable Google-style docstrings

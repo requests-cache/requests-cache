@@ -15,7 +15,7 @@ If you have an issue or PR that hasn't received a response in a timely manner, o
 discuss ideas about the project in general, please reach out on the Code Shelter chat server, under
 [projects/requests-cache](https://codeshelter.zulipchat.com/#narrow/stream/186993-projects/topic/requests-cache).
 
-## Installation
+## Dev Installation
 To set up for local development:
 
 ```bash
@@ -24,7 +24,7 @@ $ cd requests-cache
 $ pip install -Ue ".[dev]"
 ```
 
-## Pre-commit hooks
+## Pre-commit Hooks
 [Pre-commit](https://github.com/pre-commit/pre-commit) config is included to run the same checks
 locally that are run in CI jobs by GitHub Actions. This is optional but recommended.
 ```bash
