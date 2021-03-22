@@ -26,6 +26,7 @@ extras_require = {
         'pre-commit',
         'pytest>=5.0',
         'pytest-cov>=2.11',
+        'requests-mock>=1.8',
     ],
 }
 # All development/testing packages combined

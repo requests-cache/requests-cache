@@ -71,25 +71,44 @@ class MonkeyPatchTestCase(unittest.TestCase):
         session = CachedSession(backend=backend)
         self.assertIs(session.cache, backend)
 
-    @patch.object(BaseCache, 'remove_old_entries')
-    def test_remove_expired_responses(self, remove_old_entries):
+    @patch.object(OriginalSession, 'request')
+    @patch.object(CachedSession, 'request')
+    def test_disabled(self, cached_request, original_request):
+        requests_cache.install_cache()
+        with requests_cache.disabled():
+            for i in range(3):
+                requests.get('some_url')
+        assert cached_request.call_count == 0
+        assert original_request.call_count == 3
+
+    @patch.object(OriginalSession, 'request')
+    @patch.object(CachedSession, 'request')
+    def test_enabled(self, cached_request, original_request):
+        with requests_cache.enabled():
+            for i in range(3):
+                requests.get('some_url')
+        assert cached_request.call_count == 3
+        assert original_request.call_count == 0
+
+    @patch.object(BaseCache, 'remove_expired_responses')
+    def test_remove_expired_responses(self, remove_expired_responses):
         requests_cache.install_cache(expire_after=360)
         requests_cache.remove_expired_responses()
-        assert remove_old_entries.called is True
+        assert remove_expired_responses.called is True
 
-    @patch.object(BaseCache, 'remove_old_entries')
-    def test_remove_expired_responses__cache_not_installed(self, remove_old_entries):
+    @patch.object(BaseCache, 'remove_expired_responses')
+    def test_remove_expired_responses__cache_not_installed(self, remove_expired_responses):
         requests_cache.remove_expired_responses()
-        assert remove_old_entries.called is False
+        assert remove_expired_responses.called is False
 
-    @patch.object(BaseCache, 'remove_old_entries')
-    def test_remove_expired_responses__no_expiration(self, remove_old_entries):
+    @patch.object(BaseCache, 'remove_expired_responses')
+    def test_remove_expired_responses__no_expiration(self, remove_expired_responses):
         requests_cache.install_cache()
         requests_cache.remove_expired_responses()
         # Before https://github.com/reclosedev/requests-cache/pull/177, this
-        # was False, but with per-request caching, remove_old_entries must
+        # was False, but with per-request caching, remove_expired_responses must
         # always be called
-        assert remove_old_entries.called is True
+        assert remove_expired_responses.called is True
 
 
 if __name__ == '__main__':

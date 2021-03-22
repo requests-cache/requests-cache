@@ -5,7 +5,7 @@ import requests
 
 import requests_cache
 
-requests_cache.install_cache('example_cache', backend='memory')
+requests_cache.install_cache('example_cache', backend='sqlite')
 
 
 def main():
@@ -15,11 +15,9 @@ def main():
     response = requests.get('https://httpbin.org/get')
     assert response.from_cache
 
-    # Changing the expires_after time causes a cache invalidation,
-    # thus /get is queried again ...
+    # Caching with expiration
+    requests_cache.clear()
     response = requests.get('https://httpbin.org/get', expire_after=1)
-    assert not response.from_cache
-    # ... but cached for 1 second
     response = requests.get('https://httpbin.org/get')
     assert response.from_cache
     # After > 1 second, it's cached value is expired

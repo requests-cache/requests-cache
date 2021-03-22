@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# flake8: noqa: F841
 import json
 import os
 import pytest
@@ -6,499 +6,393 @@ import sys
 import time
 import unittest
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
-from unittest import mock
+from datetime import datetime, timedelta
+from pickle import PickleError
+from unittest.mock import PropertyMock, patch
 
 import requests
 from requests import Request
 
 import requests_cache
-from requests_cache import CachedSession
-
-CACHE_BACKEND = 'sqlite'
-CACHE_NAME = 'requests_cache_test'
-FAST_SAVE = False
-
-HTTPBIN_URL = os.getenv('HTTPBIN_URL', 'http://httpbin.org/')
+from requests_cache import ALL_METHODS, CachedSession
+from requests_cache.backends.storage.dbdict import DbPickleDict
+from tests.conftest import MOCKED_URL, MOCKED_URL_HTTPS, MOCKED_URL_JSON, MOCKED_URL_REDIRECT
 
 
 def httpbin(*suffix):
     """Returns url for HTTPBIN resource."""
-    return HTTPBIN_URL + '/'.join(suffix)
+    return 'http://httpbin.org/' + '/'.join(suffix)
 
 
-class CacheTestCase(unittest.TestCase):
-    def setUp(self):
-        self.s = CachedSession(CACHE_NAME, backend=CACHE_BACKEND, fast_save=FAST_SAVE)
-        self.s.cache.clear()
-        requests_cache.uninstall_cache()
+def test_unregistered_backend():
+    with pytest.raises(ValueError):
+        CachedSession(backend='nonexistent')
 
-    @classmethod
-    def tearDownClass(cls):
-        super(CacheTestCase, cls).tearDownClass()
-        filename = "{0}.{1}".format(CACHE_NAME, CACHE_BACKEND)
-        if os.path.exists(filename):
-            try:
-                os.unlink(filename)
-            except OSError:
-                pass
 
-    def tearDown(self):
-        self.s.close()
+@patch('requests_cache.backends.registry')
+def test_missing_backend_dependency(mocked_registry):
+    """Test that the correct error is thrown when a user does not have a dependency installed"""
+    mocked_registry.__getitem__.side_effect = KeyError
+    with pytest.raises(ImportError):
+        CachedSession(backend='redis')
 
-    def test_expire_cache(self):
-        delay = 1
-        url = httpbin('delay/%s' % delay)
-        s = CachedSession(CACHE_NAME, backend=CACHE_BACKEND, expire_after=0.06)
-        t = time.time()
-        r = s.get(url)
-        delta = time.time() - t
-        self.assertGreaterEqual(delta, delay)
-        time.sleep(0.5)
-        t = time.time()
-        r = s.get(url)
-        delta = time.time() - t
-        self.assertGreaterEqual(delta, delay)
-        s.close()
 
-    def test_delete_urls(self):
-        url = httpbin('get')
-        r = self.s.get(url)
-        assert self.s.cache.has_url(url)
-        self.s.cache.delete_url(url)
-        assert not self.s.cache.has_url(url)
+@pytest.mark.parametrize('method', ALL_METHODS)
+@pytest.mark.parametrize('field', ['params', 'data', 'json'])
+def test_all_methods(field, method, mock_session):
+    """Test all relevant combinations of methods and data fields. Requests with different request
+    params, data, or json should be cached under different keys.
+    """
+    for params in [{'param_1': 1}, {'param_1': 2}, {'param_2': 2}]:
+        assert mock_session.request(method, MOCKED_URL, **{field: params}).from_cache is False
+        assert mock_session.request(method, MOCKED_URL, **{field: params}).from_cache is True
 
-    def test_unregistered_backend(self):
-        with self.assertRaises(ValueError):
-            CachedSession(CACHE_NAME, backend='nonexistent')
 
-    @mock.patch('requests_cache.backends.registry')
-    def test_missing_backend_dependency(self, mocked_registry):
-        # Testing that the correct error is thrown when a user does not have
-        # the Python package `redis` installed.  We mock out the registry
-        # to simulate `redis` not being installed.
-        mocked_registry.__getitem__.side_effect = KeyError
-        with self.assertRaises(ImportError):
-            CachedSession(CACHE_NAME, backend='redis')
+@pytest.mark.parametrize('method', ALL_METHODS)
+@pytest.mark.parametrize('field', ['params', 'data', 'json'])
+def test_all_methods__ignore_parameters(field, method, mock_session):
+    """Test all relevant combinations of methods and data fields. Requests with different request
+    params, data, or json should not be cached under different keys based on an ignored param.
+    """
+    mock_session.cache._ignored_parameters = ['ignored']
+    params_1 = {'ignored': 1, 'not ignored': 1}
+    params_2 = {'ignored': 2, 'not ignored': 1}
+    params_3 = {'ignored': 2, 'not ignored': 2}
 
-    def test_hooks(self):
-        state = defaultdict(int)
-        for hook in ('response',):  # TODO it's only one hook here
+    assert mock_session.request(method, MOCKED_URL, **{field: params_1}).from_cache is False
+    assert mock_session.request(method, MOCKED_URL, **{field: params_1}).from_cache is True
+    assert mock_session.request(method, MOCKED_URL, **{field: params_2}).from_cache is True
+    mock_session.request(method, MOCKED_URL, params={'a': 'b'})
+    assert mock_session.request(method, MOCKED_URL, **{field: params_3}).from_cache is False
 
-            def hook_func(r, *args, **kwargs):
-                state[hook] += 1
-                return r
 
-            n = 5
-            for i in range(n):
-                r = self.s.get(httpbin('get'), hooks={hook: hook_func})
-            self.assertEqual(state[hook], n)
+# TODO: mock response with cookies
+def test_cookies(mock_session):
+    def get_json(url):
+        return json.loads(mock_session.get(url).text)
 
-    def test_attr_from_cache_in_hook(self):
-        state = defaultdict(int)
-        hook = 'response'
+    response_1 = get_json(httpbin('cookies/set/test1/test2'))
+    with mock_session.cache_disabled():
+        assert get_json(httpbin('cookies')) == response_1
+    # From cache
+    response_2 = get_json(httpbin('cookies'))
+    assert response_2 == get_json(httpbin('cookies'))
+    # Not from cache
+    with mock_session.cache_disabled():
+        response_3 = get_json(httpbin('cookies/set/test3/test4'))
+        assert response_3 == get_json(httpbin('cookies'))
+
+
+# TODO: mock response with gzip-compressed content
+def test_gzip(mock_session):
+    assert mock_session.get(httpbin('gzip')).from_cache is False
+    assert mock_session.get(httpbin('gzip')).from_cache is True
+
+
+def test_https(mock_session):
+    assert mock_session.get(MOCKED_URL_HTTPS, verify=True).from_cache is False
+    assert mock_session.get(MOCKED_URL_HTTPS, verify=True).from_cache is True
+
+
+def test_json(mock_session):
+    assert mock_session.get(MOCKED_URL_JSON).from_cache is False
+    response = mock_session.get(MOCKED_URL_JSON)
+    assert response.from_cache is True
+    assert response.json()['message'] == 'mock json response'
+
+
+# TODO: Create mock response with redirect history
+@pytest.mark.skip(reason='httpbin.org/relative-redirect no longer returns redirects')
+def test_response_history(mock_session):
+    r1 = mock_session.get(httpbin('relative-redirect/3'))
+
+    def test_redirect_history(url):
+        r2 = mock_session.get(url)
+        assert r2.from_cache is True
+        for r11, r22 in zip(r1.history, r2.history):
+            assert r11.url == r22.url
+
+    test_redirect_history(httpbin('relative-redirect/3'))
+    test_redirect_history(httpbin('relative-redirect/2'))
+    r3 = requests.get(httpbin('relative-redirect/1'))
+    assert len(r3.history) == 1
+
+
+def test_repr():
+    """Test session and cache string representations"""
+    cache_name = 'requests_cache_test'
+    session = CachedSession(cache_name=cache_name, backend='memory', expire_after=10)
+    session.cache.responses['key'] = 'value'
+    session.cache.keys_map['key'] = 'value'
+    session.cache.keys_map['key_2'] = 'value'
+
+    assert cache_name in repr(session) and '10' in repr(session)
+    assert 'redirects: 2' in str(session.cache) and 'responses: 1' in str(session.cache)
+
+
+# TODO: More event types; make a mock response that emulates hook behavior
+def test_hooks(mock_session):
+    state = defaultdict(int)
+    mock_session.get(httpbin('get'))
+
+    for hook in ('response',):
 
         def hook_func(r, *args, **kwargs):
-            if state[hook] > 0:
-                self.assertTrue(r.from_cache)
             state[hook] += 1
+            assert r.from_cache is True
             return r
 
-        n = 5
-        for i in range(n):
-            r = self.s.get(httpbin('get'), hooks={hook: hook_func})
-        self.assertEqual(state[hook], n)
+        for i in range(5):
+            r = mock_session.get(httpbin('get'), hooks={hook: hook_func})
+        assert state[hook] == 5
 
-    def test_post(self):
-        url = httpbin('post')
-        r1 = json.loads(self.s.post(url, data={'test1': 'test1'}).text)
-        r2 = json.loads(self.s.post(url, data={'test2': 'test2'}).text)
-        self.assertIn('test2', r2['form'])
-        req = Request('POST', url).prepare()
-        self.assertFalse(self.s.cache.has_key(self.s.cache.create_key(req)))
 
-    def test_disabled(self):
+def test_normalize_params(mock_session):
+    params = {"a": "a", "b": ["1", "2", "3"], "c": "4"}
+    reversed_params = dict(sorted(params.items(), reverse=True))
 
-        url = httpbin('get')
-        requests_cache.install_cache(CACHE_NAME, backend=CACHE_BACKEND, fast_save=FAST_SAVE)
-        requests.get(url)
-        with requests_cache.disabled():
-            for i in range(2):
-                r = requests.get(url)
-                self.assertFalse(getattr(r, 'from_cache', False))
-        with self.s.cache_disabled():
-            for i in range(2):
-                r = self.s.get(url)
-                self.assertFalse(getattr(r, 'from_cache', False))
-        r = self.s.get(url)
-        self.assertTrue(getattr(r, 'from_cache', False))
+    assert mock_session.get(MOCKED_URL, params=params).from_cache is False
+    assert mock_session.get(MOCKED_URL, params=params).from_cache is True
+    assert mock_session.get(MOCKED_URL, params={"a": "b"}).from_cache is False
+    assert mock_session.get(MOCKED_URL, params=reversed_params).from_cache is True
 
-    def test_enabled(self):
-        url = httpbin('get')
-        options = dict(cache_name=CACHE_NAME, backend=CACHE_BACKEND, fast_save=FAST_SAVE)
-        with requests_cache.enabled(**options):
-            r = requests.get(url)
-            self.assertFalse(getattr(r, 'from_cache', False))
-            for i in range(2):
-                r = requests.get(url)
-                self.assertTrue(getattr(r, 'from_cache', False))
-        r = requests.get(url)
-        self.assertFalse(getattr(r, 'from_cache', False))
+    class UserSubclass(dict):
+        def items(self):
+            return sorted(super(UserSubclass, self).items(), reverse=True)
 
-    def test_content_and_cookies(self):
-        requests_cache.install_cache(CACHE_NAME, CACHE_BACKEND)
-        s = requests.session()
+    params["z"] = "5"
+    custom_dict = UserSubclass(params)
+    assert mock_session.get(MOCKED_URL, params=custom_dict).from_cache is False
+    assert mock_session.get(MOCKED_URL, params=custom_dict).from_cache is True
 
-        def js(url):
-            return json.loads(s.get(url).text)
 
-        r1 = js(httpbin('cookies/set/test1/test2'))
-        with requests_cache.disabled():
-            r2 = js(httpbin('cookies'))
-        self.assertEqual(r1, r2)
-        r3 = js(httpbin('cookies'))
-        with requests_cache.disabled():
-            r4 = js(httpbin('cookies/set/test3/test4'))
-        # from cache
-        self.assertEqual(r3, js(httpbin('cookies')))
-        # updated
-        with requests_cache.disabled():
-            self.assertEqual(r4, js(httpbin('cookies')))
-        s.close()
+def test_normalize_post_data(mock_session):
+    params = {"a": "a", "b": ["1", "2", "3"], "c": "4"}
+    assert mock_session.post(MOCKED_URL, data=params).from_cache is False
+    assert mock_session.post(MOCKED_URL, data=params).from_cache is True
+    assert mock_session.post(MOCKED_URL, data=sorted(params.items())).from_cache is True
+    assert mock_session.post(MOCKED_URL, data=sorted(params.items(), reverse=True)).from_cache is False
 
-    # TODO: Create mock responses instead of depending on httpbin
-    @pytest.mark.skip(reason='httpbin.org/relative-redirect no longer returns redirects')
-    def test_response_history(self):
-        r1 = self.s.get(httpbin('relative-redirect/3'))
 
-        def test_redirect_history(url):
-            r2 = self.s.get(url)
-            self.assertTrue(r2.from_cache)
-            for r11, r22 in zip(r1.history, r2.history):
-                self.assertEqual(r11.url, r22.url)
+def test_delete_response(mock_session):
+    mock_session.get(MOCKED_URL)
+    mock_session.cache.delete_url(MOCKED_URL)
+    assert not mock_session.cache.has_url(MOCKED_URL)
 
-        test_redirect_history(httpbin('relative-redirect/3'))
-        test_redirect_history(httpbin('relative-redirect/2'))
-        r3 = requests.get(httpbin('relative-redirect/1'))
-        self.assertEqual(len(r3.history), 1)
 
-    # TODO: Create mock responses instead of depending on httpbin
-    @pytest.mark.skip(reason='httpbin.org/relative-redirect no longer returns redirects')
-    def test_response_history_simple(self):
-        r1 = self.s.get(httpbin('relative-redirect/2'))
-        r2 = self.s.get(httpbin('relative-redirect/1'))
-        self.assertTrue(r2.from_cache)
+def test_delete_nonexistent_response(mock_session):
+    """Deleting a response that was either already deleted (or never added) should fail silently"""
+    mock_session.cache.delete_url(MOCKED_URL)
 
-    def post(self, data):
-        return json.loads(self.s.post(httpbin('post'), data=data).text)
+    mock_session.get(MOCKED_URL)
+    mock_session.cache.delete_url(MOCKED_URL)
+    assert not mock_session.cache.has_url(MOCKED_URL)
+    mock_session.cache.delete_url(MOCKED_URL)  # Should fail silently
 
-    def test_post_params(self):
-        # issue #2
-        self.s = CachedSession(CACHE_NAME, CACHE_BACKEND, allowable_methods=('GET', 'POST'))
 
-        d = {'param1': 'test1'}
-        for _ in range(2):
-            self.assertEqual(self.post(d)['form'], d)
-            d = {'param1': 'test1', 'param3': 'test3'}
-            self.assertEqual(self.post(d)['form'], d)
+# TODO: Better mocking for redirects
+def test_delete_redirect(mock_session):
+    response_key = mock_session.cache._url_to_key(MOCKED_URL)
+    redirect_key = mock_session.cache._url_to_key(MOCKED_URL_REDIRECT)
+    mock_session.get(MOCKED_URL)
+    mock_session.cache.keys_map[redirect_key] = response_key
 
-        self.assertTrue(self.s.post(httpbin('post'), data=d).from_cache)
-        d.update({'something': 'else'})
-        self.assertFalse(self.s.post(httpbin('post'), data=d).from_cache)
+    mock_session.cache.delete_url(MOCKED_URL_REDIRECT)
+    assert mock_session.cache.has_url(MOCKED_URL)
+    assert not mock_session.cache.has_url(MOCKED_URL_REDIRECT)
 
-    def test_post_data(self):
-        # issue #2, raw payload
-        self.s = CachedSession(CACHE_NAME, CACHE_BACKEND, allowable_methods=('GET', 'POST'))
-        d1 = json.dumps({'param1': 'test1'})
-        d2 = json.dumps({'param1': 'test1', 'param2': 'test2'})
-        d3 = str('some unicode data')
-        bin_data = bytes('some binary data', 'utf8')
 
-        for d in (d1, d2, d3):
-            self.assertEqual(self.post(d)['data'], d)
-            r = self.s.post(httpbin('post'), data=d)
-            self.assertTrue(hasattr(r, 'from_cache'))
+# TODO
+def test_delete_history(mock_session):
+    pass
 
-        self.assertEqual(self.post(bin_data)['data'], bin_data.decode('utf8'))
-        r = self.s.post(httpbin('post'), data=bin_data)
-        self.assertTrue(hasattr(r, 'from_cache'))
 
-    def test_get_params_as_argument(self):
-        for _ in range(5):
-            p = {'arg1': 'value1'}
-            r = self.s.get(httpbin('get'), params=p)
-            self.assertTrue(self.s.cache.has_url(httpbin('get?arg1=value1')))
+def test_response_defaults(mock_session):
+    """Both cached and new responses should always have the following attributes"""
+    mock_session.expire_after = datetime.utcnow() + timedelta(days=1)
+    response_1 = mock_session.get(MOCKED_URL)
+    response_2 = mock_session.get(MOCKED_URL)
+    response_3 = mock_session.get(MOCKED_URL)
 
-    @unittest.skipIf(sys.version_info < (2, 7), "No https in 2.6")
-    def test_https_support(self):
-        n = 10
-        delay = 1
-        url = 'https://httpbin.org/delay/%s?ar1=value1' % delay
-        t = time.time()
-        for _ in range(n):
-            r = self.s.get(url, verify=False)
-        self.assertLessEqual(time.time() - t, delay * n / 2)
+    assert response_1.created_at is None
+    assert response_1.expires is None
+    assert response_1.from_cache is False
+    assert response_1.is_expired is False
 
-    def test_from_cache_attribute(self):
-        url = httpbin('get?q=1')
-        self.assertFalse(self.s.get(url).from_cache)
-        self.assertTrue(self.s.get(url).from_cache)
-        self.s.cache.clear()
-        self.assertFalse(self.s.get(url).from_cache)
+    assert isinstance(response_2.created_at, datetime)
+    assert isinstance(response_2.expires, datetime)
+    assert response_2.created_at == response_3.created_at
+    assert response_2.expires == response_3.expires
+    assert response_2.from_cache is response_3.from_cache is True
+    assert response_2.is_expired is response_3.is_expired is False
 
-    def test_gzip_response(self):
-        url = httpbin('gzip')
-        self.assertFalse(self.s.get(url).from_cache)
-        self.assertTrue(self.s.get(url).from_cache)
 
-    def test_close_response(self):
-        for _ in range(3):
-            r = self.s.get(httpbin("get"))
-            r.close()
+def test_include_get_headers(mock_session):
+    """With include_get_headers, requests with different headers should have different cache keys"""
+    mock_session.cache._include_get_headers = True
+    headers_list = [{'Accept': 'text/json'}, {'Accept': 'text/xml'}, {'Accept': 'custom'}, None]
+    for headers in headers_list:
+        assert mock_session.get(MOCKED_URL, headers=headers).from_cache is False
+        assert mock_session.get(MOCKED_URL, headers=headers).from_cache is True
 
-    def test_get_parameters_normalization(self):
-        url = httpbin("get")
-        params = {"a": "a", "b": ["1", "2", "3"], "c": "4"}
 
-        self.assertFalse(self.s.get(url, params=params).from_cache)
-        r = self.s.get(url, params=params)
-        self.assertTrue(r.from_cache)
-        self.assertEqual(r.json()["args"], params)
-        self.assertFalse(self.s.get(url, params={"a": "b"}).from_cache)
-        self.assertTrue(self.s.get(url, params=sorted(params.items())).from_cache)
+def test_include_get_headers_normalize(mock_session):
+    """With include_get_headers, the same headers (in any order) should have the same cache key"""
+    mock_session.cache._include_get_headers = True
+    headers = {'Accept': 'text/json', 'Custom': 'abc'}
+    reversed_headers = {'Custom': 'abc', 'Accept': 'text/json'}
+    assert mock_session.get(MOCKED_URL, headers=headers).from_cache is False
+    assert mock_session.get(MOCKED_URL, headers=reversed_headers).from_cache is True
 
-        class UserSubclass(dict):
-            def items(self):
-                return sorted(super(UserSubclass, self).items(), reverse=True)
 
-        params["z"] = "5"
-        custom_dict = UserSubclass(params)
-        self.assertFalse(self.s.get(url, params=custom_dict).from_cache)
-        self.assertTrue(self.s.get(url, params=custom_dict).from_cache)
+def test_cache_error(mock_session):
+    """If there is an error while fetching a cached response, a new one should be fetched"""
+    mock_session.get(MOCKED_URL)
+    with patch.object(mock_session.cache, 'get_response', side_effect=ValueError):
+        assert mock_session.get(MOCKED_URL).from_cache is False
 
-    def test_post_parameters_normalization(self):
-        params = {"a": "a", "b": ["1", "2", "3"], "c": "4"}
-        url = httpbin("post")
-        s = CachedSession(CACHE_NAME, CACHE_BACKEND, allowable_methods=('GET', 'POST'))
-        self.assertFalse(s.post(url, data=params).from_cache)
-        self.assertTrue(s.post(url, data=params).from_cache)
-        self.assertTrue(s.post(url, data=sorted(params.items())).from_cache)
-        self.assertFalse(s.post(url, data=sorted(params.items(), reverse=True)).from_cache)
 
-    def test_stream_requests_support(self):
-        n = 100
-        url = httpbin("stream/%s" % n)
-        r = self.s.get(url, stream=True)
-        first_char = r.raw.read(1)
-        lines = list(r.iter_lines())
-        self.assertTrue(first_char)
-        self.assertEqual(len(lines), n)
+def test_expired_request_error(mock_session):
+    """Without old_data_on_error (default), if there is an error while re-fetching an expired
+    response, the request should be re-raised and the expired item deleted"""
+    mock_session.old_data_on_error = False
+    mock_session.expire_after = 0.01
+    mock_session.get(MOCKED_URL)
+    time.sleep(0.01)
 
+    with patch.object(mock_session.cache, 'save_response', side_effect=ValueError):
+        with pytest.raises(ValueError):
+            mock_session.get(MOCKED_URL)
+    assert len(mock_session.cache.responses) == 0
+
+
+def test_old_data_on_error(mock_session):
+    """With old_data_on_error, expect to get old cache data if there is an error during a request"""
+    mock_session.old_data_on_error = True
+    mock_session.expire_after = 0.1
+
+    assert mock_session.get(MOCKED_URL).from_cache is False
+    assert mock_session.get(MOCKED_URL).from_cache is True
+    time.sleep(0.1)
+    with patch.object(mock_session.cache, 'save_response', side_effect=ValueError):
+        response = mock_session.get(MOCKED_URL)
+        assert response.from_cache is True and response.is_expired is True
+
+
+@pytest.mark.parametrize('method', ['POST', 'PUT'])
+def test_raw_data(method, mock_session):
+    """POST and PUT requests with different data (raw) should be cached under different keys"""
+    assert mock_session.request(method, MOCKED_URL, data='raw data').from_cache is False
+    assert mock_session.request(method, MOCKED_URL, data='raw data').from_cache is True
+    assert mock_session.request(method, MOCKED_URL, data='new raw data').from_cache is False
+
+
+def test_cache_disabled(mock_session):
+    mock_session.get(MOCKED_URL)
+    with mock_session.cache_disabled():
         for i in range(2):
-            r = self.s.get(url, stream=True)
-            first_char_cached = r.raw.read(1)
-            self.assertTrue(r.from_cache)
-            cached_lines = list(r.iter_lines())
-            self.assertEqual(cached_lines, lines)
-            self.assertEqual(first_char, first_char_cached)
-
-    def test_headers_in_get_query(self):
-        url = httpbin("get")
-        s = CachedSession(CACHE_NAME, CACHE_BACKEND, include_get_headers=True)
-        headers = {"Accept": "text/json"}
-        self.assertFalse(s.get(url, headers=headers).from_cache)
-        self.assertTrue(s.get(url, headers=headers).from_cache)
-
-        headers["Accept"] = "text/xml"
-        self.assertFalse(s.get(url, headers=headers).from_cache)
-        self.assertTrue(s.get(url, headers=headers).from_cache)
-
-        headers["X-custom-header"] = "custom"
-        self.assertFalse(s.get(url, headers=headers).from_cache)
-        self.assertTrue(s.get(url, headers=headers).from_cache)
-
-        self.assertFalse(s.get(url).from_cache)
-        self.assertTrue(s.get(url).from_cache)
-
-    def test_str_and_repr(self):
-        s = repr(CachedSession(CACHE_NAME, CACHE_BACKEND, expire_after=10))
-        self.assertIn(CACHE_NAME, s)
-        self.assertIn("10", s)
-
-    @mock.patch("requests_cache.core.datetime")
-    @mock.patch("requests_cache.backends.base.datetime")
-    def test_return_old_data_on_error(self, datetime_mock_backend, datetime_mock):
-        now = datetime(2021, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
-        datetime_mock_backend.now.return_value = now
-
-        datetime_mock.now.return_value = now
-        expire_after = 100
-        url = httpbin("get")
-        s = CachedSession(CACHE_NAME, CACHE_BACKEND, old_data_on_error=True, expire_after=expire_after)
-        header = "X-Tst"
-
-        def get(n):
-            return s.get(url, headers={header: n}).json()["headers"][header]
-
-        get("expired")
-        self.assertEqual(get("2"), "expired")
-        datetime_mock.now.return_value = now + timedelta(seconds=expire_after * 2)
-
-        with mock.patch.object(s.cache, "save_response", side_effect=Exception):
-            self.assertEqual(get("3"), "expired")
-
-        with mock.patch("requests_cache.core.OriginalSession.send") as send_mock:
-            resp_mock = requests.Response()
-            request = requests.Request("GET", url)
-            resp_mock.request = request.prepare()
-            resp_mock.status_code = 400
-            resp_mock._content = '{"other": "content"}'
-            send_mock.return_value = resp_mock
-            self.assertEqual(get("4"), "expired")
-
-            resp_mock.status_code = 200
-            self.assertIs(s.get(url).content, resp_mock.content)
-
-        # default behaviour
-        datetime_mock.now.return_value = now + timedelta(seconds=expire_after * 5)
-        s = CachedSession(CACHE_NAME, CACHE_BACKEND, old_data_on_error=False, expire_after=expire_after)
-        with mock.patch.object(s.cache, "save_response", side_effect=Exception):
-            with self.assertRaises(Exception):
-                s.get(url)
-
-    def test_ignore_parameters_get(self):
-        url = httpbin("get")
-        ignored_param = "ignored"
-        usual_param = "some"
-        params = {ignored_param: "1", usual_param: "1"}
-
-        s = CachedSession(CACHE_NAME, CACHE_BACKEND, ignored_parameters=[ignored_param])
-
-        r = s.get(url, params=params)
-        self.assertIn(ignored_param, r.json()['args'].keys())
-        self.assertFalse(r.from_cache)
-
-        self.assertTrue(s.get(url, params=params).from_cache)
-
-        params[ignored_param] = "new"
-        self.assertTrue(s.get(url, params=params).from_cache)
-
-        params[usual_param] = "new"
-        self.assertFalse(s.get(url, params=params).from_cache)
-
-    def test_ignore_parameters_post(self):
-        url = httpbin("post")
-        ignored_param = "ignored"
-        usual_param = "some"
-        d = {ignored_param: "1", usual_param: "1"}
-
-        s = CachedSession(
-            CACHE_NAME,
-            CACHE_BACKEND,
-            allowable_methods=('POST'),
-            ignored_parameters=[ignored_param],
-        )
-
-        r = s.post(url, data=d)
-        self.assertIn(ignored_param, r.json()['form'].keys())
-        self.assertFalse(r.from_cache)
-
-        self.assertTrue(s.post(url, data=d).from_cache)
-
-        d[ignored_param] = "new"
-        self.assertTrue(s.post(url, data=d).from_cache)
-
-        d[usual_param] = "new"
-        self.assertFalse(s.post(url, data=d).from_cache)
-
-    def test_ignore_parameters_post_json(self):
-        url = httpbin("post")
-        ignored_param = "ignored"
-        usual_param = "some"
-        d = {ignored_param: "1", usual_param: "1"}
-
-        s = CachedSession(
-            CACHE_NAME,
-            CACHE_BACKEND,
-            allowable_methods=('POST'),
-            ignored_parameters=[ignored_param],
-        )
-
-        r = s.post(url, json=d)
-        self.assertIn(ignored_param, json.loads(r.json()['data']).keys())
-        self.assertFalse(r.from_cache)
-
-        self.assertTrue(s.post(url, json=d).from_cache)
-
-        d[ignored_param] = "new"
-        self.assertTrue(s.post(url, json=d).from_cache)
-
-        d[usual_param] = "new"
-        self.assertFalse(s.post(url, json=d).from_cache)
-
-    def test_ignore_parameters_post_raw(self):
-        url = httpbin("post")
-        ignored_param = "ignored"
-        raw_data = "raw test data"
-
-        s = CachedSession(
-            CACHE_NAME,
-            CACHE_BACKEND,
-            allowable_methods=('POST'),
-            ignored_parameters=[ignored_param],
-        )
-
-        self.assertFalse(s.post(url, data=raw_data).from_cache)
-        self.assertTrue(s.post(url, data=raw_data).from_cache)
-
-        raw_data = "new raw data"
-        self.assertFalse(s.post(url, data=raw_data).from_cache)
-
-    # TODO: Create mock responses instead of depending on httpbin
-    @pytest.mark.skip(reason='httpbin.org/relative-redirect no longer returns redirects')
-    @mock.patch("requests_cache.backends.base.datetime")
-    @mock.patch("requests_cache.core.datetime")
-    def test_remove_expired_entries(self, datetime_mock, datetime_mock2):
-        expire_after = timedelta(minutes=10)
-        start_time = datetime.utcnow().replace(year=2010, minute=0)
-        datetime_mock.utcnow.return_value = start_time
-        datetime_mock2.utcnow.return_value = start_time
-
-        s = CachedSession(CACHE_NAME, CACHE_BACKEND, expire_after=expire_after)
-        s.get(httpbin('get'))
-        s.get(httpbin('relative-redirect/3'))
-        datetime_mock.utcnow.return_value = start_time + expire_after * 2
-        datetime_mock2.utcnow.return_value = datetime_mock.utcnow.return_value
-
-        ok_url = 'get?x=1'
-        s.get(httpbin(ok_url))
-        self.assertEqual(len(s.cache.responses), 3)
-        self.assertEqual(len(s.cache.keys_map), 3)
-        s.remove_expired_responses()
-        self.assertEqual(len(s.cache.responses), 1)
-        self.assertEqual(len(s.cache.keys_map), 0)
-        self.assertIn(ok_url, list(s.cache.responses.values())[0][0].url)
-
-    def test_cache_unpickle_errors(self):
-        url = httpbin('get?q=1')
-        self.assertFalse(self.s.get(url).from_cache)
-        with mock.patch("requests_cache.backends.base.BaseCache.restore_response", side_effect=TypeError):
-            resp = self.s.get(url)
-            self.assertFalse(resp.from_cache)
-            self.assertEqual(resp.json()["args"]["q"], "1")
-        resp = self.s.get(url)
-        self.assertTrue(resp.from_cache)
-        self.assertEqual(resp.json()["args"]["q"], "1")
-
-    def test_cache_date(self):
-        url = httpbin('get')
-        response1 = self.s.get(url)
-        response2 = self.s.get(url)
-        response3 = self.s.get(url)
-        self.assertEqual(response1.cache_date, None)
-        self.assertTrue(isinstance(response2.cache_date, datetime))
-        self.assertEqual(response2.cache_date, response3.cache_date)
+            assert mock_session.get(MOCKED_URL).from_cache is False
+    assert mock_session.get(MOCKED_URL).from_cache is True
 
 
-if __name__ == '__main__':
-    unittest.main()
+def test_remove_expired_responses(mock_session):
+    unexpired_url = f'{MOCKED_URL}?x=1'
+    mock_session.mock_adapter.register_uri('GET', unexpired_url, status_code=200, text='mock response')
+    mock_session.expire_after = timedelta(seconds=0.1)
+    mock_session.get(MOCKED_URL)
+    mock_session.get(MOCKED_URL_JSON)
+    time.sleep(0.1)
+    mock_session.get(unexpired_url)
+
+    # At this point we should have 1 unexpired response and 2 expired responses
+    assert len(mock_session.cache.responses) == 3
+    mock_session.remove_expired_responses()
+    assert len(mock_session.cache.responses) == 1
+    cached_response = list(mock_session.cache.responses.values())[0]
+    assert cached_response.url == unexpired_url
+
+    # Now the last response should be expired as well
+    time.sleep(0.1)
+    mock_session.remove_expired_responses()
+    assert len(mock_session.cache.responses) == 0
+
+
+def test_remove_expired_responses__extend_expiration(mock_session):
+    # Start with an expired response
+    mock_session.expire_after = datetime.utcnow() - timedelta(seconds=0.05)
+    mock_session.get(MOCKED_URL)
+
+    # Set expiration in the future and revalidate
+    mock_session.remove_expired_responses(expire_after=datetime.utcnow() + timedelta(seconds=0.05))
+    assert len(mock_session.cache.responses) == 1
+    response = mock_session.get(MOCKED_URL)
+    assert response.is_expired is False and response.from_cache is True
+
+
+def test_remove_expired_responses__shorten_expiration(mock_session):
+    # Start with a non-expired response
+    mock_session.expire_after = datetime.utcnow() + timedelta(seconds=1)
+    mock_session.get(MOCKED_URL)
+
+    # Set expiration in the past and revalidate
+    mock_session.remove_expired_responses(expire_after=datetime.utcnow() - timedelta(seconds=0.05))
+    assert len(mock_session.cache.responses) == 0
+    response = mock_session.get(MOCKED_URL)
+    assert response.is_expired is False and response.from_cache is False
+
+
+def test_remove_expired_responses__per_request(mock_session):
+    # Cache 3 responses with different expiration times
+    second_url = f'{MOCKED_URL}/endpoint_2'
+    third_url = f'{MOCKED_URL}/endpoint_3'
+    mock_session.mock_adapter.register_uri('GET', second_url, status_code=200)
+    mock_session.mock_adapter.register_uri('GET', third_url, status_code=200)
+    mock_session.get(MOCKED_URL)
+    mock_session.get(second_url, expire_after=0.2)
+    mock_session.get(third_url, expire_after=0.4)
+
+    # All 3 responses should still be cached
+    mock_session.remove_expired_responses()
+    assert len(mock_session.cache.responses) == 3
+
+    # One should be expired after 0.2s, and another should be expired after 0.4s
+    time.sleep(0.2)
+    mock_session.remove_expired_responses()
+    assert len(mock_session.cache.responses) == 2
+    time.sleep(0.2)
+    mock_session.remove_expired_responses()
+    assert len(mock_session.cache.responses) == 1
+
+
+def test_per_request__expiration(mock_session):
+    """No per-session expiration is set, but then overridden with per-request expiration"""
+    mock_session.expire_after = None
+    response = mock_session.get(MOCKED_URL, expire_after=0.01)
+    assert response.from_cache is False
+    time.sleep(0.01)
+    response = mock_session.get(MOCKED_URL)
+    assert response.from_cache is False
+
+
+def test_per_request__no_expiration(mock_session):
+    """A per-session expiration is set, but then overridden with no per-request expiration"""
+    mock_session.expire_after = 0.01
+    response = mock_session.get(MOCKED_URL, expire_after=-1)
+    assert response.from_cache is False
+    time.sleep(0.01)
+    response = mock_session.get(MOCKED_URL)
+    assert response.from_cache is True
+
+
+def test_unpickle_errors(mock_session):
+    """If there is an error during deserialization, the request should be made again"""
+    assert mock_session.get(MOCKED_URL_JSON).from_cache is False
+
+    with patch.object(DbPickleDict, '__getitem__', side_effect=PickleError):
+        resp = mock_session.get(MOCKED_URL_JSON)
+        assert resp.from_cache is False
+        assert resp.json()['message'] == 'mock json response'
+
+    resp = mock_session.get(MOCKED_URL_JSON)
+    assert resp.from_cache is True
+    assert resp.json()['message'] == 'mock json response'
