@@ -8,6 +8,7 @@
 import hashlib
 import json
 from pickle import PickleError
+from typing import List
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 import requests
@@ -31,6 +32,13 @@ class BaseCache(object):
         self.responses = {}
         self._include_get_headers = kwargs.get("include_get_headers", False)
         self._ignored_parameters = set(kwargs.get("ignored_parameters") or [])
+
+    @property
+    def urls(self) -> List[str]:
+        """Get all URLs currently in the cache"""
+        response_urls = [response.url for response in self.responses.values()]
+        redirect_urls = list(self.keys_map.keys())
+        return sorted(response_urls + redirect_urls)
 
     def save_response(self, key: str, response: AnyResponse, expire_after: ExpirationTime = None):
         """Save response to cache

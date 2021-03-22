@@ -130,6 +130,15 @@ def test_repr():
     assert 'redirects: 2' in str(session.cache) and 'responses: 1' in str(session.cache)
 
 
+def test_urls(mock_session):
+    for url in [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_HTTPS]:
+        mock_session.get(url)
+    mock_session.cache.keys_map[MOCKED_URL_REDIRECT] = MOCKED_URL
+
+    expected_urls = [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_HTTPS, MOCKED_URL_REDIRECT]
+    assert set(mock_session.cache.urls) == set(expected_urls)
+
+
 # TODO: More event types; make a mock response that emulates hook behavior
 def test_hooks(mock_session):
     state = defaultdict(int)
