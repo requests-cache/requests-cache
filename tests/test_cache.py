@@ -123,8 +123,8 @@ def test_repr():
     cache_name = 'requests_cache_test'
     session = CachedSession(cache_name=cache_name, backend='memory', expire_after=10)
     session.cache.responses['key'] = 'value'
-    session.cache.keys_map['key'] = 'value'
-    session.cache.keys_map['key_2'] = 'value'
+    session.cache.redirects['key'] = 'value'
+    session.cache.redirects['key_2'] = 'value'
 
     assert cache_name in repr(session) and '10' in repr(session)
     assert 'redirects: 2' in str(session.cache) and 'responses: 1' in str(session.cache)
@@ -133,7 +133,7 @@ def test_repr():
 def test_urls(mock_session):
     for url in [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_HTTPS]:
         mock_session.get(url)
-    mock_session.cache.keys_map[MOCKED_URL_REDIRECT] = MOCKED_URL
+    mock_session.cache.redirects[MOCKED_URL_REDIRECT] = MOCKED_URL
 
     expected_urls = [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_HTTPS, MOCKED_URL_REDIRECT]
     assert set(mock_session.cache.urls) == set(expected_urls)
@@ -204,7 +204,7 @@ def test_delete_redirect(mock_session):
     response_key = mock_session.cache._url_to_key(MOCKED_URL)
     redirect_key = mock_session.cache._url_to_key(MOCKED_URL_REDIRECT)
     mock_session.get(MOCKED_URL)
-    mock_session.cache.keys_map[redirect_key] = response_key
+    mock_session.cache.redirects[redirect_key] = response_key
 
     mock_session.cache.delete_url(MOCKED_URL_REDIRECT)
     assert mock_session.cache.has_url(MOCKED_URL)
