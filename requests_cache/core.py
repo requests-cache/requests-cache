@@ -6,6 +6,7 @@
 """
 from collections.abc import Mapping
 from contextlib import contextmanager
+from fnmatch import fnmatch
 from operator import itemgetter
 from typing import Any, Callable, Dict, Iterable, Optional, Type
 
@@ -29,7 +30,8 @@ class CacheMixin:
         self,
         cache_name: str = 'cache',
         backend: str = None,
-        expire_after: ExpirationTime = None,
+        expire_after: ExpirationTime = -1,
+        urls_expire_after: Dict[str, ExpirationTime] = None,
         allowable_codes: Iterable[int] = (200,),
         allowable_methods: Iterable['str'] = ('GET', 'HEAD'),
         filter_fn: Callable = None,
@@ -39,34 +41,18 @@ class CacheMixin:
         self.cache = backends.create_backend(backend, cache_name, kwargs)
         self.allowable_codes = allowable_codes
         self.allowable_methods = allowable_methods
+        self.expire_after = expire_after
+        self.urls_expire_after = urls_expire_after
         self.filter_fn = filter_fn or (lambda r: True)
         self.old_data_on_error = old_data_on_error
 
         self._cache_name = cache_name
-        self._expire_after = expire_after
         self._request_expire_after: ExpirationTime = None
         self._disabled = False
 
         # Remove any requests-cache-specific kwargs before passing along to superclass
         session_kwargs = {k: v for k, v in kwargs.items() if k not in backends.BACKEND_KWARGS}
         super().__init__(**session_kwargs)
-
-    @property
-    def expire_after(self):
-        """Get either the per-session expiration, or per-request expiration, if set"""
-        return self._request_expire_after or self._expire_after
-
-    @expire_after.setter
-    def expire_after(self, value: ExpirationTime):
-        """Set per-session expiration"""
-        self._expire_after = value
-
-    @contextmanager
-    def request_expire_after(self, expire_after: ExpirationTime = None):
-        """Temporarily override ``expire_after`` for an individual request"""
-        self._request_expire_after = expire_after
-        yield
-        self._request_expire_after = None
 
     def request(
         self,
@@ -172,7 +158,7 @@ class CacheMixin:
     def _send_and_cache(self, request, cache_key, **kwargs):
         response = super().send(request, **kwargs)
         if response.status_code in self.allowable_codes:
-            self.cache.save_response(cache_key, response, self.expire_after)
+            self.cache.save_response(cache_key, response, self.get_expiration(request.url))
         return set_response_defaults(response)
 
     @contextmanager
@@ -194,6 +180,28 @@ class CacheMixin:
             finally:
                 self._disabled = False
 
+    def get_expiration(self, url: str = None) -> ExpirationTime:
+        """Get the appropriate expiration, in order of precedence:
+        1. Per-request expiration
+        2. Per-URL expiration
+        3. Per-session expiration
+        """
+        return self._request_expire_after or self.url_expire_after(url) or self.expire_after
+
+    @contextmanager
+    def request_expire_after(self, expire_after: ExpirationTime = None):
+        """Temporarily override ``expire_after`` for an individual request"""
+        self._request_expire_after = expire_after
+        yield
+        self._request_expire_after = None
+
+    def url_expire_after(self, url: str) -> ExpirationTime:
+        """Get the expiration time for a URL, if a matching pattern is defined"""
+        for pattern, expire_after in (self.urls_expire_after or {}).items():
+            if url_match(url, pattern):
+                return expire_after
+        return None
+
     def remove_expired_responses(self, expire_after: ExpirationTime = None):
         """Remove expired responses from the cache, optionally with revalidation
 
@@ -209,6 +217,7 @@ class CacheMixin:
         )
 
 
+# TODO: Move details/examples to user guide
 class CachedSession(CacheMixin, OriginalSession):
     """Class that extends ``requests.Session`` with caching features.
     See individual backend classes for additional backend-specific arguments.
@@ -218,6 +227,7 @@ class CachedSession(CacheMixin, OriginalSession):
         backend: Cache backend name; one of ``['sqlite', 'mongodb', 'gridfs', 'redis', 'dynamodb', 'memory']``.
                 Default behavior is to use ``'sqlite'`` if available, otherwise fallback to ``'memory'``.
         expire_after: Time after which cached items will expire (see notes below)
+        expire_after_urls: Expiration times to apply for different URL patterns (see notes below)
         allowable_codes: Only cache responses with one of these codes
         allowable_methods: Cache only responses for one of these HTTP methods
         include_get_headers: Make request headers part of the cache key
@@ -249,16 +259,72 @@ class CachedSession(CacheMixin, OriginalSession):
     **Cache Expiration:**
 
     Use ``expire_after`` to specify how long responses will be cached. This can be a number
-    (in seconds), a :py:class:`.timedelta`, or a :py:class:`datetime`. Use ``None`` or ``-1`` to
-    never expire. This will not apply to responses cached in the current session; to apply a
-    different expiration to previously cached responses, see :py:meth:`remove_expired_responses`.
+    (in seconds), a :py:class:`.timedelta`, or a :py:class:`datetime`. Use ``-1`` to never expire.
+    This will not apply to responses cached in the current session; to apply a different expiration
+    to previously cached responses, see :py:meth:`remove_expired_responses`.
+
+    Expiration can also be set on a per-URL or per request basis. The following order of precedence
+    is used:
+
+    1. Per-request expiration (``expire_after`` argument for :py:meth:`.request`)
+    2. Per-URL expiration (``urls_expire_after`` argument for ``CachedSession``)
+    3. Per-session expiration (``expire_after`` argument for ``CachedSession``)
+
+    **URL Patterns:**
+
+    The ``expire_after_urls`` parameter can be used to set different expiration times for different
+    requests, based on URL glob patterns. This allows you to customize caching based on what you
+    know about the resources you're requesting. For example, you might request one resource that
+    gets updated frequently, another that changes infrequently, and another that never changes.
+
+    Example::
+
+        urls_expire_after = {
+            '*.site_1.com': 30,
+            'site_2.com/resource_1': 60 * 2,
+            'site_2.com/resource_2': 60 * 60 * 24,
+            'site_2.com/static': -1,
+        }
+
+    Notes:
+
+    * ``urls_expire_after`` should be a dict in the format ``{'pattern': expire_after}``
+    * ``expire_after`` accepts the same types as ``CachedSession.expire_after``
+    * Patterns will match request **base URLs**, so the pattern ``site.com/resource/`` is equivalent to
+      ``http*://site.com/resource/**``
+    * If there is more than one match, the first match will be used in the order they are defined
+    * If no patterns match a request, ``expire_after`` will be used as a default.
+
     """
+
+
+def url_match(url: str, pattern: str) -> bool:
+    """Determine if a URL matches a pattern.
+
+    Args:
+        url: URL to test. Its base URL (without protocol) will be used.
+        pattern: Glob pattern to match against. A recursive wildcard will be added if not present
+
+    Example:
+        >>> url_match('https://httpbin.org/delay/1', 'httpbin.org/delay')
+        True
+        >>> url_match('https://httpbin.org/stream/1', 'httpbin.org/*/1')
+        True
+        >>> url_match('https://httpbin.org/stream/2', 'httpbin.org/*/1')
+        False
+    """
+    if not url:
+        return False
+    url = url.split('://')[-1]
+    pattern = pattern.split('://')[-1].rstrip('*') + '**'
+    return fnmatch(url, pattern)
 
 
 def install_cache(
     cache_name: str = 'cache',
     backend: str = None,
     expire_after: ExpirationTime = None,
+    urls_expire_after: Dict[str, ExpirationTime] = None,
     allowable_codes: Iterable[int] = (200,),
     allowable_methods: Iterable['str'] = ('GET', 'HEAD'),
     filter_fn: Callable = None,
@@ -282,6 +348,7 @@ def install_cache(
                 cache_name=cache_name,
                 backend=backend,
                 expire_after=expire_after,
+                urls_expire_after=urls_expire_after,
                 allowable_codes=allowable_codes,
                 allowable_methods=allowable_methods,
                 filter_fn=filter_fn,
