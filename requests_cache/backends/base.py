@@ -178,7 +178,7 @@ class BaseCache(object):
 
 
 class BaseStorage(MutableMapping):
-    """Base class for backend storage implementation
+    """Base class for backend storage implementations
 
     Args:
         secret_key: Optional secret key used to sign cache items

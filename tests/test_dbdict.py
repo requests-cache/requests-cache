@@ -2,7 +2,7 @@
 import unittest
 from threading import Thread
 
-from requests_cache.backends.storage.dbdict import DbDict, DbPickleDict
+from requests_cache.backends.sqlite import DbDict, DbPickleDict
 from tests.test_custom_dict import BaseCustomDictTestCase
 
 

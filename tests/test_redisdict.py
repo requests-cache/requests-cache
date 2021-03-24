@@ -4,7 +4,7 @@ import unittest
 from tests.test_custom_dict import BaseCustomDictTestCase
 
 try:
-    from requests_cache.backends.storage.redisdict import RedisDict
+    from requests_cache.backends.redisdict import RedisDict
 except ImportError:
     print("Redis not installed")
 else:

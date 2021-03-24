@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os
 
-from requests_cache.backends.storage.dbdict import DbDict, DbPickleDict
+from requests_cache.backends.sqlite import DbDict, DbPickleDict
 
 
 class BaseCustomDictTestCase(object):
@@ -36,7 +36,7 @@ class BaseCustomDictTestCase(object):
         self.assertEqual(list(d3.keys()), [3])
 
         with self.assertRaises(KeyError):
-            a = d1[4]
+            d1[4]
 
     def test_str(self):
         d = self.dict_class(self.NAMESPACE)

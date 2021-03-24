@@ -1,21 +1,16 @@
 # flake8: noqa: F841
 import json
-import os
 import pytest
-import sys
 import time
-import unittest
 from collections import defaultdict
 from datetime import datetime, timedelta
 from pickle import PickleError
-from unittest.mock import PropertyMock, patch
+from unittest.mock import patch
 
 import requests
-from requests import Request
 
-import requests_cache
 from requests_cache import ALL_METHODS, CachedSession
-from requests_cache.backends.storage.dbdict import DbPickleDict
+from requests_cache.backends.sqlite import DbPickleDict
 from tests.conftest import MOCKED_URL, MOCKED_URL_HTTPS, MOCKED_URL_JSON, MOCKED_URL_REDIRECT
 
 

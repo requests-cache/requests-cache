@@ -7,7 +7,7 @@ from tests.test_custom_dict import BaseCustomDictTestCase
 
 pytestmark = pytest.mark.skip(reason='Integration test database is not set up')
 try:
-    from requests_cache.backends.storage.dynamodbdict import DynamoDbDict
+    from requests_cache.backends.dynamodb import DynamoDbDict
 except ImportError:
     print("DynamoDb not installed")
 else:
