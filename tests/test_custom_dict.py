@@ -22,7 +22,7 @@ class BaseCustomDictTestCase(object):
         for table in self.TABLES:
             d = self.dict_class(self.NAMESPACE, table)
             d.clear()
-        super(BaseCustomDictTestCase, self).tearDown()
+        super().tearDown()
 
     def test_set_get(self):
         d1 = self.dict_class(self.NAMESPACE, self.TABLES[0])

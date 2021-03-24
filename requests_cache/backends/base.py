@@ -181,7 +181,7 @@ class BaseStorage(MutableMapping):
     """Base class for backend storage implementations
 
     Args:
-        secret_key: Optional secret key used to sign cache items
+        secret_key: Optional secret key used to sign cache items for added security
         salt: Optional salt used to sign cache items
         serializer: Custom serializer that provides ``loads`` and ``dumps`` methods
     """

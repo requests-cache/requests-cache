@@ -1,23 +1,22 @@
 #!/usr/bin/env python
 import os
-import pytest
 import unittest
 
 from tests.test_custom_dict import BaseCustomDictTestCase
 
-pytestmark = pytest.mark.skip(reason='Integration test database is not set up')
 try:
     from requests_cache.backends.dynamodb import DynamoDbDict
 except ImportError:
     print("DynamoDb not installed")
 else:
+    # boto3 will accept any values for creds, but they still need to be present
+    os.environ['AWS_ACCESS_KEY_ID'] = 'placeholder'
+    os.environ['AWS_SECRET_ACCESS_KEY'] = 'placeholder'
 
     class WrapDynamoDbDict(DynamoDbDict):
         def __init__(self, namespace, collection_name='dynamodb_dict_data', **options):
-            options['endpoint_url'] = (
-                os.environ['DYNAMODB_ENDPOINT_URL'] if 'DYNAMODB_ENDPOINT_URL' in os.environ else None
-            )
-            super(WrapDynamoDbDict, self).__init__(namespace, collection_name, **options)
+            options['endpoint_url'] = 'http://0.0.0.0:8000'
+            super().__init__(namespace, collection_name, **options)
 
     class DynamoDbDictTestCase(BaseCustomDictTestCase, unittest.TestCase):
         dict_class = WrapDynamoDbDict

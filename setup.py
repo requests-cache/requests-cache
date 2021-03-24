@@ -9,7 +9,6 @@ extras_require = {
     'build': ['coveralls', 'twine', 'wheel'],
     # Packages for all supported backends + features
     'backends': ['boto3', 'pymongo', 'redis', 'itsdangerous'],
-    'security': ['itsdangerous'],
     # Packages used for documentation builds
     'docs': [
         'm2r2',
