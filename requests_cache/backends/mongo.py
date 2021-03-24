@@ -19,4 +19,4 @@ class MongoCache(BaseCache):
         """
         super().__init__(**options)
         self.responses = MongoPickleDict(db_name, 'responses', options.get('connection'))
-        self.keys_map = MongoDict(db_name, 'urls', self.responses.connection)
+        self.redirects = MongoDict(db_name, 'redirects', self.responses.connection)

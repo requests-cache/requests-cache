@@ -8,6 +8,7 @@
 import hashlib
 import json
 from pickle import PickleError
+from typing import List
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 import requests
@@ -21,16 +22,21 @@ class BaseCache(object):
     """Base class for cache implementations, which can also be used as in-memory cache.
 
     To extend it you can provide dictionary-like objects for
-    :attr:`keys_map` and :attr:`responses` or override public methods.
+    :attr:`redirects` and :attr:`responses` or override public methods.
     """
 
     def __init__(self, *args, **kwargs):
-        #: `key` -> `key_in_responses` mapping
-        self.keys_map = {}
-        #: `key_in_cache` -> `response` mapping
+        self.redirects = {}
         self.responses = {}
         self._include_get_headers = kwargs.get("include_get_headers", False)
         self._ignored_parameters = set(kwargs.get("ignored_parameters") or [])
+
+    @property
+    def urls(self) -> List[str]:
+        """Get all URLs currently in the cache"""
+        response_urls = [response.url for response in self.responses.values()]
+        redirect_urls = list(self.redirects.keys())
+        return sorted(response_urls + redirect_urls)
 
     def save_response(self, key: str, response: AnyResponse, expire_after: ExpirationTime = None):
         """Save response to cache
@@ -51,7 +57,7 @@ class BaseCache(object):
             new_key: New resource key (e.g. url from redirect)
             key_to_response: Key which can be found in :attr:`responses`
         """
-        self.keys_map[new_key] = key_to_response
+        self.redirects[new_key] = key_to_response
 
     def get_response(self, key: str, default=None) -> CachedResponse:
         """Retrieves response for `key` if it's stored in cache, otherwise returns `default`
@@ -62,7 +68,7 @@ class BaseCache(object):
         """
         try:
             if key not in self.responses:
-                key = self.keys_map[key]
+                key = self.redirects[key]
             response = self.responses[key]
             response.reset()  # In case response was in memory and raw content has already been read
             return response
@@ -76,10 +82,10 @@ class BaseCache(object):
                 response = self.responses[key]
                 del self.responses[key]
             else:
-                response = self.responses[self.keys_map[key]]
-                del self.keys_map[key]
+                response = self.responses[self.redirects[key]]
+                del self.redirects[key]
             for r in response.history:
-                del self.keys_map[self.create_key(r.request)]
+                del self.redirects[self.create_key(r.request)]
         except KeyError:
             pass
 
@@ -92,7 +98,7 @@ class BaseCache(object):
     def clear(self):
         """Delete all items from the cache"""
         self.responses.clear()
-        self.keys_map.clear()
+        self.redirects.clear()
 
     def remove_expired_responses(self, expire_after: ExpirationTime = None):
         """Remove expired responses from the cache, optionally with revalidation
@@ -109,7 +115,7 @@ class BaseCache(object):
 
     def has_key(self, key: str) -> bool:
         """Returns `True` if cache has `key`, `False` otherwise"""
-        return key in self.responses or key in self.keys_map
+        return key in self.responses or key in self.redirects
 
     def has_url(self, url: str) -> bool:
         """Returns `True` if cache has `url`, `False` otherwise. Works only for GET request urls"""
@@ -167,7 +173,7 @@ class BaseCache(object):
         return [(k, v) for k, v in data if k not in self._ignored_parameters]
 
     def __str__(self):
-        return f'redirects: {len(self.keys_map)}\nresponses: {len(self.responses)}'
+        return f'redirects: {len(self.redirects)}\nresponses: {len(self.responses)}'
 
 
 def _encode(value, encoding='utf-8') -> bytes:
