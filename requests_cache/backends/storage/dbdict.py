@@ -5,14 +5,14 @@
 
     Dictionary-like objects for saving large data sets to `sqlite` database
 """
-import pickle
 import sqlite3
 import threading
-from collections.abc import MutableMapping
 from contextlib import contextmanager
 
+from ..base import BaseStorage
 
-class DbDict(MutableMapping):
+
+class DbDict(BaseStorage):
     """DbDict - a dictionary-like object for saving large datasets to `sqlite` database
 
     It's possible to create multiply DbDict instances, which will be stored as separate
@@ -26,7 +26,7 @@ class DbDict(MutableMapping):
     correspondent tables: ``table1``, ``table2`` and ``table3``
     """
 
-    def __init__(self, filename, table_name='data', fast_save=False, **options):
+    def __init__(self, filename, table_name='data', fast_save=False, **kwargs):
         """
         :param filename: filename for database (without extension)
         :param table_name: table name
@@ -35,6 +35,7 @@ class DbDict(MutableMapping):
                           to speedup cache saving, but be careful, it's dangerous.
                           Tests showed that insertion order of records can be wrong with this option.
         """
+        super().__init__(**kwargs)
         self.filename = filename
         self.table_name = table_name
         self.fast_save = fast_save
@@ -144,7 +145,7 @@ class DbPickleDict(DbDict):
     """Same as :class:`DbDict`, but pickles values before saving"""
 
     def __setitem__(self, key, item):
-        super().__setitem__(key, sqlite3.Binary(pickle.dumps(item)))
+        super().__setitem__(key, sqlite3.Binary(self.serialize(item)))
 
     def __getitem__(self, key):
-        return pickle.loads(bytes(super().__getitem__(key)))
+        return self.deserialize(super().__getitem__(key))

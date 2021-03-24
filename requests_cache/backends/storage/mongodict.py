@@ -5,16 +5,15 @@
 
     Dictionary-like objects for saving large data sets to ``mongodb`` database
 """
-import pickle
-from collections.abc import MutableMapping
-
 from pymongo import MongoClient
 
+from ..base import BaseStorage
 
-class MongoDict(MutableMapping):
-    """MongoDict - a dictionary-like interface for ``mongo`` database"""
 
-    def __init__(self, db_name, collection_name='mongo_dict_data', connection=None):
+class MongoDict(BaseStorage):
+    """A dictionary-like interface for a MongoDB collection"""
+
+    def __init__(self, db_name, collection_name='mongo_dict_data', connection=None, **kwargs):
         """
         :param db_name: database name (be careful with production databases)
         :param collection_name: collection name (default: mongo_dict_data)
@@ -22,6 +21,7 @@ class MongoDict(MutableMapping):
                            (default) new connection with default options will
                            be created
         """
+        super().__init__(**kwargs)
         if connection is not None:
             self.connection = connection
         else:
@@ -67,7 +67,7 @@ class MongoPickleDict(MongoDict):
     """Same as :class:`MongoDict`, but pickles values before saving"""
 
     def __setitem__(self, key, item):
-        super().__setitem__(key, pickle.dumps(item))
+        super().__setitem__(key, self.serialize(item))
 
     def __getitem__(self, key):
-        return pickle.loads(bytes(super().__getitem__(key)))
+        return self.deserialize(super().__getitem__(key))

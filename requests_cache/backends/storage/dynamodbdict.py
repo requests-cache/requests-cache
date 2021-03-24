@@ -5,15 +5,14 @@
 
     Dictionary-like objects for saving large data sets to ``dynamodb`` key-store
 """
-import pickle
-from collections.abc import MutableMapping
-
 import boto3
 from botocore.exceptions import ClientError
 
+from ..base import BaseStorage
 
-class DynamoDbDict(MutableMapping):
-    """DynamoDbDict - a dictionary-like interface for ``dynamodb`` key-stores"""
+
+class DynamoDbDict(BaseStorage):
+    """A dictionary-like interface for DynamoDB key-value store"""
 
     def __init__(
         self,
@@ -24,6 +23,7 @@ class DynamoDbDict(MutableMapping):
         region_name='us-east-1',
         read_capacity_units=1,
         write_capacity_units=1,
+        **kwargs,
     ):
 
         """
@@ -42,6 +42,7 @@ class DynamoDbDict(MutableMapping):
         :param endpoint_url: url of dynamodb server.
 
         """
+        super().__init__(**kwargs)
         self._self_key = namespace
         if connection is not None:
             self.connection = connection
@@ -79,10 +80,10 @@ class DynamoDbDict(MutableMapping):
         result = self._table.get_item(Key=composite_key)
         if 'Item' not in result:
             raise KeyError
-        return pickle.loads(result['Item']['value'].value)
+        return self.deserialize(result['Item']['value'].value)
 
     def __setitem__(self, key, item):
-        item = {'namespace': self._self_key, 'key': str(key), 'value': pickle.dumps(item)}
+        item = {'namespace': self._self_key, 'key': str(key), 'value': self.serialize(item)}
         self._table.put_item(Item=item)
 
     def __delitem__(self, key):
@@ -97,7 +98,7 @@ class DynamoDbDict(MutableMapping):
     def __iter__(self):
         response = self.__scan_table()
         for v in response['Items']:
-            yield pickle.loads(v['value'].value)
+            yield self.deserialize(v['value'].value)
 
     def clear(self):
         response = self.__scan_table()

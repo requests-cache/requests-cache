@@ -5,24 +5,23 @@
 
     Dictionary-like objects for saving large data sets to ``mongodb`` database
 """
-
-import pickle
-from collections.abc import MutableMapping
-
 from gridfs import GridFS
 from pymongo import MongoClient
 
+from ..base import BaseStorage
 
-class GridFSPickleDict(MutableMapping):
-    """MongoDict - a dictionary-like interface for ``mongo`` database"""
 
-    def __init__(self, db_name, connection=None):
+class GridFSPickleDict(BaseStorage):
+    """A dictionary-like interface for a GridFS collection"""
+
+    def __init__(self, db_name, connection=None, **kwargs):
         """
         :param db_name: database name (be careful with production databases)
         :param connection: ``pymongo.Connection`` instance. If it's ``None``
                            (default) new connection with default options will
                            be created
         """
+        super().__init__(**kwargs)
         if connection is not None:
             self.connection = connection
         else:
@@ -35,11 +34,11 @@ class GridFSPickleDict(MutableMapping):
         result = self.fs.find_one({'_id': key})
         if result is None:
             raise KeyError
-        return pickle.loads(bytes(result.read()))
+        return self.deserialize(result.read())
 
     def __setitem__(self, key, item):
         self.__delitem__(key)
-        self.fs.put(pickle.dumps(item), **{'_id': key})
+        self.fs.put(self.serialize(item), **{'_id': key})
 
     def __delitem__(self, key):
         res = self.fs.find_one({'_id': key})

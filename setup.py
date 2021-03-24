@@ -7,8 +7,9 @@ from requests_cache import __version__
 extras_require = {
     # Packages used for CI jobs
     'build': ['coveralls', 'twine', 'wheel'],
-    # Packages for all supported backends
-    'backends': ['boto3', 'pymongo', 'redis'],
+    # Packages for all supported backends + features
+    'backends': ['boto3', 'pymongo', 'redis', 'itsdangerous'],
+    'security': ['itsdangerous'],
     # Packages used for documentation builds
     'docs': [
         'm2r2',

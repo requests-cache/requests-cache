@@ -5,16 +5,15 @@
 
     Dictionary-like objects for saving large data sets to ``redis`` key-store
 """
-import pickle
-from collections.abc import MutableMapping
-
 from redis import StrictRedis as Redis
 
+from ..base import BaseStorage
 
-class RedisDict(MutableMapping):
-    """RedisDict - a dictionary-like interface for ``redis`` key-stores"""
 
-    def __init__(self, namespace, collection_name='redis_dict_data', connection=None):
+class RedisDict(BaseStorage):
+    """A dictionary-like interface for redis key-value store"""
+
+    def __init__(self, namespace, collection_name='redis_dict_data', connection=None, **kwargs):
         """
         The actual key name on the redis server will be
         ``namespace``:``collection_name``
@@ -30,6 +29,7 @@ class RedisDict(MutableMapping):
                            default options will be created
 
         """
+        super().__init__(**kwargs)
         if connection is not None:
             self.connection = connection
         else:
@@ -37,16 +37,16 @@ class RedisDict(MutableMapping):
         self._self_key = ':'.join([namespace, collection_name])
 
     def __getitem__(self, key):
-        result = self.connection.hget(self._self_key, pickle.dumps(key))
+        result = self.connection.hget(self._self_key, self.serialize(key))
         if result is None:
             raise KeyError
-        return pickle.loads(bytes(result))
+        return self.deserialize(result)
 
     def __setitem__(self, key, item):
-        self.connection.hset(self._self_key, pickle.dumps(key), pickle.dumps(item))
+        self.connection.hset(self._self_key, self.serialize(key), self.serialize(item))
 
     def __delitem__(self, key):
-        if not self.connection.hdel(self._self_key, pickle.dumps(key)):
+        if not self.connection.hdel(self._self_key, self.serialize(key)):
             raise KeyError
 
     def __len__(self):
@@ -54,7 +54,7 @@ class RedisDict(MutableMapping):
 
     def __iter__(self):
         for v in self.connection.hkeys(self._self_key):
-            yield pickle.loads(bytes(v))
+            yield self.deserialize(v)
 
     def clear(self):
         self.connection.delete(self._self_key)

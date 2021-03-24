@@ -7,8 +7,9 @@
 """
 import hashlib
 import json
-from pickle import PickleError
-from typing import List
+import pickle
+from collections.abc import MutableMapping
+from typing import Iterable, List, Union
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 import requests
@@ -72,7 +73,7 @@ class BaseCache(object):
             response = self.responses[key]
             response.reset()  # In case response was in memory and raw content has already been read
             return response
-        except (KeyError, TypeError, PickleError):
+        except (KeyError, TypeError, pickle.PickleError):
             return default
 
     def delete(self, key: str):
@@ -174,6 +175,48 @@ class BaseCache(object):
 
     def __str__(self):
         return f'redirects: {len(self.redirects)}\nresponses: {len(self.responses)}'
+
+
+class BaseStorage(MutableMapping):
+    """Base class for backend storage implementation
+
+    Args:
+        secret_key: Optional secret key used to sign cache items
+        salt: Optional salt used to sign cache items
+        serializer: Custom serializer that provides ``loads`` and ``dumps`` methods
+    """
+
+    def __init__(
+        self,
+        secret_key: Union[Iterable, str, bytes] = None,
+        salt: Union[str, bytes] = b'requests-cache',
+        serializer=None,
+        **kwargs,
+    ):
+        self._serializer = serializer or self._get_serializer(secret_key, salt)
+
+    def serialize(self, item: Union[CachedResponse, str]) -> bytes:
+        """Serialize a URL or response into bytes"""
+        return self._serializer.dumps(item)
+
+    def deserialize(self, item: Union[CachedResponse, str, bytes]) -> Union[CachedResponse, str]:
+        """Deserialize a cached URL or response"""
+        return self._serializer.loads(bytes(item))
+
+    @staticmethod
+    def _get_serializer(secret_key, salt):
+        """Get the appropriate serializer to use; either ``itsdangerous``, if a secret key is
+        specified, or plain ``pickle`` otherwise.
+
+        Raises:
+            py:exc:`ImportError` if ``secret_key`` is specified but ``itsdangerous`` is not installed
+        """
+        if secret_key:
+            from itsdangerous.serializer import Serializer
+
+            return Serializer(secret_key, salt=salt, serializer=pickle)
+        else:
+            return pickle
 
 
 def _encode(value, encoding='utf-8') -> bytes:
