@@ -1,52 +1,41 @@
 API
 ===
+This section covers all the public interfaces of ``requests-cache``
 
-This part of the documentation covers all the interfaces of `requests-cache`
-
-
-Public api
+Public API
 ----------
+.. Explicitly show inherited method docs on CachedSession instead of CachedMixin
+.. autoclass:: requests_cache.core.CachedSession
+    :members: send, request, cache_disabled, remove_expired_responses
+    :show-inheritance:
+
+.. autoclass:: requests_cache.core.CacheMixin
 
 .. automodule:: requests_cache.core
-   :members:
+    :members:
+    :exclude-members: CachedSession, CacheMixin
+
+.. automodule:: requests_cache.response
+    :members:
 
 ----------------------------------------------
 
-.. _cache_backends:
-
-Cache backends
+Cache Backends
 --------------
-
 .. automodule:: requests_cache.backends.base
    :members:
-
-.. _backends_sqlite:
 
 .. automodule:: requests_cache.backends.sqlite
    :members:
 
-.. _backends_mongo:
-
 .. automodule:: requests_cache.backends.mongo
    :members:
 
-.. _backends_redis:
+.. automodule:: requests_cache.backends.gridfs
+   :members:
 
 .. automodule:: requests_cache.backends.redis
    :members:
 
-----------------------------------------------
-
-Internal modules which can be used outside
-------------------------------------------
-
-.. _backends_dbdict:
-
-.. automodule:: requests_cache.backends.storage.dbdict
-   :members:
-
-.. automodule:: requests_cache.backends.storage.mongodict
-   :members:
-
-.. automodule:: requests_cache.backends.storage.redisdict
+.. automodule:: requests_cache.backends.dynamodb
    :members:
