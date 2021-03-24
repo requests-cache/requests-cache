@@ -4,8 +4,8 @@ import unittest
 from tests.test_custom_dict import BaseCustomDictTestCase
 
 try:
-    from requests_cache.backends.storage.gridfspickledict import GridFSPickleDict
-    from requests_cache.backends.storage.mongodict import MongoDict
+    from requests_cache.backends.gridfs import GridFSPickleDict
+    from requests_cache.backends.mongo import MongoDict
 
 except ImportError:
     print("pymongo not installed")

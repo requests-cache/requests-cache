@@ -4,7 +4,7 @@ import unittest
 from tests.test_custom_dict import BaseCustomDictTestCase
 
 try:
-    from requests_cache.backends.storage.mongodict import MongoDict, MongoPickleDict
+    from requests_cache.backends.mongo import MongoDict, MongoPickleDict
 except ImportError:
     print("pymongo not installed")
 else:

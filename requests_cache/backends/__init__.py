@@ -21,6 +21,8 @@ BACKEND_KWARGS = [
     'namespace',
     'read_capacity_units',
     'region_name',
+    'salt',
+    'secret_key',
     'write_capacity_units',
 ]
 
@@ -73,14 +75,14 @@ except ImportError:
     DynamoDbCache = None
 
 
-def create_backend(backend_name, cache_name, options):
+def create_backend(backend_name, cache_name, kwargs):
     if isinstance(backend_name, BaseCache):
         return backend_name
 
     if backend_name is None:
         backend_name = _get_default_backend_name()
     try:
-        return registry[backend_name](cache_name, **options)
+        return registry[backend_name](cache_name, **kwargs)
     except KeyError:
         if backend_name in _backend_dependencies:
             raise ImportError('You must install the python package: %s' % _backend_dependencies[backend_name])

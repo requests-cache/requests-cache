@@ -236,6 +236,7 @@ class CachedSession(CacheMixin, OriginalSession):
             returns a boolean indicating whether or not that response should be cached. Will be
             applied to both new and previously cached responses.
         old_data_on_error: Return expired cached responses if new request fails
+        secret_key: Optional secret key used to sign cache items for added security
 
     **Cache Name:**
 
