@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import unittest
 from threading import Thread
+from unittest.mock import patch
 
 from requests_cache.backends.sqlite import DbDict, DbPickleDict
 from tests.test_custom_dict import BaseCustomDictTestCase
@@ -78,6 +79,13 @@ class DbdictTestCase(BaseCustomDictTestCase, unittest.TestCase):
         do_test_for(d1)
         do_test_for(d2)
         do_test_for(DbDict(self.NAMESPACE))
+
+
+@patch('requests_cache.backends.sqlite.sqlite3')
+def test_timeout(mock_sqlite):
+    """Just make sure the optional 'timeout' param gets passed to sqlite3.connect"""
+    DbDict('test', timeout=0.5)
+    mock_sqlite.connect.assert_called_with('test', timeout=0.5)
 
 
 if __name__ == '__main__':

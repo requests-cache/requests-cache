@@ -12,10 +12,11 @@ class DbCache(BaseCache):
     Reading is fast, saving is a bit slower. It can store big amount of data with low memory usage.
 
     Args:
-        location: database filename prefix
+        location: database file path (without extension)
         extension: Database file extension
         fast_save: Speedup cache saving up to 50 times but with possibility of data loss.
             See :ref:`backends.DbDict <backends_dbdict>` for more info
+        timeout: Timeout for acquiring a database lock
     """
 
     def __init__(self, location='http_cache', extension='.sqlite', fast_save=False, **kwargs):
@@ -26,7 +27,7 @@ class DbCache(BaseCache):
 
 
 class DbDict(BaseStorage):
-    """DbDict - a dictionary-like object for saving large datasets to `sqlite` database
+    """A dictionary-like interface for SQLite.
 
     It's possible to create multiply DbDict instances, which will be stored as separate
     tables in one database::
@@ -35,23 +36,22 @@ class DbDict(BaseStorage):
         d2 = DbDict('test', 'table2')
         d3 = DbDict('test', 'table3')
 
-    all data will be stored in ``test.sqlite`` database into
-    correspondent tables: ``table1``, ``table2`` and ``table3``
+    All data will be stored in separate tables in the file ``test.sqlite``.
+
+    Args:
+        filename: Filename for database (without extension)
+        table_name: Table name
+        fast_save: Use `"PRAGMA synchronous = 0;" <http://www.sqlite.org/pragma.html#pragma_synchronous>`_
+            to speed up cache saving, but with the potential for data loss
+        timeout: Timeout for acquiring a database lock
     """
 
-    def __init__(self, filename, table_name='http_cache', fast_save=False, **kwargs):
-        """
-        :param filename: filename for database (without extension)
-        :param table_name: table name
-        :param fast_save: If it's True, then sqlite will be configured with
-                          `"PRAGMA synchronous = 0;" <http://www.sqlite.org/pragma.html#pragma_synchronous>`_
-                          to speedup cache saving, but be careful, it's dangerous.
-                          Tests showed that insertion order of records can be wrong with this option.
-        """
+    def __init__(self, filename, table_name='http_cache', fast_save=False, timeout=5.0, **kwargs):
         super().__init__(**kwargs)
         self.filename = filename
         self.table_name = table_name
         self.fast_save = fast_save
+        self.timeout = timeout
 
         #: Transactions can be committed if this property is set to `True`
         self.can_commit = True
@@ -67,10 +67,10 @@ class DbDict(BaseStorage):
         with self._lock:
             if self._bulk_commit:
                 if self._pending_connection is None:
-                    self._pending_connection = sqlite3.connect(self.filename)
+                    self._pending_connection = sqlite3.connect(self.filename, timeout=self.timeout)
                 con = self._pending_connection
             else:
-                con = sqlite3.connect(self.filename)
+                con = sqlite3.connect(self.filename, timeout=self.timeout)
             try:
                 if self.fast_save:
                     con.execute("PRAGMA synchronous = 0;")
