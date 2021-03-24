@@ -17,14 +17,15 @@ class GridFSCache(BaseCache):
         requests_cache.install_cache(backend='gridfs', connection=MongoClient('another-host.local'))
     """
 
-    def __init__(self, db_name, **options):
+    def __init__(self, db_name, **kwargs):
         """
         :param db_name: database name
         :param connection: (optional) ``pymongo.Connection``
         """
-        super().__init__(**options)
-        self.responses = GridFSPickleDict(db_name, options.get('connection'))
-        self.redirects = MongoDict(db_name, 'redirects', self.responses.connection)
+        super().__init__(**kwargs)
+        self.responses = GridFSPickleDict(db_name, **kwargs)
+        kwargs['connection'] = self.responses.connection
+        self.redirects = MongoDict(db_name, collection_name='redirects', **kwargs)
 
 
 class GridFSPickleDict(BaseStorage):

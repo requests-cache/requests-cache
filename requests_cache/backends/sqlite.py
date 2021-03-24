@@ -1,6 +1,7 @@
 import sqlite3
 import threading
 from contextlib import contextmanager
+from os.path import expanduser
 
 from .base import BaseCache, BaseStorage
 
@@ -8,20 +9,20 @@ from .base import BaseCache, BaseStorage
 class DbCache(BaseCache):
     """SQLite cache backend.
 
-    Reading is fast, saving is a bit slower. It can store big amount of data
-    with low memory usage.
+    Reading is fast, saving is a bit slower. It can store big amount of data with low memory usage.
+
+    Args:
+        location: database filename prefix
+        extension: Database file extension
+        fast_save: Speedup cache saving up to 50 times but with possibility of data loss.
+            See :ref:`backends.DbDict <backends_dbdict>` for more info
     """
 
-    def __init__(self, location='cache', fast_save=False, extension='.sqlite', **options):
-        """
-        :param location: database filename prefix (default: ``'cache'``)
-        :param fast_save: Speedup cache saving up to 50 times but with possibility of data loss.
-                          See :ref:`backends.DbDict <backends_dbdict>` for more info
-        :param extension: extension for filename (default: ``'.sqlite'``)
-        """
-        super().__init__(**options)
-        self.responses = DbPickleDict(str(location) + extension, 'responses', fast_save=fast_save)
-        self.redirects = DbDict(location + extension, 'redirects')
+    def __init__(self, location='http_cache', extension='.sqlite', fast_save=False, **kwargs):
+        super().__init__(**kwargs)
+        db_path = expanduser(str(location) + extension)
+        self.responses = DbPickleDict(db_path, table_name='responses', fast_save=fast_save, **kwargs)
+        self.redirects = DbDict(db_path, table_name='redirects', **kwargs)
 
 
 class DbDict(BaseStorage):
@@ -38,7 +39,7 @@ class DbDict(BaseStorage):
     correspondent tables: ``table1``, ``table2`` and ``table3``
     """
 
-    def __init__(self, filename, table_name='data', fast_save=False, **kwargs):
+    def __init__(self, filename, table_name='http_cache', fast_save=False, **kwargs):
         """
         :param filename: filename for database (without extension)
         :param table_name: table name

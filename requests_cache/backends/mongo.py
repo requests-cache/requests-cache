@@ -6,20 +6,21 @@ from .base import BaseCache, BaseStorage
 class MongoCache(BaseCache):
     """MongoDB cache backend"""
 
-    def __init__(self, db_name='requests-cache', **options):
+    def __init__(self, db_name='http_cache', **kwargs):
         """
         :param db_name: database name (default: ``'requests-cache'``)
         :param connection: (optional) ``pymongo.Connection``
         """
-        super().__init__(**options)
-        self.responses = MongoPickleDict(db_name, 'responses', options.get('connection'))
-        self.redirects = MongoDict(db_name, 'redirects', self.responses.connection)
+        super().__init__(**kwargs)
+        self.responses = MongoPickleDict(db_name, collection_name='responses', **kwargs)
+        kwargs['connection'] = self.responses.connection
+        self.redirects = MongoDict(db_name, collection_name='redirects', **kwargs)
 
 
 class MongoDict(BaseStorage):
     """A dictionary-like interface for a MongoDB collection"""
 
-    def __init__(self, db_name, collection_name='mongo_dict_data', connection=None, **kwargs):
+    def __init__(self, db_name, collection_name='http_cache', connection=None, **kwargs):
         """
         :param db_name: database name (be careful with production databases)
         :param collection_name: collection name (default: mongo_dict_data)

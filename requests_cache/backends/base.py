@@ -19,7 +19,7 @@ from ..response import AnyResponse, CachedResponse, ExpirationTime
 DEFAULT_HEADERS = requests.utils.default_headers()
 
 
-class BaseCache(object):
+class BaseCache:
     """Base class for cache implementations, which can also be used as in-memory cache.
 
     To extend it you can provide dictionary-like objects for

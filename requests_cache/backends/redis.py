@@ -11,10 +11,11 @@ class RedisCache(BaseCache):
         connection: (optional) Redis connection instance to use instead of creating a new one
     """
 
-    def __init__(self, namespace='requests-cache', connection: Redis = None, **kwargs):
+    def __init__(self, namespace='http_cache', **kwargs):
         super().__init__(**kwargs)
-        self.responses = RedisDict(namespace, 'responses', connection)
-        self.redirects = RedisDict(namespace, 'redirects', self.responses.connection)
+        self.responses = RedisDict(namespace, collection_name='responses', **kwargs)
+        kwargs['connection'] = self.responses.connection
+        self.redirects = RedisDict(namespace, collection_name='redirects', **kwargs)
 
 
 class RedisDict(BaseStorage):
@@ -30,7 +31,7 @@ class RedisDict(BaseStorage):
         connection: (optional) Redis connection instance to use instead of creating a new one
     """
 
-    def __init__(self, namespace, collection_name='redis_dict_data', connection=None, **kwargs):
+    def __init__(self, namespace, collection_name='http_cache', connection=None, **kwargs):
         super().__init__(**kwargs)
         if connection is not None:
             self.connection = connection

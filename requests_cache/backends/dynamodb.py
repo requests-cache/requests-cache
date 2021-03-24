@@ -7,22 +7,15 @@ from .base import BaseCache, BaseStorage
 class DynamoDbCache(BaseCache):
     """`DynamoDB cache backend"""
 
-    def __init__(self, table_name='requests-cache', **options):
+    def __init__(self, table_name='http_cache', **kwargs):
         """
         :param namespace: dynamodb table name (default: ``'requests-cache'``)
         :param connection: (optional) ``boto3.resource('dynamodb')``
         """
-        super().__init__(**options)
-        self.responses = DynamoDbDict(
-            table_name,
-            'responses',
-            options.get('connection'),
-            options.get('endpont_url'),
-            options.get('region_name'),
-            options.get('read_capacity_units'),
-            options.get('write_capacity_units'),
-        )
-        self.redirects = DynamoDbDict(table_name, 'redirects', self.responses.connection)
+        super().__init__(**kwargs)
+        self.responses = DynamoDbDict(table_name, namespace='responses', **kwargs)
+        kwargs['connection'] = self.responses.connection
+        self.redirects = DynamoDbDict(table_name, namespace='redirects', **kwargs)
 
 
 class DynamoDbDict(BaseStorage):
@@ -31,7 +24,7 @@ class DynamoDbDict(BaseStorage):
     def __init__(
         self,
         table_name,
-        namespace='dynamodb_dict_data',
+        namespace='http_cache',
         connection=None,
         endpoint_url=None,
         region_name='us-east-1',

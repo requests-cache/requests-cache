@@ -1,13 +1,17 @@
 # flake8: noqa: F841
 import json
+import pickle
 import pytest
 import time
 from collections import defaultdict
 from datetime import datetime, timedelta
 from pickle import PickleError
 from unittest.mock import patch
+from uuid import uuid4
 
 import requests
+from itsdangerous.exc import BadSignature
+from itsdangerous.serializer import Serializer
 
 from requests_cache import ALL_METHODS, CachedSession
 from requests_cache.backends.sqlite import DbPickleDict
@@ -458,3 +462,23 @@ def test_unpickle_errors(mock_session):
     resp = mock_session.get(MOCKED_URL_JSON)
     assert resp.from_cache is True
     assert resp.json()['message'] == 'mock json response'
+
+
+def test_cache_signing():
+    # Without a secret key, plain pickle should be used
+    session = CachedSession()
+    assert session.cache.responses._serializer == pickle
+
+    # With a secret key, itsdangerous should be used
+    secret_key = str(uuid4())
+    session = CachedSession(secret_key=secret_key)
+    assert isinstance(session.cache.responses._serializer, Serializer)
+
+    # Simple serialize/deserialize round trip
+    session.cache.responses['key'] = 'value'
+    assert session.cache.responses['key'] == 'value'
+
+    # Without the same signing key, the item shouldn't be considered safe to deserialize
+    session = CachedSession(secret_key='a different key')
+    with pytest.raises(BadSignature):
+        session.cache.responses['key']
