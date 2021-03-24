@@ -1,6 +1,6 @@
 # History
 
-## 0.6.0 (TBD)
+## 0.6.0 (2021-04-TBD)
 [See all included issues and PRs](https://github.com/reclosedev/requests-cache/milestone/1?closed=1)
 
 * Drop support for python <= 3.5
@@ -11,7 +11,9 @@
   for compatibility with other `requests`-based libraries
 * Add `CachedResponse` class to wrapped cached `requests.Response` objects, make additional cache
   information available to client code
-* Add property `BaseCache.urls` to get all URLs persisted in the cache
+* Add `BaseCache.urls` property to get all URLs persisted in the cache
+* Add `timeout` parameter to SQLite backend
+* Add optional support for `itsdangerous` for more secure serialization
 * Update usage of deprecated MongoClient `save()` method
 * Fix TypeError with `DbPickleDict` initialization
 * Fix usage of `CachedSession.cache_disabled` if used within another contextmanager
