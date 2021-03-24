@@ -9,6 +9,7 @@ from typing import Iterable, List, Union
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 import requests
+from url_normalize import url_normalize
 
 from ..response import AnyResponse, CachedResponse, ExpirationTime
 
@@ -70,7 +71,9 @@ class BaseCache:
             response = self.responses[key]
             response.reset()  # In case response was in memory and raw content has already been read
             return response
-        except (AttributeError, KeyError, TypeError, ValueError, pickle.PickleError) as e:
+        except KeyError:
+            return default
+        except (AttributeError, TypeError, ValueError, pickle.PickleError) as e:
             logger.error(f'Unable to deserialize response with key {key}: {str(e)}')
             return default
 
@@ -117,7 +120,7 @@ class BaseCache:
             try:
                 response = self.responses[key]
             except Exception as e:
-                logger.info(f'Unable to deserialize response with key {key}: {str(e)}')
+                logger.debug(f'Unable to deserialize response with key {key}: {str(e)}')
                 self.delete(key)
                 continue
 
@@ -141,6 +144,7 @@ class BaseCache:
 
     def create_key(self, request: requests.PreparedRequest) -> str:
         url = self._remove_ignored_url_parameters(request)
+        url = url_normalize(url)
         body = self._remove_ignored_body_parameters(request)
         key = hashlib.sha256()
         key.update(_encode(request.method.upper()))

@@ -182,6 +182,11 @@ def test_normalize_post_data(mock_session):
     assert mock_session.post(MOCKED_URL, data=sorted(params.items(), reverse=True)).from_cache is False
 
 
+# TODO
+def test_normalize_cache_key():
+    pass
+
+
 def test_delete_response(mock_session):
     mock_session.get(MOCKED_URL)
     mock_session.cache.delete_url(MOCKED_URL)
