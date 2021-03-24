@@ -295,6 +295,64 @@ def test_cache_disabled(mock_session):
     assert mock_session.get(MOCKED_URL).from_cache is True
 
 
+@pytest.mark.parametrize(
+    'url, expected_expire_after',
+    [
+        ('img.site_1.com', 60 * 60),
+        ('http://img.site_1.com/base/img.jpg', 60 * 60),
+        ('https://img.site_2.com/base/img.jpg', None),
+        ('site_2.com/resource_1', 60 * 60 * 2),
+        ('http://site_2.com/resource_1/index.html', 60 * 60 * 2),
+        ('http://site_2.com/resource_2/', 60 * 60 * 24),
+        ('http://site_2.com/static/', -1),
+        ('http://site_2.com/static/img.jpg', -1),
+        ('site_2.com', None),
+        ('some_other_site.com', None),
+    ],
+)
+def test_urls_expire_after(url, expected_expire_after):
+    session = CachedSession(
+        urls_expire_after={
+            '*.site_1.com': 60 * 60,
+            'site_2.com/resource_1': 60 * 60 * 2,
+            'site_2.com/resource_2': 60 * 60 * 24,
+            'site_2.com/static': -1,
+        },
+    )
+    assert session.url_expire_after(url) == expected_expire_after
+
+
+@pytest.mark.parametrize(
+    'url, expected_expire_after',
+    [
+        ('https://img.site_1.com/image.jpeg', 60 * 60),
+        ('https://img.site_1.com/resource/1', 60 * 60 * 2),
+        ('https://site_2.com', 1),
+        ('https://any_other_site.com', 1),
+    ],
+)
+def test_urls_expire_after__evaluation_order(url, expected_expire_after):
+    """If there are multiple matches, the first match should be used in the order defined"""
+    session = CachedSession(
+        urls_expire_after={
+            '*.site_1.com/resource': 60 * 60 * 2,
+            '*.site_1.com': 60 * 60,
+            '*': 1,
+        },
+    )
+    assert session.url_expire_after(url) == expected_expire_after
+
+
+def test_get_expiration_precedence():
+    session = CachedSession(expire_after=1, urls_expire_after={'*.site_1.com': 60 * 60})
+    assert session.get_expiration() == 1
+    assert session.get_expiration('site_2.com') == 1
+    assert session.get_expiration('img.site_1.com/image.jpg') == 60 * 60
+    with session.request_expire_after(30):
+        assert session.get_expiration() == 30
+        assert session.get_expiration('img.site_1.com/image.jpg') == 30
+
+
 def test_remove_expired_responses(mock_session):
     unexpired_url = f'{MOCKED_URL}?x=1'
     mock_session.mock_adapter.register_uri('GET', unexpired_url, status_code=200, text='mock response')
