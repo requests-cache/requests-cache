@@ -21,6 +21,7 @@ class DbCache(BaseCache):
 
     def __init__(self, location='http_cache', extension='.sqlite', fast_save=False, **kwargs):
         super().__init__(**kwargs)
+        kwargs.setdefault('suppress_warnings', True)
         db_path = expanduser(str(location) + extension)
         self.responses = DbPickleDict(db_path, table_name='responses', fast_save=fast_save, **kwargs)
         self.redirects = DbDict(db_path, table_name='redirects', **kwargs)

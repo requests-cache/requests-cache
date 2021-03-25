@@ -8,9 +8,11 @@
 import hashlib
 import json
 import pickle
+from abc import ABC
 from collections.abc import MutableMapping
 from typing import Iterable, List, Union
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
+from warnings import warn
 
 import requests
 
@@ -177,12 +179,13 @@ class BaseCache:
         return f'redirects: {len(self.redirects)}\nresponses: {len(self.responses)}'
 
 
-class BaseStorage(MutableMapping):
+class BaseStorage(MutableMapping, ABC):
     """Base class for backend storage implementations
 
     Args:
         secret_key: Optional secret key used to sign cache items for added security
         salt: Optional salt used to sign cache items
+        suppress_warnings: Don't show a warning when not using ``secret_key``
         serializer: Custom serializer that provides ``loads`` and ``dumps`` methods
     """
 
@@ -190,10 +193,16 @@ class BaseStorage(MutableMapping):
         self,
         secret_key: Union[Iterable, str, bytes] = None,
         salt: Union[str, bytes] = b'requests-cache',
+        suppress_warnings: bool = False,
         serializer=None,
         **kwargs,
     ):
         self._serializer = serializer or self._get_serializer(secret_key, salt)
+        if not secret_key and not suppress_warnings:
+            warn(
+                'Using a secret_key to sign cached items is recommended for this backend.\n'
+                'Use suppress_warnings=True to ignore this message.'
+            )
 
     def serialize(self, item: Union[CachedResponse, str]) -> bytes:
         """Serialize a URL or response into bytes"""
@@ -207,10 +216,8 @@ class BaseStorage(MutableMapping):
     def _get_serializer(secret_key, salt):
         """Get the appropriate serializer to use; either ``itsdangerous``, if a secret key is
         specified, or plain ``pickle`` otherwise.
-
-        Raises:
-            py:exc:`ImportError` if ``secret_key`` is specified but ``itsdangerous`` is not installed
         """
+        # Import in function scope to make itsdangerous an optional dependency
         if secret_key:
             from itsdangerous.serializer import Serializer
 
