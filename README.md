@@ -1,4 +1,4 @@
-# requests-cache
+# Requests-Cache
 [![Build](https://github.com/reclosedev/requests-cache/actions/workflows/build.yml/badge.svg)](https://github.com/reclosedev/requests-cache/actions/workflows/build.yml)
 [![Coverage](https://coveralls.io/repos/github/reclosedev/requests-cache/badge.svg?branch=master)](https://coveralls.io/github/reclosedev/requests-cache?branch=master)
 [![Documentation](https://img.shields.io/readthedocs/requests-cache/latest)](https://requests-cache.readthedocs.io/en/latest/)
@@ -23,26 +23,27 @@ Install with pip:
 pip install requests-cache
 ```
 
-Requirements:
-Requires python 3.6+.
-You may need additional dependencies depending on which backend you want to use.
-To install with extra dependencies for all supported backends:
-```bash
-pip install requests-cache[backends]
-```
+**Requirements:**
+* Requires python 3.6+.
+* You may need additional dependencies depending on which backend you want to use. To install with
+  extra dependencies for all supported backends:
 
-See [Contributing Guide](https://github.com/reclosedev/requests-cache/blob/master/CONTRIBUTING.md)
-for setup info for local development.
+    ```bash
+    pip install requests-cache[backends]
+    ```
 
-## Full Examples
-* You can find a working example at Real Python:
-[Caching External API Requests](https://realpython.com/blog/python/caching-external-api-requests)
-* There are some additional examples in the [examples/](https://github.com/reclosedev/requests-cache/tree/master/examples) folder
+**Optional Setup Steps:**
+* See [Security](https://requests-cache.readthedocs.io/en/latest/security.html) for recommended
+  setup for more secure cache serialization.
+* See [Contributing Guide](https://requests-cache.readthedocs.io/en/latest/contributing.html)
+  for setup info for local development.
 
 ## General Usage
 There are two main ways of using `requests-cache`:
-* Using [CachedSession](https://requests-cache.readthedocs.io/en/latest/api.html#requests_cache.core.CachedSession) (recommended)
-* Globally patching `requests` using [install_cache](https://requests-cache.readthedocs.io/en/latest/api.html#requests_cache.core.install_cache)
+* **Sessions:** Use [requests_cache.CachedSession](https://requests-cache.readthedocs.io/en/latest/api.html#requests_cache.core.CachedSession)
+  in place of [requests.Session](https://requests.readthedocs.io/en/master/user/advanced/#session-objects) (recommended)
+* **Patching:** Globally patch `requests` using
+  [requests_cache.install_cache](https://requests-cache.readthedocs.io/en/latest/api.html#requests_cache.core.install_cache)
 
 ### Sessions
 `CachedSession` wraps `requests.Session` with caching features, and otherwise behaves the same as a
@@ -59,9 +60,6 @@ for i in range(100):
 The URL in this example adds a delay of 1 second, but all 100 requests will complete in just over 1
 second. The response will be fetched once, saved to `demo_cache.sqlite`, and subsequent requests
 will return the cached response near-instantly.
-
-There are many ways to customize caching behavior; see
-[Advanced Usage](https://requests-cache.readthedocs.io/en/latest/advanced_usage.html) for details.
 
 ### Patching
 Patching with `requests_cache.install_cache()` will add caching to all `requests` functions:
@@ -126,7 +124,7 @@ You can also set expiration on a per-request basis, which will override any sess
 session.get('http://httpbin.org/get', expire_after=360)
 ```
 
-If a per-session expiration is set but you want to temporarily disable it, use ```-1```:
+If a per-session expiration is set but you want to temporarily disable it, use `-1`:
 ```python
 # Never expire
 session.get('http://httpbin.org/get', expire_after=-1)
@@ -147,9 +145,16 @@ Or, to revalidate the cache with a new expiration:
 session.remove_expired_responses(expire_after=360)
 ```
 
+## More Features & Examples
+* You can find a working example at Real Python:
+  [Caching External API Requests](https://realpython.com/blog/python/caching-external-api-requests)
+* There are some additional examples in the [examples/](https://github.com/reclosedev/requests-cache/tree/master/examples) folder
+* See [Advanced Usage](https://requests-cache.readthedocs.io/en/latest/advanced_usage.html) for
+  details on customizing cache behavior and other features beyond the basics. 
+
 ## Related Projects
 If `requests-cache` isn't quite what you need, you can help make it better! See the
-[Contributing Guide](https://github.com/reclosedev/requests-cache/blob/master/CONTRIBUTING.md)
+[Contributing Guide](https://requests-cache.readthedocs.io/en/latest/contributing.html)
 for details.
 
 You can also check out these other python cache projects:

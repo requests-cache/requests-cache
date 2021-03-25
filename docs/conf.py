@@ -5,7 +5,7 @@ import sys
 # Add project path
 sys.path.insert(0, os.path.abspath('..'))
 
-from requests_cache import __version__
+from requests_cache import __version__  # noqa: E402
 
 # General information about the project.
 project = 'requests-cache'
