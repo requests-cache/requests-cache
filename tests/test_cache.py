@@ -16,6 +16,7 @@ from requests.structures import CaseInsensitiveDict
 
 from requests_cache import ALL_METHODS, CachedSession
 from requests_cache.backends.sqlite import DbDict, DbPickleDict
+from requests_cache.cache_keys import url_to_key
 from tests.conftest import MOCKED_URL, MOCKED_URL_HTTPS, MOCKED_URL_JSON, MOCKED_URL_REDIRECT
 
 
@@ -159,14 +160,34 @@ def test_hooks(mock_session):
 @pytest.mark.parametrize('mapping_class', [dict, UserDict, CaseInsensitiveDict])
 @pytest.mark.parametrize('field', ['params', 'data', 'json'])
 def test_normalize_params(field, mapping_class, mock_session):
-    """Test param normalization with different combinations of data fields and dict-like classes"""
+    """Test normalization with different combinations of data fields and dict-like classes"""
     params = {"a": "a", "b": ["1", "2", "3"], "c": "4"}
     reversed_params = mapping_class(sorted(params.items(), reverse=True))
 
     assert mock_session.get(MOCKED_URL, **{field: params}).from_cache is False
     assert mock_session.get(MOCKED_URL, **{field: params}).from_cache is True
-    assert mock_session.get(MOCKED_URL, **{field: {"a": "b"}}).from_cache is False
-    assert mock_session.get(MOCKED_URL, **{field: reversed_params}).from_cache is True
+    assert mock_session.post(MOCKED_URL, **{field: params}).from_cache is False
+    assert mock_session.post(MOCKED_URL, **{field: params}).from_cache is True
+    assert mock_session.post(MOCKED_URL, **{field: reversed_params}).from_cache is True
+    assert mock_session.post(MOCKED_URL, **{field: {"a": "b"}}).from_cache is False
+
+
+@pytest.mark.parametrize('field', ['data', 'json'])
+def test_normalize_serialized_body(field, mock_session):
+    """Test normalization for serialized request body content"""
+    params = {"a": "a", "b": ["1", "2", "3"], "c": "4"}
+    reversed_params = dict(sorted(params.items(), reverse=True))
+
+    assert mock_session.post(MOCKED_URL, **{field: json.dumps(params)}).from_cache is False
+    assert mock_session.post(MOCKED_URL, **{field: json.dumps(params)}).from_cache is True
+    assert mock_session.post(MOCKED_URL, **{field: json.dumps(reversed_params)}).from_cache is True
+
+
+def test_normalize_non_json_body(mock_session):
+    """For serialized request body content that isn't in JSON format, no normalization is expected"""
+    assert mock_session.post(MOCKED_URL, data=b'key_1=value_1,key_2=value_2').from_cache is False
+    assert mock_session.post(MOCKED_URL, data=b'key_1=value_1,key_2=value_2').from_cache is True
+    assert mock_session.post(MOCKED_URL, data=b'key_2=value_2,key_1=value_1').from_cache is False
 
 
 def test_normalize_url(mock_session):
@@ -203,8 +224,8 @@ def test_delete_nonexistent_response(mock_session):
 
 # TODO: Better mocking for redirects
 def test_delete_redirect(mock_session):
-    response_key = mock_session.cache._url_to_key(MOCKED_URL)
-    redirect_key = mock_session.cache._url_to_key(MOCKED_URL_REDIRECT)
+    response_key = url_to_key(MOCKED_URL)
+    redirect_key = url_to_key(MOCKED_URL_REDIRECT)
     mock_session.get(MOCKED_URL)
     mock_session.cache.redirects[redirect_key] = response_key
 

@@ -10,7 +10,7 @@ from requests import Session as OriginalSession
 from requests.hooks import dispatch_hook
 
 from . import backends
-from .backends import BaseCache, normalize_dict
+from .cache_keys import normalize_dict
 from .response import AnyResponse, ExpirationTime, set_response_defaults
 
 ALL_METHODS = ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
@@ -82,7 +82,7 @@ class CacheMixin:
         2. :py:meth:`.CachedSession.request`
         3. :py:meth:`requests.Session.request`
         4. :py:meth:`.CachedSession.send`
-        5. :py:meth:`.BaseCache.get_response`
+        5. :py:meth:`.backends.BaseCache.get_response`
         6. :py:meth:`requests.Session.send` (if not cached)
         """
         with self.request_expire_after(expire_after):
@@ -352,7 +352,7 @@ def enabled(*args, **kwargs):
         uninstall_cache()
 
 
-def get_cache() -> BaseCache:
+def get_cache() -> backends.BaseCache:
     """Returns internal cache object from globally installed ``CachedSession``"""
     return requests.Session().cache if is_installed() else None
 
