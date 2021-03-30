@@ -5,6 +5,8 @@ Requests-cache documentation
 .. mdinclude:: ../README.md
     :end-line: 17
 
+.. _general-usage:
+
 .. mdinclude:: ../README.md
     :start-line: 19
 

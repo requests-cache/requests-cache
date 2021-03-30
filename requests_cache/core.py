@@ -1,9 +1,4 @@
-"""
-    requests_cache.core
-    ~~~~~~~~~~~~~~~~~~~
-
-    Core functions for configuring cache and monkey patching ``requests``
-"""
+"""Core functions for configuring cache and monkey patching ``requests``"""
 from collections.abc import Mapping
 from contextlib import contextmanager
 from fnmatch import fnmatch
@@ -219,15 +214,18 @@ class CacheMixin:
 
 # TODO: Move details/examples to user guide
 class CachedSession(CacheMixin, OriginalSession):
-    """Class that extends ``requests.Session`` with caching features.
-    See individual backend classes for additional backend-specific arguments.
+    """Class that extends :py:class:`requests.Session` with caching features.
+
+    See individual :ref:`backend classes <cache-backends>` for additional backend-specific arguments.
+    Also see :ref:`advanced-usage` for more details and examples on how the following arguments
+    affect cache behavior.
 
     Args:
         cache_name: Cache prefix or namespace, depending on backend
         backend: Cache backend name; one of ``['sqlite', 'mongodb', 'gridfs', 'redis', 'dynamodb', 'memory']``.
                 Default behavior is to use ``'sqlite'`` if available, otherwise fallback to ``'memory'``.
-        expire_after: Time after which cached items will expire (see notes below)
-        expire_after_urls: Expiration times to apply for different URL patterns (see notes below)
+        expire_after: Time after which cached items will expire
+        expire_after_urls: Expiration times to apply for different URL patterns
         allowable_codes: Only cache responses with one of these codes
         allowable_methods: Cache only responses for one of these HTTP methods
         include_get_headers: Make request headers part of the cache key
@@ -237,64 +235,6 @@ class CachedSession(CacheMixin, OriginalSession):
             applied to both new and previously cached responses.
         old_data_on_error: Return expired cached responses if new request fails
         secret_key: Optional secret key used to sign cache items for added security
-
-    **Cache Name:**
-
-    The ``cache_name`` parameter will be used as follows depending on the backend:
-
-    * ``sqlite``: Cache filename, e.g ``my_cache.sqlite``
-    * ``mongodb``: Database name
-    * ``redis``: Namespace, meaning all keys will be prefixed with ``'cache_name:'``
-
-    **Cache Keys:**
-
-    The cache key is a hash created from request information, and is used as an index for cached
-    responses. There are a couple ways you can customize how the cache key is created:
-
-    * Use ``include_get_headers`` if you want headers to be included in the cache key. In other
-      words, this will create separate cache items for responses with different headers.
-    * Use ``ignored_parameters`` to exclude specific request params from the cache key. This is
-      useful, for example, if you request the same resource with different credentials or access
-      tokens.
-
-    **Cache Expiration:**
-
-    Use ``expire_after`` to specify how long responses will be cached. This can be a number
-    (in seconds), a :py:class:`.timedelta`, or a :py:class:`datetime`. Use ``-1`` to never expire.
-    This will not apply to responses cached in the current session; to apply a different expiration
-    to previously cached responses, see :py:meth:`remove_expired_responses`.
-
-    Expiration can also be set on a per-URL or per request basis. The following order of precedence
-    is used:
-
-    1. Per-request expiration (``expire_after`` argument for :py:meth:`.request`)
-    2. Per-URL expiration (``urls_expire_after`` argument for ``CachedSession``)
-    3. Per-session expiration (``expire_after`` argument for ``CachedSession``)
-
-    **URL Patterns:**
-
-    The ``expire_after_urls`` parameter can be used to set different expiration times for different
-    requests, based on URL glob patterns. This allows you to customize caching based on what you
-    know about the resources you're requesting. For example, you might request one resource that
-    gets updated frequently, another that changes infrequently, and another that never changes.
-
-    Example::
-
-        urls_expire_after = {
-            '*.site_1.com': 30,
-            'site_2.com/resource_1': 60 * 2,
-            'site_2.com/resource_2': 60 * 60 * 24,
-            'site_2.com/static': -1,
-        }
-
-    Notes:
-
-    * ``urls_expire_after`` should be a dict in the format ``{'pattern': expire_after}``
-    * ``expire_after`` accepts the same types as ``CachedSession.expire_after``
-    * Patterns will match request **base URLs**, so the pattern ``site.com/resource/`` is equivalent to
-      ``http*://site.com/resource/**``
-    * If there is more than one match, the first match will be used in the order they are defined
-    * If no patterns match a request, ``expire_after`` will be used as a default.
 
     """
 
@@ -409,7 +349,7 @@ def enabled(*args, **kwargs):
         uninstall_cache()
 
 
-def get_cache():
+def get_cache() -> BaseCache:
     """Returns internal cache object from globally installed ``CachedSession``"""
     return requests.Session().cache if is_installed() else None
 

@@ -1,10 +1,3 @@
-"""
-    requests_cache.backends.base
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    Contains BaseCache class which can be used as in-memory cache backend or
-    extended to support persistence.
-"""
 import hashlib
 import json
 import pickle

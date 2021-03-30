@@ -150,7 +150,7 @@ responses they redirect to.
 
 Custom Backends
 ---------------
-If the built-in :ref:`cache_backends` don't suit your needs and you want to create your own, you can create
+If the built-in :ref:`cache-backends` don't suit your needs and you want to create your own, you can create
 subclasses of :py:class:`.BaseCache` and :py:class:`.BaseStorage`:
 
     >>> from requests_cache import CachedSession
