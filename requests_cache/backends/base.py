@@ -10,6 +10,7 @@ import json
 import pickle
 from abc import ABC
 from collections.abc import MutableMapping
+from logging import getLogger
 from typing import Iterable, List, Union
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 from warnings import warn
@@ -19,6 +20,7 @@ import requests
 from ..response import AnyResponse, CachedResponse, ExpirationTime
 
 DEFAULT_HEADERS = requests.utils.default_headers()
+logger = getLogger(__name__)
 
 
 class BaseCache:
@@ -75,7 +77,8 @@ class BaseCache:
             response = self.responses[key]
             response.reset()  # In case response was in memory and raw content has already been read
             return response
-        except (KeyError, TypeError, pickle.PickleError):
+        except (AttributeError, KeyError, TypeError, pickle.PickleError) as e:
+            logger.error(f'Unable to deserialize response with key {key}: {str(e)}')
             return default
 
     def delete(self, key: str):
