@@ -20,6 +20,7 @@
 * Fix non-thread-safe iteration in `BaseCache`
 * Fix `get_cache()`, `clear()`, and `remove_expired_responses()` so they will do nothing if
   requests-cache is not installed
+* Also remove invalid responses when running `remove_expired_responses()`
 * Add `HEAD` to default `allowable_methods`
 
 ## 0.5.2 (2019-08-14)
