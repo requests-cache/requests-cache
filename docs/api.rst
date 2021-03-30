@@ -25,6 +25,8 @@ Cache Backends
 .. automodule:: requests_cache.backends.base
    :members:
 
+.. _cache-backends:
+
 .. automodule:: requests_cache.backends.sqlite
    :members:
 

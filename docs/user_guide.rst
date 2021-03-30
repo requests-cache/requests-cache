@@ -2,4 +2,4 @@
 
 User Guide
 ==========
-This page has moved. Please see :ref:`usage` and :ref:`advanced-usage` sections.
+This page has moved. Please see :ref:`general-usage` and :ref:`advanced-usage` sections.

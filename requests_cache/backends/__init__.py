@@ -1,10 +1,5 @@
+"""Classes and functions for cache persistence"""
 # flake8: noqa: F401
-"""
-    requests_cache.backends
-    ~~~~~~~~~~~~~~~~~~~~~~~
-
-    Classes and functions for cache persistence
-"""
 from .base import BaseCache
 
 # All backend-specific keyword arguments combined
