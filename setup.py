@@ -8,7 +8,7 @@ extras_require = {
     # Packages used for CI jobs
     'build': ['coveralls', 'twine', 'wheel'],
     # Packages for all supported backends + features
-    'backends': ['boto3', 'pymongo', 'redis', 'itsdangerous'],
+    'backends': ['boto3', 'pymongo', 'redis'],
     # Packages used for documentation builds
     'docs': [
         'm2r2',
@@ -32,6 +32,7 @@ extras_require = {
 # All development/testing packages combined
 extras_require['dev'] = list(chain.from_iterable(extras_require.values()))
 
+
 setup(
     name='requests-cache',
     packages=find_packages(),
@@ -39,7 +40,7 @@ setup(
     author='Roman Haritonov',
     author_email='reclosedev@gmail.com',
     url='https://github.com/reclosedev/requests-cache',
-    install_requires=['requests>=2.0.0'],
+    install_requires=['requests>=2.0.0', 'itsdangerous'],
     extras_require=extras_require,
     include_package_data=True,
 )

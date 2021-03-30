@@ -13,6 +13,7 @@ Requests-cache documentation
     :maxdepth: 2
 
     advanced_usage
+    security
     api
     contributing
     history

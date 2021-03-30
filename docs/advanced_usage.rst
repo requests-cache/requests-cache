@@ -170,42 +170,6 @@ You can then use your custom backend in a ``CachedSession`` with the ``backend``
 
     >>> session = CachedSession(backend=MyCache())
 
-Security
---------
-The python ``pickle`` module has some
-`known security vulnerabilities <https://docs.python.org/3/library/pickle.html>`_,
-meaning it should only be used to serialize and deserialize data you trust. Since this isn't always
-possible, requests-cache can optionally use `itsdangerous <https://itsdangerous.palletsprojects.com>`_
-to add a layer of security around these operations.
-
-It works by signing serialized data with a secret key that you control. Then, if the data is tampered
-with, the signature check fails and raises an error. To enable this behavior, first install the extra package::
-
-    $ pip install itsdangerous
-
-Then create your key and set it in your application. A common pattern for this (or any other
-application credentials) is to store it wherever you store the rest of your credentials
-(system keyring, password database, etc.) and set it in an environment variable.
-
-Then, initialize your cache with your key:
-
-    >>> import os
-    >>> from requests_cache import CachedSession
-    >>> session = CachedSession(secret_key=os.environ['SECRET_KEY'])
-    >>> session.get('https://httpbin.org/get')
-
-You can verify that it's working by modifying the cached item (*without* your key):
-
-    >>> session_2 = CachedSession(secret_key='a different key')
-    >>> cache_key = list(session_2.cache.responses.keys())[0]
-    >>> session_2.cache.responses[cache_key] = 'exploit!'
-
-Then, if you try to get that cached response again (*with* your key), you will get an error:
-
-    >>> session.get('https://httpbin.org/get')
-    BadSignature: Signature b'iFNmzdUOSw5vqrR9Cb_wfI1EoZ8' does not match
-
-
 Usage with other requests features
 ----------------------------------
 
@@ -340,10 +304,10 @@ Usage is the same as other libraries that subclass `requests.Session`::
     class CachedArchiveSession(CacheMixin, ArchiveSession):
         """Session with features from both CachedSession and ArchiveSession"""
 
-
 Potential Issues
 ----------------
-
-.. warning:: Version updates of ``requests``, ``urllib3`` or ``requests_cache`` itself may not be
-    compatible with previously cached data (see `issue #56 <https://github.com/reclosedev/requests-cache/issues/56>`_).
-    To prevent this, you can use a virtualenv and pin your dependency versions.
+* Version updates of ``requests``, ``urllib3`` or ``requests-cache`` itself may not be compatible with
+  previously cached data (see issues `#56 <https://github.com/reclosedev/requests-cache/issues/56>`_
+  and `#102 <https://github.com/reclosedev/requests-cache/issues/102>`_).
+  The best way to prevent this is to use a virtualenv and pin your dependency versions.
+* See :ref:`security` for notes on serialization security
