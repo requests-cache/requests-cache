@@ -1,6 +1,6 @@
 """Classes and functions for cache persistence"""
 # flake8: noqa: F401
-from .base import BaseCache
+from .base import BaseCache, normalize_dict
 
 # All backend-specific keyword arguments combined
 BACKEND_KWARGS = [

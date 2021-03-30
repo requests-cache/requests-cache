@@ -3,7 +3,7 @@ import json
 import pickle
 import pytest
 import time
-from collections import defaultdict
+from collections import UserDict, defaultdict
 from datetime import datetime, timedelta
 from pickle import PickleError
 from unittest.mock import patch
@@ -12,6 +12,7 @@ from uuid import uuid4
 import requests
 from itsdangerous.exc import BadSignature
 from itsdangerous.serializer import Serializer
+from requests.structures import CaseInsensitiveDict
 
 from requests_cache import ALL_METHODS, CachedSession
 from requests_cache.backends.sqlite import DbDict, DbPickleDict
@@ -155,36 +156,33 @@ def test_hooks(mock_session):
         assert state[hook] == 5
 
 
-def test_normalize_params(mock_session):
+@pytest.mark.parametrize('mapping_class', [dict, UserDict, CaseInsensitiveDict])
+@pytest.mark.parametrize('field', ['params', 'data', 'json'])
+def test_normalize_params(field, mapping_class, mock_session):
+    """Test param normalization with different combinations of data fields and dict-like classes"""
     params = {"a": "a", "b": ["1", "2", "3"], "c": "4"}
-    reversed_params = dict(sorted(params.items(), reverse=True))
+    reversed_params = mapping_class(sorted(params.items(), reverse=True))
 
-    assert mock_session.get(MOCKED_URL, params=params).from_cache is False
-    assert mock_session.get(MOCKED_URL, params=params).from_cache is True
-    assert mock_session.get(MOCKED_URL, params={"a": "b"}).from_cache is False
-    assert mock_session.get(MOCKED_URL, params=reversed_params).from_cache is True
-
-    class UserSubclass(dict):
-        def items(self):
-            return sorted(super(UserSubclass, self).items(), reverse=True)
-
-    params["z"] = "5"
-    custom_dict = UserSubclass(params)
-    assert mock_session.get(MOCKED_URL, params=custom_dict).from_cache is False
-    assert mock_session.get(MOCKED_URL, params=custom_dict).from_cache is True
+    assert mock_session.get(MOCKED_URL, **{field: params}).from_cache is False
+    assert mock_session.get(MOCKED_URL, **{field: params}).from_cache is True
+    assert mock_session.get(MOCKED_URL, **{field: {"a": "b"}}).from_cache is False
+    assert mock_session.get(MOCKED_URL, **{field: reversed_params}).from_cache is True
 
 
-def test_normalize_post_data(mock_session):
-    params = {"a": "a", "b": ["1", "2", "3"], "c": "4"}
-    assert mock_session.post(MOCKED_URL, data=params).from_cache is False
-    assert mock_session.post(MOCKED_URL, data=params).from_cache is True
-    assert mock_session.post(MOCKED_URL, data=sorted(params.items())).from_cache is True
-    assert mock_session.post(MOCKED_URL, data=sorted(params.items(), reverse=True)).from_cache is False
+def test_normalize_url(mock_session):
+    """Test URL variations that should all result in the same key"""
+    urls = [
+        'https://site.com?param_1=value_1&param_2=value_2',
+        'https://site.com?param_2=value_2&param_1=value_1',
+        'https://site.com:443?param_1=value_1&param_2=value_2',
+        'HTTPS://site.com?param_1=value_1&param_2=value_2',
+    ]
 
+    def get_request(url):
+        return mock_session.prepare_request(requests.Request('GET', url))
 
-# TODO
-def test_normalize_cache_key():
-    pass
+    keys = [mock_session.cache.create_key(get_request(url)) for url in urls]
+    assert len(set(keys)) == 1
 
 
 def test_delete_response(mock_session):
@@ -211,6 +209,7 @@ def test_delete_redirect(mock_session):
     mock_session.cache.redirects[redirect_key] = response_key
 
     mock_session.cache.delete_url(MOCKED_URL_REDIRECT)
+    # breakpoint()
     assert mock_session.cache.has_url(MOCKED_URL)
     assert not mock_session.cache.has_url(MOCKED_URL_REDIRECT)
 

@@ -5,7 +5,8 @@ import warnings
 from abc import ABC
 from collections.abc import MutableMapping
 from logging import getLogger
-from typing import Iterable, List, Union
+from operator import itemgetter
+from typing import Dict, Iterable, List, Mapping, Union
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 import requests
@@ -154,9 +155,8 @@ class BaseCache:
             key.update(_encode(body))
         else:
             if self._include_get_headers and request.headers != DEFAULT_HEADERS:
-                for name, value in sorted(request.headers.items()):
-                    key.update(_encode(name))
-                    key.update(_encode(value))
+                for name, value in normalize_dict(request.headers).items():
+                    key.update(_encode(f'{name}={value}'))
         return key.hexdigest()
 
     def _remove_ignored_url_parameters(self, request: requests.PreparedRequest) -> str:
@@ -241,6 +241,31 @@ class BaseStorage(MutableMapping, ABC):
             return Serializer(secret_key, salt=salt, serializer=pickle)
         else:
             return pickle
+
+
+def normalize_dict(items: Union[Mapping, str, bytes] = None, normalize_data: bool = False) -> Union[Dict, str, bytes]:
+    """Sort items in a dict
+
+    Args:
+        items: Request params, data, or json
+        normalize_data: Also normalize stringified JSON
+    """
+
+    def sort_dict(d):
+        return dict(sorted(d.items(), key=itemgetter(0)))
+
+    if isinstance(items, Mapping):
+        return sort_dict(items)
+    if normalize_data and isinstance(items, (bytes, str)):
+        # Attempt to load body as JSON; not doing this by default as it could impact performance
+        try:
+            dict_items = json.loads(_decode(items))
+            dict_items = json.dumps(sort_dict(dict_items))
+            return dict_items.encode('utf-8') if isinstance(items, bytes) else dict_items
+        except Exception:
+            pass
+
+    return items
 
 
 def _encode(value, encoding='utf-8') -> bytes:
