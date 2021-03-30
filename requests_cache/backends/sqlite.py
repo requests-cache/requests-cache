@@ -29,6 +29,12 @@ class DbCache(BaseCache):
         self.responses = DbPickleDict(db_path, table_name='responses', fast_save=fast_save, **kwargs)
         self.redirects = DbDict(db_path, table_name='redirects', **kwargs)
 
+    def remove_expired_responses(self, *args, **kwargs):
+        """Remove expired responses from the cache, with additional cleanup"""
+        super().remove_expired_responses(*args, **kwargs)
+        self.responses.vacuum()
+        self.redirects.vacuum()
+
 
 class DbDict(BaseStorage):
     """A dictionary-like interface for SQLite.
@@ -151,6 +157,10 @@ class DbDict(BaseStorage):
         with self.connection(True) as con:
             con.execute("drop table `%s`" % self.table_name)
             con.execute("create table `%s` (key PRIMARY KEY, value)" % self.table_name)
+            con.execute("vacuum")
+
+    def vacuum(self):
+        with self.connection(True) as con:
             con.execute("vacuum")
 
     def __str__(self):
