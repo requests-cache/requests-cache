@@ -228,7 +228,7 @@ class CachedSession(CacheMixin, OriginalSession):
         backend: Cache backend name; one of ``['sqlite', 'mongodb', 'gridfs', 'redis', 'dynamodb', 'memory']``.
                 Default behavior is to use ``'sqlite'`` if available, otherwise fallback to ``'memory'``.
         expire_after: Time after which cached items will expire
-        expire_after_urls: Expiration times to apply for different URL patterns
+        urls_expire_after: Expiration times to apply for different URL patterns
         allowable_codes: Only cache responses with one of these codes
         allowable_methods: Cache only responses for one of these HTTP methods
         include_get_headers: Make request headers part of the cache key
