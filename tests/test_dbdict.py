@@ -26,12 +26,12 @@ class DbdictTestCase(BaseCustomDictTestCase, unittest.TestCase):
         d = DbDict(self.NAMESPACE)
         self.assertIn(1, d)
 
-        d.can_commit = False
+        d._can_commit = False
         d[2] = 2
 
         d = DbDict(self.NAMESPACE)
         self.assertNotIn(2, d)
-        self.assertTrue(d.can_commit)
+        self.assertTrue(d._can_commit)
 
     def test_fast_save(self):
         d1 = DbDict(self.NAMESPACE, fast_save=True)

@@ -1,12 +1,12 @@
 import hashlib
 import json
 import pickle
+import warnings
 from abc import ABC
 from collections.abc import MutableMapping
 from logging import getLogger
 from typing import Iterable, List, Union
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
-from warnings import warn
 
 import requests
 
@@ -85,7 +85,7 @@ class BaseCache:
                 del self.redirects[key]
             for r in response.history:
                 del self.redirects[self.create_key(r.request)]
-        except KeyError:
+        except (AttributeError, KeyError):
             pass
 
     def delete_url(self, url: str):
@@ -96,6 +96,7 @@ class BaseCache:
 
     def clear(self):
         """Delete all items from the cache"""
+        logger.info('Clearing all items from the cache')
         self.responses.clear()
         self.redirects.clear()
 
@@ -105,7 +106,19 @@ class BaseCache:
         Args:
             expire_after: A new expiration time used to revalidate the cache
         """
-        for key, response in list(self.responses.items()):
+        logger.info(
+            'Removing expired responses.'
+            + (f'Revalidating with: {expire_after}' if expire_after else '')
+        )
+        for key in list(self.responses.keys()):
+            # If a response is invalid, delete it
+            try:
+                response = self.responses[key]
+            except Exception as e:
+                logger.info(f'Unable to deserialize response with key {key}: {str(e)}')
+                self.delete(key)
+                continue
+
             # If we're revalidating and it's not yet expired, update the cached item's expiration
             if expire_after is not None and not response.revalidate(expire_after):
                 self.responses[key] = response
@@ -194,11 +207,13 @@ class BaseStorage(MutableMapping, ABC):
         **kwargs,
     ):
         self._serializer = serializer or self._get_serializer(secret_key, salt)
-        if not secret_key and not suppress_warnings:
-            warn(
-                'Using a secret_key to sign cached items is recommended for this backend.\n'
-                'Use suppress_warnings=True to ignore this message.'
-            )
+        logger.info(f'Initializing {type(self).__name__} with serializer: {type(self._serializer)}')
+
+        if kwargs:
+            logger.warning(f'Unrecognized keyword arguments: {kwargs}')
+        if not secret_key:
+            warn_func = logger.info if suppress_warnings else warnings.warn
+            warn_func('Using a secret key to sign cached items is recommended for this backend')
 
     def serialize(self, item: Union[CachedResponse, str]) -> bytes:
         """Serialize a URL or response into bytes"""

@@ -1,9 +1,12 @@
 import sqlite3
 import threading
 from contextlib import contextmanager
+from logging import getLogger
 from os.path import expanduser
 
 from .base import BaseCache, BaseStorage
+
+logger = getLogger(__name__)
 
 
 class DbCache(BaseCache):
@@ -49,15 +52,13 @@ class DbDict(BaseStorage):
 
     def __init__(self, filename, table_name='http_cache', fast_save=False, timeout=5.0, **kwargs):
         super().__init__(**kwargs)
+        self.fast_save = fast_save
         self.filename = filename
         self.table_name = table_name
-        self.fast_save = fast_save
         self.timeout = timeout
 
-        #: Transactions can be committed if this property is set to `True`
-        self.can_commit = True
-
         self._bulk_commit = False
+        self._can_commit = True
         self._pending_connection = None
         self._lock = threading.RLock()
         with self.connection() as con:
@@ -65,6 +66,7 @@ class DbDict(BaseStorage):
 
     @contextmanager
     def connection(self, commit_on_success=False):
+        logger.debug(f'Opening connection to {self.filename}:{self.table_name}')
         with self._lock:
             if self._bulk_commit:
                 if self._pending_connection is None:
@@ -76,7 +78,7 @@ class DbDict(BaseStorage):
                 if self.fast_save:
                     con.execute("PRAGMA synchronous = 0;")
                 yield con
-                if commit_on_success and self.can_commit:
+                if commit_on_success and self._can_commit:
                     con.commit()
             finally:
                 if not self._bulk_commit:
@@ -88,7 +90,7 @@ class DbDict(BaseStorage):
 
         :param force: force commit, ignore :attr:`can_commit`
         """
-        if force or self.can_commit:
+        if force or self._can_commit:
             if self._pending_connection is not None:
                 self._pending_connection.commit()
 
@@ -105,13 +107,13 @@ class DbDict(BaseStorage):
 
         """
         self._bulk_commit = True
-        self.can_commit = False
+        self._can_commit = False
         try:
             yield
             self.commit(True)
         finally:
             self._bulk_commit = False
-            self.can_commit = True
+            self._can_commit = True
             if self._pending_connection is not None:
                 self._pending_connection.close()
                 self._pending_connection = None

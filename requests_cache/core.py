@@ -2,6 +2,7 @@
 from collections.abc import Mapping
 from contextlib import contextmanager
 from fnmatch import fnmatch
+from logging import getLogger
 from operator import itemgetter
 from typing import Any, Callable, Dict, Iterable, Optional, Type
 
@@ -11,9 +12,11 @@ from requests import Session as OriginalSession
 from requests.hooks import dispatch_hook
 
 from . import backends
+from .backends import BaseCache
 from .response import AnyResponse, ExpirationTime, set_response_defaults
 
 ALL_METHODS = ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
+logger = getLogger(__name__)
 
 
 class CacheMixin:
@@ -97,6 +100,7 @@ class CacheMixin:
         # If the request has been filtered out, delete previously cached response if it exists
         main_key = self.cache.create_key(response.request)
         if not response.from_cache and not self.filter_fn(response):
+            logger.info(f'Deleting filtered response for URL: {response.url}')
             self.cache.delete(main_key)
             return response
 
@@ -109,6 +113,7 @@ class CacheMixin:
         """Send a prepared request, with caching."""
         # If we shouldn't cache the response, just send the request
         if not self._is_cacheable(request):
+            logger.info(f'Request for URL {request.url} is not cacheable')
             response = super().send(request, **kwargs)
             return set_response_defaults(response)
 
@@ -136,18 +141,20 @@ class CacheMixin:
     def _handle_expired_response(self, request, response, cache_key, **kwargs) -> AnyResponse:
         """Determine what to do with an expired response, depending on old_data_on_error setting"""
         # Attempt to send the request and cache the new response
+        logger.info('Expired response; attempting to re-send request')
         try:
-            new_response = self._send_and_cache(request, cache_key, **kwargs)
-            self.cache.delete(cache_key)
-            return new_response
+            return self._send_and_cache(request, cache_key, **kwargs)
         # Return the expired/invalid response on error, if specified; otherwise reraise
-        except Exception:
+        except Exception as e:
+            logger.exception(e)
             if self.old_data_on_error:
+                logger.warning('Request failed; using stale cache data')
                 return response
             self.cache.delete(cache_key)
             raise
 
     def _send_and_cache(self, request, cache_key, **kwargs):
+        logger.info(f'Sending request and caching response for URL: {request.url}')
         response = super().send(request, **kwargs)
         if response.status_code in self.allowable_codes:
             self.cache.save_response(cache_key, response, self.get_expiration(request.url))
@@ -373,6 +380,7 @@ def remove_expired_responses(expire_after: ExpirationTime = None):
 
 
 def _patch_session_factory(session_factory: Type[OriginalSession] = CachedSession):
+    logger.info(f'Patching requests.Session with class: {type(session_factory).__name__}')
     requests.Session = requests.sessions.Session = session_factory  # noqa
 
 

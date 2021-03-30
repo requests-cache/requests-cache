@@ -1,12 +1,11 @@
 from copy import copy
 from datetime import datetime, timedelta
 from io import BytesIO
+from logging import getLogger
 from typing import Any, Dict, Optional, Union
 
 from requests import Response
 from urllib3.response import HTTPResponse
-
-ExpirationTime = Union[None, int, float, datetime, timedelta]
 
 # Reponse attributes to copy
 RESPONSE_ATTRS = Response.__attrs__
@@ -21,6 +20,9 @@ RAW_RESPONSE_ATTRS = [
     'version',
 ]
 
+ExpirationTime = Union[None, int, float, datetime, timedelta]
+logger = getLogger(__name__)
+
 
 class CachedResponse(Response):
     """A serializable wrapper for :py:class:`requests.Response`. CachedResponse objects will behave
@@ -30,7 +32,7 @@ class CachedResponse(Response):
 
     Args:
         original_response: Response object
-        expire_after:
+        expire_after: Time after which this cached response will expire
     """
 
     def __init__(self, original_response: Response, expire_after: ExpirationTime = None):
@@ -68,6 +70,7 @@ class CachedResponse(Response):
 
     def _get_expiration_datetime(self, expire_after: ExpirationTime) -> Optional[datetime]:
         """Convert a time value or delta to an absolute datetime, if it's not already"""
+        logger.debug(f'Determining expiration time based on: {expire_after}')
         if expire_after is None or expire_after == -1:
             return None
         elif isinstance(expire_after, datetime):
@@ -90,6 +93,7 @@ class CachedResponse(Response):
     def raw(self) -> HTTPResponse:
         """Reconstruct a raw urllib response object from stored attrs"""
         if not self._raw_response:
+            logger.info('Rebuilding raw response object')
             self._raw_response = CachedHTTPResponse(body=self._content, **self._raw_response_attrs)
         return self._raw_response
 
