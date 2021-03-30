@@ -76,21 +76,26 @@ class BaseCache:
 
     def delete(self, key: str):
         """Delete `key` from cache. Also deletes all responses from response history"""
+        self.delete_history(key)
+        for cache in [self.responses, self.redirects]:
+            # Skip `contains` checks to reduce # of service calls
+            try:
+                del cache[key]
+            except (AttributeError, KeyError):
+                pass
+
+    def delete_history(self, key: str):
+        """Delete redirect history associated with a response, if any"""
         try:
-            if key in self.responses:
-                response = self.responses[key]
-                del self.responses[key]
-            else:
-                response = self.responses[self.redirects[key]]
-                del self.redirects[key]
+            response = self.responses[key] or self.responses[self.redirects[key]]
             for r in response.history:
                 del self.redirects[self.create_key(r.request)]
-        except (AttributeError, KeyError):
+        except Exception:
             pass
 
     def delete_url(self, url: str):
-        """Delete response associated with `url` from cache.
-        Also deletes all responses from response history. Works only for GET requests
+        """Delete response + redirects associated with `url` from cache.
+        Works only for GET requests.
         """
         self.delete(self._url_to_key(url))
 
@@ -106,10 +111,7 @@ class BaseCache:
         Args:
             expire_after: A new expiration time used to revalidate the cache
         """
-        logger.info(
-            'Removing expired responses.'
-            + (f'Revalidating with: {expire_after}' if expire_after else '')
-        )
+        logger.info('Removing expired responses.' + (f'Revalidating with: {expire_after}' if expire_after else ''))
         for key in list(self.responses.keys()):
             # If a response is invalid, delete it
             try:

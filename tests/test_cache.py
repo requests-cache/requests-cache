@@ -387,6 +387,19 @@ def test_remove_expired_responses(mock_session):
     assert len(mock_session.cache.responses) == 0
 
 
+def test_remove_expired_responses__error(mock_session):
+    # Start with two cached responses, one of which will raise an error
+    mock_session.get(MOCKED_URL)
+    mock_session.get(MOCKED_URL_JSON)
+    side_effects = [mock_session.get(MOCKED_URL_JSON), PickleError, PickleError]
+
+    with patch.object(DbPickleDict, '__getitem__', side_effect=side_effects):
+        mock_session.remove_expired_responses()
+    assert len(mock_session.cache.responses) == 1
+    assert mock_session.get(MOCKED_URL).from_cache is False
+    assert mock_session.get(MOCKED_URL_JSON).from_cache is True
+
+
 def test_remove_expired_responses__extend_expiration(mock_session):
     # Start with an expired response
     mock_session.expire_after = datetime.utcnow() - timedelta(seconds=0.05)

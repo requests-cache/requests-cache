@@ -38,6 +38,7 @@ def mock_session() -> CachedSession:
             cache_name=temp.name,
             backend='sqlite',
             allowable_methods=ALL_METHODS,
+            suppress_warnings=True,
         )
         adapter = get_mock_adapter()
         for protocol in MOCK_PROTOCOLS:
