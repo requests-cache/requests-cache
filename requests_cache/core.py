@@ -114,10 +114,7 @@ class CacheMixin:
 
         # Attempt to fetch the cached response
         cache_key = self.cache.create_key(request)
-        try:
-            response = self.cache.get_response(cache_key)
-        except (ImportError, TypeError, ValueError):
-            response = None
+        response = self.cache.get_response(cache_key)
 
         # Attempt to fetch and cache a new response, if needed
         if response is None:

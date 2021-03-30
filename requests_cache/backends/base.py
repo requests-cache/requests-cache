@@ -70,7 +70,7 @@ class BaseCache:
             response = self.responses[key]
             response.reset()  # In case response was in memory and raw content has already been read
             return response
-        except (AttributeError, KeyError, TypeError, pickle.PickleError) as e:
+        except (AttributeError, KeyError, TypeError, ValueError, pickle.PickleError) as e:
             logger.error(f'Unable to deserialize response with key {key}: {str(e)}')
             return default
 

@@ -14,7 +14,7 @@ from itsdangerous.exc import BadSignature
 from itsdangerous.serializer import Serializer
 
 from requests_cache import ALL_METHODS, CachedSession
-from requests_cache.backends.sqlite import DbPickleDict
+from requests_cache.backends.sqlite import DbDict, DbPickleDict
 from tests.conftest import MOCKED_URL, MOCKED_URL_HTTPS, MOCKED_URL_JSON, MOCKED_URL_REDIRECT
 
 
@@ -253,10 +253,14 @@ def test_include_get_headers_normalize(mock_session):
     assert mock_session.get(MOCKED_URL, headers=reversed_headers).from_cache is True
 
 
-def test_cache_error(mock_session):
+@pytest.mark.parametrize(
+    'exception_cls',
+    [AttributeError, KeyError, TypeError, ValueError, pickle.PickleError],
+)
+def test_cache_error(exception_cls, mock_session):
     """If there is an error while fetching a cached response, a new one should be fetched"""
     mock_session.get(MOCKED_URL)
-    with patch.object(mock_session.cache, 'get_response', side_effect=ValueError):
+    with patch.object(DbDict, '__getitem__', side_effect=exception_cls):
         assert mock_session.get(MOCKED_URL).from_cache is False
 
 
