@@ -1,10 +1,8 @@
 """Core functions for configuring cache and monkey patching ``requests``"""
-from collections.abc import Mapping
 from contextlib import contextmanager
 from fnmatch import fnmatch
 from logging import getLogger
-from operator import itemgetter
-from typing import Any, Callable, Dict, Iterable, Optional, Type
+from typing import Any, Callable, Dict, Iterable, Type
 
 import requests
 from requests import PreparedRequest
@@ -12,7 +10,7 @@ from requests import Session as OriginalSession
 from requests.hooks import dispatch_hook
 
 from . import backends
-from .backends import BaseCache
+from .cache_keys import normalize_dict
 from .response import AnyResponse, ExpirationTime, set_response_defaults
 
 ALL_METHODS = ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
@@ -58,6 +56,7 @@ class CacheMixin:
         url: str,
         params: Dict = None,
         data: Any = None,
+        json: Dict = None,
         expire_after: ExpirationTime = None,
         **kwargs,
     ) -> AnyResponse:
@@ -83,15 +82,16 @@ class CacheMixin:
         2. :py:meth:`.CachedSession.request`
         3. :py:meth:`requests.Session.request`
         4. :py:meth:`.CachedSession.send`
-        5. :py:meth:`.BaseCache.get_response`
+        5. :py:meth:`.backends.BaseCache.get_response`
         6. :py:meth:`requests.Session.send` (if not cached)
         """
         with self.request_expire_after(expire_after):
             response = super().request(
                 method,
                 url,
-                _normalize_parameters(params),
-                _normalize_parameters(data),
+                params=normalize_dict(params),
+                data=normalize_dict(data),
+                json=normalize_dict(json),
                 **kwargs,
             )
         if self._disabled:
@@ -216,7 +216,6 @@ class CacheMixin:
         )
 
 
-# TODO: Move details/examples to user guide
 class CachedSession(CacheMixin, OriginalSession):
     """Class that extends :py:class:`requests.Session` with caching features.
 
@@ -353,7 +352,7 @@ def enabled(*args, **kwargs):
         uninstall_cache()
 
 
-def get_cache() -> BaseCache:
+def get_cache() -> backends.BaseCache:
     """Returns internal cache object from globally installed ``CachedSession``"""
     return requests.Session().cache if is_installed() else None
 
@@ -382,12 +381,3 @@ def remove_expired_responses(expire_after: ExpirationTime = None):
 def _patch_session_factory(session_factory: Type[OriginalSession] = CachedSession):
     logger.info(f'Patching requests.Session with class: {type(session_factory).__name__}')
     requests.Session = requests.sessions.Session = session_factory  # noqa
-
-
-def _normalize_parameters(params: Optional[Dict]) -> Dict:
-    """If builtin dict is passed as parameter, returns sorted list
-    of key-value pairs
-    """
-    if isinstance(params, Mapping):
-        return dict(sorted(params.items(), key=itemgetter(0)))
-    return params or {}

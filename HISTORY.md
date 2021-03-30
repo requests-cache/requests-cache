@@ -14,6 +14,7 @@
 * Add `BaseCache.urls` property to get all URLs persisted in the cache
 * Add `timeout` parameter to SQLite backend
 * Add optional support for `itsdangerous` for more secure serialization
+* Handle additional edge cases with request normalization for cache keys (to avoid duplicate cached responses)
 * Update usage of deprecated MongoClient `save()` method
 * Fix TypeError with `DbPickleDict` initialization
 * Fix usage of `CachedSession.cache_disabled` if used within another contextmanager

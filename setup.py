@@ -40,7 +40,7 @@ setup(
     author='Roman Haritonov',
     author_email='reclosedev@gmail.com',
     url='https://github.com/reclosedev/requests-cache',
-    install_requires=['requests>=2.0.0', 'itsdangerous'],
+    install_requires=['itsdangerous', 'requests>=2.0.0', 'url-normalize>=1.4'],
     extras_require=extras_require,
     include_package_data=True,
 )

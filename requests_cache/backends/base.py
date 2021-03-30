@@ -1,18 +1,15 @@
-import hashlib
-import json
 import pickle
 import warnings
 from abc import ABC
 from collections.abc import MutableMapping
 from logging import getLogger
 from typing import Iterable, List, Union
-from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 import requests
 
+from ..cache_keys import create_key, url_to_key
 from ..response import AnyResponse, CachedResponse, ExpirationTime
 
-DEFAULT_HEADERS = requests.utils.default_headers()
 logger = getLogger(__name__)
 
 
@@ -32,9 +29,7 @@ class BaseCache:
     @property
     def urls(self) -> List[str]:
         """Get all URLs currently in the cache"""
-        response_urls = [response.url for response in self.responses.values()]
-        redirect_urls = list(self.redirects.keys())
-        return sorted(response_urls + redirect_urls)
+        return list(sorted(self.redirects.keys()))
 
     def save_response(self, key: str, response: AnyResponse, expire_after: ExpirationTime = None):
         """Save response to cache
@@ -70,7 +65,9 @@ class BaseCache:
             response = self.responses[key]
             response.reset()  # In case response was in memory and raw content has already been read
             return response
-        except (AttributeError, KeyError, TypeError, ValueError, pickle.PickleError) as e:
+        except KeyError:
+            return default
+        except (AttributeError, TypeError, ValueError, pickle.PickleError) as e:
             logger.error(f'Unable to deserialize response with key {key}: {str(e)}')
             return default
 
@@ -89,7 +86,7 @@ class BaseCache:
         try:
             response = self.responses[key] or self.responses[self.redirects[key]]
             for r in response.history:
-                del self.redirects[self.create_key(r.request)]
+                del self.redirects[create_key(r.request, self._ignored_parameters)]
         except Exception:
             pass
 
@@ -97,7 +94,7 @@ class BaseCache:
         """Delete response + redirects associated with `url` from cache.
         Works only for GET requests.
         """
-        self.delete(self._url_to_key(url))
+        self.delete(url_to_key(url, self._ignored_parameters))
 
     def clear(self):
         """Delete all items from the cache"""
@@ -117,7 +114,7 @@ class BaseCache:
             try:
                 response = self.responses[key]
             except Exception as e:
-                logger.info(f'Unable to deserialize response with key {key}: {str(e)}')
+                logger.debug(f'Unable to deserialize response with key {key}: {str(e)}')
                 self.delete(key)
                 continue
 
@@ -127,64 +124,17 @@ class BaseCache:
             if response.is_expired:
                 self.delete(key)
 
+    def create_key(self, request: requests.PreparedRequest) -> str:
+        """Create a normalized cache key from a request object"""
+        return create_key(request, self._ignored_parameters, self._include_get_headers)
+
     def has_key(self, key: str) -> bool:
         """Returns `True` if cache has `key`, `False` otherwise"""
         return key in self.responses or key in self.redirects
 
     def has_url(self, url: str) -> bool:
         """Returns `True` if cache has `url`, `False` otherwise. Works only for GET request urls"""
-        return self.has_key(self._url_to_key(url))  # noqa: W601
-
-    def _url_to_key(self, url: str) -> str:
-        session = requests.Session()
-        return self.create_key(session.prepare_request(requests.Request('GET', url)))
-
-    def create_key(self, request: requests.PreparedRequest) -> str:
-        url = self._remove_ignored_url_parameters(request)
-        body = self._remove_ignored_body_parameters(request)
-        key = hashlib.sha256()
-        key.update(_encode(request.method.upper()))
-        key.update(_encode(url))
-
-        if body:
-            key.update(_encode(body))
-        else:
-            if self._include_get_headers and request.headers != DEFAULT_HEADERS:
-                for name, value in sorted(request.headers.items()):
-                    key.update(_encode(name))
-                    key.update(_encode(value))
-        return key.hexdigest()
-
-    def _remove_ignored_url_parameters(self, request: requests.PreparedRequest) -> str:
-        url = str(request.url)
-        if not self._ignored_parameters:
-            return url
-
-        url = urlparse(url)
-        query = parse_qsl(url.query)
-        query = self._filter_ignored_parameters(query)
-        query = urlencode(query)
-        url = urlunparse((url.scheme, url.netloc, url.path, url.params, query, url.fragment))
-        return url
-
-    def _remove_ignored_body_parameters(self, request: requests.PreparedRequest) -> str:
-        body = request.body
-        content_type = request.headers.get('content-type')
-        if not self._ignored_parameters or not body or not content_type:
-            return request.body
-
-        if content_type == 'application/x-www-form-urlencoded':
-            body = parse_qsl(body)
-            body = self._filter_ignored_parameters(body)
-            body = urlencode(body)
-        elif content_type == 'application/json':
-            body = json.loads(_decode(body))
-            body = self._filter_ignored_parameters(sorted(body.items()))
-            body = json.dumps(body)
-        return body
-
-    def _filter_ignored_parameters(self, data):
-        return [(k, v) for k, v in data if k not in self._ignored_parameters]
+        return self.has_key(url_to_key(url, self._ignored_parameters))  # noqa: W601
 
     def __str__(self):
         return f'redirects: {len(self.redirects)}\nresponses: {len(self.responses)}'
@@ -237,15 +187,3 @@ class BaseStorage(MutableMapping, ABC):
             return Serializer(secret_key, salt=salt, serializer=pickle)
         else:
             return pickle
-
-
-def _encode(value, encoding='utf-8') -> bytes:
-    """Encode a value, if it hasn't already been"""
-    return value if isinstance(value, bytes) else value.encode(encoding)
-
-
-def _decode(value, encoding='utf-8') -> str:
-    """Decode a value, if hasn't already been.
-    Note: PreparedRequest.body is always encoded in utf-8.
-    """
-    return value if isinstance(value, str) else value.decode(encoding)
