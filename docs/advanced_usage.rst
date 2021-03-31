@@ -78,7 +78,7 @@ is used:
 
 URL Patterns
 ~~~~~~~~~~~~
-You can use ``expire_after_urls`` to set different expiration times for different requests, based on
+You can use ``urls_expire_after`` to set different expiration times for different requests, based on
 URL glob patterns. This allows you to customize caching based on what you know about the resources
 you're requesting. For example, you might request one resource that gets updated frequently, another
 that changes infrequently, and another that never changes. Example:
