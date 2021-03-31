@@ -86,6 +86,8 @@ jobs:
         run: black --check --diff .
       - name: Run isort check
         run: isort --check --diff .
+      - name: Run cyclomatic complexity check
+        run: radon cc --show-complexity --average --order SCORE requests_cache
 
   # Deploy stable builds on tags only
   release:
