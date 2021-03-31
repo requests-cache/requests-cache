@@ -131,12 +131,11 @@ def test_repr():
     assert 'redirects: 2' in str(session.cache) and 'responses: 1' in str(session.cache)
 
 
-def test_urls(mock_session):
+def test_cached_urls(mock_session):
     for url in [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_HTTPS]:
         mock_session.get(url)
-    mock_session.cache.redirects[MOCKED_URL_REDIRECT] = MOCKED_URL
 
-    expected_urls = [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_HTTPS, MOCKED_URL_REDIRECT]
+    expected_urls = [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_HTTPS]
     assert set(mock_session.cache.urls) == set(expected_urls)
 
 

@@ -29,7 +29,7 @@ class BaseCache:
     @property
     def urls(self) -> List[str]:
         """Get all URLs currently in the cache"""
-        return list(sorted(self.redirects.keys()))
+        return sorted([r.url for r in self.responses.values()])
 
     def save_response(self, key: str, response: AnyResponse, expire_after: ExpirationTime = None):
         """Save response to cache
