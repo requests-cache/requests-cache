@@ -5,19 +5,27 @@ Note: The protocol ``http(s)+mock://`` helps :py:class:`requests_mock.Adapter` p
 https://requests-mock.readthedocs.io/en/latest/adapter.html
 """
 import pytest
+from os import getenv
 from tempfile import NamedTemporaryFile
 
 from requests_mock import ANY as ANY_METHOD
 from requests_mock import Adapter
 
-from requests_cache import ALL_METHODS, CachedSession
+from requests_cache.core import ALL_METHODS, CachedSession
 
 MOCKED_URL = 'http+mock://requests-cache.com/text'
 MOCKED_URL_GZIP = 'https+mock://requests-cache.com/gzip'  # TODO
 MOCKED_URL_HTTPS = 'https+mock://requests-cache.com/text'
 MOCKED_URL_JSON = 'http+mock://requests-cache.com/json'
-MOCKED_URL_REDIRECT = 'http+mock://requests-cache.com/redirect'  # TODO
+MOCKED_URL_REDIRECT = 'http+mock://requests-cache.com/redirect'
+MOCKED_URL_REDIRECT_TARGET = 'http+mock://requests-cache.com/redirect_target'
 MOCK_PROTOCOLS = ['mock://', 'http+mock://', 'https+mock://']
+
+
+def httpbin(path):
+    """Get the url for either a local or remote httpbin instance"""
+    base_url = getenv('HTTPBIN_URL', 'http://localhost:80/')
+    return base_url + path
 
 
 @pytest.fixture(scope='function')
@@ -69,6 +77,20 @@ def get_mock_adapter() -> Adapter:
         MOCKED_URL_JSON,
         headers={'Content-Type': 'application/json'},
         json={'message': 'mock json response'},
+        status_code=200,
+    )
+    adapter.register_uri(
+        ANY_METHOD,
+        MOCKED_URL_REDIRECT,
+        headers={'Content-Type': 'text/plain', 'Location': MOCKED_URL_REDIRECT_TARGET},
+        text='mock redirect response',
+        status_code=302,
+    )
+    adapter.register_uri(
+        ANY_METHOD,
+        MOCKED_URL_REDIRECT_TARGET,
+        headers={'Content-Type': 'text/plain'},
+        text='mock redirected response',
         status_code=200,
     )
     return adapter

@@ -17,12 +17,14 @@ from requests.structures import CaseInsensitiveDict
 from requests_cache import ALL_METHODS, CachedSession
 from requests_cache.backends.sqlite import DbDict, DbPickleDict
 from requests_cache.cache_keys import url_to_key
-from tests.conftest import MOCKED_URL, MOCKED_URL_HTTPS, MOCKED_URL_JSON, MOCKED_URL_REDIRECT
-
-
-def httpbin(*suffix):
-    """Returns url for HTTPBIN resource."""
-    return 'http://httpbin.org/' + '/'.join(suffix)
+from tests.conftest import (
+    MOCKED_URL,
+    MOCKED_URL_HTTPS,
+    MOCKED_URL_JSON,
+    MOCKED_URL_REDIRECT,
+    MOCKED_URL_REDIRECT_TARGET,
+    httpbin,
+)
 
 
 def test_unregistered_backend():
@@ -102,21 +104,12 @@ def test_json(mock_session):
     assert response.json()['message'] == 'mock json response'
 
 
-# TODO: Create mock response with redirect history
-@pytest.mark.skip(reason='httpbin.org/relative-redirect no longer returns redirects')
 def test_response_history(mock_session):
-    r1 = mock_session.get(httpbin('relative-redirect/3'))
+    r1 = mock_session.get(MOCKED_URL_REDIRECT)
+    r2 = mock_session.get(MOCKED_URL_REDIRECT_TARGET)
 
-    def test_redirect_history(url):
-        r2 = mock_session.get(url)
-        assert r2.from_cache is True
-        for r11, r22 in zip(r1.history, r2.history):
-            assert r11.url == r22.url
-
-    test_redirect_history(httpbin('relative-redirect/3'))
-    test_redirect_history(httpbin('relative-redirect/2'))
-    r3 = requests.get(httpbin('relative-redirect/1'))
-    assert len(r3.history) == 1
+    assert r2.from_cache is True
+    assert len(mock_session.cache.redirects) == 1
 
 
 def test_repr():
@@ -139,10 +132,9 @@ def test_cached_urls(mock_session):
     assert set(mock_session.cache.urls) == set(expected_urls)
 
 
-# TODO: More event types; make a mock response that emulates hook behavior
 def test_hooks(mock_session):
     state = defaultdict(int)
-    mock_session.get(httpbin('get'))
+    mock_session.get(MOCKED_URL)
 
     for hook in ('response',):
 
@@ -152,7 +144,7 @@ def test_hooks(mock_session):
             return r
 
         for i in range(5):
-            r = mock_session.get(httpbin('get'), hooks={hook: hook_func})
+            r = mock_session.get(MOCKED_URL, hooks={hook: hook_func})
         assert state[hook] == 5
 
 
@@ -221,22 +213,12 @@ def test_delete_nonexistent_response(mock_session):
     mock_session.cache.delete_url(MOCKED_URL)  # Should fail silently
 
 
-# TODO: Better mocking for redirects
 def test_delete_redirect(mock_session):
-    response_key = url_to_key(MOCKED_URL)
-    redirect_key = url_to_key(MOCKED_URL_REDIRECT)
-    mock_session.get(MOCKED_URL)
-    mock_session.cache.redirects[redirect_key] = response_key
+    mock_session.get(MOCKED_URL_REDIRECT)
+    assert mock_session.cache.has_url(MOCKED_URL_REDIRECT)
 
     mock_session.cache.delete_url(MOCKED_URL_REDIRECT)
-    # breakpoint()
-    assert mock_session.cache.has_url(MOCKED_URL)
     assert not mock_session.cache.has_url(MOCKED_URL_REDIRECT)
-
-
-# TODO
-def test_delete_history(mock_session):
-    pass
 
 
 def test_response_defaults(mock_session):
@@ -305,11 +287,11 @@ def test_expired_request_error(mock_session):
 def test_old_data_on_error(mock_session):
     """With old_data_on_error, expect to get old cache data if there is an error during a request"""
     mock_session.old_data_on_error = True
-    mock_session.expire_after = 0.1
+    mock_session.expire_after = 0.2
 
     assert mock_session.get(MOCKED_URL).from_cache is False
     assert mock_session.get(MOCKED_URL).from_cache is True
-    time.sleep(0.1)
+    time.sleep(0.2)
     with patch.object(mock_session.cache, 'save_response', side_effect=ValueError):
         response = mock_session.get(MOCKED_URL)
         assert response.from_cache is True and response.is_expired is True
@@ -392,10 +374,10 @@ def test_get_expiration_precedence():
 def test_remove_expired_responses(mock_session):
     unexpired_url = f'{MOCKED_URL}?x=1'
     mock_session.mock_adapter.register_uri('GET', unexpired_url, status_code=200, text='mock response')
-    mock_session.expire_after = timedelta(seconds=0.1)
+    mock_session.expire_after = timedelta(seconds=0.2)
     mock_session.get(MOCKED_URL)
     mock_session.get(MOCKED_URL_JSON)
-    time.sleep(0.1)
+    time.sleep(0.2)
     mock_session.get(unexpired_url)
 
     # At this point we should have 1 unexpired response and 2 expired responses
@@ -406,7 +388,7 @@ def test_remove_expired_responses(mock_session):
     assert cached_response.url == unexpired_url
 
     # Now the last response should be expired as well
-    time.sleep(0.1)
+    time.sleep(0.2)
     mock_session.remove_expired_responses()
     assert len(mock_session.cache.responses) == 0
 
@@ -426,11 +408,11 @@ def test_remove_expired_responses__error(mock_session):
 
 def test_remove_expired_responses__extend_expiration(mock_session):
     # Start with an expired response
-    mock_session.expire_after = datetime.utcnow() - timedelta(seconds=0.05)
+    mock_session.expire_after = datetime.utcnow() - timedelta(seconds=0.01)
     mock_session.get(MOCKED_URL)
 
     # Set expiration in the future and revalidate
-    mock_session.remove_expired_responses(expire_after=datetime.utcnow() + timedelta(seconds=0.05))
+    mock_session.remove_expired_responses(expire_after=datetime.utcnow() + timedelta(seconds=1))
     assert len(mock_session.cache.responses) == 1
     response = mock_session.get(MOCKED_URL)
     assert response.is_expired is False and response.from_cache is True
@@ -442,7 +424,7 @@ def test_remove_expired_responses__shorten_expiration(mock_session):
     mock_session.get(MOCKED_URL)
 
     # Set expiration in the past and revalidate
-    mock_session.remove_expired_responses(expire_after=datetime.utcnow() - timedelta(seconds=0.05))
+    mock_session.remove_expired_responses(expire_after=datetime.utcnow() - timedelta(seconds=0.01))
     assert len(mock_session.cache.responses) == 0
     response = mock_session.get(MOCKED_URL)
     assert response.is_expired is False and response.from_cache is False
