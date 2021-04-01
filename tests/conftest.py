@@ -8,6 +8,7 @@ import pytest
 from os import getenv
 from tempfile import NamedTemporaryFile
 
+import requests
 from requests_mock import ANY as ANY_METHOD
 from requests_mock import Adapter
 
@@ -56,6 +57,20 @@ def mock_session() -> CachedSession:
 
 
 @pytest.fixture(scope='function')
+def tempfile_session() -> CachedSession:
+    """Get a CachedSession using a temporary SQLite db"""
+    with NamedTemporaryFile(suffix='.db') as temp:
+        session = CachedSession(
+            cache_name=temp.name,
+            backend='sqlite',
+            allowable_methods=ALL_METHODS,
+            suppress_warnings=True,
+        )
+        yield session
+    requests_cache.uninstall_cache()
+
+
+@pytest.fixture(scope='function')
 def installed_session() -> CachedSession:
     """Get a CachedSession using a temporary SQLite db, with global patching.
     Installs cache before test and uninstalls after.
@@ -67,7 +82,7 @@ def installed_session() -> CachedSession:
             allowable_methods=ALL_METHODS,
             suppress_warnings=True,
         )
-    yield
+        yield requests.Session()
     requests_cache.uninstall_cache()
 
 
