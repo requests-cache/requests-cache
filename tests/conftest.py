@@ -11,6 +11,7 @@ from tempfile import NamedTemporaryFile
 from requests_mock import ANY as ANY_METHOD
 from requests_mock import Adapter
 
+import requests_cache
 from requests_cache.core import ALL_METHODS, CachedSession
 
 MOCKED_URL = 'http+mock://requests-cache.com/text'
@@ -52,6 +53,22 @@ def mock_session() -> CachedSession:
             session.mount(protocol, adapter)
         session.mock_adapter = adapter
         yield session
+
+
+@pytest.fixture(scope='function')
+def installed_session() -> CachedSession:
+    """Get a CachedSession using a temporary SQLite db, with global patching.
+    Installs cache before test and uninstalls after.
+    """
+    with NamedTemporaryFile(suffix='.db') as temp:
+        requests_cache.install_cache(
+            cache_name=temp.name,
+            backend='sqlite',
+            allowable_methods=ALL_METHODS,
+            suppress_warnings=True,
+        )
+    yield
+    requests_cache.uninstall_cache()
 
 
 def get_mock_adapter() -> Adapter:

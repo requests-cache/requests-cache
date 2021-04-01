@@ -109,6 +109,24 @@ def test_cached_urls(mock_session):
     assert set(mock_session.cache.urls) == set(expected_urls)
 
 
+def test_filter_fn(mock_session):
+    mock_session.filter_fn = lambda r: r.url != MOCKED_URL_JSON
+    mock_session.get(MOCKED_URL)
+    mock_session.get(MOCKED_URL_JSON)
+
+    assert mock_session.cache.has_url(MOCKED_URL)
+    assert not mock_session.cache.has_url(MOCKED_URL_JSON)
+
+
+def test_filter_fn__retroactive(mock_session):
+    """filter_fn should also apply to previously cached responses"""
+    mock_session.get(MOCKED_URL_JSON)
+    mock_session.filter_fn = lambda r: r.url != MOCKED_URL_JSON
+    mock_session.get(MOCKED_URL_JSON)
+
+    assert not mock_session.cache.has_url(MOCKED_URL_JSON)
+
+
 def test_hooks(mock_session):
     state = defaultdict(int)
     mock_session.get(MOCKED_URL)

@@ -1,40 +1,27 @@
 #!/usr/bin/env python
-import unittest
+import pytest
 from threading import Thread
 
-from requests_cache import CachedSession
+from tests.conftest import MOCKED_URL
 
-CACHE_NAME = 'requests_cache_test'
-
-
-class ThreadSafetyTestCase(unittest.TestCase):
-    def test_caching_with_threads(self):
-        def do_tests_for(backend):
-            s = CachedSession(CACHE_NAME, backend)
-            s.cache.clear()
-            n_threads = 10
-            url = 'http://httpbin.org/get'
-
-            def do_requests(url, params):
-                for i in range(10):  # for testing write and read from cache
-                    s.get(url, params=params)
-
-            for _ in range(20):  # stress test
-                threads = [Thread(target=do_requests, args=(url, {'param': i})) for i in range(n_threads)]
-                for t in threads:
-                    t.start()
-                for t in threads:
-                    t.join()
-
-                for i in range(n_threads):
-                    self.assertTrue(s.cache.has_url('%s?param=%s' % (url, i)))
-
-        for backend in ('sqlite', 'mongodb'):
-            try:
-                do_tests_for(backend)
-            except Exception:
-                print("Failed to test %s" % backend)
+N_THREADS = 10
+N_ITERATIONS = 20
 
 
-if __name__ == '__main__':
-    unittest.main()
+@pytest.mark.parametrize('iteration', range(N_ITERATIONS))
+@pytest.mark.parametrize('backend', ['sqlite', 'mongodb', 'redis', 'dynamodb'])
+def test_caching_with_threads(backend, iteration, mock_session):
+    """Stress test for multi-threaded caching"""
+
+    def send_requests(url, params):
+        for i in range(10):
+            mock_session.get(url, params=params)
+
+    threads = [Thread(target=send_requests, args=(MOCKED_URL, {'param': i})) for i in range(N_THREADS)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    for i in range(N_THREADS):
+        assert mock_session.cache.has_url(f'{MOCKED_URL}?param={i}')

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import unittest
 from unittest.mock import patch
 
 import requests
@@ -14,92 +13,91 @@ CACHE_BACKEND = 'sqlite'
 FAST_SAVE = False
 
 
-class MonkeyPatchTestCase(unittest.TestCase):
-    def setUp(self):
+def test_install_uninstall():
+    for _ in range(2):
         requests_cache.install_cache(name=CACHE_NAME, backend=CACHE_BACKEND)
-        requests.Session().cache.clear()
+        assert isinstance(requests.Session(), CachedSession)
+        assert isinstance(requests.sessions.Session(), CachedSession)
         requests_cache.uninstall_cache()
-
-    def test_install_uninstall(self):
-        for _ in range(2):
-            requests_cache.install_cache(name=CACHE_NAME, backend=CACHE_BACKEND)
-            self.assertTrue(isinstance(requests.Session(), CachedSession))
-            self.assertTrue(isinstance(requests.sessions.Session(), CachedSession))
-            self.assertTrue(isinstance(requests.session(), CachedSession))
-            requests_cache.uninstall_cache()
-            self.assertFalse(isinstance(requests.Session(), CachedSession))
-            self.assertFalse(isinstance(requests.sessions.Session(), CachedSession))
-            self.assertFalse(isinstance(requests.session(), CachedSession))
-
-    def test_session_is_a_class_with_original_attributes(self):
-        requests_cache.install_cache(name=CACHE_NAME, backend=CACHE_BACKEND)
-        self.assertTrue(isinstance(requests.Session, type))
-        for attribute in dir(OriginalSession):
-            self.assertTrue(hasattr(requests.Session, attribute))
-        self.assertTrue(isinstance(requests.Session(), CachedSession))
-
-    def test_inheritance_after_monkey_patch(self):
-        requests_cache.install_cache(name=CACHE_NAME, backend=CACHE_BACKEND)
-
-        class FooSession(requests.Session):
-            __attrs__ = requests.Session.__attrs__ + ["new_one"]
-
-            def __init__(self, param):
-                self.param = param
-                super(FooSession, self).__init__()
-
-        s = FooSession(1)
-        self.assertEqual(s.param, 1)
-        self.assertIn("new_one", s.__attrs__)
-        self.assertTrue(isinstance(s, CachedSession))
-
-    def test_passing_backend_instance_support(self):
-        class MyCache(BaseCache):
-            pass
-
-        backend = MyCache()
-        requests_cache.install_cache(name=CACHE_NAME, backend=backend)
-        self.assertIs(requests.Session().cache, backend)
-
-        session = CachedSession(backend=backend)
-        self.assertIs(session.cache, backend)
-
-    @patch.object(OriginalSession, 'request')
-    @patch.object(CachedSession, 'request')
-    def test_disabled(self, cached_request, original_request):
-        requests_cache.install_cache()
-        with requests_cache.disabled():
-            for i in range(3):
-                requests.get('some_url')
-        assert cached_request.call_count == 0
-        assert original_request.call_count == 3
-
-    @patch.object(OriginalSession, 'request')
-    @patch.object(CachedSession, 'request')
-    def test_enabled(self, cached_request, original_request):
-        with requests_cache.enabled():
-            for i in range(3):
-                requests.get('some_url')
-        assert cached_request.call_count == 3
-        assert original_request.call_count == 0
-
-    @patch.object(BaseCache, 'remove_expired_responses')
-    def test_remove_expired_responses(self, remove_expired_responses):
-        requests_cache.install_cache(expire_after=360)
-        requests_cache.remove_expired_responses()
-        assert remove_expired_responses.called is True
-
-    @patch.object(BaseCache, 'remove_expired_responses')
-    def test_remove_expired_responses__cache_not_installed(self, remove_expired_responses):
-        requests_cache.remove_expired_responses()
-        assert remove_expired_responses.called is False
-
-    @patch.object(BaseCache, 'remove_expired_responses')
-    def test_remove_expired_responses__no_expiration(self, remove_expired_responses):
-        requests_cache.install_cache()
-        requests_cache.remove_expired_responses()
-        assert remove_expired_responses.called is True
+        assert not isinstance(requests.Session(), CachedSession)
+        assert not isinstance(requests.sessions.Session(), CachedSession)
 
 
-if __name__ == '__main__':
-    unittest.main()
+def test_session_is_a_class_with_original_attributes(installed_session):
+    assert isinstance(requests.Session, type)
+    for attribute in dir(OriginalSession):
+        assert hasattr(requests.Session, attribute)
+    assert isinstance(requests.Session(), CachedSession)
+
+
+def test_inheritance_after_monkey_patch(installed_session):
+    class FooSession(requests.Session):
+        __attrs__ = requests.Session.__attrs__ + ["new_one"]
+
+        def __init__(self, param):
+            self.param = param
+            super(FooSession, self).__init__()
+
+    s = FooSession(1)
+    assert isinstance(s, CachedSession)
+    assert s.param == 1
+    assert "new_one" in s.__attrs__
+
+
+def test_passing_backend_instance_support():
+    class MyCache(BaseCache):
+        pass
+
+    backend = MyCache()
+    requests_cache.install_cache(name=CACHE_NAME, backend=backend)
+    assert requests.Session().cache is backend
+    requests_cache.uninstall_cache()
+
+    session = CachedSession(backend=backend)
+    assert session.cache is backend
+
+
+@patch.object(BaseCache, 'clear')
+def test_clear(mock_clear, installed_session):
+    requests_cache.clear()
+    mock_clear.assert_called()
+
+
+@patch.object(OriginalSession, 'request')
+@patch.object(CachedSession, 'request')
+def test_disabled(cached_request, original_request, installed_session):
+    with requests_cache.disabled():
+        for i in range(3):
+            requests.get('some_url')
+    assert cached_request.call_count == 0
+    assert original_request.call_count == 3
+
+
+@patch.object(OriginalSession, 'request')
+@patch.object(CachedSession, 'request')
+def test_enabled(cached_request, original_request):
+    with requests_cache.enabled():
+        for i in range(3):
+            requests.get('some_url')
+    assert cached_request.call_count == 3
+    assert original_request.call_count == 0
+
+
+@patch.object(BaseCache, 'remove_expired_responses')
+def test_remove_expired_responses(remove_expired_responses):
+    requests_cache.install_cache(expire_after=360)
+    requests_cache.remove_expired_responses()
+    assert remove_expired_responses.called is True
+    requests_cache.uninstall_cache()
+
+
+@patch.object(BaseCache, 'remove_expired_responses')
+def test_remove_expired_responses__cache_not_installed(remove_expired_responses):
+    requests_cache.remove_expired_responses()
+    assert remove_expired_responses.called is False
+
+
+@patch.object(BaseCache, 'remove_expired_responses')
+def test_remove_expired_responses__no_expiration(remove_expired_responses, installed_session):
+    requests_cache.remove_expired_responses()
+    assert remove_expired_responses.called is True
