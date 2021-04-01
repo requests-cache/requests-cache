@@ -17,7 +17,6 @@ from requests.structures import CaseInsensitiveDict
 
 from requests_cache import ALL_METHODS, CachedSession
 from requests_cache.backends.sqlite import DbDict, DbPickleDict
-from requests_cache.cache_keys import url_to_key
 from tests.conftest import (
     MOCKED_URL,
     MOCKED_URL_HTTPS,
@@ -79,6 +78,13 @@ def test_json(mock_session):
     response = mock_session.get(MOCKED_URL_JSON)
     assert response.from_cache is True
     assert response.json()['message'] == 'mock json response'
+
+
+def test_verify(mock_session):
+    mock_session.get(MOCKED_URL)
+    assert mock_session.get(MOCKED_URL).from_cache is True
+    assert mock_session.get(MOCKED_URL, verify=False).from_cache is False
+    assert mock_session.get(MOCKED_URL, verify='/path/to/cert').from_cache is False
 
 
 def test_response_history(mock_session):

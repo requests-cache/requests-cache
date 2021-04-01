@@ -15,6 +15,7 @@ def create_key(
     request: requests.PreparedRequest,
     ignored_params: Iterable[str] = None,
     include_get_headers: bool = False,
+    **kwargs,
 ) -> str:
     """Create a normalized cache key from a request object"""
     key = hashlib.sha256()
@@ -22,6 +23,7 @@ def create_key(
     url = remove_ignored_url_params(request, ignored_params)
     url = url_normalize(url)
     key.update(_encode(url))
+    key.update(_encode(kwargs.get('verify', True)))
 
     body = remove_ignored_body_params(request, ignored_params)
     if body:
@@ -99,11 +101,11 @@ def url_to_key(url: str, *args, **kwargs) -> str:
 
 def _encode(value, encoding='utf-8') -> bytes:
     """Encode a value, if it hasn't already been"""
-    return value if isinstance(value, bytes) else value.encode(encoding)
+    return value if isinstance(value, bytes) else str(value).encode(encoding)
 
 
 def _decode(value, encoding='utf-8') -> str:
     """Decode a value, if hasn't already been.
     Note: PreparedRequest.body is always encoded in utf-8.
     """
-    return value if isinstance(value, str) else value.decode(encoding)
+    return value.decode(encoding) if isinstance(value, bytes) else value
