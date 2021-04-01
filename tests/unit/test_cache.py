@@ -1,3 +1,4 @@
+"""CachedSession + BaseCache tests that use mocked responses only"""
 # flake8: noqa: F841
 import json
 import pickle
@@ -23,7 +24,6 @@ from tests.conftest import (
     MOCKED_URL_JSON,
     MOCKED_URL_REDIRECT,
     MOCKED_URL_REDIRECT_TARGET,
-    httpbin,
 )
 
 
@@ -67,29 +67,6 @@ def test_all_methods__ignore_parameters(field, method, mock_session):
     assert mock_session.request(method, MOCKED_URL, **{field: params_2}).from_cache is True
     mock_session.request(method, MOCKED_URL, params={'a': 'b'})
     assert mock_session.request(method, MOCKED_URL, **{field: params_3}).from_cache is False
-
-
-# TODO: mock response with cookies
-def test_cookies(mock_session):
-    def get_json(url):
-        return json.loads(mock_session.get(url).text)
-
-    response_1 = get_json(httpbin('cookies/set/test1/test2'))
-    with mock_session.cache_disabled():
-        assert get_json(httpbin('cookies')) == response_1
-    # From cache
-    response_2 = get_json(httpbin('cookies'))
-    assert response_2 == get_json(httpbin('cookies'))
-    # Not from cache
-    with mock_session.cache_disabled():
-        response_3 = get_json(httpbin('cookies/set/test3/test4'))
-        assert response_3 == get_json(httpbin('cookies'))
-
-
-# TODO: mock response with gzip-compressed content
-def test_gzip(mock_session):
-    assert mock_session.get(httpbin('gzip')).from_cache is False
-    assert mock_session.get(httpbin('gzip')).from_cache is True
 
 
 def test_https(mock_session):
@@ -195,6 +172,14 @@ def test_normalize_url(mock_session):
 
     keys = [mock_session.cache.create_key(get_request(url)) for url in urls]
     assert len(set(keys)) == 1
+
+
+def test_clear(mock_session):
+    mock_session.get(MOCKED_URL)
+    mock_session.get(MOCKED_URL_REDIRECT)
+    mock_session.cache.clear()
+    assert not mock_session.cache.has_url(MOCKED_URL)
+    assert not mock_session.cache.has_url(MOCKED_URL_REDIRECT)
 
 
 def test_delete_response(mock_session):

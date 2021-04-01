@@ -14,7 +14,6 @@ from requests_mock import Adapter
 from requests_cache.core import ALL_METHODS, CachedSession
 
 MOCKED_URL = 'http+mock://requests-cache.com/text'
-MOCKED_URL_GZIP = 'https+mock://requests-cache.com/gzip'  # TODO
 MOCKED_URL_HTTPS = 'https+mock://requests-cache.com/text'
 MOCKED_URL_JSON = 'http+mock://requests-cache.com/json'
 MOCKED_URL_REDIRECT = 'http+mock://requests-cache.com/redirect'

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import unittest
 
-from tests.test_custom_dict import BaseCustomDictTestCase
+from tests.integration.test_backends import BaseBackendTestCase
 
 try:
     from requests_cache.backends.mongo import MongoDict, MongoPickleDict
@@ -9,7 +9,7 @@ except ImportError:
     print("pymongo not installed")
 else:
 
-    class MongoDictTestCase(BaseCustomDictTestCase, unittest.TestCase):
+    class MongoDBTestCase(BaseBackendTestCase, unittest.TestCase):
         dict_class = MongoDict
         pickled_dict_class = MongoPickleDict
 

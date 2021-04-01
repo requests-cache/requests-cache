@@ -31,13 +31,6 @@ class MonkeyPatchTestCase(unittest.TestCase):
             self.assertFalse(isinstance(requests.sessions.Session(), CachedSession))
             self.assertFalse(isinstance(requests.session(), CachedSession))
 
-    def test_requests_from_cache(self):
-        requests_cache.install_cache(name=CACHE_NAME, backend=CACHE_BACKEND)
-        r = requests.get('http://httpbin.org/get')
-        self.assertFalse(r.from_cache)
-        r = requests.get('http://httpbin.org/get')
-        self.assertTrue(r.from_cache)
-
     def test_session_is_a_class_with_original_attributes(self):
         requests_cache.install_cache(name=CACHE_NAME, backend=CACHE_BACKEND)
         self.assertTrue(isinstance(requests.Session, type))
@@ -105,9 +98,6 @@ class MonkeyPatchTestCase(unittest.TestCase):
     def test_remove_expired_responses__no_expiration(self, remove_expired_responses):
         requests_cache.install_cache()
         requests_cache.remove_expired_responses()
-        # Before https://github.com/reclosedev/requests-cache/pull/177, this
-        # was False, but with per-request caching, remove_expired_responses must
-        # always be called
         assert remove_expired_responses.called is True
 
 
