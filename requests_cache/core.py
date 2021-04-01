@@ -98,7 +98,7 @@ class CacheMixin:
             return response
 
         # If the request has been filtered out, delete previously cached response if it exists
-        cache_key = self.cache.create_key(response.request)
+        cache_key = self.cache.create_key(response.request, **kwargs)
         if not response.from_cache and not self.filter_fn(response):
             logger.info(f'Deleting filtered response for URL: {response.url}')
             self.cache.delete(cache_key)
@@ -118,7 +118,7 @@ class CacheMixin:
             return set_response_defaults(response)
 
         # Attempt to fetch the cached response
-        cache_key = self.cache.create_key(request)
+        cache_key = self.cache.create_key(request, **kwargs)
         response = self.cache.get_response(cache_key)
 
         # Attempt to fetch and cache a new response, if needed

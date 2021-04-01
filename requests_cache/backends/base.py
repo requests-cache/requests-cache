@@ -125,9 +125,9 @@ class BaseCache:
             if response.is_expired:
                 self.delete(key)
 
-    def create_key(self, request: requests.PreparedRequest) -> str:
+    def create_key(self, request: requests.PreparedRequest, **kwargs) -> str:
         """Create a normalized cache key from a request object"""
-        return create_key(request, self._ignored_parameters, self._include_get_headers)
+        return create_key(request, self._ignored_parameters, self._include_get_headers, **kwargs)
 
     def has_key(self, key: str) -> bool:
         """Returns `True` if cache has `key`, `False` otherwise"""
