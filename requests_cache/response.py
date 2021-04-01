@@ -59,10 +59,11 @@ class CachedResponse(Response):
         for k in RAW_RESPONSE_ATTRS:
             self._raw_response_attrs[k] = getattr(original_response.raw, k, None)
 
-        # Copy redirect history, if any
+        # Copy redirect history, if any; avoid recursion by not copying redirects of redirects
         self.history = []
-        for redirect in original_response.history:
-            self.history.append(CachedResponse(redirect))
+        if not self.is_redirect:
+            for redirect in original_response.history:
+                self.history.append(CachedResponse(redirect))
 
     def __getstate__(self):
         """Override pickling behavior in ``requests.Response.__getstate__``"""

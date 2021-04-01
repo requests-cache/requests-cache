@@ -1,13 +1,16 @@
 #!/usr/bin/env python
+# TODO: Refactor with pytest fixtures
 import os
 
+from requests_cache.backends.base import BaseStorage
 from requests_cache.backends.sqlite import DbDict, DbPickleDict
 
 
-class BaseCustomDictTestCase(object):
+class BaseBackendTestCase:
+    """Base class for testing backends"""
 
-    dict_class = DbDict
-    pickled_dict_class = DbPickleDict
+    dict_class: BaseStorage = DbDict
+    pickled_dict_class: BaseStorage = DbPickleDict
 
     NAMESPACE = 'requests-cache-temporary-db-test-will-be-deleted'
     TABLES = ['table%s' % i for i in range(5)]
@@ -67,18 +70,19 @@ class BaseCustomDictTestCase(object):
         self.assertEqual(d[1].b, 2)
 
     def test_clear_and_work_again(self):
-        d = self.dict_class(self.NAMESPACE)
-        for _ in range(3):
-            d.clear()
-            d.clear()
-            self.assertEqual(len(d), 0)
-            n = 5
-            for i in range(n):
-                d[i] = i * 2
-            self.assertEqual(len(d), n)
-            self.assertEqual(d[2], 4)
-            d.clear()
-            self.assertEqual(len(d), 0)
+        d1 = self.dict_class(self.NAMESPACE)
+        d2 = self.pickled_dict_class(self.NAMESPACE, connection=d1.connection)
+        d1.clear()
+        d2.clear()
+
+        for i in range(5):
+            d1[i] = i
+            d2[i] = i
+
+        assert len(d1) == len(d2) == 5
+        d1.clear()
+        d2.clear()
+        assert len(d1) == len(d2) == 0
 
     def test_same_settings(self):
         d1 = self.dict_class(self.NAMESPACE)
@@ -87,15 +91,7 @@ class BaseCustomDictTestCase(object):
         d2.clear()
         d1[1] = 1
         d2[2] = 2
-        self.assertEqual(d1, d2)
-
-    def test_len(self):
-        n = 5
-        d = self.dict_class(self.NAMESPACE)
-        d.clear()
-        for i in range(n):
-            d[i] = i
-        self.assertEqual(len(d), 5)
+        assert d1 == d2
 
 
 class ForPickle(object):

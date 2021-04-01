@@ -131,12 +131,12 @@ def test_revalidate__extend_expiration(mock_session):
     # Start with an expired response
     response = CachedResponse(
         mock_session.get(MOCKED_URL),
-        expire_after=datetime.utcnow() - timedelta(seconds=0.05),
+        expire_after=datetime.utcnow() - timedelta(seconds=0.01),
     )
     assert response.is_expired is True
 
     # Set expiration in the future and revalidate
-    is_expired = response.revalidate(datetime.utcnow() + timedelta(seconds=0.05))
+    is_expired = response.revalidate(datetime.utcnow() + timedelta(seconds=0.01))
     assert is_expired is response.is_expired is False
     sleep(0.1)
     assert response.is_expired is True
@@ -151,5 +151,5 @@ def test_revalidate__shorten_expiration(mock_session):
     assert response.is_expired is False
 
     # Set expiration in the past and revalidate
-    is_expired = response.revalidate(datetime.utcnow() - timedelta(seconds=0.05))
+    is_expired = response.revalidate(datetime.utcnow() - timedelta(seconds=1))
     assert is_expired is response.is_expired is True

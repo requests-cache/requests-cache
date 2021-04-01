@@ -2,6 +2,12 @@
 version: '3'
 
 services:
+  httpbin:
+    image: kennethreitz/httpbin
+    container_name: httpbin
+    ports:
+      - '80:80'
+
   dynamodb:
     image: amazon/dynamodb-local
     container_name: dynamodb
@@ -11,8 +17,6 @@ services:
     environment:
       AWS_ACCESS_KEY_ID: 'placeholder'
       AWS_SECRET_ACCESS_KEY: 'placeholder'
-#    volumes:
-#      - 'dynamodb_data:/home/dynamodblocal/data'
     working_dir: '/home/dynamodblocal'
 
   mongo:

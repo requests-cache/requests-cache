@@ -98,15 +98,15 @@ class CacheMixin:
             return response
 
         # If the request has been filtered out, delete previously cached response if it exists
-        main_key = self.cache.create_key(response.request)
+        cache_key = self.cache.create_key(response.request)
         if not response.from_cache and not self.filter_fn(response):
             logger.info(f'Deleting filtered response for URL: {response.url}')
-            self.cache.delete(main_key)
+            self.cache.delete(cache_key)
             return response
 
         # Cache redirect history
         for r in response.history:
-            self.cache.add_key_mapping(self.cache.create_key(r.request), main_key)
+            self.cache.save_redirect(r.request, cache_key)
         return response
 
     def send(self, request: PreparedRequest, **kwargs) -> AnyResponse:

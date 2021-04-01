@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 import unittest
 
-from tests.test_custom_dict import BaseCustomDictTestCase
+from tests.integration.test_backends import BaseBackendTestCase
 
 try:
-    from requests_cache.backends.redisdict import RedisDict
+    from requests_cache.backends.redis import RedisDict
 except ImportError:
     print("Redis not installed")
 else:
 
-    class RedisDictTestCase(BaseCustomDictTestCase, unittest.TestCase):
+    class RedisTestCase(BaseBackendTestCase, unittest.TestCase):
         dict_class = RedisDict
         pickled_dict_class = RedisDict
 

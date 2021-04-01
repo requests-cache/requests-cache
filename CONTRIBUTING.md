@@ -36,7 +36,16 @@ To uninstall:
 $ pre-commit uninstall
 ```
 
-## Integration Tests
+## Testing
+* Tests are divided into unit and integration tests:
+    * Unit tests can be run without any additional setup, and don't depend on any external services
+    * Integration tests depend on additional services, which are easiest to run using Docker
+      (see Integration Tests section below).
+* See [conftest.py](https://github.com/reclosedev/requests-cache/blob/master/tests/conftest.py) for
+  [pytest fixtures](https://docs.pytest.org/en/stable/fixture.html) that apply the most common
+  mocking steps and other test setup.
+
+### Integration Tests
 Local databases are required to run integration tests, and docker-compose config is included to make
 this easier. First, [install docker](https://docs.docker.com/get-docker/) and
 [install docker-compose](https://docs.docker.com/compose/install/).
@@ -44,7 +53,7 @@ this easier. First, [install docker](https://docs.docker.com/get-docker/) and
 Then, run:
 ```bash
 $ docker-compose up -d
-pytest test/integration
+pytest tests/integration
 ```
 
 ## Documentation

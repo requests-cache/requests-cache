@@ -7,6 +7,8 @@ on:
   pull_request:
     branches: [master, dev]
   workflow_dispatch:
+env:
+  LATEST_PY_VERSION: '3.9'
 
 jobs:
   # Run unit tests for each supported python version
@@ -15,6 +17,11 @@ jobs:
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8, 3.9]
+    services:
+      nginx:
+        image: kennethreitz/httpbin
+        ports:
+          - 80:80
 
     steps:
       - uses: actions/checkout@v2
@@ -22,7 +29,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      # Start integration test databases (for per-python version tests)
+      # Start integration test databases
       - uses: supercharge/mongodb-github-action@1.3.0
         with:
           mongodb-version: 4.4
@@ -38,48 +45,54 @@ jobs:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('setup.py') }}
           restore-keys: ${{ runner.os }}-pip-${{ matrix.python-version }}
-
       - name: Install dependencies
         run: pip install ".[dev]"
-      - name: Run unit tests
-        run: pytest
 
-  # Run code analysis checks, reports, etc.
+      # Latest python version: Run unit tests with coverage and send to coveralls
+      - name: Run unit tests with code coverage report
+        if: ${{ matrix.python-version == env.LATEST_PY_VERSION }}
+        # Run unit tests first to fail more quickly
+        run: |
+          pytest tests/unit --cov=requests_cache --cov-report=term --cov-report=html
+          pytest tests/integration --cov=requests_cache --cov-report=term --cov-report=html --cov-append
+      - name: Send code coverage report to Coveralls
+        if: ${{ matrix.python-version == env.LATEST_PY_VERSION }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: coveralls --service=github
+
+      # All other python versions: just run unit tests
+      - name: Run unit tests
+        if: ${{ matrix.python-version != env.LATEST_PY_VERSION }}
+        run: |
+          pytest tests/unit
+          pytest tests/integration
+
+  # Run code analysis checks
   analyze:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-          python-version: '3.8'
+          python-version: ${{ env.LATEST_PY_VERSION }}
+
+      # Cache packages for latest python version, and reuse until setup.py changes
       - name: Cache pip packages
         uses: actions/cache@v2
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-3.8-${{ hashFiles('setup.py') }}
-          restore-keys: ${{ runner.os }}-pip-3.8
-
-      # Start integration test databases (for generating code coverage report)
-      - uses: supercharge/mongodb-github-action@1.3.0
-        with:
-          mongodb-version: 4.4
-      - uses: supercharge/redis-github-action@1.2.0
-        with:
-          redis-version: '6'
-      - uses: rrainn/dynamodb-action@v2.0.0
-
+          key: ${{ runner.os }}-pip-${{ env.LATEST_PY_VERSION }}-${{ hashFiles('setup.py') }}
+          restore-keys: ${{ runner.os }}-pip-${{ env.LATEST_PY_VERSION }}
       - name: Install dependencies
         run: pip install ".[dev]"
-      - name: Run style checks
-        run: |
-          black --check --diff .
-          isort --check --diff .
-      - name: Generate code coverage report
-        run: pytest tests --cov=requests_cache --cov-report=term --cov-report=html
-      - name: Send code coverage report to Coveralls
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: coveralls --service=github
+
+      - name: Run black check
+        run: black --check --diff .
+      - name: Run isort check
+        run: isort --check --diff .
+      - name: Run cyclomatic complexity check
+        run: radon cc --show-complexity --average --order SCORE requests_cache
 
   # Deploy stable builds on tags only
   release:

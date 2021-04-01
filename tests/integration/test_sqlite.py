@@ -4,10 +4,10 @@ from threading import Thread
 from unittest.mock import patch
 
 from requests_cache.backends.sqlite import DbDict, DbPickleDict
-from tests.test_custom_dict import BaseCustomDictTestCase
+from tests.integration.test_backends import BaseBackendTestCase
 
 
-class DbdictTestCase(BaseCustomDictTestCase, unittest.TestCase):
+class DbdictTestCase(BaseBackendTestCase, unittest.TestCase):
     def test_bulk_commit(self):
         d = DbDict(self.NAMESPACE, self.TABLES[0])
         with d.bulk_commit():

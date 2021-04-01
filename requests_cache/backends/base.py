@@ -6,6 +6,7 @@ from logging import getLogger
 from typing import Iterable, List, Union
 
 import requests
+from requests.models import PreparedRequest
 
 from ..cache_keys import create_key, url_to_key
 from ..response import AnyResponse, CachedResponse, ExpirationTime
@@ -41,16 +42,16 @@ class BaseCache:
         """
         self.responses[key] = CachedResponse(response, expire_after=expire_after)
 
-    def add_key_mapping(self, new_key: str, key_to_response: str):
+    def save_redirect(self, request: PreparedRequest, response_key: str):
         """
-        Adds mapping of `new_key` to `key_to_response` to make it possible to
-        associate many keys with single response
+        Map a redirect request to a response. This makes it possible to associate many keys with a
+        single response.
 
         Args:
-            new_key: New resource key (e.g. url from redirect)
-            key_to_response: Key which can be found in :attr:`responses`
+            request: Request object for redirect URL
+            response_key: Cache key which can be found in ``responses``
         """
-        self.redirects[new_key] = key_to_response
+        self.redirects[self.create_key(request)] = response_key
 
     def get_response(self, key: str, default=None) -> CachedResponse:
         """Retrieves response for `key` if it's stored in cache, otherwise returns `default`

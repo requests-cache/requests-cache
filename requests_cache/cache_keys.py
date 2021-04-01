@@ -26,10 +26,10 @@ def create_key(
     body = remove_ignored_body_params(request, ignored_params)
     if body:
         key.update(_encode(body))
-    else:
-        if include_get_headers and request.headers != DEFAULT_HEADERS:
-            for name, value in normalize_dict(request.headers).items():
-                key.update(_encode(f'{name}={value}'))
+    if include_get_headers and request.headers != DEFAULT_HEADERS:
+        for name, value in normalize_dict(request.headers).items():
+            key.update(_encode(f'{name}={value}'))
+
     return key.hexdigest()
 
 
