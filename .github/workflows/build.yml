@@ -51,9 +51,9 @@ jobs:
       # Latest python version: Run unit tests with coverage and send to coveralls
       - name: Run unit tests with code coverage report
         if: ${{ matrix.python-version == env.LATEST_PY_VERSION }}
-        # Run unit tests first to fail more quickly
+        # Run unit tests first (and with multiprocessing) to fail quickly if there are issues
         run: |
-          pytest tests/unit --cov=requests_cache --cov-report=term --cov-report=html
+          pytest tests/unit --numprocesses=auto --cov=requests_cache --cov-report=term --cov-report=html
           pytest tests/integration --cov=requests_cache --cov-report=term --cov-report=html --cov-append
       - name: Send code coverage report to Coveralls
         if: ${{ matrix.python-version == env.LATEST_PY_VERSION }}
@@ -65,7 +65,7 @@ jobs:
       - name: Run unit tests
         if: ${{ matrix.python-version != env.LATEST_PY_VERSION }}
         run: |
-          pytest tests/unit
+          pytest --numprocesses=auto tests/unit
           pytest tests/integration
 
   # Run code analysis checks
