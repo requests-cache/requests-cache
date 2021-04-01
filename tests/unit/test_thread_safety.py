@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import pytest
 from threading import Thread
 
@@ -9,7 +8,7 @@ N_ITERATIONS = 20
 
 
 @pytest.mark.parametrize('iteration', range(N_ITERATIONS))
-@pytest.mark.parametrize('backend', ['sqlite', 'mongodb', 'redis', 'dynamodb'])
+@pytest.mark.parametrize('backend', ['sqlite', 'mongodb', 'gridfs', 'redis', 'dynamodb'])
 def test_caching_with_threads(backend, iteration, mock_session):
     """Stress test for multi-threaded caching"""
 

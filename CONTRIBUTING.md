@@ -37,6 +37,8 @@ $ pre-commit uninstall
 ```
 
 ## Testing
+
+### Test Layout
 * Tests are divided into unit and integration tests:
     * Unit tests can be run without any additional setup, and don't depend on any external services
     * Integration tests depend on additional services, which are easiest to run using Docker
@@ -44,9 +46,16 @@ $ pre-commit uninstall
 * See [conftest.py](https://github.com/reclosedev/requests-cache/blob/master/tests/conftest.py) for
   [pytest fixtures](https://docs.pytest.org/en/stable/fixture.html) that apply the most common
   mocking steps and other test setup.
+  
+### Running Tests
+* Run `pytest` to run all tests
+* Run `pytest tests/unit` to run only unit tests
+* Run `pytest tests/integration` to run only integration tests
+* Run `./runtests.sh` to run all tests with some useful options for test coverage reports,
+  multiprocessing, and debugging.
 
 ### Integration Tests
-Local databases are required to run integration tests, and docker-compose config is included to make
+Live databases are required to run integration tests, and docker-compose config is included to make
 this easier. First, [install docker](https://docs.docker.com/get-docker/) and
 [install docker-compose](https://docs.docker.com/compose/install/).
 
@@ -55,6 +64,16 @@ Then, run:
 $ docker-compose up -d
 pytest tests/integration
 ```
+
+## Debugging
+When you run into issues while working on new features and/or tests, it will make your life much easier
+to use a debugger instead of haphazard `print` statements. Most IDEs have a built-in debugger, but if
+you prefer the command line, [ipdb](https://github.com/gotcha/ipdb) is a good option. To install:
+```bash
+pip install ipython ipdb
+```
+
+The `runtests.sh` script will use ipdb by default, if it's installed.
 
 ## Documentation
 [Sphinx](http://www.sphinx-doc.org/en/master/) is used to generate documentation.
