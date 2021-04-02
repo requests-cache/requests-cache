@@ -53,8 +53,8 @@ jobs:
         if: ${{ matrix.python-version == env.LATEST_PY_VERSION }}
         # Run unit tests first (and with multiprocessing) to fail quickly if there are issues
         run: |
-          pytest tests/unit --numprocesses=auto --cov=requests_cache --cov-report=term --cov-report=html
-          pytest tests/integration --cov=requests_cache --cov-report=term --cov-report=html --cov-append
+          pytest tests/unit --numprocesses=auto --cov --cov-report=term --cov-report=html
+          pytest tests/integration --cov --cov-report=term --cov-report=html --cov-append
       - name: Send code coverage report to Coveralls
         if: ${{ matrix.python-version == env.LATEST_PY_VERSION }}
         env:
