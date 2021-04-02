@@ -44,19 +44,6 @@ def test_inheritance_after_monkey_patch(installed_session):
     assert "new_one" in s.__attrs__
 
 
-def test_passing_backend_instance_support():
-    class MyCache(BaseCache):
-        pass
-
-    backend = MyCache()
-    requests_cache.install_cache(name=CACHE_NAME, backend=backend)
-    assert requests.Session().cache is backend
-    requests_cache.uninstall_cache()
-
-    session = CachedSession(backend=backend)
-    assert session.cache is backend
-
-
 @patch.object(BaseCache, 'clear')
 def test_clear(mock_clear, installed_session):
     requests_cache.clear()

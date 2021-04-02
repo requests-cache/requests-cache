@@ -2,7 +2,7 @@ import sqlite3
 import threading
 from contextlib import contextmanager
 from logging import getLogger
-from os.path import expanduser
+from os.path import basename, expanduser
 
 from .base import BaseCache, BaseStorage
 
@@ -15,17 +15,20 @@ class DbCache(BaseCache):
     Reading is fast, saving is a bit slower. It can store big amount of data with low memory usage.
 
     Args:
-        location: database file path (without extension)
-        extension: Database file extension
+        location: Database file path
         fast_save: Speedup cache saving up to 50 times but with possibility of data loss.
             See :ref:`backends.DbDict <backends_dbdict>` for more info
         timeout: Timeout for acquiring a database lock
     """
 
-    def __init__(self, location='http_cache', extension='.sqlite', fast_save=False, **kwargs):
+    def __init__(self, db_path: str = 'http_cache', fast_save: bool = False, **kwargs):
         super().__init__(**kwargs)
         kwargs.setdefault('suppress_warnings', True)
-        db_path = expanduser(str(location) + extension)
+        # Allow paths with user directories (~/*), and add file extension if not specified
+        db_path = expanduser(str(db_path))
+        if '.' not in basename(db_path):
+            db_path += '.sqlite'
+
         self.responses = DbPickleDict(db_path, table_name='responses', fast_save=fast_save, **kwargs)
         self.redirects = DbDict(db_path, table_name='redirects', **kwargs)
 
