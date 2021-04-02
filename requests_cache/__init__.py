@@ -4,10 +4,8 @@ __version__ = '0.6.0'
 
 try:
     from .response import AnyResponse, CachedHTTPResponse, CachedResponse, ExpirationTime
-    from .core import (
-        ALL_METHODS,
-        CachedSession,
-        CacheMixin,
+    from .session import ALL_METHODS, CachedSession, CacheMixin
+    from .patcher import (
         clear,
         disabled,
         enabled,

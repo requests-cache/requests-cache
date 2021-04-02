@@ -1,5 +1,4 @@
 """CachedSession + BaseCache tests that use mocked responses only"""
-# flake8: noqa: F841
 # TODO: This could be split up into some smaller test modules
 import json
 import pickle
@@ -55,6 +54,11 @@ def test_init_backend_class():
     assert isinstance(session.cache, MyCache)
 
 
+def test_import_compat():
+    """Just make sure that we can still import from requests_cache.core"""
+    from requests_cache.core import CachedSession, install_cache  # noqa: F401
+
+
 @pytest.mark.parametrize('method', ALL_METHODS)
 @pytest.mark.parametrize('field', ['params', 'data', 'json'])
 def test_all_methods(field, method, mock_session):
@@ -104,10 +108,10 @@ def test_verify(mock_session):
 
 
 def test_response_history(mock_session):
-    r1 = mock_session.get(MOCKED_URL_REDIRECT)
-    r2 = mock_session.get(MOCKED_URL_REDIRECT_TARGET)
+    mock_session.get(MOCKED_URL_REDIRECT)
+    r = mock_session.get(MOCKED_URL_REDIRECT_TARGET)
 
-    assert r2.from_cache is True
+    assert r.from_cache is True
     assert len(mock_session.cache.redirects) == 1
 
 
@@ -161,8 +165,16 @@ def test_hooks(mock_session):
             return r
 
         for i in range(5):
-            r = mock_session.get(MOCKED_URL, hooks={hook: hook_func})
+            mock_session.get(MOCKED_URL, hooks={hook: hook_func})
         assert state[hook] == 5
+
+
+@pytest.mark.parametrize('method', ['POST', 'PUT'])
+def test_raw_data(method, mock_session):
+    """POST and PUT requests with different data (raw) should be cached under different keys"""
+    assert mock_session.request(method, MOCKED_URL, data='raw data').from_cache is False
+    assert mock_session.request(method, MOCKED_URL, data='raw data').from_cache is True
+    assert mock_session.request(method, MOCKED_URL, data='new raw data').from_cache is False
 
 
 @pytest.mark.parametrize('mapping_class', [dict, UserDict, CaseInsensitiveDict])
@@ -322,19 +334,21 @@ def test_old_data_on_error(mock_session):
         assert response.from_cache is True and response.is_expired is True
 
 
-@pytest.mark.parametrize('method', ['POST', 'PUT'])
-def test_raw_data(method, mock_session):
-    """POST and PUT requests with different data (raw) should be cached under different keys"""
-    assert mock_session.request(method, MOCKED_URL, data='raw data').from_cache is False
-    assert mock_session.request(method, MOCKED_URL, data='raw data').from_cache is True
-    assert mock_session.request(method, MOCKED_URL, data='new raw data').from_cache is False
-
-
 def test_cache_disabled(mock_session):
     mock_session.get(MOCKED_URL)
     with mock_session.cache_disabled():
         for i in range(2):
             assert mock_session.get(MOCKED_URL).from_cache is False
+    assert mock_session.get(MOCKED_URL).from_cache is True
+
+
+def test_cache_disabled__nested(mock_session):
+    mock_session.get(MOCKED_URL)
+    with mock_session.cache_disabled():
+        mock_session.get(MOCKED_URL)
+        with mock_session.cache_disabled():
+            for i in range(2):
+                assert mock_session.get(MOCKED_URL).from_cache is False
     assert mock_session.get(MOCKED_URL).from_cache is True
 
 

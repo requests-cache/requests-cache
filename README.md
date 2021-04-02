@@ -40,10 +40,10 @@ pip install requests-cache
 
 ## General Usage
 There are two main ways of using `requests-cache`:
-* **Sessions:** Use [requests_cache.CachedSession](https://requests-cache.readthedocs.io/en/latest/api.html#requests_cache.core.CachedSession)
+* **Sessions:** Use [requests_cache.CachedSession](https://requests-cache.readthedocs.io/en/latest/api.html#requests_cache.session.CachedSession)
   in place of [requests.Session](https://requests.readthedocs.io/en/master/user/advanced/#session-objects) (recommended)
 * **Patching:** Globally patch `requests` using
-  [requests_cache.install_cache](https://requests-cache.readthedocs.io/en/latest/api.html#requests_cache.core.install_cache)
+  [requests_cache.install_cache](https://requests-cache.readthedocs.io/en/latest/api.html#requests_cache.patcher.install_cache)
 
 ### Sessions
 `CachedSession` wraps `requests.Session` with caching features, and otherwise behaves the same as a
