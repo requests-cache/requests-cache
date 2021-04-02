@@ -5,13 +5,16 @@ from .base import BaseCache, BaseStorage
 
 
 class DynamoDbCache(BaseCache):
-    """`DynamoDB cache backend"""
+    """DynamoDB cache backend
+
+    Args:
+        table_name: DynamoDb table name
+        namespace: Name of DynamoDb hash map
+        connection: DynamoDb Resource object (``boto3.resource('dynamodb')``) to use instead of
+            creating a new one
+    """
 
     def __init__(self, table_name='http_cache', **kwargs):
-        """
-        :param namespace: dynamodb table name (default: ``'requests-cache'``)
-        :param connection: (optional) ``boto3.resource('dynamodb')``
-        """
         super().__init__(**kwargs)
         self.responses = DynamoDbDict(table_name, namespace='responses', **kwargs)
         kwargs['connection'] = self.responses.connection
@@ -19,7 +22,20 @@ class DynamoDbCache(BaseCache):
 
 
 class DynamoDbDict(BaseStorage):
-    """A dictionary-like interface for DynamoDB key-value store"""
+    """A dictionary-like interface for DynamoDB key-value store
+
+    **Note:** The actual key name on the dynamodb server will be ``namespace``:``table_name``
+
+    In order to deal with how dynamodb stores data/keys,
+    everything, i.e. keys and data, must be pickled.
+
+    Args:
+        table_name: DynamoDb table name
+        namespace: Name of DynamoDb hash map
+        connection: DynamoDb Resource object (``boto3.resource('dynamodb')``) to use instead of
+            creating a new one
+        endpoint_url: Alternative URL of dynamodb server.
+    """
 
     def __init__(
         self,
@@ -32,23 +48,6 @@ class DynamoDbDict(BaseStorage):
         write_capacity_units=1,
         **kwargs,
     ):
-
-        """
-        The actual key name on the dynamodb server will be
-        ``namespace``:``namespace_name``
-
-        In order to deal with how dynamodb stores data/keys,
-        everything, i.e. keys and data, must be pickled.
-
-        :param table_name: table name to use
-        :param namespace_name: name of the hash map stored in dynamodb
-                                (default: dynamodb_dict_data)
-        :param connection: ``boto3.resource('dynamodb')`` instance.
-                           If it's ``None`` (default), a new connection with
-                           default options will be created
-        :param endpoint_url: url of dynamodb server.
-
-        """
         super().__init__(**kwargs)
         self._self_key = namespace
         if connection is not None:

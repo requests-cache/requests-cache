@@ -376,7 +376,7 @@ def test_urls_expire_after(url, expected_expire_after):
             'site_2.com/static': -1,
         },
     )
-    assert session.url_expire_after(url) == expected_expire_after
+    assert session._url_expire_after(url) == expected_expire_after
 
 
 @pytest.mark.parametrize(
@@ -397,17 +397,17 @@ def test_urls_expire_after__evaluation_order(url, expected_expire_after):
             '*': 1,
         },
     )
-    assert session.url_expire_after(url) == expected_expire_after
+    assert session._url_expire_after(url) == expected_expire_after
 
 
 def test_get_expiration_precedence():
     session = CachedSession(expire_after=1, urls_expire_after={'*.site_1.com': 60 * 60})
-    assert session.get_expiration() == 1
-    assert session.get_expiration('site_2.com') == 1
-    assert session.get_expiration('img.site_1.com/image.jpg') == 60 * 60
+    assert session._get_expiration() == 1
+    assert session._get_expiration('site_2.com') == 1
+    assert session._get_expiration('img.site_1.com/image.jpg') == 60 * 60
     with session.request_expire_after(30):
-        assert session.get_expiration() == 30
-        assert session.get_expiration('img.site_1.com/image.jpg') == 30
+        assert session._get_expiration() == 30
+        assert session._get_expiration('img.site_1.com/image.jpg') == 30
 
 
 def test_remove_expired_responses(mock_session):

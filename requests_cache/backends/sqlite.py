@@ -17,7 +17,7 @@ class DbCache(BaseCache):
     Args:
         db_path: Database file path
         fast_save: Speedup cache saving up to 50 times but with possibility of data loss.
-            See :ref:`backends.DbDict <backends_dbdict>` for more info
+            See :py:class:`.DbDict` for more info
         timeout: Timeout for acquiring a database lock
     """
 

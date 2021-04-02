@@ -8,7 +8,7 @@
 [![Code Shelter](https://www.codeshelter.co/static/badges/badge-flat.svg)](https://www.codeshelter.co/)
 
 ## Summary
-**Requests-cache** is a transparent persistent HTTP cache for the python [requests](http://python-requests.org)
+**requests-cache** is a transparent persistent HTTP cache for the python [requests](http://python-requests.org)
 library. It is especially useful for web scraping, consuming REST APIs, slow or rate-limited
 sites, or any other scenario in which you're making lots of requests that are likely to be sent
 more than once.
@@ -34,20 +34,20 @@ pip install requests-cache
 
 **Optional Setup Steps:**
 * See [Security](https://requests-cache.readthedocs.io/en/latest/security.html) for recommended
-  setup for more secure cache serialization.
+  setup steps for more secure cache serialization.
 * See [Contributing Guide](https://requests-cache.readthedocs.io/en/latest/contributing.html)
   for setup info for local development.
 
 ## General Usage
-There are two main ways of using `requests-cache`:
-* **Sessions:** Use [requests_cache.CachedSession](https://requests-cache.readthedocs.io/en/latest/api.html#requests_cache.session.CachedSession)
-  in place of [requests.Session](https://requests.readthedocs.io/en/master/user/advanced/#session-objects) (recommended)
-* **Patching:** Globally patch `requests` using
-  [requests_cache.install_cache](https://requests-cache.readthedocs.io/en/latest/api.html#requests_cache.patcher.install_cache)
+There are two main ways of using requests-cache:
+* [Sessions](https://requests-cache.readthedocs.io/en/latest/api.html#sessions):
+  Use `requests_cache.CachedSession` in place of
+  [requests.Session](https://requests.readthedocs.io/en/master/user/advanced/#session-objects) (recommended)
+* [Patching](https://requests-cache.readthedocs.io/en/latest/api.html#patching):
+  Globally patch `requests` using `requests_cache.install_cache()`.
 
 ### Sessions
-`CachedSession` wraps `requests.Session` with caching features, and otherwise behaves the same as a
-normal session.
+The `CachedSession` class is a drop-in replacement for `requests.Session` that adds caching features.
 
 Basic example:
 ```python
@@ -62,7 +62,7 @@ second. The response will be fetched once, saved to `demo_cache.sqlite`, and sub
 will return the cached response near-instantly.
 
 ### Patching
-Patching with `requests_cache.install_cache()` will add caching to all `requests` functions:
+Using `requests_cache.install_cache()` will add caching to all `requests` functions:
 ```python
 import requests
 import requests_cache
@@ -88,13 +88,13 @@ requests.get('http://httpbin.org/get')
 
 Like any other utility that uses global patching, there are some scenarios where you won't want to
 use this:
-* In a multi-threaded or multiprocess applications
+* In a multi-threaded or multiprocess application
 * In an application that uses other packages that extend or modify `requests.Session`
 * In a package that will be used by other packages or applications
 
 ### Cache Backends
-Several cache backends are included, which can be selected with the `backend` parameter to
-`CachedSession` or `install_cache()`:
+Several [cache backends](https://requests-cache.readthedocs.io/en/latest/modules/requests_cache.backends.html)
+are included, which can be selected with the `backend` parameter to `CachedSession` or `install_cache()`:
 
 * `'memory'` : Not persistent, just stores responses with an in-memory dict
 * `'sqlite'` : [SQLite](https://www.sqlite.org) database (**default**)
@@ -160,12 +160,12 @@ for details.
 You can also check out these other python cache projects:
 
 * [CacheControl](https://github.com/ionrock/cachecontrol): An HTTP cache for `requests` that caches
-  according to uses HTTP headers and status codes
+  according to HTTP headers
+* [diskcache](https://github.com/grantjenks/python-diskcache): A general-purpose (not HTTP-specific)
+  file-based cache built on SQLite
 * [aiohttp-client-cache](https://github.com/JWCook/aiohttp-client-cache): An async HTTP cache for
   `aiohttp`, based on `requests-cache`
 * [aiohttp-cache](https://github.com/cr0hn/aiohttp-cache): A server-side async HTTP cache for the
   `aiohttp` web server
-* [diskcache](https://github.com/grantjenks/python-diskcache): A general-purpose (not HTTP-specific)
-  file-based cache built on SQLite
 * [aiocache](https://github.com/aio-libs/aiocache): General-purpose (not HTTP-specific) async cache
   backends

@@ -1,5 +1,10 @@
+.. _security:
+
 Security
 ========
+
+Pickle Vulnerabilities
+----------------------
 .. warning:: The python ``pickle`` module has `known security vulnerabilities <https://docs.python.org/3/library/pickle.html>`_,
     potentially leading to code execution when deserialzing data.
 

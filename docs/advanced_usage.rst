@@ -1,4 +1,4 @@
-.. _advanced-usage:
+.. _advanced_usage:
 
 Advanced Usage
 ==============
@@ -7,14 +7,15 @@ Advanced Usage
 
 CachedSession Options
 ---------------------
-See :py:class:`requests_cache.CachedSession` for a full list of parameters.
+See :py:class:`.CachedSession` for a full list of parameters.
 
 Cache Name
 ~~~~~~~~~~
 The ``cache_name`` parameter will be used as follows depending on the backend:
 
 * ``sqlite``: Cache filename, e.g ``my_cache.sqlite``
-* ``mongodb``: Database name
+* ``dynamodb``: Table name
+* ``mongodb`` and ``gridfs``: Database name
 * ``redis``: Namespace, meaning all keys will be prefixed with ``'cache_name:'``
 
 Cache Keys
@@ -63,8 +64,8 @@ Use ``expire_after`` to specify how long responses will be cached. This can be:
 
 * A positive number (in seconds)
 * ``-1`` (to never expire)
-* A :py:class:`.timedelta`
-* A :py:class:`datetime`
+* A :py:class:`~datetime.timedelta`
+* A :py:class:`~datetime.datetime`
 
 This will only apply to responses cached in the current session; to apply a different expiration
 to previously cached responses, see :py:meth:`remove_expired_responses`.
@@ -72,7 +73,7 @@ to previously cached responses, see :py:meth:`remove_expired_responses`.
 Expiration can also be set on a per-URL or per request basis. The following order of precedence
 is used:
 
-1. Per-request expiration (``expire_after`` argument for :py:meth:`.request`)
+1. Per-request expiration (``expire_after`` argument for :py:meth:`.CachedSession.request`)
 2. Per-URL expiration (``urls_expire_after`` argument for ``CachedSession``)
 3. Per-session expiration (``expire_after`` argument for ``CachedSession``)
 
@@ -135,8 +136,8 @@ You can use :py:meth:`.CachedSession.cache.urls` to see all URLs currently in th
     ['https://httpbin.org/get', 'https://httpbin.org/stream/100']
 
 If needed, you can get more details on cached responses via ``CachedSession.cache.responses``, which
-is a dict-like interface to the cache backend. See :py:class:`requests.Response` and
-:py:class:`.CachedResponse` for a full list of attributes available.
+is a dict-like interface to the cache backend. See :py:class:`.CachedResponse` for a full list of
+attributes available.
 
 For example, if you wanted to to see all URLs requested with a specific method:
 
@@ -150,7 +151,7 @@ responses they redirect to.
 
 Custom Backends
 ---------------
-If the built-in :ref:`cache-backends` don't suit your needs and you want to create your own, you can create
+If the built-in :py:mod:`Cache Backends <requests_cache.backends>` don't suit your needs and you want to create your own, you can create
 subclasses of :py:class:`.BaseCache` and :py:class:`.BaseStorage`:
 
     >>> from requests_cache import CachedSession

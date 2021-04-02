@@ -1,5 +1,4 @@
-Requests-cache documentation
-============================
+.. _index-page:
 
 .. Include Readme contents (except for the link to readthedocs, since we're already on readthedocs!)
 .. mdinclude:: ../README.md
@@ -18,6 +17,7 @@ Requests-cache documentation
     security
     api
     contributing
+    contributors
     history
 
 Indices and tables

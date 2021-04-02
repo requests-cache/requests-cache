@@ -17,8 +17,7 @@ logger = getLogger(__name__)
 class BaseCache:
     """Base class for cache implementations, which can also be used as in-memory cache.
 
-    To extend it you can provide dictionary-like objects for
-    :attr:`redirects` and :attr:`responses` or override public methods.
+    See :ref:`advanced_usage:custom backends` for details on creating your own implementation.
     """
 
     def __init__(self, *args, **kwargs):
