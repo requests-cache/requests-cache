@@ -44,7 +44,7 @@ def mock_session() -> CachedSession:
     """
     with NamedTemporaryFile(suffix='.db') as temp:
         session = CachedSession(
-            cache_name=temp.name,
+            db_path=temp.name,
             backend='sqlite',
             allowable_methods=ALL_METHODS,
             suppress_warnings=True,

@@ -2,7 +2,7 @@ import sqlite3
 import threading
 from contextlib import contextmanager
 from logging import getLogger
-from os.path import expanduser
+from os.path import basename, expanduser
 
 from .base import BaseCache, BaseStorage
 
@@ -15,17 +15,20 @@ class DbCache(BaseCache):
     Reading is fast, saving is a bit slower. It can store big amount of data with low memory usage.
 
     Args:
-        location: database file path (without extension)
-        extension: Database file extension
+        db_path: Database file path
         fast_save: Speedup cache saving up to 50 times but with possibility of data loss.
             See :ref:`backends.DbDict <backends_dbdict>` for more info
         timeout: Timeout for acquiring a database lock
     """
 
-    def __init__(self, location='http_cache', extension='.sqlite', fast_save=False, **kwargs):
+    def __init__(self, db_path: str = 'http_cache', fast_save: bool = False, **kwargs):
         super().__init__(**kwargs)
         kwargs.setdefault('suppress_warnings', True)
-        db_path = expanduser(str(location) + extension)
+        # Allow paths with user directories (~/*), and add file extension if not specified
+        db_path = expanduser(str(db_path))
+        if '.' not in basename(db_path):
+            db_path += '.sqlite'
+
         self.responses = DbPickleDict(db_path, table_name='responses', fast_save=fast_save, **kwargs)
         self.redirects = DbDict(db_path, table_name='redirects', **kwargs)
 
@@ -49,17 +52,17 @@ class DbDict(BaseStorage):
     All data will be stored in separate tables in the file ``test.sqlite``.
 
     Args:
-        filename: Filename for database (without extension)
+        db_path: Database file path
         table_name: Table name
         fast_save: Use `"PRAGMA synchronous = 0;" <http://www.sqlite.org/pragma.html#pragma_synchronous>`_
             to speed up cache saving, but with the potential for data loss
         timeout: Timeout for acquiring a database lock
     """
 
-    def __init__(self, filename, table_name='http_cache', fast_save=False, timeout=5.0, **kwargs):
+    def __init__(self, db_path, table_name='http_cache', fast_save=False, timeout=5.0, **kwargs):
         super().__init__(**kwargs)
+        self.db_path = db_path
         self.fast_save = fast_save
-        self.filename = filename
         self.table_name = table_name
         self.timeout = timeout
 
@@ -72,14 +75,14 @@ class DbDict(BaseStorage):
 
     @contextmanager
     def connection(self, commit_on_success=False):
-        logger.debug(f'Opening connection to {self.filename}:{self.table_name}')
+        logger.debug(f'Opening connection to {self.db_path}:{self.table_name}')
         with self._lock:
             if self._bulk_commit:
                 if self._pending_connection is None:
-                    self._pending_connection = sqlite3.connect(self.filename, timeout=self.timeout)
+                    self._pending_connection = sqlite3.connect(self.db_path, timeout=self.timeout)
                 con = self._pending_connection
             else:
-                con = sqlite3.connect(self.filename, timeout=self.timeout)
+                con = sqlite3.connect(self.db_path, timeout=self.timeout)
             try:
                 if self.fast_save:
                     con.execute("PRAGMA synchronous = 0;")

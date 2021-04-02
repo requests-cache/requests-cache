@@ -1,20 +1,21 @@
 """Classes and functions for cache persistence"""
 # flake8: noqa: F401
-from ..cache_keys import normalize_dict
-from .base import BaseCache
+from logging import getLogger
+from typing import Type, Union
 
-# All backend-specific keyword arguments combined
-BACKEND_KWARGS = [
+from .base import BaseCache, BaseStorage
+
+# Backend-specific keyword arguments equivalent to 'cache_name'
+CACHE_NAME_KWARGS = ['db_path', 'db_name', 'namespace', 'table_name']
+
+# All backend-specific keyword arguments
+BACKEND_KWARGS = CACHE_NAME_KWARGS + [
     'connection',
-    'db_name',
-    'endpont_url',
-    'extension',
+    'endpoint_url',
     'fast_save',
     'ignored_parameters',
     'include_get_headers',
-    'location',
     'name',
-    'namespace',
     'read_capacity_units',
     'region_name',
     'salt',
@@ -23,71 +24,76 @@ BACKEND_KWARGS = [
     'write_capacity_units',
 ]
 
-registry = {
-    'memory': BaseCache,
-}
-
-_backend_dependencies = {
-    'sqlite': 'sqlite3',
-    'mongo': 'pymongo',
-    'redis': 'redis',
-    'dynamodb': 'dynamodb',
-}
-
-try:
-    # Heroku doesn't allow the SQLite3 module to be installed
-    from .sqlite import DbCache
-
-    registry['sqlite'] = DbCache
-except ImportError:
-    DbCache = None
-
-try:
-    from .mongo import MongoCache
-
-    registry['mongo'] = registry['mongodb'] = MongoCache
-except ImportError:
-    MongoCache = None
+BackendSpecifier = Union[str, BaseCache, Type[BaseCache], None]
+logger = getLogger(__name__)
 
 
-try:
-    from .gridfs import GridFSCache
+def get_placeholder_backend(original_exception: Exception = None) -> Type[BaseCache]:
+    """Create a placeholder type for a backend class that does not have dependencies installed.
+    This allows delaying ImportErrors until init time, rather than at import time.
+    """
 
-    registry['gridfs'] = GridFSCache
-except ImportError:
-    GridFSCache = None
+    class PlaceholderBackend(BaseCache):
+        def __init__(*args, **kwargs):
+            msg = 'Dependencies are not installed for this backend'
+            logger.error(msg)
+            raise original_exception or ImportError(msg)
 
-try:
-    from .redis import RedisCache
+    return PlaceholderBackend
 
-    registry['redis'] = RedisCache
-except ImportError:
-    RedisCache = None
 
+# Import all backends for which dependencies are installed
 try:
     from .dynamodb import DynamoDbCache
+except ImportError as e:
+    DynamoDbCache = get_placeholder_backend(e)  # type: ignore
+try:
+    from .gridfs import GridFSCache
+except ImportError as e:
+    GridFSCache = get_placeholder_backend(e)  # type: ignore
+try:
+    from .mongo import MongoCache
+except ImportError as e:
+    MongoCache = get_placeholder_backend(e)  # type: ignore
+try:
+    from .redis import RedisCache
+except ImportError as e:
+    RedisCache = get_placeholder_backend(e)  # type: ignore
+try:
+    # Note: Heroku doesn't support SQLite due to ephemeral storage
+    from .sqlite import DbCache
+except ImportError as e:
+    DbCache = get_placeholder_backend(e)  # type: ignore
 
-    registry['dynamodb'] = DynamoDbCache
-except ImportError:
-    DynamoDbCache = None
+
+BACKEND_CLASSES = {
+    'dynamodb': DynamoDbCache,
+    'gridfs': GridFSCache,
+    'memory': BaseCache,
+    'mongo': MongoCache,
+    'redis': RedisCache,
+    'sqlite': DbCache,
+}
 
 
-def create_backend(backend_name, cache_name, kwargs):
-    if isinstance(backend_name, BaseCache):
-        return backend_name
+def init_backend(backend: BackendSpecifier, *args, **kwargs) -> BaseCache:
+    """Initialize a backend given a name, class, or instance"""
+    logger.info(f'Initializing backend: {backend}')
 
-    if backend_name is None:
-        backend_name = _get_default_backend_name()
-    try:
-        return registry[backend_name](cache_name, **kwargs)
-    except KeyError:
-        if backend_name in _backend_dependencies:
-            raise ImportError('You must install the python package: %s' % _backend_dependencies[backend_name])
-        else:
-            raise ValueError('Unsupported backend "%s" try one of: %s' % (backend_name, ', '.join(registry.keys())))
+    # Omit 'cache_name' positional arg if an equivalent backend-specific kwarg is specified
+    if any([k in kwargs for k in CACHE_NAME_KWARGS]):
+        args = tuple()
 
+    # Determine backend class
+    if isinstance(backend, BaseCache):
+        return backend
+    elif isinstance(backend, type):
+        return backend(*args, **kwargs)
+    elif not backend:
+        backend = 'sqlite' if BACKEND_CLASSES['sqlite'] else 'memory'
 
-def _get_default_backend_name():
-    if 'sqlite' in registry:
-        return 'sqlite'
-    return 'memory'
+    backend = str(backend).lower().replace('mongodb', 'mongo')
+    if backend not in BACKEND_CLASSES:
+        raise ValueError(f'Invalid backend: {backend}. Choose from: {BACKEND_CLASSES.keys()}')
+
+    return BACKEND_CLASSES[backend](*args, **kwargs)
