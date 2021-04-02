@@ -13,7 +13,7 @@ from requests_mock import ANY as ANY_METHOD
 from requests_mock import Adapter
 
 import requests_cache
-from requests_cache.core import ALL_METHODS, CachedSession
+from requests_cache.session import ALL_METHODS, CachedSession
 
 MOCKED_URL = 'http+mock://requests-cache.com/text'
 MOCKED_URL_HTTPS = 'https+mock://requests-cache.com/text'

@@ -2,23 +2,24 @@ API
 ===
 This section covers all the public interfaces of ``requests-cache``
 
-Public API
-----------
+Sessions
+--------
 .. Explicitly show inherited method docs on CachedSession instead of CachedMixin
-.. autoclass:: requests_cache.core.CachedSession
+.. autoclass:: requests_cache.session.CachedSession
     :members: send, request, cache_disabled, remove_expired_responses
     :show-inheritance:
 
-.. autoclass:: requests_cache.core.CacheMixin
+.. autoclass:: requests_cache.session.CacheMixin
 
-.. automodule:: requests_cache.core
+Patching
+--------
+.. automodule:: requests_cache.patcher
     :members:
-    :exclude-members: CachedSession, CacheMixin
 
+Responses
+---------
 .. automodule:: requests_cache.response
     :members:
-
-----------------------------------------------
 
 Cache Backends
 --------------
