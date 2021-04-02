@@ -1,5 +1,6 @@
 """CachedSession + BaseCache tests that use mocked responses only"""
 # flake8: noqa: F841
+# TODO: This could be split up into some smaller test modules
 import json
 import pickle
 import pytest
@@ -16,6 +17,7 @@ from itsdangerous.serializer import Serializer
 from requests.structures import CaseInsensitiveDict
 
 from requests_cache import ALL_METHODS, CachedSession
+from requests_cache.backends import BACKEND_CLASSES, BaseCache, get_placeholder_backend
 from requests_cache.backends.sqlite import DbDict, DbPickleDict
 from tests.conftest import (
     MOCKED_URL,
@@ -26,17 +28,31 @@ from tests.conftest import (
 )
 
 
-def test_unregistered_backend():
+def test_init_unregistered_backend():
     with pytest.raises(ValueError):
         CachedSession(backend='nonexistent')
 
 
-@patch('requests_cache.backends.registry')
-def test_missing_backend_dependency(mocked_registry):
+@patch.dict(BACKEND_CLASSES, {'mongo': get_placeholder_backend()})
+def test_init_missing_backend_dependency():
     """Test that the correct error is thrown when a user does not have a dependency installed"""
-    mocked_registry.__getitem__.side_effect = KeyError
     with pytest.raises(ImportError):
-        CachedSession(backend='redis')
+        CachedSession(backend='mongo')
+
+
+class MyCache(BaseCache):
+    pass
+
+
+def test_init_backend_instance():
+    backend = MyCache()
+    session = CachedSession(backend=backend)
+    assert session.cache is backend
+
+
+def test_init_backend_class():
+    session = CachedSession(backend=MyCache)
+    assert isinstance(session.cache, MyCache)
 
 
 @pytest.mark.parametrize('method', ALL_METHODS)

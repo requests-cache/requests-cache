@@ -2,14 +2,14 @@
 from contextlib import contextmanager
 from fnmatch import fnmatch
 from logging import getLogger
-from typing import Any, Callable, Dict, Iterable, Type
+from typing import Any, Callable, Dict, Iterable, Optional, Type
 
 import requests
 from requests import PreparedRequest
 from requests import Session as OriginalSession
 from requests.hooks import dispatch_hook
 
-from . import backends
+from .backends import BACKEND_KWARGS, BackendSpecifier, BaseCache, init_backend
 from .cache_keys import normalize_dict
 from .response import AnyResponse, ExpirationTime, set_response_defaults
 
@@ -24,8 +24,8 @@ class CacheMixin:
 
     def __init__(
         self,
-        cache_name: str = 'cache',
-        backend: str = None,
+        cache_name: str = 'http-cache',
+        backend: BackendSpecifier = None,
         expire_after: ExpirationTime = -1,
         urls_expire_after: Dict[str, ExpirationTime] = None,
         allowable_codes: Iterable[int] = (200,),
@@ -34,7 +34,7 @@ class CacheMixin:
         old_data_on_error: bool = False,
         **kwargs,
     ):
-        self.cache = backends.create_backend(backend, cache_name, kwargs)
+        self.cache = init_backend(backend, cache_name, **kwargs)
         self.allowable_codes = allowable_codes
         self.allowable_methods = allowable_methods
         self.expire_after = expire_after
@@ -47,7 +47,7 @@ class CacheMixin:
         self._disabled = False
 
         # Remove any requests-cache-specific kwargs before passing along to superclass
-        session_kwargs = {k: v for k, v in kwargs.items() if k not in backends.BACKEND_KWARGS}
+        session_kwargs = {k: v for k, v in kwargs.items() if k not in BACKEND_KWARGS}
         super().__init__(**session_kwargs)
 
     def request(
@@ -82,7 +82,7 @@ class CacheMixin:
         2. :py:meth:`.CachedSession.request`
         3. :py:meth:`requests.Session.request`
         4. :py:meth:`.CachedSession.send`
-        5. :py:meth:`.backends.BaseCache.get_response`
+        5. :py:meth:`.BaseCache.get_response`
         6. :py:meth:`requests.Session.send` (if not cached)
         """
         with self.request_expire_after(expire_after):
@@ -225,8 +225,8 @@ class CachedSession(CacheMixin, OriginalSession):
 
     Args:
         cache_name: Cache prefix or namespace, depending on backend
-        backend: Cache backend name; one of ``['sqlite', 'mongodb', 'gridfs', 'redis', 'dynamodb', 'memory']``.
-                Default behavior is to use ``'sqlite'`` if available, otherwise fallback to ``'memory'``.
+        backend: Cache backend name, class, or instance; name may be one of
+            ``['sqlite', 'mongodb', 'gridfs', 'redis', 'dynamodb', 'memory']``.
         expire_after: Time after which cached items will expire
         urls_expire_after: Expiration times to apply for different URL patterns
         allowable_codes: Only cache responses with one of these codes
@@ -352,7 +352,7 @@ def enabled(*args, **kwargs):
         uninstall_cache()
 
 
-def get_cache() -> backends.BaseCache:
+def get_cache() -> Optional[BaseCache]:
     """Returns internal cache object from globally installed ``CachedSession``"""
     return requests.Session().cache if is_installed() else None
 
