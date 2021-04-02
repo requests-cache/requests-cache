@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# flake8: noqa: F841
 """The same as `basic_usage.py`, but using global session patching"""
 import time
 

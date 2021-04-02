@@ -22,6 +22,8 @@ extras_require = {
     'test': [
         'black==20.8b1',
         'flake8',
+        'flake8-comprehensions',
+        'flake8-polyfill',
         'isort',
         'pre-commit',
         'psutil',
