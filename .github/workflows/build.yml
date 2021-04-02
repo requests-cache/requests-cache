@@ -87,10 +87,12 @@ jobs:
       - name: Install dependencies
         run: pip install ".[dev]"
 
-      - name: Run black check
-        run: black --check --diff .
-      - name: Run isort check
-        run: isort --check --diff .
+      - name: Run linter
+        run: flake8 .
+      - name: Run code style checks
+        run: |
+          black --check --diff .
+          isort --check --diff .
       - name: Run cyclomatic complexity check
         run: radon cc --show-complexity --average --order SCORE requests_cache
 
