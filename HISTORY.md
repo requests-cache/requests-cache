@@ -3,26 +3,48 @@
 ## 0.6.0 (2021-04-TBD)
 [See all included issues and PRs](https://github.com/reclosedev/requests-cache/milestone/1?closed=1)
 
+### General
 * Drop support for python <= 3.5
+* Add `CacheMixin` class to make the features of `CachedSession` usable as a mixin class,
+  for compatibility with other `requests`-based libraries
+* Add `CachedResponse` class to wrapped cached `requests.Response` objects,
+  which makes additional cache information available to client code
+* Add `BaseCache.urls` property to get all URLs persisted in the cache
+* Add optional support for `itsdangerous` for more secure serialization
+* Add `HEAD` to default `allowable_methods`
+* Remove invalid responses when running `remove_expired_responses()` (in case an update in
+  requests-cache or one of its dependencies breaks backwards-compatibility with old cache data)
+* Handle additional edge cases with request normalization for cache keys (to avoid duplicate cached responses)
+
+### Cache Expiration
 * Add support for setting expiration for individual requests
 * Add support for setting expiration based on URL glob patterns
 * Add support for overriding original expiration (i.e., revalidating) in `CachedSession.remove_expired_responses()` 
-* Add `CacheMixin` class to be make the features of `CachedSession` usable as a mixin class,
-  for compatibility with other `requests`-based libraries
-* Add `CachedResponse` class to wrapped cached `requests.Response` objects, make additional cache
-  information available to client code
-* Add `BaseCache.urls` property to get all URLs persisted in the cache
-* Add `timeout` parameter to SQLite backend
-* Add optional support for `itsdangerous` for more secure serialization
-* Handle additional edge cases with request normalization for cache keys (to avoid duplicate cached responses)
-* Update usage of deprecated MongoClient `save()` method
-* Fix TypeError with `DbPickleDict` initialization
+
+### Backends
+* SQLite: Allow passing user paths (`~/path-to-cache`) to database file with `db_path` param
+* SQLite: Add `timeout` parameter
+* Make default table names consistent across backends (`'http_cache'`)
+
+### Bugfixes
+* Fix caching requests with data specified in `json` parameter
+* Fix caching requests with `verify` parameter
+* Fix usage of backend-specific params when used in place of `cache_name`
+* Fix potential TypeError with `DbPickleDict` initialization
 * Fix usage of `CachedSession.cache_disabled` if used within another contextmanager
 * Fix non-thread-safe iteration in `BaseCache`
 * Fix `get_cache()`, `clear()`, and `remove_expired_responses()` so they will do nothing if
   requests-cache is not installed
-* Also remove invalid responses when running `remove_expired_responses()`
-* Add `HEAD` to default `allowable_methods`
+* Update usage of deprecated MongoClient `save()` method
+
+### Docs & Tests
+* Add type annotations to main functions/methods in public API, and include in documentation on
+  [readthedocs](https://requests-cache.readthedocs.io/en/latest/)
+* Add [Contributing Guide](https://requests-cache.readthedocs.io/en/latest/contributing.html),
+  [Security](https://requests-cache.readthedocs.io/en/latest/security.html) info,
+  and more examples & detailed usage info in an 
+  [Advanced Usage](https://requests-cache.readthedocs.io/en/latest/advanced_usage.html#) section.
+* Increased test coverage, and added containerized backends for both local and CI integration testing
 
 ## 0.5.2 (2019-08-14)
 * Fix DeprecationWarning from collections #140
