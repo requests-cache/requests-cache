@@ -51,7 +51,8 @@ class CachedResponse(Response):
 
         # Read content to support streaming requests, and reset file pointer on original request
         self._content = original_response.content
-        original_response.raw._fp = BytesIO(self._content or b'')
+        if hasattr(original_response.raw, '_fp'):
+            original_response.raw._fp = BytesIO(self._content or b'')
 
         # Copy raw response
         self._raw_response = None
