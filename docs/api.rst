@@ -1,9 +1,9 @@
 .. Note: backend module docs are auto-generated with apidoc; the remaining modules are manually
    added here for more custom formatting.
 
-API
-===
-This section covers all the public interfaces of ``requests-cache``
+API Reference
+=============
+This section covers all the public interfaces of requests-cache.
 
 .. contents:: Table of Contents
     :depth: 2

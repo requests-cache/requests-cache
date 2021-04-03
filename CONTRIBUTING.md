@@ -11,7 +11,7 @@ If there is a new feature you would like to see, the best way to make that happe
 for it!
 
 ## Bug Reports & Feedback
-If you discover a bug, want to propose new feature, or have other feedback about requests-cache, please
+If you discover a bug, want to propose a new feature, or have other feedback about requests-cache, please
 [create an issue](https://github.com/reclosedev/requests-cache/issues/new/choose)!
 
 ## Project Discussion
