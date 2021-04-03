@@ -24,7 +24,7 @@ See full project documentation at: https://requests-cache.readthedocs.io
   [expiration](https://requests-cache.readthedocs.io/en/latest/user_guide.html#cache-expiration)
   and other [behavior](https://requests-cache.readthedocs.io/en/latest/user_guide.html#cache-options)
 * **Persistence:** Includes several [storage backends](https://requests-cache.readthedocs.io/en/latest/user_guide.html#cache-backends):
-  SQLite, Redis, MongoDB, and DynamoDB.
+  SQLite, Redis, MongoDB, GridFS, DynamoDB, and filesystem.
 * **Compatibility:** Can be used alongside
   [other popular libraries based on requests](https://requests-cache.readthedocs.io/en/latest/advanced_usage.html#library-compatibility)
 

@@ -136,7 +136,7 @@ class DbDict(BaseStorage):
 
     def clear(self):
         with self.connection(True) as con:
-            con.execute("drop table `%s`" % self.table_name)
+            con.execute("drop table if exists `%s`" % self.table_name)
             con.execute("create table `%s` (key PRIMARY KEY, value)" % self.table_name)
             con.execute("vacuum")
 

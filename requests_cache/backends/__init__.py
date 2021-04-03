@@ -72,10 +72,15 @@ try:
     from .sqlite import DbCache, DbDict, DbPickleDict
 except ImportError as e:
     DbCache = DbDict = DbPickleDict = get_placeholder_backend(e)  # type: ignore
+try:
+    from .filesystem import FileCache, FileDict
+except ImportError as e:
+    FileCache = FileDict = get_placeholder_backend(e)  # type: ignore
 
 
 BACKEND_CLASSES = {
     'dynamodb': DynamoDbCache,
+    'filesystem': FileCache,
     'gridfs': GridFSCache,
     'memory': BaseCache,
     'mongo': MongoCache,
