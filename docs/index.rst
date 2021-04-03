@@ -1,23 +1,24 @@
-Requests-cache documentation
-============================
+.. _index-page:
 
 .. Include Readme contents (except for the link to readthedocs, since we're already on readthedocs!)
 .. mdinclude:: ../README.md
-    :end-line: 17
-
-.. _general-usage:
+    :end-line: 15
 
 .. mdinclude:: ../README.md
-    :start-line: 19
+    :start-line: 17
 
+Contents
+========
 .. toctree::
-    :caption: Contents
     :maxdepth: 2
 
+    user_guide
     advanced_usage
     security
     api
     contributing
+    contributors
+    related_projects
     history
 
 Indices and tables

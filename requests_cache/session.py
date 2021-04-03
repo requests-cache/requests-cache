@@ -23,7 +23,7 @@ class CacheMixin:
 
     def __init__(
         self,
-        cache_name: str = 'http-cache',
+        cache_name: str = 'http_cache',
         backend: BackendSpecifier = None,
         expire_after: ExpirationTime = -1,
         urls_expire_after: Dict[str, ExpirationTime] = None,
@@ -156,7 +156,7 @@ class CacheMixin:
         logger.info(f'Sending request and caching response for URL: {request.url}')
         response = super().send(request, **kwargs)
         if response.status_code in self.allowable_codes:
-            self.cache.save_response(cache_key, response, self.get_expiration(request.url))
+            self.cache.save_response(cache_key, response, self._get_expiration(request.url))
         return set_response_defaults(response)
 
     @contextmanager
@@ -178,27 +178,27 @@ class CacheMixin:
             finally:
                 self._disabled = False
 
-    def get_expiration(self, url: str = None) -> ExpirationTime:
+    def _get_expiration(self, url: str = None) -> ExpirationTime:
         """Get the appropriate expiration, in order of precedence:
         1. Per-request expiration
         2. Per-URL expiration
         3. Per-session expiration
         """
-        return self._request_expire_after or self.url_expire_after(url) or self.expire_after
+        return self._request_expire_after or self._url_expire_after(url) or self.expire_after
 
-    @contextmanager
-    def request_expire_after(self, expire_after: ExpirationTime = None):
-        """Temporarily override ``expire_after`` for an individual request"""
-        self._request_expire_after = expire_after
-        yield
-        self._request_expire_after = None
-
-    def url_expire_after(self, url: str) -> ExpirationTime:
+    def _url_expire_after(self, url: str) -> ExpirationTime:
         """Get the expiration time for a URL, if a matching pattern is defined"""
         for pattern, expire_after in (self.urls_expire_after or {}).items():
             if url_match(url, pattern):
                 return expire_after
         return None
+
+    @contextmanager
+    def request_expire_after(self, expire_after: ExpirationTime = None):
+        """Temporarily override ``expire_after`` for individual requests"""
+        self._request_expire_after = expire_after
+        yield
+        self._request_expire_after = None
 
     def remove_expired_responses(self, expire_after: ExpirationTime = None):
         """Remove expired responses from the cache, optionally with revalidation
@@ -218,8 +218,8 @@ class CacheMixin:
 class CachedSession(CacheMixin, OriginalSession):
     """Class that extends :py:class:`requests.Session` with caching features.
 
-    See individual :ref:`backend classes <cache-backends>` for additional backend-specific arguments.
-    Also see :ref:`advanced-usage` for more details and examples on how the following arguments
+    See individual :py:mod:`backend classes <requests_cache.backends>` for additional backend-specific arguments.
+    Also see :ref:`advanced_usage` for more details and examples on how the following arguments
     affect cache behavior.
 
     Args:

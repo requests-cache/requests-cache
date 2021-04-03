@@ -1,4 +1,8 @@
-"""Functions for monkey-patching ``requests``"""
+"""Utilities for patching ``requests``.
+
+.. warning:: These functions are not thread-safe. Use :py:class:`.CachedSession` directly if you
+    want to use caching in a multi-threaded environment.
+"""
 from contextlib import contextmanager
 from logging import getLogger
 from typing import Callable, Dict, Iterable, Optional, Type
@@ -13,7 +17,7 @@ logger = getLogger(__name__)
 
 
 def install_cache(
-    cache_name: str = 'http-cache',
+    cache_name: str = 'http_cache',
     backend: BackendSpecifier = None,
     expire_after: ExpirationTime = -1,
     urls_expire_after: Dict[str, ExpirationTime] = None,
@@ -25,9 +29,13 @@ def install_cache(
     **kwargs,
 ):
     """
-    Installs cache for all ``requests`` functions by monkey-patching ``Session``
+    Install the cache for all ``requests`` functions by monkey-patching :py:class:`requests.Session`
 
-    Parameters are the same as in :py:class:`.CachedSession`. Additional parameters:
+    Example:
+
+        >>> requests_cache.install_cache('demo_cache')
+
+    Accepts all the same parameters as :py:class:`.CachedSession`. Additional parameters:
 
     Args:
         session_factory: Session class to use. It must inherit from either
@@ -52,21 +60,18 @@ def install_cache(
 
 
 def uninstall_cache():
-    """Restores ``requests.Session`` and disables cache"""
+    """Disable the cache by restoring the original :py:class:`requests.Session`"""
     _patch_session_factory(OriginalSession)
 
 
 @contextmanager
 def disabled():
     """
-    Context manager for temporary disabling globally installed cache
+    Context manager for temporarily disabling caching for all ``requests`` functions
 
-    .. warning:: not thread-safe
-
-    ::
+    Example:
 
         >>> with requests_cache.disabled():
-        ...     requests.get('http://httpbin.org/ip')
         ...     requests.get('http://httpbin.org/get')
 
     """
@@ -81,13 +86,11 @@ def disabled():
 @contextmanager
 def enabled(*args, **kwargs):
     """
-    Context manager for temporary installing global cache.
+    Context manager for temporarily enabling caching for all ``requests`` functions
 
-    Accepts same arguments as :func:`install_cache`
+    Accepts the same arguments as :py:func:`.install_cache`.
 
-    .. warning:: not thread-safe
-
-    ::
+    Example:
 
         >>> with requests_cache.enabled('cache_db'):
         ...     requests.get('http://httpbin.org/get')
@@ -101,17 +104,17 @@ def enabled(*args, **kwargs):
 
 
 def get_cache() -> Optional[BaseCache]:
-    """Returns internal cache object from globally installed ``CachedSession``"""
+    """Get the internal cache object from the currently installed ``CachedSession`` (if any)"""
     return requests.Session().cache if is_installed() else None
 
 
-def is_installed():
-    """Indicate whether or not requests-cache is installed"""
+def is_installed() -> bool:
+    """Indicate whether or not requests-cache is currently installed"""
     return isinstance(requests.Session(), CachedSession)
 
 
 def clear():
-    """Clears globally installed cache"""
+    """Clear the currently installed cache (if any)"""
     if get_cache():
         get_cache().clear()
 

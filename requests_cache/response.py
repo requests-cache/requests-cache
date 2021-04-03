@@ -1,3 +1,4 @@
+"""Classes to wrap cached response objects"""
 from copy import copy
 from datetime import datetime, timedelta
 from io import BytesIO

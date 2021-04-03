@@ -10,9 +10,13 @@ Maintenance will mainly focus on bugfixes, security and compatibility updates, e
 If there is a new feature you would like to see, the best way to make that happen is to submit a PR
 for it!
 
+## Bug Reports & Feedback
+If you discover a bug, want to propose a new feature, or have other feedback about requests-cache, please
+[create an issue](https://github.com/reclosedev/requests-cache/issues/new/choose)!
+
 ## Project Discussion
-If you have an issue or PR that hasn't received a response in a timely manner, or if you want to
-discuss ideas about the project in general, please reach out on the Code Shelter chat server, under
+If you want to discuss ideas about the project in general, or if you have an issue or PR that hasn't
+received a response in a timely manner, please reach out on the Code Shelter chat server, under
 [projects/requests-cache](https://codeshelter.zulipchat.com/#narrow/stream/186993-projects/topic/requests-cache).
 
 ## Dev Installation
@@ -67,7 +71,7 @@ pytest tests/integration
 
 ## Debugging
 When you run into issues while working on new features and/or tests, it will make your life much easier
-to use a debugger instead of haphazard `print` statements. Most IDEs have a built-in debugger, but if
+to use a debugger instead of `print` statements. Most IDEs have a built-in debugger, but if
 you prefer the command line, [ipdb](https://github.com/gotcha/ipdb) is a good option. To install:
 ```bash
 pip install ipython ipdb
@@ -80,7 +84,7 @@ The `runtests.sh` script will use ipdb by default, if it's installed.
 
 To build the docs locally:
 ```bash
-$ make -C docs html
+$ make -C docs all
 ```
 
 To preview:
