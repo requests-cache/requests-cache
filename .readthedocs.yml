@@ -5,8 +5,11 @@ sphinx:
   builder: html
   configuration: docs/conf.py
 
+build:
+  image: 8.0
+
 python:
-  version: 3.7
+  version: 3.8
   system_packages: True
   install:
     - method: pip
