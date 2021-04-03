@@ -31,6 +31,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx_autodoc_typehints',
     'sphinx_copybutton',
+    'sphinx_rtd_theme',
     'sphinxcontrib.apidoc',
     'm2r2',
 ]
@@ -59,7 +60,6 @@ apidoc_module_dir = PACKAGE_DIR
 apidoc_output_dir = 'modules'
 apidoc_excluded_paths = []
 apidoc_module_first = True
-# apidoc_separate_modules = True
 apidoc_toc_file = False
 autosectionlabel_prefix_document = True
 
