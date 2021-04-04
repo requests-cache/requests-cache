@@ -106,7 +106,7 @@ docker run --rm -ti \
   readthedocs/build \
   /bin/bash -c \
   "cd /home/docs/project \
-    && pip3 install '.[dev]' \
+    && pip3 install '.[docs,backends]' \
     && make -C docs html"
 ```
 

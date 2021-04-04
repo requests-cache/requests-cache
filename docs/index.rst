@@ -21,8 +21,8 @@ Contents
     related_projects
     history
 
-Indices and tables
-==================
+Indices and Tables
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`

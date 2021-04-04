@@ -5,9 +5,6 @@ API Reference
 =============
 This section covers all the public interfaces of requests-cache.
 
-.. contents:: Table of Contents
-    :depth: 2
-
 Sessions
 --------
 .. Explicitly show inherited method docs on CachedSession instead of CachedMixin
