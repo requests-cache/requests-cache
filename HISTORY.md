@@ -3,6 +3,10 @@
 ## 0.6.0 (2021-04-TBD)
 [See all included issues and PRs](https://github.com/reclosedev/requests-cache/milestone/1?closed=1)
 
+Thanks to [Code Shelter](https://www.codeshelter.co) and
+[contributors](https://requests-cache.readthedocs.io/en/latest/contributors.html)
+for making this release possible!
+
 ### Serialization
 **Note:** Due to the following changes, responses cached with previous versions of requests-cache
 will be invalid. These **old responses will be treated as expired**, and will be refreshed the

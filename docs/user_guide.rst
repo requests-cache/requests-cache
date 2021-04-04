@@ -12,7 +12,7 @@ Requirements
 ~~~~~~~~~~~~
 * Requires python 3.6+.
 * You may need additional dependencies depending on which backend you want to use. To install with
-  extra dependencies for all supported backends:
+  extra dependencies for all supported :ref:`user_guide:cache backends`:
 
     $ pip install requests-cache[backends]
 
@@ -51,7 +51,7 @@ Caching can be temporarily disabled with :py:meth:`.CachedSession.cache_disabled
     ...     session.get('http://httpbin.org/get')
 
 The best way to clean up your cache is through :ref:`user_guide:cache expiration`, but you can also
-clear out everything with :py:meth:`.BaseCache.clear`:
+clear out everything at once with :py:meth:`.BaseCache.clear`:
 
     >>> session.cache.clear()
 
