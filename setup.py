@@ -11,12 +11,11 @@ extras_require = {
     'backends': ['boto3', 'pymongo', 'redis'],
     # Packages used for documentation builds
     'docs': [
-        'docutils==0.16',
         'm2r2',
         'Sphinx~=3.5.3',
         'sphinx-autodoc-typehints',
         'sphinx-copybutton',
-        'sphinx-rtd-theme~=0.5.1',
+        'sphinx-rtd-theme~=0.5.2',
         'sphinxcontrib-apidoc',
     ],
     # Packages used for testing both locally and in CI jobs
