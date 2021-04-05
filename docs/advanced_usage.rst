@@ -4,6 +4,9 @@ Advanced Usage
 ==============
 This section covers some more advanced and use-case-specific features.
 
+.. contents::
+    :local:
+
 Custom Response Filtering
 -------------------------
 If you need more advanced behavior for determining what to cache, you can provide a custom filtering
