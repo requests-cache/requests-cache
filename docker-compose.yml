@@ -1,5 +1,5 @@
 # Containers needed to test all backend services locally
-version: '3'
+version: '3.7'
 
 services:
   httpbin:
@@ -36,9 +36,20 @@ services:
       - '6379:6379'
     environment:
       ALLOW_EMPTY_PASSWORD: 'yes'
-      # REDIS_DISABLE_COMMANDS: 'FLUSHDB,FLUSHALL'
     volumes:
       - 'redis_data:/bitnami/redis/data'
+
+  readthedocs:
+    container_name: readthedocs
+    build:
+      context: .
+      dockerfile: docs/Dockerfile
+      network: host
+    user: '1000'
+    tty: true
+    volumes:
+      - '.:/home/docs/project'
+    working_dir: '/home/docs/project/docs'
 
 volumes:
   mongodb_data:

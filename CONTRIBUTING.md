@@ -97,17 +97,14 @@ $ xdg-open docs/_build/index.html
 
 ### Readthedocs
 Sometimes, there are differences in the Readthedocs build environment that can cause builds to
-succeed locally but fail remotely. To help debug this, you can use the Readthedocs Docker container
-(`readthedocs/build`) to perform the build. Example:
+succeed locally but fail remotely. To help debug this, you can use the 
+[readthedocs/build](https://github.com/readthedocs/readthedocs-docker-images) container to build
+the docs. A configured build container is included in `docker-compose.yml` to simplify this.
+
+Run with:
 ```bash
-docker pull readthedocs/build
-docker run --rm -ti \
-  -v (pwd):/home/docs/project \
-  readthedocs/build \
-  /bin/bash -c \
-  "cd /home/docs/project \
-    && pip3 install '.[docs,backends]' \
-    && make -C docs html"
+docker-compose up -d --build
+docker exec readthedocs make all
 ```
 
 ## Pull Requests
