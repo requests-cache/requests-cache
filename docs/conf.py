@@ -64,13 +64,4 @@ autosectionlabel_prefix_document = True
 
 # HTML theme settings
 pygments_style = 'sphinx'
-html_theme = 'sphinx_material'
-html_theme_options = {
-    'color_primary': 'blue',
-    'color_accent': 'light-blue',
-    'logo_icon': '&#xe1af',
-    'repo_url': 'https://github.com/reclosedev/requests-cache',
-    'repo_name': project,
-    'nav_title': project,
-}
-html_sidebars = {'**': ['logo-text.html', 'globaltoc.html', 'localtoc.html', 'searchbox.html']}
+html_theme = 'sphinx_rtd_theme'

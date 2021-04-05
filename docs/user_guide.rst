@@ -2,6 +2,10 @@ User Guide
 ==========
 This section covers the main features of requests-cache.
 
+.. contents::
+    :local:
+    :depth: 2
+
 Installation
 ------------
 Install with pip:
