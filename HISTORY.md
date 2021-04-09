@@ -1,6 +1,6 @@
 # History
 
-## 0.6.0 (2021-04-TBD)
+## 0.6.0 (2021-04-09)
 [See all included issues and PRs](https://github.com/reclosedev/requests-cache/milestone/1?closed=1)
 
 Thanks to [Code Shelter](https://www.codeshelter.co) and
