@@ -1,0 +1,14 @@
+version: '3.7'
+
+services:
+  readthedocs:
+    container_name: readthedocs
+    build:
+      context: ..
+      dockerfile: docs/Dockerfile
+      network: host
+    user: '1000'
+    tty: true
+    volumes:
+      - '..:/home/docs/project'
+    working_dir: '/home/docs/project/docs'

@@ -99,11 +99,12 @@ $ xdg-open docs/_build/index.html
 Sometimes, there are differences in the Readthedocs build environment that can cause builds to
 succeed locally but fail remotely. To help debug this, you can use the 
 [readthedocs/build](https://github.com/readthedocs/readthedocs-docker-images) container to build
-the docs. A configured build container is included in `docker-compose.yml` to simplify this.
+the docs. A configured build container is included in `docs/docker-compose.yml` to simplify this.
 
 Run with:
 ```bash
-docker-compose up -d --build
+# Optionally add --build to rebuild with updated dependencies
+docker-compose -f docs/docker-compose.yml up -d
 docker exec readthedocs make all
 ```
 
