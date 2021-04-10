@@ -40,7 +40,7 @@ extras_require['dev'] = list(chain.from_iterable(extras_require.values()))
 
 setup(
     name='requests-cache',
-    packages=find_packages(),
+    packages=find_packages(exclude=['tests*']),
     version=__version__,
     author='Roman Haritonov',
     author_email='reclosedev@gmail.com',
