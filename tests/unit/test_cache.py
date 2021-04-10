@@ -56,7 +56,13 @@ def test_init_backend_class():
 
 def test_import_compat():
     """Just make sure that we can still import from requests_cache.core"""
-    from requests_cache.core import CachedSession, install_cache  # noqa: F401
+    with pytest.deprecated_call():
+        from requests_cache.core import CachedSession, install_cache  # noqa: F401
+
+
+def test_method_compat(mock_session):
+    with pytest.deprecated_call():
+        mock_session.cache.remove_old_entries()
 
 
 @pytest.mark.parametrize('method', ALL_METHODS)

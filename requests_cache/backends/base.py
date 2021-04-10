@@ -124,6 +124,11 @@ class BaseCache:
             if response.is_expired:
                 self.delete(key)
 
+    def remove_old_entries(self, *args, **kwargs):
+        msg = 'BaseCache.remove_old_entries() is deprecated; ' 'please use CachedSession.remove_expired_responses()'
+        warnings.warn(DeprecationWarning(msg))
+        self.remove_expired_responses(*args, **kwargs)
+
     def create_key(self, request: requests.PreparedRequest, **kwargs) -> str:
         """Create a normalized cache key from a request object"""
         return create_key(request, self._ignored_parameters, self._include_get_headers, **kwargs)
