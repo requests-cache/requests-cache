@@ -141,6 +141,14 @@ def test_cached_urls(mock_session):
     assert set(mock_session.cache.urls) == set(expected_urls)
 
 
+def test_invalid_urls(mock_session):
+    responses = [mock_session.get(url) for url in [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_HTTPS]]
+    responses[2] = AttributeError
+    with patch.object(DbPickleDict, '__getitem__', side_effect=responses):
+        expected_urls = [MOCKED_URL, MOCKED_URL_JSON]
+        assert set(mock_session.cache.urls) == set(expected_urls)
+
+
 def test_filter_fn(mock_session):
     mock_session.filter_fn = lambda r: r.url != MOCKED_URL_JSON
     mock_session.get(MOCKED_URL)

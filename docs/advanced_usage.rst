@@ -55,7 +55,7 @@ Cache Contents
 You can use :py:meth:`.CachedSession.cache.urls` to see all URLs currently in the cache:
 
     >>> session = CachedSession()
-    >>> print(session.urls)
+    >>> print(session.cache.urls)
     ['https://httpbin.org/get', 'https://httpbin.org/stream/100']
 
 If needed, you can get more details on cached responses via ``CachedSession.cache.responses``, which

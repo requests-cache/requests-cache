@@ -3,7 +3,7 @@ import warnings
 from abc import ABC
 from collections.abc import MutableMapping
 from logging import getLogger
-from typing import Iterable, List, Union
+from typing import Iterable, List, Tuple, Union
 
 import requests
 from requests.models import PreparedRequest
@@ -11,6 +11,7 @@ from requests.models import PreparedRequest
 from ..cache_keys import create_key, url_to_key
 from ..response import AnyResponse, CachedResponse, ExpirationTime
 
+ResponseOrKey = Union[CachedResponse, str]
 logger = getLogger(__name__)
 
 
@@ -28,8 +29,8 @@ class BaseCache:
 
     @property
     def urls(self) -> List[str]:
-        """Get all URLs currently in the cache"""
-        return sorted([r.url for r in self.responses.values()])
+        """Get all URLs currently in the cache (excluding redirects)"""
+        return [r.url for _, r in self._get_valid_responses()]
 
     def save_response(self, key: str, response: AnyResponse, expire_after: ExpirationTime = None):
         """Save response to cache
@@ -109,15 +110,7 @@ class BaseCache:
             expire_after: A new expiration time used to revalidate the cache
         """
         logger.info('Removing expired responses.' + (f'Revalidating with: {expire_after}' if expire_after else ''))
-        for key in list(self.responses.keys()):
-            # If a response is invalid, delete it
-            try:
-                response = self.responses[key]
-            except Exception as e:
-                logger.debug(f'Unable to deserialize response with key {key}: {str(e)}')
-                self.delete(key)
-                continue
-
+        for key, response in self._get_valid_responses():
             # If we're revalidating and it's not yet expired, update the cached item's expiration
             if expire_after is not None and not response.revalidate(expire_after):
                 self.responses[key] = response
@@ -128,6 +121,17 @@ class BaseCache:
         msg = 'BaseCache.remove_old_entries() is deprecated; ' 'please use CachedSession.remove_expired_responses()'
         warnings.warn(DeprecationWarning(msg))
         self.remove_expired_responses(*args, **kwargs)
+
+    def _get_valid_responses(self) -> Iterable[Tuple[str, CachedResponse]]:
+        """Get all responses from the cache, and delete any invalid ones"""
+        for key in list(self.responses.keys()):
+            # If a response is invalid, delete it
+            try:
+                yield key, self.responses[key]
+            except Exception as e:
+                logger.debug(f'Unable to deserialize response with key {key}: {str(e)}')
+                self.delete(key)
+                continue
 
     def create_key(self, request: requests.PreparedRequest, **kwargs) -> str:
         """Create a normalized cache key from a request object"""
@@ -172,11 +176,11 @@ class BaseStorage(MutableMapping, ABC):
             warn_func = logger.info if suppress_warnings else warnings.warn
             warn_func('Using a secret key to sign cached items is recommended for this backend')
 
-    def serialize(self, item: Union[CachedResponse, str]) -> bytes:
+    def serialize(self, item: ResponseOrKey) -> bytes:
         """Serialize a URL or response into bytes"""
         return self._serializer.dumps(item)
 
-    def deserialize(self, item: Union[CachedResponse, str, bytes]) -> Union[CachedResponse, str]:
+    def deserialize(self, item: Union[ResponseOrKey, bytes]) -> ResponseOrKey:
         """Deserialize a cached URL or response"""
         return self._serializer.loads(bytes(item))
 
