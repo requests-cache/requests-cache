@@ -168,12 +168,12 @@ class BaseStorage(MutableMapping, ABC):
         **kwargs,
     ):
         self._serializer = serializer or self._get_serializer(secret_key, salt)
-        logger.info(f'Initializing {type(self).__name__} with serializer: {type(self._serializer)}')
+        logger.debug(f'Initializing {type(self).__name__} with serializer: {self._serializer}')
 
         if kwargs:
             logger.warning(f'Unrecognized keyword arguments: {kwargs}')
         if not secret_key:
-            warn_func = logger.info if suppress_warnings else warnings.warn
+            warn_func = logger.debug if suppress_warnings else warnings.warn
             warn_func('Using a secret key to sign cached items is recommended for this backend')
 
     def serialize(self, item: ResponseOrKey) -> bytes:

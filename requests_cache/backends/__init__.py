@@ -78,7 +78,7 @@ BACKEND_CLASSES = {
 
 def init_backend(backend: BackendSpecifier, *args, **kwargs) -> BaseCache:
     """Initialize a backend given a name, class, or instance"""
-    logger.info(f'Initializing backend: {backend}')
+    logger.debug(f'Initializing backend: {backend}')
 
     # Omit 'cache_name' positional arg if an equivalent backend-specific kwarg is specified
     if any([k in kwargs for k in CACHE_NAME_KWARGS]):

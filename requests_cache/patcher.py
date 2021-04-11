@@ -130,5 +130,5 @@ def remove_expired_responses(expire_after: ExpirationTime = None):
 
 
 def _patch_session_factory(session_factory: Type[OriginalSession] = CachedSession):
-    logger.info(f'Patching requests.Session with class: {type(session_factory).__name__}')
+    logger.debug(f'Patching requests.Session with class: {session_factory.__name__}')
     requests.Session = requests.sessions.Session = session_factory  # noqa
