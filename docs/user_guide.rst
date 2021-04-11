@@ -40,8 +40,7 @@ Basic usage looks like this:
     >>> from requests_cache import CachedSession
     >>>
     >>> session = CachedSession()
-    >>> for i in range(60):
-    ...     session.get('http://httpbin.org/delay/1')
+    >>> session.get('http://httpbin.org/get')
 
 Any :py:class:`requests.Session` method can be used (but see :ref:`user_guide:http methods` section
 below for config details):
