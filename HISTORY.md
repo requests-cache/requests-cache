@@ -3,6 +3,7 @@
 ## 0.6.1 (2021-04-TBD)
 * Handle errors due to invalid responses in `BaseCache.urls`
 * Add recently renamed `BaseCache.remove_old_entries()` back, as an alias with a DeprecationWarning
+* Make parent dirs for new SQLite databases
 * Exclude test directory from `find_packages()`
 
 ## 0.6.0 (2021-04-09)
