@@ -96,7 +96,7 @@ class CachedResponse(Response):
     def raw(self) -> HTTPResponse:
         """Reconstruct a raw urllib response object from stored attrs"""
         if not self._raw_response:
-            logger.info('Rebuilding raw response object')
+            logger.debug('Rebuilding raw response object')
             self._raw_response = CachedHTTPResponse(body=self._content, **self._raw_response_attrs)
         return self._raw_response
 

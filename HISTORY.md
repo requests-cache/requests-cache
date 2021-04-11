@@ -1,5 +1,10 @@
 # History
 
+## 0.6.1 (2021-04-TBD)
+* Handle errors due to invalid responses in `BaseCache.urls`
+* Add recently renamed `BaseCache.remove_old_entries()` back, as an alias with a DeprecationWarning
+* Exclude test directory from `find_packages()`
+
 ## 0.6.0 (2021-04-09)
 [See all included issues and PRs](https://github.com/reclosedev/requests-cache/milestone/1?closed=1)
 
@@ -51,6 +56,7 @@ next time they are requested. They can also be manually converted or removed, if
 * Fix `get_cache()`, `clear()`, and `remove_expired_responses()` so they will do nothing if
   requests-cache is not installed
 * Update usage of deprecated MongoClient `save()` method
+* Replace some old bugs with new and different bugs, just to keep life interesting
 
 ### General
 * Drop support for python <= 3.5
