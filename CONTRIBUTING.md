@@ -58,16 +58,30 @@ $ pre-commit uninstall
 * Run `./runtests.sh` to run all tests with some useful options for test coverage reports,
   multiprocessing, and debugging.
 
-### Integration Tests
-Live databases are required to run integration tests, and docker-compose config is included to make
-this easier. First, [install docker](https://docs.docker.com/get-docker/) and
-[install docker-compose](https://docs.docker.com/compose/install/).
+### Integration Test Containers
+A live web server and backend databases are required to run integration tests, and docker-compose
+config is included to make this easier. First, [install docker](https://docs.docker.com/get-docker/)
+and [install docker-compose](https://docs.docker.com/compose/install/).
 
 Then, run:
 ```bash
 $ docker-compose up -d
 pytest tests/integration
 ```
+
+### Integration Test Alternatives
+If you can't easily run Docker containers in your environment but still want to run some of the
+integration tests, you can use [pytest-httpbin](https://github.com/kevin1024/pytest-httpbin) instead
+of the httpbin container. This just requires installing an extra package and setting an environment
+variable:
+```bash
+pip install pytest-httpbin
+export USE_PYTEST_HTTPBIN=true
+pytest tests/integration/test_cache.py
+```
+
+For backend databases, you can install and run them on the host instead of in a container, as long
+as they are running on the default port.
 
 ## Debugging
 When you run into issues while working on new features and/or tests, it will make your life much easier
