@@ -47,5 +47,6 @@ setup(
     url='https://github.com/reclosedev/requests-cache',
     install_requires=['itsdangerous', 'requests>=2.0.0', 'url-normalize>=1.4'],
     extras_require=extras_require,
+    python_requires='>=3.6',
     include_package_data=True,
 )
