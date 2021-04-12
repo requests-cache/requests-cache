@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # flake8: noqa: E402,F401
 __version__ = '0.6.1'
 
