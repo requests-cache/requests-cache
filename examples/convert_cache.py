@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-"""Example of converting data cached in older versions of requests-cache (<=0.5.2)
+"""
+Example of converting data cached in older versions of requests-cache (<=0.5.2)
 into the current format
 """
 from requests import Response

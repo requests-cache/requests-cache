@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-"""An example of setting expiration for individual requests"""
+"""
+An example of setting expiration for individual requests
+"""
 import time
 
 from requests_cache import CachedSession

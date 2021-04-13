@@ -15,6 +15,7 @@ Contents
     user_guide
     advanced_usage
     security
+    examples
     api
     contributing
     contributors

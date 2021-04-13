@@ -15,3 +15,5 @@ You can also check out these other python cache projects:
   ``aiohttp`` web server
 * `aiocache <https://github.com/aio-libs/aiocache>`_: General-purpose (not HTTP-specific) async cache
   backends
+* `flask-caching <https://github.com/sh4nks/flask-caching>`_: A server-side HTTP cache for
+  applications using the Flask framework
