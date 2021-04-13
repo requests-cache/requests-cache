@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # TODO: Refactor with pytest fixtures
 import os
 

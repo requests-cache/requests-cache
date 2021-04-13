@@ -42,28 +42,28 @@ def get_placeholder_backend(original_exception: Exception = None) -> Type[BaseCa
     return PlaceholderBackend
 
 
-# Import all backends for which dependencies are installed
+# Import all backend classes for which dependencies are installed
 try:
-    from .dynamodb import DynamoDbCache
+    from .dynamodb import DynamoDbCache, DynamoDbDict
 except ImportError as e:
-    DynamoDbCache = get_placeholder_backend(e)  # type: ignore
+    DynamoDbCache = DynamoDbDict = get_placeholder_backend(e)  # type: ignore
 try:
-    from .gridfs import GridFSCache
+    from .gridfs import GridFSCache, GridFSPickleDict
 except ImportError as e:
-    GridFSCache = get_placeholder_backend(e)  # type: ignore
+    GridFSCache = GridFSPickleDict = get_placeholder_backend(e)  # type: ignore
 try:
-    from .mongo import MongoCache
+    from .mongo import MongoCache, MongoDict, MongoPickleDict
 except ImportError as e:
-    MongoCache = get_placeholder_backend(e)  # type: ignore
+    MongoCache = MongoDict = MongoPickleDict = get_placeholder_backend(e)  # type: ignore
 try:
-    from .redis import RedisCache
+    from .redis import RedisCache, RedisDict
 except ImportError as e:
-    RedisCache = get_placeholder_backend(e)  # type: ignore
+    RedisCache = RedisDict = get_placeholder_backend(e)  # type: ignore
 try:
     # Note: Heroku doesn't support SQLite due to ephemeral storage
-    from .sqlite import DbCache
+    from .sqlite import DbCache, DbDict, DbPickleDict
 except ImportError as e:
-    DbCache = get_placeholder_backend(e)  # type: ignore
+    DbCache = DbDict = DbPickleDict = get_placeholder_backend(e)  # type: ignore
 
 
 BACKEND_CLASSES = {

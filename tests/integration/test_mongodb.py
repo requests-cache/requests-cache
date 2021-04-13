@@ -1,17 +1,21 @@
-#!/usr/bin/env python
+import pytest
 import unittest
 
+from requests_cache.backends import MongoDict, MongoPickleDict
+from tests.conftest import fail_if_no_connection
 from tests.integration.test_backends import BaseBackendTestCase
 
-try:
-    from requests_cache.backends.mongo import MongoDict, MongoPickleDict
-except ImportError:
-    print("pymongo not installed")
-else:
 
-    class MongoDBTestCase(BaseBackendTestCase, unittest.TestCase):
-        dict_class = MongoDict
-        pickled_dict_class = MongoPickleDict
+@pytest.fixture(scope='module', autouse=True)
+@fail_if_no_connection
+def ensure_connection():
+    """Fail all tests in this module if MongoDB is not running"""
+    from pymongo import MongoClient
 
-    if __name__ == '__main__':
-        unittest.main()
+    client = MongoClient(serverSelectionTimeoutMS=200)
+    client.server_info()
+
+
+class MongoDBTestCase(BaseBackendTestCase, unittest.TestCase):
+    dict_class = MongoDict
+    pickled_dict_class = MongoPickleDict
