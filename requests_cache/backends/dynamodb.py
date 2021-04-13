@@ -44,6 +44,8 @@ class DynamoDbDict(BaseStorage):
         connection=None,
         endpoint_url=None,
         region_name='us-east-1',
+        aws_access_key_id=None,
+        aws_secret_access_key=None,
         read_capacity_units=1,
         write_capacity_units=1,
         **kwargs,
@@ -53,7 +55,15 @@ class DynamoDbDict(BaseStorage):
         if connection is not None:
             self.connection = connection
         else:
-            self.connection = boto3.resource('dynamodb', endpoint_url=endpoint_url, region_name=region_name)
+            # TODO: Use inspection to get any valid resource arguments from **kwargs
+            self.connection = boto3.resource(
+                'dynamodb',
+                endpoint_url=endpoint_url,
+                region_name=region_name,
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key,
+            )
+
         try:
             self.connection.create_table(
                 AttributeDefinitions=[
