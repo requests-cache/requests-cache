@@ -4,8 +4,9 @@ Note: The protocol ``http(s)+mock://`` helps :py:class:`requests_mock.Adapter` p
 :py:class:`requests.PreparedRequest`. More info here:
 https://requests-mock.readthedocs.io/en/latest/adapter.html
 """
+import os
 import pytest
-from os import getenv
+from logging import basicConfig, getLogger
 from tempfile import NamedTemporaryFile
 
 import requests
@@ -22,11 +23,36 @@ MOCKED_URL_REDIRECT = 'http+mock://requests-cache.com/redirect'
 MOCKED_URL_REDIRECT_TARGET = 'http+mock://requests-cache.com/redirect_target'
 MOCK_PROTOCOLS = ['mock://', 'http+mock://', 'https+mock://']
 
+# Configure logging to show debug output when tests fail (or with pytest -s)
+basicConfig(level='INFO')
+getLogger('requests_cache').setLevel('DEBUG')
+logger = getLogger(__name__)
+
 
 def httpbin(path):
     """Get the url for either a local or remote httpbin instance"""
-    base_url = getenv('HTTPBIN_URL', 'http://localhost:80/')
-    return base_url + path
+    base_url = os.getenv('HTTPBIN_URL', 'http://localhost:80').rstrip('/')
+    return f'{base_url}/{path}'
+
+
+"""The following allows pytest-httpbin to be used instead of the httpbin container.
+A server will be started via an autoused fixture if both:
+* pytest-httpbin is installed
+* The environment variable USE_PYTEST_HTTPBIN is set to 'true'
+"""
+try:
+    import pytest_httpbin  # noqa: F401
+
+    USE_PYTEST_HTTPBIN = os.getenv('USE_PYTEST_HTTPBIN', '').lower() == 'true'
+    logger.info('Using pytest-httpin for integration tests')
+except ImportError:
+    USE_PYTEST_HTTPBIN = False
+
+
+@pytest.fixture(scope='session', autouse=USE_PYTEST_HTTPBIN)
+def httpbin_wrapper(httpbin):
+    os.environ['HTTPBIN_URL'] = httpbin.url
+    return httpbin
 
 
 @pytest.fixture(scope='function')

@@ -2,7 +2,7 @@
 import json
 import pytest
 
-from tests.conftest import httpbin
+from tests.conftest import USE_PYTEST_HTTPBIN, httpbin
 
 HTTPBIN_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 HTTPBIN_FORMATS = [
@@ -37,6 +37,10 @@ def test_all_methods(field, method, tempfile_session):
 @pytest.mark.parametrize('response_format', HTTPBIN_FORMATS)
 def test_all_response_formats(response_format, tempfile_session):
     """Test that all relevant response formats are cached correctly"""
+    # Temporary workaround for this issue: https://github.com/kevin1024/pytest-httpbin/issues/60
+    if response_format == 'json' and USE_PYTEST_HTTPBIN:
+        tempfile_session.allowable_codes = (200, 404)
+
     r1 = tempfile_session.get(httpbin(response_format))
     r2 = tempfile_session.get(httpbin(response_format))
     assert r1.from_cache is False
