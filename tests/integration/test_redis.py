@@ -3,7 +3,7 @@ import unittest
 
 from requests_cache.backends.redis import RedisDict
 from tests.conftest import fail_if_no_connection
-from tests.integration.test_backends import BaseBackendTestCase
+from tests.integration.test_backends import BaseStorageTestCase
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -15,6 +15,6 @@ def ensure_connection():
     Redis().info()
 
 
-class RedisTestCase(BaseBackendTestCase, unittest.TestCase):
-    dict_class = RedisDict
-    pickled_dict_class = RedisDict
+class RedisTestCase(BaseStorageTestCase, unittest.TestCase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, storage_class=RedisDict, picklable=True, **kwargs)

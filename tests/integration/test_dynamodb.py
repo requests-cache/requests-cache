@@ -3,7 +3,7 @@ import unittest
 
 from requests_cache.backends import DynamoDbDict
 from tests.conftest import fail_if_no_connection
-from tests.integration.test_backends import BaseBackendTestCase
+from tests.integration.test_backends import BaseStorageTestCase
 
 boto_options = {
     'endpoint_url': 'http://localhost:8000',
@@ -25,10 +25,14 @@ def ensure_connection():
 
 class DynamoDbDictWrapper(DynamoDbDict):
     def __init__(self, namespace, collection_name='dynamodb_dict_data', **options):
-        options.update(boto_options)
-        super().__init__(namespace, collection_name, **options)
+        super().__init__(namespace, collection_name, **options, **boto_options)
 
 
-class DynamoDbTestCase(BaseBackendTestCase, unittest.TestCase):
-    dict_class = DynamoDbDictWrapper
-    pickled_dict_class = DynamoDbDictWrapper
+class DynamoDbTestCase(BaseStorageTestCase, unittest.TestCase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(
+            *args,
+            storage_class=DynamoDbDictWrapper,
+            picklable=True,
+            **kwargs,
+        )

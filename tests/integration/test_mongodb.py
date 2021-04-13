@@ -3,7 +3,7 @@ import unittest
 
 from requests_cache.backends import MongoDict, MongoPickleDict
 from tests.conftest import fail_if_no_connection
-from tests.integration.test_backends import BaseBackendTestCase
+from tests.integration.test_backends import BaseStorageTestCase
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -16,6 +16,11 @@ def ensure_connection():
     client.server_info()
 
 
-class MongoDBTestCase(BaseBackendTestCase, unittest.TestCase):
-    dict_class = MongoDict
-    pickled_dict_class = MongoPickleDict
+class MongoDictTestCase(BaseStorageTestCase, unittest.TestCase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, storage_class=MongoDict, **kwargs)
+
+
+class MongoPickleDictTestCase(BaseStorageTestCase, unittest.TestCase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, storage_class=MongoPickleDict, picklable=True, **kwargs)
