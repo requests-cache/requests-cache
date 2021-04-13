@@ -1,17 +1,20 @@
-#!/usr/bin/env python
+import pytest
 import unittest
 
-from tests.integration.test_backends import BaseBackendTestCase
+from requests_cache.backends.redis import RedisDict
+from tests.conftest import fail_if_no_connection
+from tests.integration.test_backends import BaseStorageTestCase
 
-try:
-    from requests_cache.backends.redis import RedisDict
-except ImportError:
-    print("Redis not installed")
-else:
 
-    class RedisTestCase(BaseBackendTestCase, unittest.TestCase):
-        dict_class = RedisDict
-        pickled_dict_class = RedisDict
+@pytest.fixture(scope='module', autouse=True)
+@fail_if_no_connection
+def ensure_connection():
+    """Fail all tests in this module if Redis is not running"""
+    from redis import Redis
 
-    if __name__ == '__main__':
-        unittest.main()
+    Redis().info()
+
+
+class RedisTestCase(BaseStorageTestCase, unittest.TestCase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, storage_class=RedisDict, picklable=True, **kwargs)

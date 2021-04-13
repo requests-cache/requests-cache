@@ -32,6 +32,7 @@ extras_require = {
         'pytest-xdist',
         'radon',
         'requests-mock>=1.8',
+        'timeout-decorator',
     ],
 }
 # All development/testing packages combined

@@ -31,7 +31,7 @@ class GridFSCache(BaseCache):
 class GridFSPickleDict(BaseStorage):
     """A dictionary-like interface for a GridFS collection"""
 
-    def __init__(self, db_name, connection=None, **kwargs):
+    def __init__(self, db_name, collection_name=None, connection=None, **kwargs):
         """
         :param db_name: database name (be careful with production databases)
         :param connection: ``pymongo.Connection`` instance. If it's ``None``
@@ -54,13 +54,17 @@ class GridFSPickleDict(BaseStorage):
         return self.deserialize(result.read())
 
     def __setitem__(self, key, item):
-        self.__delitem__(key)
+        try:
+            self.__delitem__(key)
+        except KeyError:
+            pass
         self.fs.put(self.serialize(item), **{'_id': key})
 
     def __delitem__(self, key):
         res = self.fs.find_one({'_id': key})
-        if res is not None:
-            self.fs.delete(res._id)
+        if res is None:
+            raise KeyError
+        self.fs.delete(res._id)
 
     def __len__(self):
         return self.db['fs.files'].count()

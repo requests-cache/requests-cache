@@ -1,26 +1,38 @@
-#!/usr/bin/env python
-import os
+import pytest
 import unittest
 
-from tests.integration.test_backends import BaseBackendTestCase
+from requests_cache.backends import DynamoDbDict
+from tests.conftest import fail_if_no_connection
+from tests.integration.test_backends import BaseStorageTestCase
 
-try:
-    from requests_cache.backends.dynamodb import DynamoDbDict
-except ImportError:
-    print("DynamoDb not installed")
-else:
-    # boto3 will accept any values for creds, but they still need to be present
-    os.environ['AWS_ACCESS_KEY_ID'] = 'placeholder'
-    os.environ['AWS_SECRET_ACCESS_KEY'] = 'placeholder'
+boto_options = {
+    'endpoint_url': 'http://localhost:8000',
+    'region_name': 'us-east-1',
+    'aws_access_key_id': 'placeholder',
+    'aws_secret_access_key': 'placeholder',
+}
 
-    class DynamoDbDictWrapper(DynamoDbDict):
-        def __init__(self, namespace, collection_name='dynamodb_dict_data', **options):
-            options['endpoint_url'] = 'http://0.0.0.0:8000'
-            super().__init__(namespace, collection_name, **options)
 
-    class DynamoDbTestCase(BaseBackendTestCase, unittest.TestCase):
-        dict_class = DynamoDbDictWrapper
-        pickled_dict_class = DynamoDbDictWrapper
+@pytest.fixture(scope='module', autouse=True)
+@fail_if_no_connection
+def ensure_connection():
+    """Fail all tests in this module if DynamoDB is not running"""
+    import boto3
 
-    if __name__ == '__main__':
-        unittest.main()
+    client = boto3.client('dynamodb', **boto_options)
+    client.describe_limits()
+
+
+class DynamoDbDictWrapper(DynamoDbDict):
+    def __init__(self, namespace, collection_name='dynamodb_dict_data', **options):
+        super().__init__(namespace, collection_name, **options, **boto_options)
+
+
+class DynamoDbTestCase(BaseStorageTestCase, unittest.TestCase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(
+            *args,
+            storage_class=DynamoDbDictWrapper,
+            picklable=True,
+            **kwargs,
+        )

@@ -6,12 +6,14 @@ https://requests-mock.readthedocs.io/en/latest/adapter.html
 """
 import os
 import pytest
+from functools import wraps
 from logging import basicConfig, getLogger
 from tempfile import NamedTemporaryFile
 
 import requests
 from requests_mock import ANY as ANY_METHOD
 from requests_mock import Adapter
+from timeout_decorator import timeout
 
 import requests_cache
 from requests_cache.session import ALL_METHODS, CachedSession
@@ -151,3 +153,23 @@ def get_mock_adapter() -> Adapter:
         status_code=200,
     )
     return adapter
+
+
+def fail_if_no_connection(func) -> bool:
+    """Decorator for testing a backend connection. This will intentionally cause a test failure if
+    the wrapped function doesn't have dependencies installed, doesn't connect after a short timeout,
+    or raises any exceptions.
+
+    This allows us to fail quickly for backends that aren't set up, rather than hanging for an
+    extended period of time.
+    """
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            timeout(0.5)(func)(*args, **kwargs)
+        except Exception as e:
+            logger.error(e)
+            pytest.fail('Could not connect to backend')
+
+    return wrapper

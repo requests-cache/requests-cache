@@ -1,19 +1,31 @@
-#!/usr/bin/env python
+import pytest
 import unittest
 
-from tests.integration.test_backends import BaseBackendTestCase
+from requests_cache.backends import GridFSPickleDict
+from tests.conftest import fail_if_no_connection
+from tests.integration.test_backends import BaseStorageTestCase
 
-try:
-    from requests_cache.backends.gridfs import GridFSPickleDict
-    from requests_cache.backends.mongo import MongoDict
 
-except ImportError:
-    print("pymongo not installed")
-else:
+@pytest.fixture(scope='module', autouse=True)
+@fail_if_no_connection
+def ensure_connection():
+    """Fail all tests in this module if MongoDB is not running"""
+    from pymongo import MongoClient
 
-    class GridFSTestCase(BaseBackendTestCase, unittest.TestCase):
-        dict_class = MongoDict
-        pickled_dict_class = GridFSPickleDict
+    client = MongoClient(serverSelectionTimeoutMS=200)
+    client.server_info()
 
-    if __name__ == '__main__':
-        unittest.main()
+
+class GridFSPickleDictTestCase(BaseStorageTestCase, unittest.TestCase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, storage_class=GridFSPickleDict, picklable=True, **kwargs)
+
+    def test_set_get(self):
+        """Override base test to test a single collecton instead of multiple"""
+        d1 = self.storage_class(self.NAMESPACE, self.TABLES[0])
+        d1[1] = 1
+        d1[2] = 2
+        assert list(d1.keys()) == [1, 2]
+
+        with pytest.raises(KeyError):
+            d1[4]
