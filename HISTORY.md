@@ -5,6 +5,8 @@
 * Add recently renamed `BaseCache.remove_old_entries()` back, as an alias with a DeprecationWarning
 * Make parent dirs for new SQLite databases
 * Exclude test directory from `find_packages()`
+* Add `aws_access_key_id` and `aws_secret_access_key` kwargs to `DynamoDbDict`
+* Update `GridFSPickleDict.__delitem__` to raise a KeyError for missing items
 
 ## 0.6.0 (2021-04-09)
 [See all included issues and PRs](https://github.com/reclosedev/requests-cache/milestone/1?closed=1)
