@@ -1,6 +1,9 @@
 # History
 
-## 0.6.1 (2021-04-13)
+### 0.6.2 (2021-04-14)
+* Explicitly include docs, tests, and examples in sdist
+
+### 0.6.1 (2021-04-13)
 * Handle errors due to invalid responses in `BaseCache.urls`
 * Add recently renamed `BaseCache.remove_old_entries()` back, as an alias with a DeprecationWarning
 * Make parent dirs for new SQLite databases

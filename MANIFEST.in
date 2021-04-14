@@ -3,3 +3,7 @@ include *.md
 include *.yml
 prune docs/_*
 prune temp
+graft docs
+graft examples
+graft tests
+global-exclude *.py[co]
