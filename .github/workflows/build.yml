@@ -96,16 +96,16 @@ jobs:
       - name: Run cyclomatic complexity check
         run: radon cc --show-complexity --average --order SCORE requests_cache
 
-  # Deploy stable builds on tags only
+  # Deploy pre-release builds from dev branch, and stable builds on tags only
   release:
     needs: [test, analyze]
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/dev'
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-          python-version: '3.8'
+          python-version: ${{ env.LATEST_PY_VERSION }}
 
       - name: Install dependencies
         run: pip install -U ".[build]"
