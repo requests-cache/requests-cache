@@ -11,6 +11,9 @@ directory = 'test-reports'
 [tool.coverage.run]
 branch = true
 source = ['requests_cache']
+omit = [
+    'requests_cache/__init__.py',
+]
 
 [tool.isort]
 profile = "black"

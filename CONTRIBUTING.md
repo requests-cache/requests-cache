@@ -145,3 +145,12 @@ Release steps:
 - Push a new tag, e.g.: `git tag v0.1 && git push origin --tags`
 - This will trigger a deployment. Verify that this completes successfully and that the new version
   can be installed from pypi with `pip install`
+
+## Pre-Releases
+Pre-release builds are convenient for letting testers try out in-development changes. Versions with
+the suffix `.dev` (among others) can be deployed to PyPI and installed by users with `pip install --pre`,
+and are otherwise ignored by `pip install`. See python packaging docs on
+[pre-release versioning](https://packaging.python.org/guides/distributing-packages-using-setuptools/#pre-release-versioning)
+for more details.
+
+A pre-release build for requests-cache will automatically be published for **any commits to the dev branch.**
