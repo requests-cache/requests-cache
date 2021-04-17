@@ -65,3 +65,8 @@ autosectionlabel_prefix_document = True
 # HTML theme settings
 pygments_style = 'sphinx'
 html_theme = 'sphinx_rtd_theme'
+
+
+def setup(app):
+    """Run some additional steps after the Sphinx builder is initialized"""
+    app.add_css_file('collapsible_container.css')
