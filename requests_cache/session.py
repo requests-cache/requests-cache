@@ -2,6 +2,7 @@
 from contextlib import contextmanager
 from fnmatch import fnmatch
 from logging import getLogger
+from threading import RLock
 from typing import Any, Callable, Dict, Iterable
 
 from requests import PreparedRequest
@@ -44,6 +45,7 @@ class CacheMixin:
         self._cache_name = cache_name
         self._request_expire_after: ExpirationTime = None
         self._disabled = False
+        self._lock = RLock()
 
         # Remove any requests-cache-specific kwargs before passing along to superclass
         session_kwargs = {k: v for k, v in kwargs.items() if k not in BACKEND_KWARGS}
@@ -163,11 +165,15 @@ class CacheMixin:
     def cache_disabled(self):
         """
         Context manager for temporary disabling the cache
-        ::
+
+        .. warning:: This method is not thread-safe.
+
+        Example:
 
             >>> s = CachedSession()
             >>> with s.cache_disabled():
             ...     s.get('http://httpbin.org/ip')
+
         """
         if self._disabled:
             yield
@@ -195,10 +201,13 @@ class CacheMixin:
 
     @contextmanager
     def request_expire_after(self, expire_after: ExpirationTime = None):
-        """Temporarily override ``expire_after`` for individual requests"""
-        self._request_expire_after = expire_after
-        yield
-        self._request_expire_after = None
+        """Temporarily override ``expire_after`` for an individual request. This is needed to
+        persist the value between requests.Session.request() -> send()."""
+        # TODO: Is there a way to pass this via request kwargs -> PreparedRequest?
+        with self._lock:
+            self._request_expire_after = expire_after
+            yield
+            self._request_expire_after = None
 
     def remove_expired_responses(self, expire_after: ExpirationTime = None):
         """Remove expired responses from the cache, optionally with revalidation
