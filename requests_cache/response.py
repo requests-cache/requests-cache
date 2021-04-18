@@ -51,9 +51,19 @@ class CachedResponse(Response):
         self.request.hooks = []
 
         # Read content to support streaming requests, and reset file pointer on original request
-        self._content = original_response.content
-        if hasattr(original_response.raw, '_fp'):
-            original_response.raw._fp = BytesIO(self._content or b'')
+        if hasattr(original_response.raw, '_fp') and not original_response.raw.isclosed():
+            # Cache raw data
+            raw_data = original_response.raw.read(decode_content=False)
+            # Reset `_fp`
+            original_response.raw._fp = BytesIO(raw_data)
+            # Read and store (decoded) data
+            self._content = original_response.content
+            # Reset `_fp` again
+            original_response.raw._fp = BytesIO(raw_data)
+            original_response.raw._fp_bytes_read = 0
+            original_response.raw.length_remaining = len(raw_data)
+        else:
+            self._content = original_response.content
 
         # Copy raw response
         self._raw_response = None
@@ -123,21 +133,20 @@ class CachedHTTPResponse(HTTPResponse):
     def release_conn(self):
         """No-op for compatibility"""
 
-    def read(self, amt=None, decode_content=False, **kwargs):
+    def read(self, amt=None, decode_content=None, **kwargs):
         """Simplified reader for cached content that emulates
         :py:meth:`urllib3.response.HTTPResponse.read()`
         """
-        data = self._fp.read(amt)
-        decode_content = self.decode_content if decode_content is None else decode_content
+        if 'content-encoding' in self.headers and (
+            decode_content is False or (decode_content is None and not self.decode_content)
+        ):
+            # Warn if content was encoded and decode_content is set to False
+            logger.warning('read() returns decoded data for cached responses, even with decode_content=False set')
 
+        data = self._fp.read(amt)
         # "close" the file to inform consumers to stop reading from it
         if not data:
             self._fp.close()
-        # Decode binary content, if specified
-        elif decode_content:
-            self._init_decoder()
-            data = self._decode(data, decode_content=True, flush_decoder=True)
-
         return data
 
     def stream(self, amt=None, **kwargs):

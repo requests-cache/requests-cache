@@ -1,4 +1,3 @@
-import gzip
 import pytest
 from datetime import datetime, timedelta
 from io import BytesIO
@@ -70,22 +69,6 @@ def test_raw_response__reset(mock_session):
 
     response.reset()
     assert response.raw.read(None) == b'mock response'
-
-
-def test_raw_response__decode(mock_session):
-    """Test that a gzip-compressed raw response can be manually uncompressed with decode_content"""
-    url = f'{MOCKED_URL}/utf-8'
-    mock_session.mock_adapter.register_uri(
-        'GET',
-        url,
-        status_code=200,
-        body=BytesIO(gzip.compress(b'compressed response')),
-        headers={'content-encoding': 'gzip'},
-    )
-    response = CachedResponse(mock_session.get(url))
-    # Requests will have already read this, but let's just pretend we want to do it manually
-    response.raw._fp = BytesIO(gzip.compress(b'compressed response'))
-    assert response.raw.read(None, decode_content=True) == b'compressed response'
 
 
 def test_raw_response__stream(mock_session):
