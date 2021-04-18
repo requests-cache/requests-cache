@@ -9,6 +9,7 @@ on:
   workflow_dispatch:
 env:
   LATEST_PY_VERSION: '3.9'
+  COVERAGE_ARGS: '--cov --cov-report=term --cov-report=html'
 
 jobs:
   # Run unit tests for each supported python version
@@ -53,8 +54,8 @@ jobs:
         if: ${{ matrix.python-version == env.LATEST_PY_VERSION }}
         # Run unit tests first (and with multiprocessing) to fail quickly if there are issues
         run: |
-          pytest tests/unit --numprocesses=auto --cov --cov-report=term --cov-report=html
-          pytest tests/integration --cov --cov-report=term --cov-report=html --cov-append
+          pytest tests/unit --numprocesses=auto ${{ env.COVERAGE_ARGS }}
+          pytest tests/integration --cov-append ${{ env.COVERAGE_ARGS }}
       - name: Send code coverage report to Coveralls
         if: ${{ matrix.python-version == env.LATEST_PY_VERSION }}
         env:

@@ -29,6 +29,7 @@ extras_require = {
         'psutil',
         'pytest>=5.0',
         'pytest-cov>=2.11',
+        'pytest-order~=0.11.0',
         'pytest-xdist',
         'radon',
         'requests-mock>=1.8',
