@@ -1,5 +1,6 @@
 # Contributors
-Thanks to the following people for contributing patches and suggestions:
+Thanks to the following individuals for providing pull requests, feedback, and other
+contributions that have helped to improve requests-cache:
 
 * [Aaron-mf1](https://github.com/aaron-mf1)
 * [Alex Morega](https://github.com/mgax)
@@ -20,13 +21,14 @@ Thanks to the following people for contributing patches and suggestions:
 * [Guangnan Cheng](https://github.com/chengguangnan)
 * [Honza Javorek](https://github.com/honzajavorek)
 * [Ilya](https://github.com/libbkmz)
-* [J Rob Gant ](https://github.com/rgant)
+* [J Rob Gant](https://github.com/rgant)
 * [Jace Browning](https://github.com/jacebrowning)
-* [Jessy Williams ](https://github.com/jkwill87)
+* [Jessy Williams](https://github.com/jkwill87)
 * [John Vandenberg](https://github.com/jayvdb)
 * [Jürgen Hermann](https://github.com/jhermann)
 * [Kieran W](https://github.com/FredHappyface)
 * [Kristian Kvilekval](https://github.com/kgk)
+* [M Hellmund](https://github.com/MHellmund)
 * [MBarkhau](https://github.com/mbarkhau)
 * [Marc Abramowitz](https://github.com/msabramo)
 * [Marius Gedminas](https://github.com/mgedmin)
@@ -42,6 +44,7 @@ Thanks to the following people for contributing patches and suggestions:
 * [Paul Furley](https://github.com/paulfurley)
 * [Philipp A.](https://github.com/flying-sheep)
 * [Sebastian Höffner](https://github.com/shoeffner)
+* [Shiftinv](https://github.com/shiftinv)
 * [Simon Biewald](https://github.com/Varbin)
 * [Slin Lee](https://github.com/slinlee)
 * [Stavros Korokithakis](https://github.com/skorokithakis)

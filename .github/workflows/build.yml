@@ -49,8 +49,8 @@ jobs:
       - name: Install dependencies
         run: pip install ".[dev]"
 
-      # Latest python version: Run unit tests with coverage and send to coveralls
-      - name: Run unit tests with code coverage report
+      # Latest python version: Run tests with coverage and send to coveralls
+      - name: Run tests with code coverage report
         if: ${{ matrix.python-version == env.LATEST_PY_VERSION }}
         # Run unit tests first (and with multiprocessing) to fail quickly if there are issues
         run: |
@@ -62,8 +62,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: coveralls --service=github
 
-      # All other python versions: just run unit tests
-      - name: Run unit tests
+      # All other python versions: just run tests
+      - name: Run tests
         if: ${{ matrix.python-version != env.LATEST_PY_VERSION }}
         run: |
           pytest --numprocesses=auto tests/unit
