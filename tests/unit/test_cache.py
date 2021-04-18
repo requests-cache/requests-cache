@@ -82,7 +82,7 @@ def test_all_methods__ignore_parameters(field, method, mock_session):
     """Test all relevant combinations of methods and data fields. Requests with different request
     params, data, or json should not be cached under different keys based on an ignored param.
     """
-    mock_session.cache._ignored_parameters = ['ignored']
+    mock_session.cache.ignored_parameters = ['ignored']
     params_1 = {'ignored': 1, 'not ignored': 1}
     params_2 = {'ignored': 2, 'not ignored': 1}
     params_3 = {'ignored': 2, 'not ignored': 2}
@@ -292,18 +292,18 @@ def test_response_defaults(mock_session):
     assert response_2.is_expired is response_3.is_expired is False
 
 
-def test_include_get_headers(mock_session):
+def testinclude_get_headers(mock_session):
     """With include_get_headers, requests with different headers should have different cache keys"""
-    mock_session.cache._include_get_headers = True
+    mock_session.cache.include_get_headers = True
     headers_list = [{'Accept': 'text/json'}, {'Accept': 'text/xml'}, {'Accept': 'custom'}, None]
     for headers in headers_list:
         assert mock_session.get(MOCKED_URL, headers=headers).from_cache is False
         assert mock_session.get(MOCKED_URL, headers=headers).from_cache is True
 
 
-def test_include_get_headers_normalize(mock_session):
+def testinclude_get_headers_normalize(mock_session):
     """With include_get_headers, the same headers (in any order) should have the same cache key"""
-    mock_session.cache._include_get_headers = True
+    mock_session.cache.include_get_headers = True
     headers = {'Accept': 'text/json', 'Custom': 'abc'}
     reversed_headers = {'Custom': 'abc', 'Accept': 'text/json'}
     assert mock_session.get(MOCKED_URL, headers=headers).from_cache is False

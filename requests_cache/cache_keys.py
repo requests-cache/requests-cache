@@ -66,7 +66,7 @@ def remove_ignored_body_params(request: requests.PreparedRequest, ignored_params
 
 
 def filter_params(data: List[Tuple], ignored_params: Iterable[str]) -> List[Tuple]:
-    return [(k, v) for k, v in data if k not in ignored_params]
+    return [(k, v) for k, v in data if k not in set(ignored_params)]
 
 
 def normalize_dict(items: RequestContent = None, normalize_data: bool = True) -> RequestContent:
