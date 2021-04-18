@@ -6,7 +6,7 @@ from time import sleep
 from urllib3.response import HTTPResponse
 
 from requests_cache import CachedHTTPResponse, CachedResponse
-from tests.conftest import MOCKED_URL, httpbin
+from tests.conftest import MOCKED_URL
 
 
 def test_basic_attrs(mock_session):
@@ -69,26 +69,6 @@ def test_raw_response__reset(mock_session):
 
     response.reset()
     assert response.raw.read(None) == b'mock response'
-
-
-def test_raw_response__decode(tempfile_session):
-    """Test that a gzip-compressed raw response can be manually uncompressed with decode_content"""
-    response = tempfile_session.get(httpbin('gzip'))
-    assert b'gzipped' in response.content
-
-    cached = CachedResponse(response)
-    assert b'gzipped' in cached.content
-    assert b'gzipped' in cached.raw.read(None, decode_content=True)
-
-
-def test_raw_response__decode_stream(tempfile_session):
-    """Test that streamed gzip-compressed responses can be uncompressed with decode_content"""
-    response_uncached = tempfile_session.get(httpbin('gzip'), stream=True)
-    response_cached = tempfile_session.get(httpbin('gzip'), stream=True)
-
-    for res in (response_uncached, response_cached):
-        assert b'gzipped' in res.content
-        assert b'gzipped' in res.raw.read(None, decode_content=True)
 
 
 def test_raw_response__stream(mock_session):

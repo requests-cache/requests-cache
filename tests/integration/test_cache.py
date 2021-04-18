@@ -2,6 +2,7 @@
 import json
 import pytest
 
+from requests_cache import CachedResponse
 from tests.conftest import USE_PYTEST_HTTPBIN, httpbin
 
 HTTPBIN_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
@@ -73,3 +74,23 @@ def test_cookies(tempfile_session):
     with tempfile_session.cache_disabled():
         response_3 = get_json(httpbin('cookies/set/test3/test4'))
         assert response_3 == get_json(httpbin('cookies'))
+
+
+def test_response_decode(tempfile_session):
+    """Test that a gzip-compressed raw response can be manually uncompressed with decode_content"""
+    response = tempfile_session.get(httpbin('gzip'))
+    assert b'gzipped' in response.content
+
+    cached = CachedResponse(response)
+    assert b'gzipped' in cached.content
+    assert b'gzipped' in cached.raw.read(None, decode_content=True)
+
+
+def test_response_decode_stream(tempfile_session):
+    """Test that streamed gzip-compressed responses can be uncompressed with decode_content"""
+    response_uncached = tempfile_session.get(httpbin('gzip'), stream=True)
+    response_cached = tempfile_session.get(httpbin('gzip'), stream=True)
+
+    for res in (response_uncached, response_cached):
+        assert b'gzipped' in res.content
+        assert b'gzipped' in res.raw.read(None, decode_content=True)

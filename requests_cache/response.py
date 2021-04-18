@@ -52,16 +52,16 @@ class CachedResponse(Response):
 
         # Read content to support streaming requests, and reset file pointer on original request
         if hasattr(original_response.raw, '_fp') and not original_response.raw.isclosed():
-            # Cache raw data in `_body`
-            original_response.raw.read(decode_content=False, cache_content=True)
+            # Cache raw data
+            raw_data = original_response.raw.read(decode_content=False)
             # Reset `_fp`
-            original_response.raw._fp = BytesIO(original_response.raw._body)
+            original_response.raw._fp = BytesIO(raw_data)
             # Read and store (decoded) data
             self._content = original_response.content
             # Reset `_fp` again
-            original_response.raw._fp = BytesIO(original_response.raw._body)
+            original_response.raw._fp = BytesIO(raw_data)
             original_response.raw._fp_bytes_read = 0
-            original_response.raw.length_remaining = len(original_response.raw._body)
+            original_response.raw.length_remaining = len(raw_data)
         else:
             self._content = original_response.content
 
