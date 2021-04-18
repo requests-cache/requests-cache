@@ -21,11 +21,17 @@ class BaseCache:
     See :ref:`advanced_usage:custom backends` for details on creating your own implementation.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+        self,
+        *args,
+        include_get_headers: bool = False,
+        ignored_parameters: Iterable[str] = None,
+        **kwargs,
+    ):
         self.redirects = {}
         self.responses = {}
-        self._include_get_headers = kwargs.get("include_get_headers", False)
-        self._ignored_parameters = set(kwargs.get("ignored_parameters") or [])
+        self.include_get_headers = include_get_headers
+        self.ignored_parameters = ignored_parameters
 
     @property
     def urls(self) -> List[str]:
@@ -87,7 +93,7 @@ class BaseCache:
         try:
             response = self.responses[key] or self.responses[self.redirects[key]]
             for r in response.history:
-                del self.redirects[create_key(r.request, self._ignored_parameters)]
+                del self.redirects[create_key(r.request, self.ignored_parameters)]
         except Exception:
             pass
 
@@ -95,7 +101,7 @@ class BaseCache:
         """Delete response + redirects associated with `url` from cache.
         Works only for GET requests.
         """
-        self.delete(url_to_key(url, self._ignored_parameters))
+        self.delete(url_to_key(url, self.ignored_parameters))
 
     def clear(self):
         """Delete all items from the cache"""
@@ -135,7 +141,7 @@ class BaseCache:
 
     def create_key(self, request: requests.PreparedRequest, **kwargs) -> str:
         """Create a normalized cache key from a request object"""
-        return create_key(request, self._ignored_parameters, self._include_get_headers, **kwargs)
+        return create_key(request, self.ignored_parameters, self.include_get_headers, **kwargs)
 
     def has_key(self, key: str) -> bool:
         """Returns `True` if cache has `key`, `False` otherwise"""
@@ -143,7 +149,7 @@ class BaseCache:
 
     def has_url(self, url: str) -> bool:
         """Returns `True` if cache has `url`, `False` otherwise. Works only for GET request urls"""
-        return self.has_key(url_to_key(url, self._ignored_parameters))  # noqa: W601
+        return self.has_key(url_to_key(url, self.ignored_parameters))  # noqa: W601
 
     def __str__(self):
         return f'redirects: {len(self.redirects)}\nresponses: {len(self.responses)}'
@@ -170,6 +176,7 @@ class BaseStorage(MutableMapping, ABC):
         self._serializer = serializer or self._get_serializer(secret_key, salt)
         logger.debug(f'Initializing {type(self).__name__} with serializer: {self._serializer}')
 
+        # Show a warning instead of an exception if there are remaining unused kwargs
         if kwargs:
             logger.warning(f'Unrecognized keyword arguments: {kwargs}')
         if not secret_key:
