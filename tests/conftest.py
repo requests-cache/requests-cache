@@ -1,5 +1,9 @@
 """Fixtures that will be automatically picked up by pytest
 
+Short description:
+* The ``mock_session`` fixture uses pre-configured mock requests, and should be used for unit tests.
+* The ``tempfile_session`` fixture makes real HTTP requests, and should be used for integration test.
+
 Note: The protocol ``http(s)+mock://`` helps :py:class:`requests_mock.Adapter` play nicely with
 :py:class:`requests.PreparedRequest`. More info here:
 https://requests-mock.readthedocs.io/en/latest/adapter.html
@@ -37,22 +41,22 @@ def httpbin(path):
     return f'{base_url}/{path}'
 
 
-"""The following allows pytest-httpbin to be used instead of the httpbin container.
-A server will be started via an autoused fixture if both:
-* pytest-httpbin is installed
-* The environment variable USE_PYTEST_HTTPBIN is set to 'true'
-"""
 try:
     import pytest_httpbin  # noqa: F401
 
     USE_PYTEST_HTTPBIN = os.getenv('USE_PYTEST_HTTPBIN', '').lower() == 'true'
-    logger.info('Using pytest-httpin for integration tests')
 except ImportError:
     USE_PYTEST_HTTPBIN = False
 
 
 @pytest.fixture(scope='session', autouse=USE_PYTEST_HTTPBIN)
 def httpbin_wrapper(httpbin):
+    """Allow pytest-httpbin to be used instead of the httpbin Docker container. This fixture does
+    not need to be used manually. It will be autoused if both:
+    * pytest-httpbin is installed
+    * The environment variable USE_PYTEST_HTTPBIN is set to 'true'
+    """
+    logger.info('Using pytest-httpin for integration tests')
     os.environ['HTTPBIN_URL'] = httpbin.url
     return httpbin
 
