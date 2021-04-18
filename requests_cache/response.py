@@ -1,7 +1,6 @@
 """Classes to wrap cached response objects"""
 from copy import copy
 from datetime import datetime, timedelta
-from functools import wraps
 from io import BytesIO
 from logging import getLogger
 from typing import Any, Dict, Optional, Union
@@ -51,26 +50,20 @@ class CachedResponse(Response):
         self.request = copy(original_response.request)
         self.request.hooks = []
 
-        # Read content to support streaming requests, reset file pointer on original request,
-        # and patch `decode_content` parameter to avoid decoding twice
-        self._content = original_response.content
-        if hasattr(original_response.raw, '_fp'):
-            data = self._content or b''
-            original_response.raw._fp = BytesIO(data)
+        # Read content to support streaming requests, and reset file pointer on original request
+        if hasattr(original_response.raw, '_fp') and not original_response.raw.isclosed():
+            # Cache raw data in `_body`
+            original_response.raw.read(decode_content=False, cache_content=True)
+            # Reset `_fp`
+            original_response.raw._fp = BytesIO(original_response.raw._body)
+            # Read and store (decoded) data
+            self._content = original_response.content
+            # Reset `_fp` again
+            original_response.raw._fp = BytesIO(original_response.raw._body)
             original_response.raw._fp_bytes_read = 0
-            original_response.raw.length_remaining = len(data)
-
-            # Only need to patch if response is encoded and `read` is bound (i.e. not patched yet)
-            if 'content-encoding' in original_response.headers and hasattr(original_response.raw.read, '__self__'):
-                orig = original_response.raw.read
-
-                @wraps(orig)
-                def patched_read(amt=None, decode_content=None, *args, **kwargs):
-                    _check_response_read_decode(decode_content, original_response.raw)
-                    # Force decode_content to be False, as _fp already contains decoded data
-                    return orig(amt, False, *args, **kwargs)
-
-                original_response.raw.read = patched_read  # noqa
+            original_response.raw.length_remaining = len(original_response.raw._body)
+        else:
+            self._content = original_response.content
 
         # Copy raw response
         self._raw_response = None
@@ -144,8 +137,11 @@ class CachedHTTPResponse(HTTPResponse):
         """Simplified reader for cached content that emulates
         :py:meth:`urllib3.response.HTTPResponse.read()`
         """
-        if 'content-encoding' in self.headers:
-            _check_response_read_decode(decode_content, self)
+        if 'content-encoding' in self.headers and (
+            decode_content is False or (decode_content is None and not self.decode_content)
+        ):
+            # Warn if content was encoded and decode_content is set to False
+            logger.warning('read() returns decoded data for cached responses, even with decode_content=False set')
 
         data = self._fp.read(amt)
         # "close" the file to inform consumers to stop reading from it
@@ -174,9 +170,3 @@ def set_response_defaults(response: AnyResponse) -> AnyResponse:
         response.from_cache = False
         response.is_expired = False
     return response
-
-
-def _check_response_read_decode(decode_content: Optional[bool], response: HTTPResponse):
-    if decode_content is False or (decode_content is None and not response.decode_content):
-        # Warn if decode_content is set to False
-        logger.warning('read() returns decoded data, even with decode_content=False set')
