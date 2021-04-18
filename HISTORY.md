@@ -1,5 +1,9 @@
 # History
 
+### 0.6.3 (2021-TBD)
+* Fix false positive warning with `include_get_headers`
+
+
 ### 0.6.2 (2021-04-14)
 * Explicitly include docs, tests, and examples in sdist
 
