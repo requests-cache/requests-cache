@@ -73,7 +73,7 @@ def test_raw_response__reset(mock_session):
 
 
 def test_raw_response__decode(mock_session):
-    """Test that a gzip-compressed raw response can be manually uncompressed with decode_content"""
+    """Test that a gzip-compressed raw response does not get decoded twice with decode_content"""
     url = f'{MOCKED_URL}/utf-8'
     mock_session.mock_adapter.register_uri(
         'GET',
@@ -82,10 +82,13 @@ def test_raw_response__decode(mock_session):
         body=BytesIO(gzip.compress(b'compressed response')),
         headers={'content-encoding': 'gzip'},
     )
-    response = CachedResponse(mock_session.get(url))
-    # Requests will have already read this, but let's just pretend we want to do it manually
-    response.raw._fp = BytesIO(gzip.compress(b'compressed response'))
-    assert response.raw.read(None, decode_content=True) == b'compressed response'
+    response = mock_session.get(url)
+    cached = CachedResponse(response)
+
+    # Test the original response after creating a CachedResponse based on it,
+    # as well as the CachedResponse itself
+    for res in (response, cached):
+        assert res.raw.read(None, decode_content=True) == b'compressed response'
 
 
 def test_raw_response__stream(mock_session):

@@ -1,6 +1,7 @@
 """Classes to wrap cached response objects"""
 from copy import copy
 from datetime import datetime, timedelta
+from functools import wraps
 from io import BytesIO
 from logging import getLogger
 from typing import Any, Dict, Optional, Union
@@ -50,10 +51,26 @@ class CachedResponse(Response):
         self.request = copy(original_response.request)
         self.request.hooks = []
 
-        # Read content to support streaming requests, and reset file pointer on original request
+        # Read content to support streaming requests, reset file pointer on original request,
+        # and patch `decode_content` parameter to avoid decoding twice
         self._content = original_response.content
         if hasattr(original_response.raw, '_fp'):
-            original_response.raw._fp = BytesIO(self._content or b'')
+            data = self._content or b''
+            original_response.raw._fp = BytesIO(data)
+            original_response.raw._fp_bytes_read = 0
+            original_response.raw.length_remaining = len(data)
+
+            # Only need to patch if response is encoded and `read` is bound (i.e. not patched yet)
+            if 'content-encoding' in original_response.headers and hasattr(original_response.raw.read, '__self__'):
+                orig = original_response.raw.read
+
+                @wraps(orig)
+                def patched_read(amt=None, decode_content=None, *args, **kwargs):
+                    _check_response_read_decode(decode_content, original_response.raw)
+                    # Force decode_content to be False, as _fp already contains decoded data
+                    return orig(amt, False, *args, **kwargs)
+
+                original_response.raw.read = patched_read  # noqa
 
         # Copy raw response
         self._raw_response = None
@@ -123,21 +140,17 @@ class CachedHTTPResponse(HTTPResponse):
     def release_conn(self):
         """No-op for compatibility"""
 
-    def read(self, amt=None, decode_content=False, **kwargs):
+    def read(self, amt=None, decode_content=None, **kwargs):
         """Simplified reader for cached content that emulates
         :py:meth:`urllib3.response.HTTPResponse.read()`
         """
-        data = self._fp.read(amt)
-        decode_content = self.decode_content if decode_content is None else decode_content
+        if 'content-encoding' in self.headers:
+            _check_response_read_decode(decode_content, self)
 
+        data = self._fp.read(amt)
         # "close" the file to inform consumers to stop reading from it
         if not data:
             self._fp.close()
-        # Decode binary content, if specified
-        elif decode_content:
-            self._init_decoder()
-            data = self._decode(data, decode_content=True, flush_decoder=True)
-
         return data
 
     def stream(self, amt=None, **kwargs):
@@ -161,3 +174,9 @@ def set_response_defaults(response: AnyResponse) -> AnyResponse:
         response.from_cache = False
         response.is_expired = False
     return response
+
+
+def _check_response_read_decode(decode_content: Optional[bool], response: HTTPResponse):
+    if decode_content is False or (decode_content is None and not response.decode_content):
+        # Warn if decode_content is set to False
+        logger.warning('read() returns decoded data, even with decode_content=False set')
