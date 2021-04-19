@@ -55,9 +55,7 @@ jobs:
         # Run unit tests first (and with multiprocessing) to fail quickly if there are issues
         run: |
           pytest tests/unit --numprocesses=auto ${{ env.COVERAGE_ARGS }}
-          pytest -k 'not dynamodb' tests/integration ${{ env.COVERAGE_ARGS }} --cov-append
-          # Run DynamoDB tests last, since that container takes the longest to initialize
-          pytest tests/integration/test_dynamodb.py ${{ env.COVERAGE_ARGS }} --cov-append
+          pytest tests/integration --cov-append ${{ env.COVERAGE_ARGS }}
       - name: Send code coverage report to Coveralls
         if: ${{ matrix.python-version == env.LATEST_PY_VERSION }}
         env:
@@ -69,8 +67,7 @@ jobs:
         if: ${{ matrix.python-version != env.LATEST_PY_VERSION }}
         run: |
           pytest --numprocesses=auto tests/unit
-          pytest -k 'not dynamodb' tests/integration
-          pytest tests/integration/test_dynamodb.py
+          pytest tests/integration
 
   # Run code analysis checks
   analyze:

@@ -5,6 +5,9 @@ from requests_cache.backends import DynamoDbDict
 from tests.conftest import fail_if_no_connection
 from tests.integration.test_backends import BaseStorageTestCase
 
+# Run this test module last, since the DynamoDB container takes the longest to initialize
+pytestmark = pytest.mark.order(-1)
+
 boto_options = {
     'endpoint_url': 'http://localhost:8000',
     'region_name': 'us-east-1',

@@ -99,7 +99,6 @@ def tempfile_session() -> CachedSession:
             suppress_warnings=True,
         )
         yield session
-    requests_cache.uninstall_cache()
 
 
 @pytest.fixture(scope='function')
@@ -171,7 +170,7 @@ def fail_if_no_connection(func) -> bool:
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:
-            timeout(0.5)(func)(*args, **kwargs)
+            timeout(1.0)(func)(*args, **kwargs)
         except Exception as e:
             logger.error(e)
             pytest.fail('Could not connect to backend')
