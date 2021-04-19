@@ -9,7 +9,7 @@ from requests import PreparedRequest
 from requests import Session as OriginalSession
 from requests.hooks import dispatch_hook
 
-from .backends import BACKEND_KWARGS, BackendSpecifier, init_backend
+from .backends import BackendSpecifier, get_valid_kwargs, init_backend
 from .cache_keys import normalize_dict
 from .response import AnyResponse, ExpirationTime, set_response_defaults
 
@@ -47,8 +47,8 @@ class CacheMixin:
         self._disabled = False
         self._lock = RLock()
 
-        # Remove any requests-cache-specific kwargs before passing along to superclass
-        session_kwargs = {k: v for k, v in kwargs.items() if k not in BACKEND_KWARGS}
+        # If the superclass is custom Session, pass along valid kwargs (if any)
+        session_kwargs = get_valid_kwargs(super().__init__, kwargs)
         super().__init__(**session_kwargs)
 
     def request(

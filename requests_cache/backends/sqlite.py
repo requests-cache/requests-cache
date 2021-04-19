@@ -5,9 +5,9 @@ from logging import getLogger
 from os import makedirs
 from os.path import abspath, basename, dirname, expanduser
 from pathlib import Path
-from typing import Union
+from typing import Type, Union
 
-from .base import BaseCache, BaseStorage
+from . import BaseCache, BaseStorage, get_valid_kwargs
 
 logger = getLogger(__name__)
 
@@ -15,18 +15,16 @@ logger = getLogger(__name__)
 class DbCache(BaseCache):
     """SQLite cache backend.
 
-    Reading is fast, saving is a bit slower. It can store big amount of data with low memory usage.
 
     Args:
         db_path: Database file path (expands user paths and creates parent dirs)
         fast_save: Speedup cache saving up to 50 times but with possibility of data loss.
             See :py:class:`.DbDict` for more info
-        timeout: Timeout for acquiring a database lock
+        kwargs: Additional keyword arguments for :py:func:`sqlite3.connect`
     """
 
     def __init__(self, db_path: Union[Path, str] = 'http_cache', fast_save: bool = False, **kwargs):
         super().__init__(**kwargs)
-        kwargs.setdefault('suppress_warnings', True)
         db_path = _get_db_path(db_path)
         self.responses = DbPickleDict(db_path, table_name='responses', fast_save=fast_save, **kwargs)
         self.redirects = DbDict(db_path, table_name='redirects', **kwargs)
@@ -58,12 +56,13 @@ class DbDict(BaseStorage):
         timeout: Timeout for acquiring a database lock
     """
 
-    def __init__(self, db_path, table_name='http_cache', fast_save=False, timeout=5.0, **kwargs):
+    def __init__(self, db_path, table_name='http_cache', fast_save=False, **kwargs):
+        kwargs.setdefault('suppress_warnings', True)
         super().__init__(**kwargs)
+        self.connection_kwargs = get_valid_kwargs(sqlite_template, kwargs)
         self.db_path = db_path
         self.fast_save = fast_save
         self.table_name = table_name
-        self.timeout = timeout
 
         self._bulk_commit = False
         self._can_commit = True
@@ -78,10 +77,10 @@ class DbDict(BaseStorage):
         with self._lock:
             if self._bulk_commit:
                 if self._pending_connection is None:
-                    self._pending_connection = sqlite3.connect(self.db_path, timeout=self.timeout)
+                    self._pending_connection = sqlite3.connect(self.db_path, **self.connection_kwargs)
                 con = self._pending_connection
             else:
-                con = sqlite3.connect(self.db_path, timeout=self.timeout)
+                con = sqlite3.connect(self.db_path, **self.connection_kwargs)
             try:
                 if self.fast_save:
                     con.execute("PRAGMA synchronous = 0;")
@@ -188,3 +187,15 @@ def _get_db_path(db_path):
     # Make sure parent dirs exist
     makedirs(dirname(db_path), exist_ok=True)
     return db_path
+
+
+def sqlite_template(
+    timeout: float = 5.0,
+    detect_types: int = 0,
+    isolation_level: str = None,
+    check_same_thread: bool = True,
+    factory: Type = None,
+    cached_statements: int = 100,
+    uri: bool = False,
+):
+    """Template function to get an accurate signature for the builtin :py:func:`sqlite3.connect`"""

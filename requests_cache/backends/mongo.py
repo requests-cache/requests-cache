@@ -1,40 +1,44 @@
 from pymongo import MongoClient
 
-from .base import BaseCache, BaseStorage
+from . import BaseCache, BaseStorage, get_valid_kwargs
 
 
 class MongoCache(BaseCache):
-    """MongoDB cache backend"""
+    """MongoDB cache backend
 
-    def __init__(self, db_name='http_cache', **kwargs):
-        """
-        :param db_name: database name (default: ``'requests-cache'``)
-        :param connection: (optional) ``pymongo.Connection``
-        """
+    Args:
+        db_name: Database name
+        connection: :py:class:`pymongo.MongoClient` object to reuse instead of creating a new one
+        kwargs: Additional keyword arguments for :py:class:`pymongo.MongoClient`
+    """
+
+    def __init__(self, db_name: str = 'http_cache', connection: MongoClient = None, **kwargs):
+        """"""
         super().__init__(**kwargs)
-        self.responses = MongoPickleDict(db_name, collection_name='responses', **kwargs)
-        kwargs['connection'] = self.responses.connection
-        self.redirects = MongoDict(db_name, collection_name='redirects', **kwargs)
+        self.responses = MongoPickleDict(db_name, 'responses', connection=connection, **kwargs)
+        self.redirects = MongoDict(
+            db_name,
+            collection_name='redirects',
+            connection=self.responses.connection,
+            **kwargs,
+        )
 
 
 class MongoDict(BaseStorage):
-    """A dictionary-like interface for a MongoDB collection"""
+    """A dictionary-like interface for a MongoDB collection
+
+    Args:
+        db_name: Database name
+        collection_name: Collection name
+        connection: :py:class:`pymongo.MongoClient` object to reuse instead of creating a new one
+        kwargs: Additional keyword arguments for :py:class:`pymongo.MongoClient`
+    """
 
     def __init__(self, db_name, collection_name='http_cache', connection=None, **kwargs):
-        """
-        :param db_name: database name (be careful with production databases)
-        :param collection_name: collection name (default: mongo_dict_data)
-        :param connection: ``pymongo.Connection`` instance. If it's ``None``
-                           (default) new connection with default options will
-                           be created
-        """
         super().__init__(**kwargs)
-        if connection is not None:
-            self.connection = connection
-        else:
-            self.connection = MongoClient()
-        self.db = self.connection[db_name]
-        self.collection = self.db[collection_name]
+        connection_kwargs = get_valid_kwargs(MongoClient, kwargs)
+        self.connection = connection or MongoClient(**connection_kwargs)
+        self.collection = self.connection[db_name][collection_name]
 
     def __getitem__(self, key):
         result = self.collection.find_one({'_id': key})

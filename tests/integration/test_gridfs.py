@@ -1,7 +1,10 @@
 import pytest
 import unittest
+from unittest.mock import patch
 
-from requests_cache.backends import GridFSPickleDict
+from pymongo import MongoClient
+
+from requests_cache.backends import GridFSPickleDict, get_valid_kwargs
 from tests.conftest import fail_if_no_connection
 from tests.integration.test_backends import BaseStorageTestCase
 
@@ -29,3 +32,15 @@ class GridFSPickleDictTestCase(BaseStorageTestCase, unittest.TestCase):
 
         with pytest.raises(KeyError):
             d1[4]
+
+
+@patch('requests_cache.backends.gridfs.GridFS')
+@patch('requests_cache.backends.gridfs.MongoClient')
+@patch(
+    'requests_cache.backends.gridfs.get_valid_kwargs',
+    side_effect=lambda cls, kwargs: get_valid_kwargs(MongoClient, kwargs),
+)
+def test_connection_kwargs(mock_get_valid_kwargs, mock_client, mock_gridfs):
+    """A spot check to make sure optional connection kwargs gets passed to connection"""
+    GridFSPickleDict('test', host='http://0.0.0.0', port=1234, invalid_kwarg='???')
+    mock_client.assert_called_with(host='http://0.0.0.0', port=1234)

@@ -2,7 +2,7 @@ import pickle
 import warnings
 from abc import ABC
 from collections.abc import MutableMapping
-from logging import getLogger
+from logging import DEBUG, WARNING, getLogger
 from typing import Iterable, List, Tuple, Union
 
 import requests
@@ -177,14 +177,9 @@ class BaseStorage(MutableMapping, ABC):
         self._serializer = serializer or self._get_serializer(secret_key, salt)
         logger.debug(f'Initializing {type(self).__name__} with serializer: {self._serializer}')
 
-        # Show a warning instead of an exception if there are remaining unused kwargs
-        kwargs.pop('include_get_headers', None)
-        kwargs.pop('ignored_params', None)
-        if kwargs:
-            logger.warning(f'Unrecognized keyword arguments: {kwargs}')
         if not secret_key:
-            warn_func = logger.debug if suppress_warnings else warnings.warn
-            warn_func('Using a secret key to sign cached items is recommended for this backend')
+            level = DEBUG if suppress_warnings else WARNING
+            logger.log(level, 'Using a secret key is recommended for this backend')
 
     def serialize(self, item: ResponseOrKey) -> bytes:
         """Serialize a URL or response into bytes"""

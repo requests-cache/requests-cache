@@ -1,7 +1,8 @@
 """Classes and functions for cache persistence"""
 # flake8: noqa: F401
+from inspect import signature
 from logging import getLogger
-from typing import Type, Union
+from typing import Callable, Dict, Iterable, Type, Union
 
 from .base import BaseCache, BaseStorage
 
@@ -40,6 +41,13 @@ def get_placeholder_backend(original_exception: Exception = None) -> Type[BaseCa
             raise original_exception or ImportError(msg)
 
     return PlaceholderBackend
+
+
+def get_valid_kwargs(func: Callable, kwargs: Dict, extras: Iterable[str] = None) -> Dict:
+    """Get the subset of non-None ``kwargs`` that are valid params for ``func``"""
+    params = list(signature(func).parameters)
+    params.extend(extras or [])
+    return {k: v for k, v in kwargs.items() if k in params and v is not None}
 
 
 # Import all backend classes for which dependencies are installed

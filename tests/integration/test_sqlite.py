@@ -89,7 +89,7 @@ class DbPickleDictTestCase(SQLiteTestCase, unittest.TestCase):
 
 
 @patch('requests_cache.backends.sqlite.sqlite3')
-def test_timeout(mock_sqlite):
-    """Just make sure the optional 'timeout' param gets passed to sqlite3.connect"""
-    DbDict('test', timeout=0.5)
+def test_connection_kwargs(mock_sqlite):
+    """A spot check to make sure optional connection kwargs gets passed to connection"""
+    DbDict('test', timeout=0.5, invalid_kwarg='???')
     mock_sqlite.connect.assert_called_with('test', timeout=0.5)
