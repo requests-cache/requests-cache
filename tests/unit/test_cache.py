@@ -272,6 +272,12 @@ def test_delete_redirect(mock_session):
     assert not mock_session.cache.has_url(MOCKED_URL_REDIRECT)
 
 
+def test_save_response_manual(mock_session):
+    response = mock_session.get(MOCKED_URL)
+    mock_session.cache.clear()
+    mock_session.cache.save_response(response)
+
+
 def test_response_defaults(mock_session):
     """Both cached and new responses should always have the following attributes"""
     mock_session.expire_after = datetime.utcnow() + timedelta(days=1)

@@ -158,7 +158,7 @@ class CacheMixin:
         logger.debug(f'Sending request and caching response for URL: {request.url}')
         response = super().send(request, **kwargs)
         if response.status_code in self.allowable_codes:
-            self.cache.save_response(cache_key, response, self._get_expiration(request.url))
+            self.cache.save_response(response, cache_key, self._get_expiration(request.url))
         return set_response_defaults(response)
 
     @contextmanager

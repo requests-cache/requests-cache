@@ -1,5 +1,8 @@
 # History
 
+## 0.7.0 (TBD) 
+* Add option to manually cache response objects
+
 ### 0.6.3 (2021-TBD)
 * Fix false positive warning with `include_get_headers`
 * Fix handling of `decode_content` parameter for `CachedResponse.raw.read()`

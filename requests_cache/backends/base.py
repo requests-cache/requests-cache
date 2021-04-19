@@ -38,7 +38,7 @@ class BaseCache:
         """Get all URLs currently in the cache (excluding redirects)"""
         return [r.url for _, r in self._get_valid_responses()]
 
-    def save_response(self, key: str, response: AnyResponse, expire_after: ExpirationTime = None):
+    def save_response(self, response: AnyResponse, key: str = None, expire_after: ExpirationTime = None):
         """Save response to cache
 
         Args:
@@ -46,6 +46,7 @@ class BaseCache:
             response: response to save
             expire_after: Time in seconds until this cache item should expire
         """
+        key = key or self.create_key(response.request)
         self.responses[key] = CachedResponse(response, expire_after=expire_after)
 
     def save_redirect(self, request: PreparedRequest, response_key: str):
