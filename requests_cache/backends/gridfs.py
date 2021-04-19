@@ -1,6 +1,7 @@
 from gridfs import GridFS
 from pymongo import MongoClient
 
+from . import get_valid_kwargs
 from .base import BaseCache, BaseStorage
 from .mongo import MongoDict
 
@@ -9,19 +10,21 @@ class GridFSCache(BaseCache):
     """GridFS cache backend.
     Use this backend to store documents greater than 16MB.
 
-    Usage:
-        requests_cache.install_cache(backend='gridfs')
+    Example:
 
-    Or:
-        from pymongo import MongoClient
-        requests_cache.install_cache(backend='gridfs', connection=MongoClient('another-host.local'))
+        >>> requests_cache.install_cache(backend='gridfs')
+
+        Or:
+        >>> from pymongo import MongoClient
+        >>> requests_cache.install_cache(backend='gridfs', connection=MongoClient('alternate-host'))
+
+    Args:
+        db_name: Database name
+        connection: :py:class:`pymongo.MongoClient` object to reuse instead of creating a new one
+        kwargs: Additional keyword arguments for :py:class:`pymongo.MongoClient`
     """
 
-    def __init__(self, db_name, **kwargs):
-        """
-        :param db_name: database name
-        :param connection: (optional) ``pymongo.Connection``
-        """
+    def __init__(self, db_name: str, **kwargs):
         super().__init__(**kwargs)
         self.responses = GridFSPickleDict(db_name, **kwargs)
         kwargs['connection'] = self.responses.connection
@@ -29,21 +32,19 @@ class GridFSCache(BaseCache):
 
 
 class GridFSPickleDict(BaseStorage):
-    """A dictionary-like interface for a GridFS collection"""
+    """A dictionary-like interface for a GridFS database
+
+    Args:
+        db_name: Database name
+        collection_name: Ignored; GridFS internally uses collections 'fs.files' and 'fs.chunks'
+        connection: :py:class:`pymongo.MongoClient` object to reuse instead of creating a new one
+        kwargs: Additional keyword arguments for :py:class:`pymongo.MongoClient`
+    """
 
     def __init__(self, db_name, collection_name=None, connection=None, **kwargs):
-        """
-        :param db_name: database name (be careful with production databases)
-        :param connection: ``pymongo.Connection`` instance. If it's ``None``
-                           (default) new connection with default options will
-                           be created
-        """
         super().__init__(**kwargs)
-        if connection is not None:
-            self.connection = connection
-        else:
-            self.connection = MongoClient()
-
+        connection_kwargs = get_valid_kwargs(MongoClient, kwargs)
+        self.connection = connection or MongoClient(**connection_kwargs)
         self.db = self.connection[db_name]
         self.fs = GridFS(self.db)
 

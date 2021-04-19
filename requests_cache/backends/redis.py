@@ -1,6 +1,6 @@
-from redis import Redis
+from redis import Redis, StrictRedis
 
-from .base import BaseCache, BaseStorage
+from . import BaseCache, BaseStorage, get_valid_kwargs
 
 
 class RedisCache(BaseCache):
@@ -8,14 +8,14 @@ class RedisCache(BaseCache):
 
     Args:
         namespace: redis namespace (default: ``'requests-cache'``)
-        connection: (optional) Redis connection instance to use instead of creating a new one
+        connection: Redis connection instance to use instead of creating a new one
+        kwargs: Additional keyword arguments for :py:class:`redis.client.Redis`
     """
 
-    def __init__(self, namespace='http_cache', **kwargs):
+    def __init__(self, namespace='http_cache', connection: Redis = None, **kwargs):
         super().__init__(**kwargs)
-        self.responses = RedisDict(namespace, collection_name='responses', **kwargs)
-        kwargs['connection'] = self.responses.connection
-        self.redirects = RedisDict(namespace, collection_name='redirects', **kwargs)
+        self.responses = RedisDict(namespace, 'responses', connection=connection, **kwargs)
+        self.redirects = RedisDict(namespace, 'redirects', connection=self.responses.connection, **kwargs)
 
 
 class RedisDict(BaseStorage):
@@ -29,14 +29,13 @@ class RedisDict(BaseStorage):
         namespace: Redis namespace
         collection_name: Name of the Redis hash map
         connection: (optional) Redis connection instance to use instead of creating a new one
+        kwargs: Additional keyword arguments for :py:class:`redis.client.Redis`
     """
 
     def __init__(self, namespace, collection_name='http_cache', connection=None, **kwargs):
         super().__init__(**kwargs)
-        if connection is not None:
-            self.connection = connection
-        else:
-            self.connection = Redis()
+        connection_kwargs = get_valid_kwargs(Redis, kwargs)
+        self.connection = connection or StrictRedis(**connection_kwargs)
         self._self_key = ':'.join([namespace, collection_name])
 
     def __getitem__(self, key):

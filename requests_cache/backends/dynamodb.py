@@ -1,7 +1,8 @@
 import boto3
+from boto3.resources.base import ServiceResource
 from botocore.exceptions import ClientError
 
-from .base import BaseCache, BaseStorage
+from . import BaseCache, BaseStorage, get_valid_kwargs
 
 
 class DynamoDbCache(BaseCache):
@@ -10,15 +11,15 @@ class DynamoDbCache(BaseCache):
     Args:
         table_name: DynamoDb table name
         namespace: Name of DynamoDb hash map
-        connection: DynamoDb Resource object (``boto3.resource('dynamodb')``) to use instead of
-            creating a new one
+        connection: :boto3:`DynamoDb Resource <services/dynamodb.html#DynamoDB.ServiceResource>`
+            object to use instead of creating a new one
+        kwargs: Additional keyword arguments for :py:meth:`~boto3.session.Session.resource`
     """
 
-    def __init__(self, table_name='http_cache', **kwargs):
+    def __init__(self, table_name: str = 'http_cache', connection: ServiceResource = None, **kwargs):
         super().__init__(**kwargs)
-        self.responses = DynamoDbDict(table_name, namespace='responses', **kwargs)
-        kwargs['connection'] = self.responses.connection
-        self.redirects = DynamoDbDict(table_name, namespace='redirects', **kwargs)
+        self.responses = DynamoDbDict(table_name, 'responses', connection=connection, **kwargs)
+        self.redirects = DynamoDbDict(table_name, 'redirects', connection=self.responses.connection, **kwargs)
 
 
 class DynamoDbDict(BaseStorage):
@@ -32,9 +33,9 @@ class DynamoDbDict(BaseStorage):
     Args:
         table_name: DynamoDb table name
         namespace: Name of DynamoDb hash map
-        connection: DynamoDb Resource object (``boto3.resource('dynamodb')``) to use instead of
-            creating a new one
-        endpoint_url: Alternative URL of dynamodb server.
+        connection: :boto3:`DynamoDb Resource <services/dynamodb.html#DynamoDB.ServiceResource>`
+            object to use instead of creating a new one
+        kwargs: Additional keyword arguments for :py:meth:`~boto3.session.Session.resource`
     """
 
     def __init__(
@@ -42,27 +43,14 @@ class DynamoDbDict(BaseStorage):
         table_name,
         namespace='http_cache',
         connection=None,
-        endpoint_url=None,
-        region_name='us-east-1',
-        aws_access_key_id=None,
-        aws_secret_access_key=None,
         read_capacity_units=1,
         write_capacity_units=1,
         **kwargs,
     ):
         super().__init__(**kwargs)
+        connection_kwargs = get_valid_kwargs(boto3.Session, kwargs, extras=['endpoint_url'])
+        self.connection = connection or boto3.resource('dynamodb', **connection_kwargs)
         self._self_key = namespace
-        if connection is not None:
-            self.connection = connection
-        else:
-            # TODO: Use inspection to get any valid resource arguments from **kwargs
-            self.connection = boto3.resource(
-                'dynamodb',
-                endpoint_url=endpoint_url,
-                region_name=region_name,
-                aws_access_key_id=aws_access_key_id,
-                aws_secret_access_key=aws_secret_access_key,
-            )
 
         try:
             self.connection.create_table(

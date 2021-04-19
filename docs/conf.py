@@ -26,6 +26,7 @@ templates_path = ['_templates']
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosectionlabel',
+    'sphinx.ext.extlinks',
     'sphinx.ext.intersphinx',
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
@@ -40,9 +41,16 @@ exclude_patterns = ['_build', 'modules/requests_cache.rst']
 
 # Enable automatic links to other projects' Sphinx docs
 intersphinx_mapping = {
+    'boto3': ('https://boto3.amazonaws.com/v1/documentation/api/latest/', None),
+    'botocore': ('http://botocore.readthedocs.io/en/latest/', None),
+    'pymongo': ('https://pymongo.readthedocs.io/en/stable/', None),
     'python': ('https://docs.python.org/3', None),
+    'redis': ('https://redis-py.readthedocs.io/en/stable/', None),
     'requests': ('https://docs.python-requests.org/en/master/', None),
     'urllib3': ('https://urllib3.readthedocs.io/en/latest/', None),
+}
+extlinks = {
+    'boto3': ('https://boto3.amazonaws.com/v1/documentation/api/latest/reference/%s', None),
 }
 
 # Enable Google-style docstrings

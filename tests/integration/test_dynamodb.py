@@ -1,5 +1,6 @@
 import pytest
 import unittest
+from unittest.mock import patch
 
 from requests_cache.backends import DynamoDbDict
 from tests.conftest import fail_if_no_connection
@@ -39,3 +40,10 @@ class DynamoDbTestCase(BaseStorageTestCase, unittest.TestCase):
             picklable=True,
             **kwargs,
         )
+
+
+@patch('requests_cache.backends.dynamodb.boto3.resource')
+def test_connection_kwargs(mock_resource):
+    """A spot check to make sure optional connection kwargs gets passed to connection"""
+    DynamoDbDict('test', region_name='us-east-2', invalid_kwarg='???')
+    mock_resource.assert_called_with('dynamodb', region_name='us-east-2')
