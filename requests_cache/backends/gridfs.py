@@ -67,7 +67,7 @@ class GridFSPickleDict(BaseStorage):
         self.fs.delete(res._id)
 
     def __len__(self):
-        return self.db['fs.files'].count()
+        return self.db['fs.files'].estimated_document_count()
 
     def __iter__(self):
         for d in self.fs.find():

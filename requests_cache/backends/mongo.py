@@ -57,7 +57,7 @@ class MongoDict(BaseStorage):
             raise KeyError
 
     def __len__(self):
-        return self.collection.count()
+        return self.collection.estimated_document_count()
 
     def __iter__(self):
         for d in self.collection.find({}, {'_id': True}):
