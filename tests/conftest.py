@@ -29,6 +29,13 @@ MOCKED_URL_REDIRECT = 'http+mock://requests-cache.com/redirect'
 MOCKED_URL_REDIRECT_TARGET = 'http+mock://requests-cache.com/redirect_target'
 MOCK_PROTOCOLS = ['mock://', 'http+mock://', 'https+mock://']
 
+AWS_OPTIONS = {
+    'endpoint_url': 'http://localhost:8000',
+    'region_name': 'us-east-1',
+    'aws_access_key_id': 'placeholder',
+    'aws_secret_access_key': 'placeholder',
+}
+
 # Configure logging to show debug output when tests fail (or with pytest -s)
 basicConfig(level='INFO')
 getLogger('requests_cache').setLevel('DEBUG')
@@ -81,11 +88,7 @@ def mock_session() -> CachedSession:
             allowable_methods=ALL_METHODS,
             suppress_warnings=True,
         )
-        adapter = get_mock_adapter()
-        for protocol in MOCK_PROTOCOLS:
-            session.mount(protocol, adapter)
-        session.mock_adapter = adapter
-        yield session
+        yield mount_mock_adapter(session)
 
 
 @pytest.fixture(scope='function')
@@ -115,6 +118,14 @@ def installed_session() -> CachedSession:
         )
         yield requests.Session()
     requests_cache.uninstall_cache()
+
+
+def mount_mock_adapter(session: CachedSession) -> CachedSession:
+    adapter = get_mock_adapter()
+    for protocol in MOCK_PROTOCOLS:
+        session.mount(protocol, adapter)
+    session.mock_adapter = adapter
+    return session
 
 
 def get_mock_adapter() -> Adapter:

@@ -3,18 +3,11 @@ import unittest
 from unittest.mock import patch
 
 from requests_cache.backends import DynamoDbDict
-from tests.conftest import fail_if_no_connection
+from tests.conftest import AWS_OPTIONS, fail_if_no_connection
 from tests.integration.test_backends import BaseStorageTestCase
 
 # Run this test module last, since the DynamoDB container takes the longest to initialize
 pytestmark = pytest.mark.order(-1)
-
-boto_options = {
-    'endpoint_url': 'http://localhost:8000',
-    'region_name': 'us-east-1',
-    'aws_access_key_id': 'placeholder',
-    'aws_secret_access_key': 'placeholder',
-}
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -23,13 +16,13 @@ def ensure_connection():
     """Fail all tests in this module if DynamoDB is not running"""
     import boto3
 
-    client = boto3.client('dynamodb', **boto_options)
+    client = boto3.client('dynamodb', **AWS_OPTIONS)
     client.describe_limits()
 
 
 class DynamoDbDictWrapper(DynamoDbDict):
     def __init__(self, namespace, collection_name='dynamodb_dict_data', **options):
-        super().__init__(namespace, collection_name, **options, **boto_options)
+        super().__init__(namespace, collection_name, **options, **AWS_OPTIONS)
 
 
 class DynamoDbTestCase(BaseStorageTestCase, unittest.TestCase):

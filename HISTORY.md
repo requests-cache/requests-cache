@@ -2,6 +2,7 @@
 
 ## 0.7.0 (TBD) 
 * Add option to manually cache response objects
+* Fix `DynamoDbDict.__iter__` to return keys instead of values
 
 ### 0.6.3 (2021-TBD)
 * Fix false positive warning with `include_get_headers`
