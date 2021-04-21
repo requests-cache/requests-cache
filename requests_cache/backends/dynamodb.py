@@ -102,7 +102,7 @@ class DynamoDbDict(BaseStorage):
     def __iter__(self):
         response = self.__scan_table()
         for v in response['Items']:
-            yield self.deserialize(v['value'].value)
+            yield v['key']
 
     def clear(self):
         response = self.__scan_table()
