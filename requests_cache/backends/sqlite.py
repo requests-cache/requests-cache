@@ -64,9 +64,7 @@ class DbDict(BaseStorage):
         self.fast_save = fast_save
         self.table_name = table_name
 
-        self._bulk_commit = False
         self._can_commit = True
-        self._pending_connection = None
         self._lock = threading.RLock()
         self._local_context = threading.local()
         with self.connection() as con:
@@ -80,26 +78,13 @@ class DbDict(BaseStorage):
                 self._local_context.con = sqlite3.connect(self.db_path, **self.connection_kwargs)
                 if self.fast_save:
                     self._local_context.con.execute("PRAGMA synchronous = 0;")
-            if self._bulk_commit:
-                if self._pending_connection is None:
-                    logger.debug(f'Opening connection to {self.db_path}:{self.table_name}')
-                    self._pending_connection = sqlite3.connect(self.db_path, **self.connection_kwargs)
-                con = self._pending_connection
-            else:
-                con = self._local_context.con
-            yield con
+            yield self._local_context.con
             if commit_on_success and self._can_commit:
-                con.commit()
+                self._local_context.con.commit()
 
-    def commit(self, force=False):
-        """
-        Commits pending transaction if :attr:`can_commit` or `force` is `True`
-
-        :param force: force commit, ignore :attr:`can_commit`
-        """
-        if force or self._can_commit:
-            if self._pending_connection is not None:
-                self._pending_connection.commit()
+    def __del__(self):
+        if hasattr(self._local_context, "con"):
+            self._local_context.close()
 
     @contextmanager
     def bulk_commit(self):
@@ -113,17 +98,13 @@ class DbDict(BaseStorage):
             ...         d1[i] = i * 2
 
         """
-        self._bulk_commit = True
         self._can_commit = False
         try:
             yield
-            self.commit(True)
+            if hasattr(self._local_context, "con"):
+                self._local_context.con.commit()
         finally:
-            self._bulk_commit = False
             self._can_commit = True
-            if self._pending_connection is not None:
-                self._pending_connection.close()
-                self._pending_connection = None
 
     def __getitem__(self, key):
         with self.connection() as con:
