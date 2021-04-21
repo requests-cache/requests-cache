@@ -2,7 +2,7 @@
 from logging import getLogger
 from os import getenv
 
-__version__ = '0.6.3'
+__version__ = '0.7.0'
 
 try:
     from .response import AnyResponse, CachedHTTPResponse, CachedResponse, ExpirationTime

@@ -23,6 +23,7 @@ contributions that have helped to improve requests-cache:
 * [Ilya](https://github.com/libbkmz)
 * [J Rob Gant](https://github.com/rgant)
 * [Jace Browning](https://github.com/jacebrowning)
+* [Jakub Semrič](https://github.com/jsemric)
 * [Jessy Williams](https://github.com/jkwill87)
 * [John Vandenberg](https://github.com/jayvdb)
 * [Jürgen Hermann](https://github.com/jhermann)
