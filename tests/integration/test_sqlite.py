@@ -77,6 +77,21 @@ class SQLiteTestCase(BaseStorageTestCase):
         do_test_for(self.storage_class(self.NAMESPACE, fast_save=True))
         do_test_for(self.storage_class(self.NAMESPACE, self.TABLES[1], fast_save=True))
 
+    def test_noop(self):
+        def do_noop_bulk(d):
+            with d.bulk_commit():
+                pass
+            del d
+
+        d = self.storage_class(self.NAMESPACE)
+        t = Thread(target=do_noop_bulk, args=(d,))
+        t.start()
+        t.join()
+
+        # make sure connection is not closed by the thread
+        d[0] = 0
+        assert str(d) == "{0: 0}"
+
 
 class DbDictTestCase(SQLiteTestCase, unittest.TestCase):
     def __init__(self, *args, **kwargs):
