@@ -66,7 +66,7 @@ class DbDict(BaseStorage):
 
         self._can_commit = True
         self._local_context = threading.local()
-        with self.connection() as con:
+        with sqlite3.connect(self.db_path, **self.connection_kwargs) as con:
             con.execute("create table if not exists `%s` (key PRIMARY KEY, value)" % self.table_name)
 
     @contextmanager
