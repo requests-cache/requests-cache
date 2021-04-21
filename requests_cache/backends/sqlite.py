@@ -65,28 +65,20 @@ class DbDict(BaseStorage):
         self.table_name = table_name
 
         self._can_commit = True
-        self._lock = threading.RLock()
         self._local_context = threading.local()
         with self.connection() as con:
             con.execute("create table if not exists `%s` (key PRIMARY KEY, value)" % self.table_name)
 
     @contextmanager
-    def connection(self, commit_on_success=False, lock=True):
-        def _get_conn():
-            if not hasattr(self._local_context, "con"):
-                logger.debug(f'Opening connection to {self.db_path}:{self.table_name}')
-                self._local_context.con = sqlite3.connect(self.db_path, **self.connection_kwargs)
-                if self.fast_save:
-                    self._local_context.con.execute("PRAGMA synchronous = 0;")
-            yield self._local_context.con
-            if commit_on_success and self._can_commit:
-                self._local_context.con.commit()
-
-        if lock:
-            with self._lock:
-                yield from _get_conn()
-        else:
-            yield from _get_conn()
+    def connection(self, commit_on_success=False):
+        if not hasattr(self._local_context, "con"):
+            logger.debug(f'Opening connection to {self.db_path}:{self.table_name}')
+            self._local_context.con = sqlite3.connect(self.db_path, **self.connection_kwargs)
+            if self.fast_save:
+                self._local_context.con.execute("PRAGMA synchronous = 0;")
+        yield self._local_context.con
+        if commit_on_success and self._can_commit:
+            self._local_context.con.commit()
 
     def __del__(self):
         if hasattr(self._local_context, "con"):
@@ -113,7 +105,7 @@ class DbDict(BaseStorage):
             self._can_commit = True
 
     def __getitem__(self, key):
-        with self.connection(lock=False) as con:
+        with self.connection() as con:
             row = con.execute("select value from `%s` where key=?" % self.table_name, (key,)).fetchone()
         # raise error after the with block, otherwise the connection will be locked
         if not row:
