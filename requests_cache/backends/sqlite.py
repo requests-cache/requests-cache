@@ -71,8 +71,8 @@ class DbDict(BaseStorage):
             con.execute("create table if not exists `%s` (key PRIMARY KEY, value)" % self.table_name)
 
     @contextmanager
-    def connection(self, commit_on_success=False):
-        with self._lock:
+    def connection(self, commit_on_success=False, lock=True):
+        def _get_conn():
             if not hasattr(self._local_context, "con"):
                 logger.debug(f'Opening connection to {self.db_path}:{self.table_name}')
                 self._local_context.con = sqlite3.connect(self.db_path, **self.connection_kwargs)
@@ -82,9 +82,15 @@ class DbDict(BaseStorage):
             if commit_on_success and self._can_commit:
                 self._local_context.con.commit()
 
+        if lock:
+            with self._lock:
+                yield from _get_conn()
+        else:
+            yield from _get_conn()
+
     def __del__(self):
         if hasattr(self._local_context, "con"):
-            self._local_context.close()
+            self._local_context.con.close()
 
     @contextmanager
     def bulk_commit(self):
@@ -107,7 +113,7 @@ class DbDict(BaseStorage):
             self._can_commit = True
 
     def __getitem__(self, key):
-        with self.connection() as con:
+        with self.connection(lock=False) as con:
             row = con.execute("select value from `%s` where key=?" % self.table_name, (key,)).fetchone()
         # raise error after the with block, otherwise the connection will be locked
         if not row:
