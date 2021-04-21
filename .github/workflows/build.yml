@@ -69,6 +69,11 @@ jobs:
           pytest --numprocesses=auto tests/unit
           pytest tests/integration
 
+      # Run longer stress tests if this is a release or merge to master
+      - name: Run stress tests
+        if: startsWith(github.ref, 'refs/tags/v') || endsWith(github.ref, '/master')
+        run: STRESS_TEST_MULTIPLIER=5 pytest tests/integration/test_thread_safety.py
+
   # Run code analysis checks
   analyze:
     runs-on: ubuntu-18.04
@@ -100,7 +105,7 @@ jobs:
   # Deploy pre-release builds from dev branch, and stable builds on tags only
   release:
     needs: [test, analyze]
-    if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/dev'
+    if: startsWith(github.ref, 'refs/tags/v') || endsWith(github.ref, '/dev')
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
