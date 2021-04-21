@@ -4,6 +4,7 @@
 *.egg-info
 build/
 dist/
+http_cache/
 venv/
 
 # Editors

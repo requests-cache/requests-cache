@@ -13,6 +13,7 @@ branch = true
 source = ['requests_cache']
 omit = [
     'requests_cache/__init__.py',
+    'requests_cache/backends/__init__.py',
 ]
 
 [tool.isort]

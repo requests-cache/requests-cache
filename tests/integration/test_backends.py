@@ -72,7 +72,7 @@ class BaseStorageTestCase:
 
     def test_clear_and_work_again(self):
         d1 = self.storage_class(self.NAMESPACE)
-        d2 = self.storage_class(self.NAMESPACE, connection=d1.connection)
+        d2 = self.storage_class(self.NAMESPACE, connection=getattr(d1, 'connection', None))
         d1.clear()
         d2.clear()
 
@@ -87,7 +87,7 @@ class BaseStorageTestCase:
 
     def test_same_settings(self):
         d1 = self.storage_class(self.NAMESPACE)
-        d2 = self.storage_class(self.NAMESPACE, connection=d1.connection)
+        d2 = self.storage_class(self.NAMESPACE, connection=getattr(d1, 'connection', None))
         d1.clear()
         d2.clear()
         d1['key_1'] = 1

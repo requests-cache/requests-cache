@@ -116,6 +116,7 @@ the ``backend`` parameter for either :py:class:`.CachedSession` or :py:func:`.in
 * ``'mongodb'``: `MongoDB <https://www.mongodb.com>`_ database (requires ``pymongo``)
 * ``'gridfs'``: `GridFS <https://docs.mongodb.com/manual/core/gridfs/>`_ collections on a MongoDB database (requires ``pymongo``)
 * ``'dynamodb'``: `Amazon DynamoDB <https://aws.amazon.com/dynamodb>`_ database (requires ``boto3``)
+* ``'filesystem'``: Stores responses as files on the local filesystem
 * ``'memory'`` : A non-persistent cache that just stores responses in memory
 
 A backend can be specified either by name, class or instance:
@@ -143,6 +144,7 @@ The ``cache_name`` parameter will be used as follows depending on the backend:
 * ``dynamodb``: Table name
 * ``mongodb`` and ``gridfs``: Database name
 * ``redis``: Namespace, meaning all keys will be prefixed with ``'<cache_name>:'``
+* ``filesystem``: Cache directory
 
 Cache Options
 -------------

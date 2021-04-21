@@ -1,10 +1,12 @@
 # History
 
-## 0.7.0 (TBD) 
+## 0.7.0 (2021-TBD) 
+* Add a filesystem cache
 * Add option to manually cache response objects
+* Use thread-local connections for SQLite backend
 * Fix `DynamoDbDict.__iter__` to return keys instead of values
 
-### 0.6.3 (2021-TBD)
+### 0.6.3 (2021-04-21)
 * Fix false positive warning with `include_get_headers`
 * Fix handling of `decode_content` parameter for `CachedResponse.raw.read()`
 * Replace deprecated pymongo `Collection.count()` with `estimated_document_count()`

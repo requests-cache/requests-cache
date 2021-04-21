@@ -18,7 +18,7 @@ N_ITERATIONS = 4 * MULTIPLIER
 def test_caching_with_threads(backend, iteration):
     """Run a multi-threaded stress test for each backend"""
     start = time()
-    session = CachedSession(backend=backend, **AWS_OPTIONS)
+    session = CachedSession(backend=backend, use_temp=True, **AWS_OPTIONS)
     session.cache.clear()
     url = httpbin('anything')
 
