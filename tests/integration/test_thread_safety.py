@@ -5,12 +5,7 @@ from time import time
 
 from requests_cache.backends import BACKEND_CLASSES
 from requests_cache.session import CachedSession
-from tests.conftest import AWS_OPTIONS, httpbin
-
-# Allow running longer stress tests with an environment variable
-MULTIPLIER = int(getenv('STRESS_TEST_MULTIPLIER', '1'))
-N_THREADS = 2 * MULTIPLIER
-N_ITERATIONS = 4 * MULTIPLIER
+from tests.conftest import AWS_OPTIONS, N_THREADS, N_ITERATIONS, httpbin
 
 
 @pytest.mark.parametrize('iteration', range(N_ITERATIONS))

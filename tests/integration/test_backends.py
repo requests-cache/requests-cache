@@ -1,100 +1,127 @@
-# TODO: Refactor with pytest fixtures
 import pytest
-from typing import Type
+from threading import Thread
+from time import time
+from typing import Dict, Type
 
-from requests_cache.backends.base import BaseStorage
+from requests_cache.backends.base import BaseCache, BaseStorage
+from requests_cache.session import CachedSession
+from tests.conftest import AWS_OPTIONS, CACHE_NAME, N_ITERATIONS, N_THREADS, httpbin
 
 
 class BaseStorageTestCase:
-    """Base class for testing backends"""
+    """Base class for testing cache storage dict-like interfaces"""
 
     def __init__(
         self,
         *args,
         storage_class: Type[BaseStorage],
+        init_kwargs: Dict = None,
         picklable: bool = False,
         **kwargs,
     ):
-        self.storage_class = storage_class
-        self.picklable = picklable
         super().__init__(*args, **kwargs)
+        self.storage_class = storage_class
+        self.init_kwargs = init_kwargs or {}
+        self.picklable = picklable
+        self.num_instances = 10  # Max number of cache instances to test
 
-    NAMESPACE = 'pytest-temp'
-    TABLES = ['table%s' % i for i in range(5)]
+    def init_cache(self, index=0, clear=True, **kwargs):
+        kwargs['suppress_warnings'] = True
+        cache = self.storage_class(CACHE_NAME, f'table_{index}', **self.init_kwargs, **kwargs)
+        if clear:
+            cache.clear()
+        return cache
 
     def tearDown(self):
-        for table in self.TABLES:
-            self.storage_class(self.NAMESPACE, table).clear()
+        for i in range(self.num_instances):
+            self.init_cache(i, clear=True)
         super().tearDown()
 
-    def test_set_get(self):
-        d1 = self.storage_class(self.NAMESPACE, self.TABLES[0])
-        d2 = self.storage_class(self.NAMESPACE, self.TABLES[1])
-        d3 = self.storage_class(self.NAMESPACE, self.TABLES[2])
-        d1['key_1'] = 1
-        d2['key_2'] = 2
-        d3['key_3'] = 3
-        assert list(d1.keys()) == ['key_1']
-        assert list(d2.keys()) == ['key_2']
-        assert list(d3.keys()) == ['key_3']
+    def test_basic_methods(self):
+        """Test basic dict methods with multiple cache instances:
+        ``getitem, setitem, delitem, len, contains``
+        """
+        caches = [self.init_cache(i) for i in range(10)]
+        for i in range(self.num_instances):
+            caches[i][f'key_{i}'] = f'value_{i}'
+            caches[i][f'key_{i+1}'] = f'value_{i+1}'
 
-        with pytest.raises(KeyError):
-            d1[4]
+        for i in range(self.num_instances):
+            cache = caches[i]
+            cache[f'key_{i}'] == f'value_{i}'
+            assert len(cache) == 2
+            assert f'key_{i}' in cache and f'key_{i+1}' in cache
 
-    def test_str(self):
-        d = self.storage_class(self.NAMESPACE)
-        d.clear()
-        d['key_1'] = 'value_1'
-        d['key_2'] = 'value_2'
-        assert dict(d) == {'key_1': 'value_1', 'key_2': 'value_2'}
+            del cache[f'key_{i}']
+            assert f'key_{i}' not in cache
+
+    def test_iterable_methods(self):
+        """Test iterable dict methods with multiple cache instances:
+        ``iter, keys, values, items``
+        """
+        caches = [self.init_cache(i) for i in range(self.num_instances)]
+        for i in range(self.num_instances):
+            caches[i][f'key_{i}'] = f'value_{i}'
+
+        for i in range(self.num_instances):
+            cache = caches[i]
+            assert list(cache) == [f'key_{i}']
+            assert list(cache.keys()) == [f'key_{i}']
+            assert list(cache.values()) == [f'value_{i}']
+            assert list(cache.items()) == [(f'key_{i}', f'value_{i}')]
+            assert dict(cache) == {f'key_{i}': f'value_{i}'}
 
     def test_del(self):
-        d = self.storage_class(self.NAMESPACE)
-        d.clear()
+        """Some more tests to ensure ``delitem`` deletes only the expected items"""
+        cache = self.init_cache()
+        for i in range(20):
+            cache[f'key_{i}'] = f'value_{i}'
         for i in range(5):
-            d[f'key_{i}'] = i
-        del d['key_0']
-        del d['key_1']
-        del d['key_2']
-        assert set(d.keys()) == {f'key_{i}' for i in range(3, 5)}
-        assert set(d.values()) == set(range(3, 5))
+            del cache[f'key_{i}']
+
+        assert len(cache) == 15
+        assert set(cache.keys()) == {f'key_{i}' for i in range(5, 20)}
+        assert set(cache.values()) == {f'value_{i}' for i in range(5, 20)}
+
+    def test_keyerrors(self):
+        """Accessing or deleting a deleted item should raise a KeyError"""
+        cache = self.init_cache()
+        cache['key'] = 'value'
+        del cache['key']
 
         with pytest.raises(KeyError):
-            del d['key_0']
+            del cache['key']
+        with pytest.raises(KeyError):
+            cache['key']
 
     def test_picklable_dict(self):
         if self.picklable:
-            d = self.storage_class(self.NAMESPACE)
-            d['key_1'] = Picklable()
-            d = self.storage_class(self.NAMESPACE)
-            assert d['key_1'].a == 1
-            assert d['key_1'].b == 2
+            cache = self.init_cache()
+            cache['key_1'] = Picklable()
+            assert cache['key_1'].attr_1 == 'value_1'
+            assert cache['key_1'].attr_2 == 'value_2'
 
     def test_clear_and_work_again(self):
-        d1 = self.storage_class(self.NAMESPACE)
-        d2 = self.storage_class(self.NAMESPACE, connection=getattr(d1, 'connection', None))
-        d1.clear()
-        d2.clear()
+        cache_1 = self.init_cache()
+        cache_2 = self.init_cache(connection=getattr(cache_1, 'connection', None))
 
         for i in range(5):
-            d1[i] = i
-            d2[i] = i
+            cache_1[i] = i
+            cache_2[i] = i
 
-        assert len(d1) == len(d2) == 5
-        d1.clear()
-        d2.clear()
-        assert len(d1) == len(d2) == 0
+        assert len(cache_1) == len(cache_2) == 5
+        cache_1.clear()
+        cache_2.clear()
+        assert len(cache_1) == len(cache_2) == 0
 
     def test_same_settings(self):
-        d1 = self.storage_class(self.NAMESPACE)
-        d2 = self.storage_class(self.NAMESPACE, connection=getattr(d1, 'connection', None))
-        d1.clear()
-        d2.clear()
-        d1['key_1'] = 1
-        d2['key_2'] = 2
-        assert d1 == d2
+        cache_1 = self.init_cache()
+        cache_2 = self.init_cache(connection=getattr(cache_1, 'connection', None))
+        cache_1['key_1'] = 1
+        cache_2['key_2'] = 2
+        assert cache_1 == cache_2
 
 
 class Picklable:
-    a = 1
-    b = 2
+    attr_1 = 'value_1'
+    attr_2 = 'value_2'

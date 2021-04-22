@@ -22,16 +22,7 @@ def ensure_connection():
 class GridFSPickleDictTestCase(BaseStorageTestCase, unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, storage_class=GridFSPickleDict, picklable=True, **kwargs)
-
-    def test_set_get(self):
-        """Override base test to test a single collecton instead of multiple"""
-        d1 = self.storage_class(self.NAMESPACE, self.TABLES[0])
-        d1[1] = 1
-        d1[2] = 2
-        assert list(d1.keys()) == [1, 2]
-
-        with pytest.raises(KeyError):
-            d1[4]
+        self.num_instances = 1  # Only test a single collecton instead of multiple
 
 
 @patch('requests_cache.backends.gridfs.GridFS')

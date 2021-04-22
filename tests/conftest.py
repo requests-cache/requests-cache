@@ -22,6 +22,13 @@ from timeout_decorator import timeout
 import requests_cache
 from requests_cache.session import ALL_METHODS, CachedSession
 
+CACHE_NAME = 'pytest_cache'
+
+# Allow running longer stress tests with an environment variable
+STRESS_TEST_MULTIPLIER = int(os.getenv('STRESS_TEST_MULTIPLIER', '1'))
+N_THREADS = 2 * STRESS_TEST_MULTIPLIER
+N_ITERATIONS = 4 * STRESS_TEST_MULTIPLIER
+
 MOCKED_URL = 'http+mock://requests-cache.com/text'
 MOCKED_URL_HTTPS = 'https+mock://requests-cache.com/text'
 MOCKED_URL_JSON = 'http+mock://requests-cache.com/json'
@@ -36,9 +43,10 @@ AWS_OPTIONS = {
     'aws_secret_access_key': 'placeholder',
 }
 
-# Configure logging to show debug output when tests fail (or with pytest -s)
+
+# Configure logging to show log output when tests fail (or with pytest -s)
 basicConfig(level='INFO')
-getLogger('requests_cache').setLevel('DEBUG')
+# getLogger('requests_cache').setLevel('DEBUG')
 logger = getLogger(__name__)
 
 

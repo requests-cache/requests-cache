@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 from requests_cache.backends import DynamoDbDict
 from tests.conftest import AWS_OPTIONS, fail_if_no_connection
-from tests.integration.test_backends import BaseStorageTestCase
+from tests.integration.test_backends import CACHE_NAME, BaseStorageTestCase
 
 # Run this test module last, since the DynamoDB container takes the longest to initialize
 pytestmark = pytest.mark.order(-1)
@@ -20,16 +20,18 @@ def ensure_connection():
     client.describe_limits()
 
 
-class DynamoDbDictWrapper(DynamoDbDict):
-    def __init__(self, namespace, collection_name='dynamodb_dict_data', **options):
-        super().__init__(namespace, collection_name, **options, **AWS_OPTIONS)
-
-
 class DynamoDbTestCase(BaseStorageTestCase, unittest.TestCase):
+    def init_cache(self, index=0, clear=True, **kwargs):
+        kwargs['suppress_warnings'] = True
+        cache = self.storage_class(CACHE_NAME, f'table_{index}', **kwargs, **AWS_OPTIONS)
+        if clear:
+            cache.clear()
+        return cache
+
     def __init__(self, *args, **kwargs):
         super().__init__(
             *args,
-            storage_class=DynamoDbDictWrapper,
+            storage_class=DynamoDbDict,
             picklable=True,
             **kwargs,
         )
