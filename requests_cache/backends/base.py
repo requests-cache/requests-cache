@@ -201,3 +201,6 @@ class BaseStorage(MutableMapping, ABC):
             return Serializer(secret_key, salt=salt, serializer=pickle)
         else:
             return pickle
+
+    def __str__(self):
+        return str(list(self.keys()))

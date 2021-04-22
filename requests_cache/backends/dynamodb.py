@@ -110,9 +110,6 @@ class DynamoDbDict(BaseStorage):
             composite_key = {'namespace': v['namespace'], 'key': v['key']}
             self._table.delete_item(Key=composite_key)
 
-    def __str__(self):
-        return str(dict(self.items()))
-
     def __scan_table(self):
         expression_attribute_values = {':Namespace': self._self_key}
         expression_attribute_names = {'#N': 'namespace'}

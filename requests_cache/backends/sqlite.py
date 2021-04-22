@@ -143,9 +143,6 @@ class DbDict(BaseStorage):
         with self.connection(True) as con:
             con.execute("vacuum")
 
-    def __str__(self):
-        return str(dict(self.items()))
-
 
 class DbPickleDict(DbDict):
     """Same as :class:`DbDict`, but pickles values before saving"""

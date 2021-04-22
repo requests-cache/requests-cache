@@ -70,9 +70,6 @@ class MongoDict(BaseStorage):
     def clear(self):
         self.collection.drop()
 
-    def __str__(self):
-        return str(dict(self.items()))
-
 
 class MongoPickleDict(MongoDict):
     """Same as :class:`MongoDict`, but pickles values before saving"""
