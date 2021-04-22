@@ -1,11 +1,9 @@
+"""Common tests to run for all backends (BaseStorage subclasses)"""
 import pytest
-from threading import Thread
-from time import time
 from typing import Dict, Type
 
-from requests_cache.backends.base import BaseCache, BaseStorage
-from requests_cache.session import CachedSession
-from tests.conftest import CACHE_NAME, N_ITERATIONS, N_THREADS, httpbin
+from requests_cache.backends.base import BaseStorage
+from tests.conftest import CACHE_NAME
 
 
 class BaseStorageTest:
@@ -124,43 +122,3 @@ class BaseStorageTest:
 class Picklable:
     attr_1 = 'value_1'
     attr_2 = 'value_2'
-
-
-class BaseCacheTest:
-    """Base class for testing cache backend classes"""
-
-    backend_class: Type[BaseCache] = None
-    init_kwargs: Dict = {}
-
-    def init_backend(self, clear=True, **kwargs):
-        kwargs['suppress_warnings'] = True
-        backend = self.backend_class(CACHE_NAME, **self.init_kwargs, **kwargs)
-        if clear:
-            backend.redirects.clear()
-            backend.responses.clear()
-        return backend
-
-    @pytest.mark.parametrize('iteration', range(N_ITERATIONS))
-    def test_caching_with_threads(self, iteration):
-        """Run a multi-threaded stress test for each backend"""
-        start = time()
-        session = CachedSession(backend=self.init_backend())
-        url = httpbin('anything')
-
-        def send_requests():
-            for i in range(N_ITERATIONS):
-                session.get(url, params={f'key_{i}': f'value_{i}'})
-
-        threads = [Thread(target=send_requests) for i in range(N_THREADS)]
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
-
-        elapsed = time() - start
-        average = (elapsed * 1000) / (N_ITERATIONS * N_THREADS)
-        print(f'{self.backend_class}: Ran {N_ITERATIONS} iterations with {N_THREADS} threads each in {elapsed} s')
-        print(f'Average time per request: {average} ms')
-
-        for i in range(N_ITERATIONS):
-            assert session.cache.has_url(f'{url}?key_{i}=value_{i}')

@@ -3,7 +3,8 @@ from unittest.mock import patch
 
 from requests_cache.backends import DynamoDbCache, DynamoDbDict
 from tests.conftest import AWS_OPTIONS, fail_if_no_connection
-from tests.integration.test_backends import BaseCacheTest, BaseStorageTest
+from tests.integration.base_cache_test import BaseCacheTest
+from tests.integration.base_storage_test import BaseStorageTest
 
 # Run this test module last, since the DynamoDB container takes the longest to initialize
 pytestmark = pytest.mark.order(-1)
