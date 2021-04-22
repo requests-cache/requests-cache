@@ -24,18 +24,17 @@ class FileCache(BaseCache):
 
     def __init__(self, cache_name: Union[Path, str] = 'http_cache', use_temp: bool = False, **kwargs):
         super().__init__(**kwargs)
-        cache_dir = _get_cache_dir(cache_name, use_temp)
-        self.responses = FileDict(cache_dir, **kwargs)
-        self.redirects = DbDict(join(cache_dir, 'redirects.sqlite'), 'redirects', **kwargs)
+        self.responses = FileDict(cache_name, use_temp=use_temp, **kwargs)
+        self.redirects = DbDict(join(self.responses.cache_dir, 'redirects.sqlite'), 'redirects', **kwargs)
 
 
 class FileDict(BaseStorage):
     """A dictionary-like interface to files on the local filesystem"""
 
-    def __init__(self, cache_dir, **kwargs):
+    def __init__(self, cache_name, use_temp: bool = False, **kwargs):
         kwargs.setdefault('suppress_warnings', True)
         super().__init__(**kwargs)
-        self.cache_dir = cache_dir
+        self.cache_dir = _get_cache_dir(cache_name, use_temp)
         makedirs(self.cache_dir, exist_ok=True)
 
     @contextmanager
@@ -70,7 +69,7 @@ class FileDict(BaseStorage):
 
     def clear(self):
         with self._try_io(ignore_errors=True):
-            rmtree(self.cache_dir)
+            rmtree(self.cache_dir, ignore_errors=True)
             makedirs(self.cache_dir)
 
     def paths(self):
