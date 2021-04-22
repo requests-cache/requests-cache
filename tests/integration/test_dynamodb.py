@@ -1,10 +1,9 @@
 import pytest
-import unittest
 from unittest.mock import patch
 
 from requests_cache.backends import DynamoDbDict
 from tests.conftest import AWS_OPTIONS, fail_if_no_connection
-from tests.integration.test_backends import CACHE_NAME, BaseStorageTestCase
+from tests.integration.test_backends import BaseStorageTest
 
 # Run this test module last, since the DynamoDB container takes the longest to initialize
 pytestmark = pytest.mark.order(-1)
@@ -20,25 +19,13 @@ def ensure_connection():
     client.describe_limits()
 
 
-class DynamoDbTestCase(BaseStorageTestCase, unittest.TestCase):
-    def init_cache(self, index=0, clear=True, **kwargs):
-        kwargs['suppress_warnings'] = True
-        cache = self.storage_class(CACHE_NAME, f'table_{index}', **kwargs, **AWS_OPTIONS)
-        if clear:
-            cache.clear()
-        return cache
+class TestDynamoDbDict(BaseStorageTest):
+    storage_class = DynamoDbDict
+    init_kwargs = AWS_OPTIONS
+    picklable = True
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(
-            *args,
-            storage_class=DynamoDbDict,
-            picklable=True,
-            **kwargs,
-        )
-
-
-@patch('requests_cache.backends.dynamodb.boto3.resource')
-def test_connection_kwargs(mock_resource):
-    """A spot check to make sure optional connection kwargs gets passed to connection"""
-    DynamoDbDict('test', region_name='us-east-2', invalid_kwarg='???')
-    mock_resource.assert_called_with('dynamodb', region_name='us-east-2')
+    @patch('requests_cache.backends.dynamodb.boto3.resource')
+    def test_connection_kwargs(self, mock_resource):
+        """A spot check to make sure optional connection kwargs gets passed to connection"""
+        DynamoDbDict('test', region_name='us-east-2', invalid_kwarg='???')
+        mock_resource.assert_called_with('dynamodb', region_name='us-east-2')

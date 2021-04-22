@@ -1,16 +1,16 @@
-import unittest
 from os.path import isfile
 from shutil import rmtree
 
 from requests_cache.backends import FileDict
-from tests.integration.test_backends import CACHE_NAME, BaseStorageTestCase
+from tests.integration.test_backends import CACHE_NAME, BaseStorageTest
 
 
-class FileDictTestCase(BaseStorageTestCase, unittest.TestCase):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, storage_class=FileDict, picklable=True, **kwargs)
+class TestFileDict(BaseStorageTest):
+    storage_class = FileDict
+    picklable = True
 
-    def tearDown(self):
+    @classmethod
+    def teardown_class(cls):
         rmtree(CACHE_NAME, ignore_errors=True)
 
     def init_cache(self, index=0, **kwargs):

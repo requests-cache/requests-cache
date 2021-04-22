@@ -1,11 +1,10 @@
 import pytest
-from os import getenv
 from threading import Thread
 from time import time
 
 from requests_cache.backends import BACKEND_CLASSES
 from requests_cache.session import CachedSession
-from tests.conftest import AWS_OPTIONS, N_THREADS, N_ITERATIONS, httpbin
+from tests.conftest import AWS_OPTIONS, N_ITERATIONS, N_THREADS, httpbin
 
 
 @pytest.mark.parametrize('iteration', range(N_ITERATIONS))

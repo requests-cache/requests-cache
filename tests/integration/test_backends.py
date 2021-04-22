@@ -1,29 +1,17 @@
 import pytest
-from threading import Thread
-from time import time
 from typing import Dict, Type
 
-from requests_cache.backends.base import BaseCache, BaseStorage
-from requests_cache.session import CachedSession
-from tests.conftest import AWS_OPTIONS, CACHE_NAME, N_ITERATIONS, N_THREADS, httpbin
+from requests_cache.backends.base import BaseStorage
+from tests.conftest import CACHE_NAME
 
 
-class BaseStorageTestCase:
+class BaseStorageTest:
     """Base class for testing cache storage dict-like interfaces"""
 
-    def __init__(
-        self,
-        *args,
-        storage_class: Type[BaseStorage],
-        init_kwargs: Dict = None,
-        picklable: bool = False,
-        **kwargs,
-    ):
-        super().__init__(*args, **kwargs)
-        self.storage_class = storage_class
-        self.init_kwargs = init_kwargs or {}
-        self.picklable = picklable
-        self.num_instances = 10  # Max number of cache instances to test
+    storage_class: Type[BaseStorage] = None
+    init_kwargs: Dict = {}
+    picklable: bool = False
+    num_instances: int = 10  # Max number of cache instances to test
 
     def init_cache(self, index=0, clear=True, **kwargs):
         kwargs['suppress_warnings'] = True
