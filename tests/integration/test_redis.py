@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from requests_cache.backends.redis import RedisCache, RedisDict
 from tests.conftest import fail_if_no_connection
-from tests.integration.test_backends import BaseStorageTest
+from tests.integration.test_backends import BaseCacheTest, BaseStorageTest
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -24,3 +24,7 @@ class TestRedisDict(BaseStorageTest):
         """A spot check to make sure optional connection kwargs gets passed to connection"""
         RedisCache('test', username='user', password='pass', invalid_kwarg='???')
         mock_redis.assert_called_with(username='user', password='pass')
+
+
+class TestRedisCache(BaseCacheTest):
+    backend_class = RedisCache

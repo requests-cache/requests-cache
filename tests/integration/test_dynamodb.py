@@ -1,9 +1,9 @@
 import pytest
 from unittest.mock import patch
 
-from requests_cache.backends import DynamoDbDict
+from requests_cache.backends import DynamoDbCache, DynamoDbDict
 from tests.conftest import AWS_OPTIONS, fail_if_no_connection
-from tests.integration.test_backends import BaseStorageTest
+from tests.integration.test_backends import BaseCacheTest, BaseStorageTest
 
 # Run this test module last, since the DynamoDB container takes the longest to initialize
 pytestmark = pytest.mark.order(-1)
@@ -29,3 +29,8 @@ class TestDynamoDbDict(BaseStorageTest):
         """A spot check to make sure optional connection kwargs gets passed to connection"""
         DynamoDbDict('test', region_name='us-east-2', invalid_kwarg='???')
         mock_resource.assert_called_with('dynamodb', region_name='us-east-2')
+
+
+class TestDynamoDbCache(BaseCacheTest):
+    backend_class = DynamoDbCache
+    init_kwargs = AWS_OPTIONS

@@ -2,8 +2,8 @@ import os
 from threading import Thread
 from unittest.mock import patch
 
-from requests_cache.backends.sqlite import DbDict, DbPickleDict
-from tests.integration.test_backends import CACHE_NAME, BaseStorageTest
+from requests_cache.backends.sqlite import DbCache, DbDict, DbPickleDict
+from tests.integration.test_backends import CACHE_NAME, BaseCacheTest, BaseStorageTest
 
 
 class SQLiteTestCase(BaseStorageTest):
@@ -63,8 +63,8 @@ class SQLiteTestCase(BaseStorageTest):
         thread.join()
 
         # make sure connection is not closed by the thread
-        cache[0] = 0
-        assert str(cache) == "{0: 0}"
+        cache['key_1'] = 'value_1'
+        assert list(cache.keys()) == ['key_1']
 
     @patch('requests_cache.backends.sqlite.sqlite3')
     def test_connection_kwargs(self, mock_sqlite):
@@ -80,3 +80,15 @@ class TestDbDict(SQLiteTestCase):
 class TestDbPickleDict(SQLiteTestCase):
     storage_class = DbPickleDict
     picklable = True
+
+
+class TestDbCache(BaseCacheTest):
+    backend_class = DbCache
+    init_kwargs = {'use_temp': True}
+
+    @classmethod
+    def teardown_class(cls):
+        try:
+            os.unlink(CACHE_NAME)
+        except Exception:
+            pass

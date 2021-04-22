@@ -3,9 +3,9 @@ from unittest.mock import patch
 
 from pymongo import MongoClient
 
-from requests_cache.backends import GridFSPickleDict, get_valid_kwargs
+from requests_cache.backends import GridFSCache, GridFSPickleDict, get_valid_kwargs
 from tests.conftest import fail_if_no_connection
-from tests.integration.test_backends import BaseStorageTest
+from tests.integration.test_backends import BaseCacheTest, BaseStorageTest
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -33,3 +33,7 @@ class TestGridFSPickleDict(BaseStorageTest):
         """A spot check to make sure optional connection kwargs gets passed to connection"""
         GridFSPickleDict('test', host='http://0.0.0.0', port=1234, invalid_kwarg='???')
         mock_client.assert_called_with(host='http://0.0.0.0', port=1234)
+
+
+class TestGridFSCache(BaseCacheTest):
+    backend_class = GridFSCache

@@ -1,8 +1,8 @@
 from os.path import isfile
 from shutil import rmtree
 
-from requests_cache.backends import FileDict
-from tests.integration.test_backends import CACHE_NAME, BaseStorageTest
+from requests_cache.backends import FileCache, FileDict
+from tests.integration.test_backends import CACHE_NAME, BaseCacheTest, BaseStorageTest
 
 
 class TestFileDict(BaseStorageTest):
@@ -26,3 +26,8 @@ class TestFileDict(BaseStorageTest):
         assert len(list(cache.paths())) == self.num_instances
         for path in cache.paths():
             assert isfile(path)
+
+
+class TestFileCache(BaseCacheTest):
+    backend_class = FileCache
+    init_kwargs = {'use_temp': True}
