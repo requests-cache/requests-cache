@@ -29,6 +29,23 @@ STRESS_TEST_MULTIPLIER = int(os.getenv('STRESS_TEST_MULTIPLIER', '1'))
 N_THREADS = 2 * STRESS_TEST_MULTIPLIER
 N_ITERATIONS = 4 * STRESS_TEST_MULTIPLIER
 
+HTTPBIN_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
+HTTPBIN_FORMATS = [
+    'brotli',
+    'deflate',
+    'deny',
+    'encoding/utf8',
+    'gzip',
+    'html',
+    'image/jpeg',
+    'image/png',
+    'image/svg',
+    'image/webp',
+    'json',
+    'robots.txt',
+    'xml',
+]
+
 MOCKED_URL = 'http+mock://requests-cache.com/text'
 MOCKED_URL_HTTPS = 'https+mock://requests-cache.com/text'
 MOCKED_URL_JSON = 'http+mock://requests-cache.com/json'
