@@ -77,6 +77,3 @@ class GridFSPickleDict(BaseStorage):
     def clear(self):
         self.db['fs.files'].drop()
         self.db['fs.chunks'].drop()
-
-    def __str__(self):
-        return str(dict(self.items()))

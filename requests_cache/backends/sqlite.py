@@ -25,7 +25,6 @@ class DbCache(BaseCache):
 
     def __init__(self, db_path: Union[Path, str] = 'http_cache', fast_save: bool = False, **kwargs):
         super().__init__(**kwargs)
-        db_path = _get_db_path(db_path)
         self.responses = DbPickleDict(db_path, table_name='responses', fast_save=fast_save, **kwargs)
         self.redirects = DbDict(db_path, table_name='redirects', **kwargs)
 
@@ -60,7 +59,7 @@ class DbDict(BaseStorage):
         kwargs.setdefault('suppress_warnings', True)
         super().__init__(**kwargs)
         self.connection_kwargs = get_valid_kwargs(sqlite_template, kwargs)
-        self.db_path = db_path
+        self.db_path = _get_db_path(db_path)
         self.fast_save = fast_save
         self.table_name = table_name
 
@@ -143,9 +142,6 @@ class DbDict(BaseStorage):
     def vacuum(self):
         with self.connection(True) as con:
             con.execute("vacuum")
-
-    def __str__(self):
-        return str(dict(self.items()))
 
 
 class DbPickleDict(DbDict):

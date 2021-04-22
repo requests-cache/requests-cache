@@ -1,7 +1,7 @@
 # TODO: Add option for compression?
 from contextlib import contextmanager
 from os import listdir, makedirs, unlink
-from os.path import abspath, expanduser, isabs, join
+from os.path import abspath, dirname, expanduser, isabs, join
 from pathlib import Path
 from pickle import PickleError
 from shutil import rmtree
@@ -13,8 +13,9 @@ from .sqlite import DbDict
 
 
 class FileCache(BaseCache):
-    """Backend that stores cached responses as files on the local filesystem. Response paths will be
-    in the format ``<cache_name>/<cache_key>``. Redirects are stored in a SQLite database.
+    """Backend that stores cached responses as files on the local filesystem.
+    Response paths will be in the format ``<cache_name>/responses/<cache_key>``.
+    Redirects are stored in a SQLite database, located at ``<cache_name>/redirects.sqlite``.
 
     Args:
         cache_name: Base directory for cache files
@@ -24,18 +25,18 @@ class FileCache(BaseCache):
 
     def __init__(self, cache_name: Union[Path, str] = 'http_cache', use_temp: bool = False, **kwargs):
         super().__init__(**kwargs)
-        cache_dir = _get_cache_dir(cache_name, use_temp)
-        self.responses = FileDict(cache_dir, **kwargs)
-        self.redirects = DbDict(join(cache_dir, 'redirects.sqlite'), 'redirects', **kwargs)
+        self.responses = FileDict(cache_name, use_temp=use_temp, **kwargs)
+        db_path = join(dirname(self.responses.cache_dir), 'redirects.sqlite')
+        self.redirects = DbDict(db_path, 'redirects', **kwargs)
 
 
 class FileDict(BaseStorage):
     """A dictionary-like interface to files on the local filesystem"""
 
-    def __init__(self, cache_dir, **kwargs):
+    def __init__(self, cache_name, use_temp: bool = False, **kwargs):
         kwargs.setdefault('suppress_warnings', True)
         super().__init__(**kwargs)
-        self.cache_dir = cache_dir
+        self.cache_dir = _get_cache_dir(cache_name, use_temp)
         makedirs(self.cache_dir, exist_ok=True)
 
     @contextmanager
@@ -70,7 +71,7 @@ class FileDict(BaseStorage):
 
     def clear(self):
         with self._try_io(ignore_errors=True):
-            rmtree(self.cache_dir)
+            rmtree(self.cache_dir, ignore_errors=True)
             makedirs(self.cache_dir)
 
     def paths(self):
@@ -81,7 +82,7 @@ class FileDict(BaseStorage):
 
 def _get_cache_dir(cache_dir: Union[Path, str], use_temp: bool) -> str:
     if use_temp and not isabs(cache_dir):
-        cache_dir = join(gettempdir(), cache_dir)
+        cache_dir = join(gettempdir(), cache_dir, 'responses')
     cache_dir = abspath(expanduser(str(cache_dir)))
     makedirs(cache_dir, exist_ok=True)
     return cache_dir

@@ -60,6 +60,3 @@ class RedisDict(BaseStorage):
 
     def clear(self):
         self.connection.delete(self._self_key)
-
-    def __str__(self):
-        return str(dict(self.items()))
