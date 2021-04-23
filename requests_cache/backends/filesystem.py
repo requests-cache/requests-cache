@@ -81,8 +81,11 @@ class FileDict(BaseStorage):
 
 
 def _get_cache_dir(cache_dir: Union[Path, str], use_temp: bool) -> str:
+    # Save to a temp directory, if specified
     if use_temp and not isabs(cache_dir):
         cache_dir = join(gettempdir(), cache_dir, 'responses')
+
+    # Expand relative and user paths (~/*), and make sure parent dirs exist
     cache_dir = abspath(expanduser(str(cache_dir)))
     makedirs(cache_dir, exist_ok=True)
     return cache_dir
