@@ -4,6 +4,9 @@ from os import getenv
 
 __version__ = '0.7.0'
 
+logger = getLogger(__name__)
+
+
 try:
     from .response import AnyResponse, CachedHTTPResponse, CachedResponse, ExpirationTime
     from .session import ALL_METHODS, CachedSession, CacheMixin
@@ -17,9 +20,9 @@ try:
         remove_expired_responses,
         uninstall_cache,
     )
-# Quietly ignore ImportError, if setup.py is invoked outside a virtualenv
-except ImportError:
-    pass
+# Ignore ImportErrors, if setup.py is invoked outside a virtualenv
+except ImportError as e:
+    logger.warning(e)
 
 
 def get_prerelease_version(version: str) -> str:
@@ -29,7 +32,7 @@ def get_prerelease_version(version: str) -> str:
     if getenv('GITHUB_REF') == 'refs/heads/dev':
         build_number = getenv('GITHUB_RUN_NUMBER', '0')
         version = f'{version}.dev{build_number}'
-        getLogger(__name__).info(f'Using pre-release version: {version}')
+        logger.info(f'Using pre-release version: {version}')
     return version
 
 
