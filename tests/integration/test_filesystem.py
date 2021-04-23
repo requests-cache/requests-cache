@@ -2,7 +2,8 @@ from os.path import isfile
 from shutil import rmtree
 
 from requests_cache.backends import FileCache, FileDict
-from tests.integration.test_backends import CACHE_NAME, BaseCacheTest, BaseStorageTest
+from tests.integration.base_cache_test import BaseCacheTest
+from tests.integration.base_storage_test import CACHE_NAME, BaseStorageTest
 
 
 class TestFileDict(BaseStorageTest):

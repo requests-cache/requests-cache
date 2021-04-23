@@ -3,7 +3,8 @@ from threading import Thread
 from unittest.mock import patch
 
 from requests_cache.backends.sqlite import DbCache, DbDict, DbPickleDict
-from tests.integration.test_backends import CACHE_NAME, BaseCacheTest, BaseStorageTest
+from tests.integration.base_cache_test import BaseCacheTest
+from tests.integration.base_storage_test import CACHE_NAME, BaseStorageTest
 
 
 class SQLiteTestCase(BaseStorageTest):
