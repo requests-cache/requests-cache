@@ -270,6 +270,15 @@ revalidate the cache with the new expiration time:
 
     >>> session.remove_expired_responses(expire_after=timedelta(days=30))
 
+
+Error Handling
+--------------
+There are a couple different options for customizing error-handling behavior.
+
+TODO: document behavior for:
+* old_data_on_error
+* raise_for_status
+
 Potential Issues
 ----------------
 * Version updates of ``requests``, ``urllib3`` or ``requests-cache`` itself may not be compatible with

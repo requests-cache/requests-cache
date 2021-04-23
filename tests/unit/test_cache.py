@@ -20,6 +20,7 @@ from requests_cache.backends import BACKEND_CLASSES, BaseCache, get_placeholder_
 from requests_cache.backends.sqlite import DbDict, DbPickleDict
 from tests.conftest import (
     MOCKED_URL,
+    MOCKED_URL_404,
     MOCKED_URL_HTTPS,
     MOCKED_URL_JSON,
     MOCKED_URL_REDIRECT,
@@ -352,6 +353,34 @@ def test_old_data_on_error(mock_session):
     with patch.object(mock_session.cache, 'save_response', side_effect=ValueError):
         response = mock_session.get(MOCKED_URL)
         assert response.from_cache is True and response.is_expired is True
+
+
+def test_raise_for_status(mock_session):
+    """Simulate getting a valid response, expiring, and then getting a 404 for the same request"""
+    mock_session.raise_for_status = True
+    mock_session.expire_after = 0.01
+    mock_session.allowable_codes = (200, 404)
+
+    mock_session.get(MOCKED_URL_404)
+    time.sleep(0.01)
+    with pytest.raises(requests.RequestException):
+        mock_session.get(MOCKED_URL_404)
+
+
+def test_raise_for_status_and_old_data(mock_session):
+    """Simulate getting a valid response, expiring, and then getting a 404 for the same request
+    with old_data_on_error
+    """
+    mock_session.old_data_on_error = True
+    mock_session.raise_for_status = True
+    mock_session.expire_after = 0.2
+    mock_session.allowable_codes = (200, 404)
+
+    assert mock_session.get(MOCKED_URL_404).from_cache is False
+    assert mock_session.get(MOCKED_URL_404).from_cache is True
+    time.sleep(0.2)
+    response = mock_session.get(MOCKED_URL_404)
+    assert response.from_cache is True and response.is_expired is True
 
 
 def test_cache_disabled(mock_session):

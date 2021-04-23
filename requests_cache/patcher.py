@@ -25,6 +25,7 @@ def install_cache(
     allowable_methods: Iterable['str'] = ('GET', 'HEAD'),
     filter_fn: Callable = None,
     old_data_on_error: bool = False,
+    raise_for_status: bool = False,
     session_factory: Type[OriginalSession] = CachedSession,
     **kwargs,
 ):
@@ -53,6 +54,7 @@ def install_cache(
                 allowable_methods=allowable_methods,
                 filter_fn=filter_fn,
                 old_data_on_error=old_data_on_error,
+                raise_for_status=raise_for_status,
                 **kwargs,
             )
 
