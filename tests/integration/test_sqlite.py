@@ -1,4 +1,5 @@
 import os
+from tempfile import gettempdir
 from threading import Thread
 from unittest.mock import patch
 
@@ -8,12 +9,20 @@ from tests.integration.base_storage_test import CACHE_NAME, BaseStorageTest
 
 
 class SQLiteTestCase(BaseStorageTest):
+    init_kwargs = {'use_temp': True}
+
     @classmethod
     def teardown_class(cls):
         try:
             os.unlink(CACHE_NAME)
         except Exception:
             pass
+
+    def test_use_temp(self):
+        relative_path = self.storage_class(CACHE_NAME).db_path
+        temp_path = self.storage_class(CACHE_NAME, use_temp=True).db_path
+        assert not relative_path.startswith(gettempdir())
+        assert temp_path.startswith(gettempdir())
 
     def test_bulk_commit(self):
         cache = self.init_cache()

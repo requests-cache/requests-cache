@@ -3,8 +3,9 @@ import threading
 from contextlib import contextmanager
 from logging import getLogger
 from os import makedirs
-from os.path import abspath, basename, dirname, expanduser
+from os.path import abspath, basename, dirname, expanduser, isabs, join
 from pathlib import Path
+from tempfile import gettempdir
 from typing import Type, Union
 
 from . import BaseCache, BaseStorage, get_valid_kwargs
@@ -18,15 +19,19 @@ class DbCache(BaseCache):
 
     Args:
         db_path: Database file path (expands user paths and creates parent dirs)
+        use_temp: Store database in a temp directory (e.g., ``/tmp/http_cache.sqlite``).
+            Note: if ``db_path`` is an absolute path, this option will be ignored.
         fast_save: Speedup cache saving up to 50 times but with possibility of data loss.
             See :py:class:`.DbDict` for more info
         kwargs: Additional keyword arguments for :py:func:`sqlite3.connect`
     """
 
-    def __init__(self, db_path: Union[Path, str] = 'http_cache', fast_save: bool = False, **kwargs):
+    def __init__(
+        self, db_path: Union[Path, str] = 'http_cache', use_temp: bool = False, fast_save: bool = False, **kwargs
+    ):
         super().__init__(**kwargs)
-        self.responses = DbPickleDict(db_path, table_name='responses', fast_save=fast_save, **kwargs)
-        self.redirects = DbDict(db_path, table_name='redirects', **kwargs)
+        self.responses = DbPickleDict(db_path, table_name='responses', use_temp=use_temp, fast_save=fast_save, **kwargs)
+        self.redirects = DbDict(db_path, table_name='redirects', use_temp=use_temp, **kwargs)
 
     def remove_expired_responses(self, *args, **kwargs):
         """Remove expired responses from the cache, with additional cleanup"""
@@ -55,11 +60,11 @@ class DbDict(BaseStorage):
         timeout: Timeout for acquiring a database lock
     """
 
-    def __init__(self, db_path, table_name='http_cache', fast_save=False, **kwargs):
+    def __init__(self, db_path, table_name='http_cache', fast_save=False, use_temp: bool = False, **kwargs):
         kwargs.setdefault('suppress_warnings', True)
         super().__init__(**kwargs)
         self.connection_kwargs = get_valid_kwargs(sqlite_template, kwargs)
-        self.db_path = _get_db_path(db_path)
+        self.db_path = _get_db_path(db_path, use_temp)
         self.fast_save = fast_save
         self.table_name = table_name
 
@@ -154,12 +159,17 @@ class DbPickleDict(DbDict):
         return self.deserialize(super().__getitem__(key))
 
 
-def _get_db_path(db_path):
+def _get_db_path(db_path: Union[Path, str], use_temp: bool) -> str:
     """Get resolved path for database file"""
-    # Allow paths with user directories (~/*), and add file extension if not specified
+    # Save to a temp directory, if specified
+    if use_temp and not isabs(db_path):
+        db_path = join(gettempdir(), db_path)
+
+    # Expand relative and user paths (~/*), and add file extension if not specified
     db_path = abspath(expanduser(str(db_path)))
     if '.' not in basename(db_path):
         db_path += '.sqlite'
+
     # Make sure parent dirs exist
     makedirs(dirname(db_path), exist_ok=True)
     return db_path

@@ -1,5 +1,6 @@
 from os.path import isfile
 from shutil import rmtree
+from tempfile import gettempdir
 
 from requests_cache.backends import FileCache, FileDict
 from tests.integration.base_cache_test import BaseCacheTest
@@ -18,6 +19,12 @@ class TestFileDict(BaseStorageTest):
         cache = self.storage_class(f'{CACHE_NAME}_{index}', use_temp=True, **kwargs)
         cache.clear()
         return cache
+
+    def test_use_temp(self):
+        relative_path = self.storage_class(CACHE_NAME).cache_dir
+        temp_path = self.storage_class(CACHE_NAME, use_temp=True).cache_dir
+        assert not relative_path.startswith(gettempdir())
+        assert temp_path.startswith(gettempdir())
 
     def test_paths(self):
         cache = self.storage_class(CACHE_NAME)
