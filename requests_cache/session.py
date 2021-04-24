@@ -144,7 +144,10 @@ class CacheMixin:
         # Attempt to send the request and cache the new response
         logger.debug('Expired response; attempting to re-send request')
         try:
-            return self._send_and_cache(request, cache_key, **kwargs)
+            new_response = self._send_and_cache(request, cache_key, **kwargs)
+            if self.old_data_on_error:
+                new_response.raise_for_status()
+            return new_response
         # Return the expired/invalid response on error, if specified; otherwise reraise
         except Exception as e:
             logger.exception(e)
@@ -244,7 +247,7 @@ class CachedSession(CacheMixin, OriginalSession):
         filter_fn: function that takes a :py:class:`aiohttp.ClientResponse` object and
             returns a boolean indicating whether or not that response should be cached. Will be
             applied to both new and previously cached responses.
-        old_data_on_error: Return expired cached responses if new request fails
+        old_data_on_error: Return stale cache data if a new request raises an exception
         secret_key: Optional secret key used to sign cache items for added security
 
     """

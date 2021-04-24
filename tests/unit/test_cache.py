@@ -20,6 +20,7 @@ from requests_cache.backends import BACKEND_CLASSES, BaseCache, get_placeholder_
 from requests_cache.backends.sqlite import DbDict, DbPickleDict
 from tests.conftest import (
     MOCKED_URL,
+    MOCKED_URL_404,
     MOCKED_URL_HTTPS,
     MOCKED_URL_JSON,
     MOCKED_URL_REDIRECT,
@@ -341,8 +342,8 @@ def test_expired_request_error(mock_session):
     assert len(mock_session.cache.responses) == 0
 
 
-def test_old_data_on_error(mock_session):
-    """With old_data_on_error, expect to get old cache data if there is an error during a request"""
+def test_old_data_on_error__exception(mock_session):
+    """With old_data_on_error, expect to get old cache data if there is an exception during a request"""
     mock_session.old_data_on_error = True
     mock_session.expire_after = 0.2
 
@@ -352,6 +353,19 @@ def test_old_data_on_error(mock_session):
     with patch.object(mock_session.cache, 'save_response', side_effect=ValueError):
         response = mock_session.get(MOCKED_URL)
         assert response.from_cache is True and response.is_expired is True
+
+
+def test_old_data_on_error__error_code(mock_session):
+    """With old_data_on_error, expect to get old cache data if a response has an error status code"""
+    mock_session.old_data_on_error = True
+    mock_session.expire_after = 0.2
+    mock_session.allowable_codes = (200, 404)
+
+    assert mock_session.get(MOCKED_URL_404).from_cache is False
+    assert mock_session.get(MOCKED_URL_404).from_cache is True
+    time.sleep(0.2)
+    response = mock_session.get(MOCKED_URL_404)
+    assert response.from_cache is True and response.is_expired is True
 
 
 def test_cache_disabled(mock_session):

@@ -1,9 +1,10 @@
 # History
 
-## 0.7.0 (2021-TBD) 
-* Add a filesystem backend
+## 0.7.0 (2021-06-TBD)
+* Add a filesystem backend that stores responses as local files
 * Add option to manually cache response objects
 * Add `use_temp` option to both SQLite and filesystem backends to store files in a temp directory
+* Update `old_data_on_error` option to also handle error response codes
 * Use thread-local connections for SQLite backend
 * Fix `DynamoDbDict.__iter__` to return keys instead of values
 
