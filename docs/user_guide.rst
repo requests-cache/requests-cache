@@ -227,7 +227,7 @@ is used:
 
 To set expiration for a single request:
 
-    >>> session.get('http://httpbin.org/get', expire_after=360)
+    >>> session.get('https://httpbin.org/get', expire_after=360)
 
 URL Patterns
 ~~~~~~~~~~~~
@@ -273,11 +273,27 @@ revalidate the cache with the new expiration time:
 
 Error Handling
 --------------
-There are a couple different options for customizing error-handling behavior.
+In some cases, you might cache a response, have it expire, but then encounter an error when
+retrieving a new response. If you would like to use expired response data in these cases, use the
+``old_data_on_error`` option:
 
-TODO: document behavior for:
-* old_data_on_error
-* raise_for_status
+    >>> # Make a test request that will expire immediately
+    >>> session = CachedSession(old_data_on_error=True)
+    >>> session.get('https://httpbin.org/get', expire_after=0.001)
+    >>> time.sleep(0.001)
+
+Afterward, let's say the page has moved and you get a 404, or the site is experiencing downtime, and
+you get a 500. You will then get the expired cache data instead:
+
+    >>> response = session.get('https://httpbin.org/get')
+    >>> print(response.from_cache, response.is_expired)
+    True, True
+
+In addition to error codes, ``old_data_on_error`` also applies to exceptions (typically a
+:py:exc:`~requests.exceptions.RequestException`). See requests documentation on
+`Errors and Exceptions <https://2.python-requests.org/en/master/user/quickstart/#errors-and-exceptions>`_
+for more details on request errors in general.
+
 
 Potential Issues
 ----------------
