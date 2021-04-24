@@ -342,8 +342,8 @@ def test_expired_request_error(mock_session):
     assert len(mock_session.cache.responses) == 0
 
 
-def test_old_data_on_error(mock_session):
-    """With old_data_on_error, expect to get old cache data if there is an error during a request"""
+def test_old_data_on_error__exception(mock_session):
+    """With old_data_on_error, expect to get old cache data if there is an exception during a request"""
     mock_session.old_data_on_error = True
     mock_session.expire_after = 0.2
 
@@ -355,24 +355,9 @@ def test_old_data_on_error(mock_session):
         assert response.from_cache is True and response.is_expired is True
 
 
-def test_raise_for_status(mock_session):
-    """Simulate getting a valid response, expiring, and then getting a 404 for the same request"""
-    mock_session.raise_for_status = True
-    mock_session.expire_after = 0.01
-    mock_session.allowable_codes = (200, 404)
-
-    mock_session.get(MOCKED_URL_404)
-    time.sleep(0.01)
-    with pytest.raises(requests.RequestException):
-        mock_session.get(MOCKED_URL_404)
-
-
-def test_raise_for_status_and_old_data(mock_session):
-    """Simulate getting a valid response, expiring, and then getting a 404 for the same request
-    with old_data_on_error
-    """
+def test_old_data_on_error__error_code(mock_session):
+    """With old_data_on_error, expect to get old cache data if a response has an error status code"""
     mock_session.old_data_on_error = True
-    mock_session.raise_for_status = True
     mock_session.expire_after = 0.2
     mock_session.allowable_codes = (200, 404)
 

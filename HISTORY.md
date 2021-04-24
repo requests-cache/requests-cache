@@ -4,8 +4,7 @@
 * Add a filesystem backend that stores responses as local files
 * Add option to manually cache response objects
 * Add `use_temp` option to both SQLite and filesystem backends to store files in a temp directory
-* Add `raise_for_status` option, to enable using stale cache data for error response codes
-  (in combination with `old_data_on_error`)
+* Update `old_data_on_error` option to also handle error response codes
 * Use thread-local connections for SQLite backend
 * Fix `DynamoDbDict.__iter__` to return keys instead of values
 

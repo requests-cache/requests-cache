@@ -32,7 +32,6 @@ class CacheMixin:
         allowable_methods: Iterable['str'] = ('GET', 'HEAD'),
         filter_fn: Callable = None,
         old_data_on_error: bool = False,
-        raise_for_status: bool = False,
         **kwargs,
     ):
         self.cache = init_backend(backend, cache_name, **kwargs)
@@ -42,7 +41,6 @@ class CacheMixin:
         self.urls_expire_after = urls_expire_after
         self.filter_fn = filter_fn or (lambda r: True)
         self.old_data_on_error = old_data_on_error
-        self.raise_for_status = raise_for_status
 
         self._cache_name = cache_name
         self._request_expire_after: ExpirationTime = None
@@ -147,7 +145,7 @@ class CacheMixin:
         logger.debug('Expired response; attempting to re-send request')
         try:
             new_response = self._send_and_cache(request, cache_key, **kwargs)
-            if self.raise_for_status:
+            if self.old_data_on_error:
                 new_response.raise_for_status()
             return new_response
         # Return the expired/invalid response on error, if specified; otherwise reraise
@@ -250,8 +248,6 @@ class CachedSession(CacheMixin, OriginalSession):
             returns a boolean indicating whether or not that response should be cached. Will be
             applied to both new and previously cached responses.
         old_data_on_error: Return stale cache data if a new request raises an exception
-        raise_for_status: Raise exceptions for error response codes (4xx or 5xx). Can be used in
-            combination with ``old_data_on_error``.
         secret_key: Optional secret key used to sign cache items for added security
 
     """
