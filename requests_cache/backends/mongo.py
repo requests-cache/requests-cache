@@ -13,7 +13,6 @@ class MongoCache(BaseCache):
     """
 
     def __init__(self, db_name: str = 'http_cache', connection: MongoClient = None, **kwargs):
-        """"""
         super().__init__(**kwargs)
         self.responses = MongoPickleDict(db_name, 'responses', connection=connection, **kwargs)
         self.redirects = MongoDict(
