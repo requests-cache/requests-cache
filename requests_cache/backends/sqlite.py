@@ -27,7 +27,11 @@ class DbCache(BaseCache):
     """
 
     def __init__(
-        self, db_path: Union[Path, str] = 'http_cache', use_temp: bool = False, fast_save: bool = False, **kwargs
+        self,
+        db_path: Union[Path, str] = 'http_cache',
+        use_temp: bool = False,
+        fast_save: bool = False,
+        **kwargs,
     ):
         super().__init__(**kwargs)
         self.responses = DbPickleDict(db_path, table_name='responses', use_temp=use_temp, fast_save=fast_save, **kwargs)

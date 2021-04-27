@@ -3,13 +3,16 @@ import warnings
 from abc import ABC
 from collections.abc import MutableMapping
 from logging import DEBUG, WARNING, getLogger
-from typing import Iterable, List, Tuple, Union
+from typing import Iterable, Iterator, Tuple, Union
 
 import requests
 from requests.models import PreparedRequest
 
 from ..cache_keys import create_key, url_to_key
 from ..response import AnyResponse, CachedResponse, ExpirationTime
+
+# Specific exceptions that may be raised during deserialization
+DESERIALIZE_ERRORS = (AttributeError, TypeError, ValueError, pickle.PickleError)
 
 ResponseOrKey = Union[CachedResponse, str]
 logger = getLogger(__name__)
@@ -34,9 +37,10 @@ class BaseCache:
         self.ignored_parameters = ignored_parameters
 
     @property
-    def urls(self) -> List[str]:
+    def urls(self) -> Iterator[str]:
         """Get all URLs currently in the cache (excluding redirects)"""
-        return [r.url for _, r in self._get_valid_responses()]
+        for response in self.values():
+            yield response.url
 
     def save_response(self, response: AnyResponse, key: str = None, expire_after: ExpirationTime = None):
         """Save response to cache
@@ -75,7 +79,7 @@ class BaseCache:
             return response
         except KeyError:
             return default
-        except (AttributeError, TypeError, ValueError, pickle.PickleError) as e:
+        except DESERIALIZE_ERRORS as e:
             logger.error(f'Unable to deserialize response with key {key}: {str(e)}')
             return default
 
@@ -117,7 +121,8 @@ class BaseCache:
             expire_after: A new expiration time used to revalidate the cache
         """
         logger.info('Removing expired responses.' + (f'Revalidating with: {expire_after}' if expire_after else ''))
-        for key, response in self._get_valid_responses():
+        # _get_valid_responses must be consumed before making any additional writes
+        for key, response in list(self._get_valid_responses(delete_invalid=True)):
             # If we're revalidating and it's not yet expired, update the cached item's expiration
             if expire_after is not None and not response.revalidate(expire_after):
                 self.responses[key] = response
@@ -125,20 +130,9 @@ class BaseCache:
                 self.delete(key)
 
     def remove_old_entries(self, *args, **kwargs):
-        msg = 'BaseCache.remove_old_entries() is deprecated; ' 'please use CachedSession.remove_expired_responses()'
+        msg = 'BaseCache.remove_old_entries() is deprecated; please use CachedSession.remove_expired_responses()'
         warnings.warn(DeprecationWarning(msg))
         self.remove_expired_responses(*args, **kwargs)
-
-    def _get_valid_responses(self) -> Iterable[Tuple[str, CachedResponse]]:
-        """Get all responses from the cache, and delete any invalid ones"""
-        for key in list(self.responses.keys()):
-            # If a response is invalid, delete it
-            try:
-                yield key, self.responses[key]
-            except Exception as e:
-                logger.debug(f'Unable to deserialize response with key {key}: {str(e)}')
-                self.delete(key)
-                continue
 
     def create_key(self, request: requests.PreparedRequest, **kwargs) -> str:
         """Create a normalized cache key from a request object"""
@@ -151,6 +145,35 @@ class BaseCache:
     def has_url(self, url: str) -> bool:
         """Returns `True` if cache has `url`, `False` otherwise. Works only for GET request urls"""
         return self.has_key(url_to_key(url, self.ignored_parameters))  # noqa: W601
+
+    def keys(self) -> Iterator[str]:
+        """Get all cache keys for redirects and (valid) responses combined"""
+        yield from self.redirects.keys()
+        for key, _ in self._get_valid_responses():
+            yield key
+
+    def values(self) -> Iterator[CachedResponse]:
+        """Get all valid response objects from the cache"""
+        for _, response in self._get_valid_responses():
+            yield response
+
+    def _get_valid_responses(self, delete_invalid=False) -> Iterator[Tuple[str, CachedResponse]]:
+        """Get all responses from the cache, and skip (+ optionally delete) any invalid ones that
+        can't be deserialized"""
+        keys_to_delete = []
+
+        for key in self.responses.keys():
+            try:
+                yield key, self.responses[key]
+            except DESERIALIZE_ERRORS as e:
+                logger.debug(f'Unable to deserialize response with key {key}: {e}')
+                keys_to_delete.append(key)
+
+        # Delay deletion until the end, to slightly improve responsiveness when used as a generator
+        if delete_invalid:
+            logger.debug(f'Deleting {len(keys_to_delete)} invalid responses')
+            for key in keys_to_delete:
+                self.delete(key)
 
     def __str__(self):
         return f'redirects: {len(self.redirects)}\nresponses: {len(self.responses)}'
