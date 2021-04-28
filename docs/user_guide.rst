@@ -199,6 +199,7 @@ Expiration Types
 ``expire_after`` can be any of the following:
 
 * ``-1`` (to never expire)
+* ``0`` (to "expire immediately," e.g. bypass the cache)
 * A positive number (in seconds)
 * A :py:class:`~datetime.timedelta`
 * A :py:class:`~datetime.datetime`
@@ -243,6 +244,14 @@ that changes infrequently, and another that never changes. Example:
     ...     'site_2.com/static': -1,
     ... }
     >>> session = CachedSession(urls_expire_after=urls_expire_after)
+
+You can also use this to define a cache whitelist, so only the patterns you define will be cached:
+
+    >>> urls_expire_after = {
+    ...     '*.site_1.com': 30,
+    ...     'site_2.com/static': -1,
+    ...     '*': 0,  # Every other non-matching URL: do not cache
+    ... }
 
 **Notes:**
 

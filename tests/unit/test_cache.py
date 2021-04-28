@@ -416,6 +416,19 @@ def test_cache_disabled__nested(mock_session):
     assert mock_session.get(MOCKED_URL).from_cache is True
 
 
+def test_do_not_cache(mock_session):
+    """expire_after=0 should bypass the cache on both read and write"""
+    # Bypass read
+    mock_session.get(MOCKED_URL)
+    assert mock_session.cache.has_url(MOCKED_URL)
+    assert mock_session.get(MOCKED_URL, expire_after=0).from_cache is False
+
+    # Bypass write
+    mock_session.expire_after = 0
+    mock_session.get(MOCKED_URL_JSON)
+    assert not mock_session.cache.has_url(MOCKED_URL_JSON)
+
+
 @pytest.mark.parametrize(
     'url, expected_expire_after',
     [
@@ -458,6 +471,18 @@ def test_urls_expire_after__evaluation_order(url, expected_expire_after, mock_se
         '*': 1,
     }
     assert mock_session._url_expire_after(url) == expected_expire_after
+
+
+def test_urls_expire_after__whitelist(mock_session):
+    """If the default is 0, only URLs matching patterns in urls_expire_after should be cached"""
+    mock_session.urls_expire_after = {
+        MOCKED_URL_JSON: 60,
+        '*': 0,
+    }
+    mock_session.get(MOCKED_URL_JSON)
+    assert mock_session.get(MOCKED_URL_JSON).from_cache is True
+    mock_session.get(MOCKED_URL)
+    assert mock_session.get(MOCKED_URL).from_cache is False
 
 
 def test_get_expiration_precedence(mock_session):
@@ -537,18 +562,18 @@ def test_remove_expired_responses__per_request(mock_session):
     mock_session.mock_adapter.register_uri('GET', second_url, status_code=200)
     mock_session.mock_adapter.register_uri('GET', third_url, status_code=200)
     mock_session.get(MOCKED_URL)
-    mock_session.get(second_url, expire_after=0.2)
-    mock_session.get(third_url, expire_after=0.4)
+    mock_session.get(second_url, expire_after=0.4)
+    mock_session.get(third_url, expire_after=0.8)
 
     # All 3 responses should still be cached
     mock_session.remove_expired_responses()
     assert len(mock_session.cache.responses) == 3
 
-    # One should be expired after 0.2s, and another should be expired after 0.4s
-    time.sleep(0.2)
+    # One should be expired after 0.4s, and another should be expired after 0.8s
+    time.sleep(0.4)
     mock_session.remove_expired_responses()
     assert len(mock_session.cache.responses) == 2
-    time.sleep(0.2)
+    time.sleep(0.4)
     mock_session.remove_expired_responses()
     assert len(mock_session.cache.responses) == 1
 

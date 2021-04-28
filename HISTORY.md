@@ -5,6 +5,8 @@
 * Add option to manually cache response objects
 * Add `use_temp` option to both SQLite and filesystem backends to store files in a temp directory
 * Add `BaseCache.keys()` and `values()` methods
+* Add support for bypassing the cache if `expire_after=0`, and, by extension, making a cache
+  whitelist based on URL patterns
 * Add response details to `CachedResponse.__str__()`
 * Update `BaseCache.urls` to only skip invalid responses, not delete them
 * Update `old_data_on_error` option to also handle error response codes

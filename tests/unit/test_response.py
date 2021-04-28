@@ -29,6 +29,8 @@ def test_basic_attrs(mock_session):
     'expire_after, is_expired',
     [
         (None, False),
+        (-1, False),
+        (0, True),
         (datetime.utcnow() + timedelta(days=1), False),
         (datetime.utcnow() - timedelta(days=1), True),
     ],
@@ -173,6 +175,7 @@ def test_repr(mock_session):
         (5, '5 bytes'),
         (3 * 1024, '3.00 KiB'),
         (1024 * 3000, '2.93 MiB'),
+        (1024 * 1024 * 5000, '4.88 GiB'),
     ],
 )
 def test_format_file_size(n_bytes, expected_size):

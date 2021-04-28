@@ -11,7 +11,7 @@ from requests.hooks import dispatch_hook
 
 from .backends import BackendSpecifier, get_valid_kwargs, init_backend
 from .cache_keys import normalize_dict
-from .response import AnyResponse, ExpirationTime, set_response_defaults
+from .response import DO_NOT_CACHE, AnyResponse, ExpirationTime, set_response_defaults
 
 ALL_METHODS = ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
 logger = getLogger(__name__)
@@ -95,8 +95,8 @@ class CacheMixin:
                 json=normalize_dict(json),
                 **kwargs,
             )
-        if self._disabled:
-            return response
+            if self._disabled or self._get_expiration(url) == DO_NOT_CACHE:
+                return response
 
         # If the request has been filtered out, delete previously cached response if it exists
         cache_key = self.cache.create_key(response.request, **kwargs)
@@ -136,6 +136,7 @@ class CacheMixin:
             not self._disabled,
             str(request.method) in self.allowable_methods,
             self.filter_fn(request),
+            self._get_expiration(request.url) != DO_NOT_CACHE,
         ]
         return all(criteria)
 
@@ -160,8 +161,9 @@ class CacheMixin:
     def _send_and_cache(self, request, cache_key, **kwargs):
         logger.debug(f'Sending request and caching response for URL: {request.url}')
         response = super().send(request, **kwargs)
-        if response.status_code in self.allowable_codes:
-            self.cache.save_response(response, cache_key, self._get_expiration(request.url))
+        expire_after = self._get_expiration(request.url)
+        if response.status_code in self.allowable_codes and expire_after != DO_NOT_CACHE:
+            self.cache.save_response(response, cache_key, expire_after)
         return set_response_defaults(response)
 
     @contextmanager
@@ -193,7 +195,7 @@ class CacheMixin:
         2. Per-URL expiration
         3. Per-session expiration
         """
-        return self._request_expire_after or self._url_expire_after(url) or self.expire_after
+        return coalesce(self._request_expire_after, self._url_expire_after(url), self.expire_after)
 
     def _url_expire_after(self, url: str) -> ExpirationTime:
         """Get the expiration time for a URL, if a matching pattern is defined"""
@@ -251,6 +253,11 @@ class CachedSession(CacheMixin, OriginalSession):
         secret_key: Optional secret key used to sign cache items for added security
 
     """
+
+
+def coalesce(*values: Any, default=None) -> Any:
+    """Get the first non-``None`` value in a list of values"""
+    return next((v for v in values if v is not None), default)
 
 
 def url_match(url: str, pattern: str) -> bool:
