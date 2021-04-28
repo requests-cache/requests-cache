@@ -85,7 +85,6 @@ class CachedResponse(Response):
 
     def _get_expiration_datetime(self, expire_after: ExpirationTime) -> Optional[datetime]:
         """Convert a time value or delta to an absolute datetime, if it's not already"""
-        logger.debug(f'Determining expiration time based on: {expire_after}')
         if expire_after is None or expire_after == -1:
             return None
         elif isinstance(expire_after, datetime):

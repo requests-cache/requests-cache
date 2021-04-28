@@ -330,7 +330,7 @@ def test_response_defaults(mock_session):
     assert response_2.is_expired is response_3.is_expired is False
 
 
-def testinclude_get_headers(mock_session):
+def test_include_get_headers(mock_session):
     """With include_get_headers, requests with different headers should have different cache keys"""
     mock_session.cache.include_get_headers = True
     headers_list = [{'Accept': 'text/json'}, {'Accept': 'text/xml'}, {'Accept': 'custom'}, None]
@@ -339,7 +339,7 @@ def testinclude_get_headers(mock_session):
         assert mock_session.get(MOCKED_URL, headers=headers).from_cache is True
 
 
-def testinclude_get_headers_normalize(mock_session):
+def test_include_get_headers_normalize(mock_session):
     """With include_get_headers, the same headers (in any order) should have the same cache key"""
     mock_session.cache.include_get_headers = True
     headers = {'Accept': 'text/json', 'Custom': 'abc'}
