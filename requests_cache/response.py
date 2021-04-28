@@ -1,6 +1,6 @@
 """Classes to wrap cached response objects"""
 from copy import copy
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from io import BytesIO
 from logging import getLogger
 from typing import Any, Dict, Optional, Union
@@ -22,7 +22,7 @@ RAW_RESPONSE_ATTRS = [
 ]
 CACHE_ATTRS = ['from_cache', 'created_at', 'expires', 'is_expired']
 
-DATETIME_SHORT_FORMAT = '%Y-%m-%d %H:%M'
+DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S %Z'
 ExpirationTime = Union[None, int, float, datetime, timedelta]
 logger = getLogger(__name__)
 
@@ -180,7 +180,12 @@ AnyResponse = Union[Response, CachedResponse]
 
 
 def format_datetime(value: Optional[datetime]) -> str:
-    return value.strftime(DATETIME_SHORT_FORMAT) if value else "N/A"
+    """Get a formatted datetime string in the local time zone"""
+    if not value:
+        return "N/A"
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    return value.astimezone().strftime(DATETIME_FORMAT)
 
 
 def format_file_size(n_bytes: int) -> str:
