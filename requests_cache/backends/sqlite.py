@@ -6,7 +6,7 @@ from os import makedirs
 from os.path import abspath, basename, dirname, expanduser, isabs, join
 from pathlib import Path
 from tempfile import gettempdir
-from typing import Type, Union
+from typing import Iterable, Tuple, Type, Union
 
 from . import BaseCache, BaseStorage, get_valid_kwargs
 
@@ -37,10 +37,12 @@ class DbCache(BaseCache):
         self.responses = DbPickleDict(db_path, table_name='responses', use_temp=use_temp, fast_save=fast_save, **kwargs)
         self.redirects = DbDict(db_path, table_name='redirects', use_temp=use_temp, **kwargs)
 
-    def remove_expired_responses(self, *args, **kwargs):
-        """Remove expired responses from the cache, with additional cleanup"""
-        super().remove_expired_responses(*args, **kwargs)
+    def delete_all(self, keys):
+        """Remove multiple responses and their associated redirects from the cache, with additional cleanup"""
+        self.responses.delete_all(keys=keys)
         self.responses.vacuum()
+        self.redirects.delete_all(keys=keys)
+        self.redirects.delete_all(values=keys)
         self.redirects.vacuum()
 
 
@@ -78,14 +80,14 @@ class DbDict(BaseStorage):
             con.execute("create table if not exists `%s` (key PRIMARY KEY, value)" % self.table_name)
 
     @contextmanager
-    def connection(self, commit_on_success=False):
+    def connection(self, commit=False):
         if not hasattr(self._local_context, "con"):
             logger.debug(f'Opening connection to {self.db_path}:{self.table_name}')
             self._local_context.con = sqlite3.connect(self.db_path, **self.connection_kwargs)
             if self.fast_save:
                 self._local_context.con.execute("PRAGMA synchronous = 0;")
         yield self._local_context.con
-        if commit_on_success and self._can_commit:
+        if commit and self._can_commit:
             self._local_context.con.commit()
 
     def __del__(self):
@@ -121,14 +123,14 @@ class DbDict(BaseStorage):
         return row[0]
 
     def __setitem__(self, key, item):
-        with self.connection(True) as con:
+        with self.connection(commit=True) as con:
             con.execute(
                 "insert or replace into `%s` (key,value) values (?,?)" % self.table_name,
                 (key, item),
             )
 
     def __delitem__(self, key):
-        with self.connection(True) as con:
+        with self.connection(commit=True) as con:
             cur = con.execute("delete from `%s` where key=?" % self.table_name, (key,))
         if not cur.rowcount:
             raise KeyError
@@ -143,13 +145,26 @@ class DbDict(BaseStorage):
             return con.execute("select count(key) from `%s`" % self.table_name).fetchone()[0]
 
     def clear(self):
-        with self.connection(True) as con:
+        with self.connection(commit=True) as con:
             con.execute("drop table if exists `%s`" % self.table_name)
             con.execute("create table `%s` (key PRIMARY KEY, value)" % self.table_name)
             con.execute("vacuum")
 
+    # TODO: Implement a similar method for all other backends
+    def delete_all(self, keys=None, values=None):
+        """Delete multiple records, either by keys or values"""
+        if not keys and not values:
+            return
+
+        column = 'key' if keys else 'value'
+        marks, args = _format_sequence(keys or values)
+        statement = f'DELETE FROM {self.table_name} WHERE {column} IN ({marks})'
+
+        with self.connection(commit=True) as con:
+            con.execute(statement, args)
+
     def vacuum(self):
-        with self.connection(True) as con:
+        with self.connection(commit=True) as con:
             con.execute("vacuum")
 
 
@@ -161,6 +176,13 @@ class DbPickleDict(DbDict):
 
     def __getitem__(self, key):
         return self.deserialize(super().__getitem__(key))
+
+
+def _format_sequence(values) -> Tuple[str, Iterable]:
+    """Get SQL parameter marks for a sequence-based query, and ensure value is a sequence"""
+    if not isinstance(values, Iterable):
+        values = [values]
+    return ','.join(['?'] * len(values)), values
 
 
 def _get_db_path(db_path: Union[Path, str], use_temp: bool) -> str:
