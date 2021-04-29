@@ -131,6 +131,13 @@ def tempfile_session() -> CachedSession:
 
 
 @pytest.fixture(scope='function')
+def tempfile_path() -> CachedSession:
+    """Get a tempfile path that will be deleted after the test finished"""
+    with NamedTemporaryFile(suffix='.db') as temp:
+        yield temp.name
+
+
+@pytest.fixture(scope='function')
 def installed_session() -> CachedSession:
     """Get a CachedSession using a temporary SQLite db, with global patching.
     Installs cache before test and uninstalls after.

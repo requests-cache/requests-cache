@@ -6,7 +6,7 @@ from os import makedirs
 from os.path import abspath, basename, dirname, expanduser, isabs, join
 from pathlib import Path
 from tempfile import gettempdir
-from typing import Type, Union
+from typing import Iterable, Tuple, Type, Union
 
 from . import BaseCache, BaseStorage, get_valid_kwargs
 
@@ -37,10 +37,12 @@ class DbCache(BaseCache):
         self.responses = DbPickleDict(db_path, table_name='responses', use_temp=use_temp, fast_save=fast_save, **kwargs)
         self.redirects = DbDict(db_path, table_name='redirects', use_temp=use_temp, **kwargs)
 
-    def remove_expired_responses(self, *args, **kwargs):
-        """Remove expired responses from the cache, with additional cleanup"""
-        super().remove_expired_responses(*args, **kwargs)
+    def delete_all(self, keys):
+        """Remove multiple responses and their associated redirects from the cache, with additional cleanup"""
+        self.responses.delete_all(keys=keys)
         self.responses.vacuum()
+        self.redirects.delete_all(keys=keys)
+        self.redirects.delete_all(values=keys)
         self.redirects.vacuum()
 
 
@@ -59,7 +61,7 @@ class DbDict(BaseStorage):
     Args:
         db_path: Database file path
         table_name: Table name
-        fast_save: Use `"PRAGMA synchronous = 0;" <http://www.sqlite.org/pragma.html#pragma_synchronous>`_
+        fast_save: Use `'PRAGMA synchronous = 0;' <http://www.sqlite.org/pragma.html#pragma_synchronous>`_
             to speed up cache saving, but with the potential for data loss
         timeout: Timeout for acquiring a database lock
     """
@@ -75,28 +77,33 @@ class DbDict(BaseStorage):
         self._can_commit = True
         self._local_context = threading.local()
         with sqlite3.connect(self.db_path, **self.connection_kwargs) as con:
-            con.execute("create table if not exists `%s` (key PRIMARY KEY, value)" % self.table_name)
+            self._create_table(con)
+
+    # Initial CREATE TABLE must happen in shared connection; subsequent queries will use thread-local connections
+    def _create_table(self, connection):
+        connection.execute(f'CREATE TABLE IF NOT EXISTS {self.table_name} (key PRIMARY KEY, value)')
 
     @contextmanager
-    def connection(self, commit_on_success=False):
-        if not hasattr(self._local_context, "con"):
+    def connection(self, commit=False) -> sqlite3.Connection:
+        """Get a thread-local database connection"""
+        if not hasattr(self._local_context, 'con'):
             logger.debug(f'Opening connection to {self.db_path}:{self.table_name}')
             self._local_context.con = sqlite3.connect(self.db_path, **self.connection_kwargs)
             if self.fast_save:
-                self._local_context.con.execute("PRAGMA synchronous = 0;")
+                self._local_context.con.execute('PRAGMA synchronous = 0;')
         yield self._local_context.con
-        if commit_on_success and self._can_commit:
+        if commit and self._can_commit:
             self._local_context.con.commit()
 
     def __del__(self):
-        if hasattr(self._local_context, "con"):
+        if hasattr(self._local_context, 'con'):
             self._local_context.con.close()
 
     @contextmanager
     def bulk_commit(self):
-        """
-        Context manager used to speedup insertion of big number of records
-        ::
+        """Context manager used to speed up insertion of a large number of records
+
+        Example:
 
             >>> d1 = DbDict('test')
             >>> with d1.bulk_commit():
@@ -107,50 +114,62 @@ class DbDict(BaseStorage):
         self._can_commit = False
         try:
             yield
-            if hasattr(self._local_context, "con"):
+            if hasattr(self._local_context, 'con'):
                 self._local_context.con.commit()
         finally:
             self._can_commit = True
 
     def __getitem__(self, key):
         with self.connection() as con:
-            row = con.execute("select value from `%s` where key=?" % self.table_name, (key,)).fetchone()
+            row = con.execute(f'SELECT value FROM {self.table_name} WHERE key=?', (key,)).fetchone()
         # raise error after the with block, otherwise the connection will be locked
         if not row:
             raise KeyError
         return row[0]
 
     def __setitem__(self, key, item):
-        with self.connection(True) as con:
+        with self.connection(commit=True) as con:
             con.execute(
-                "insert or replace into `%s` (key,value) values (?,?)" % self.table_name,
+                f'INSERT OR REPLACE INTO {self.table_name} (key,value) VALUES (?,?)',
                 (key, item),
             )
 
     def __delitem__(self, key):
-        with self.connection(True) as con:
-            cur = con.execute("delete from `%s` where key=?" % self.table_name, (key,))
+        with self.connection(commit=True) as con:
+            cur = con.execute(f'DELETE FROM {self.table_name} WHERE key=?', (key,))
         if not cur.rowcount:
             raise KeyError
 
     def __iter__(self):
         with self.connection() as con:
-            for row in con.execute("select key from `%s`" % self.table_name):
+            for row in con.execute(f'SELECT key FROM {self.table_name}'):
                 yield row[0]
 
     def __len__(self):
         with self.connection() as con:
-            return con.execute("select count(key) from `%s`" % self.table_name).fetchone()[0]
+            return con.execute(f'SELECT COUNT(key) FROM  {self.table_name}').fetchone()[0]
 
     def clear(self):
-        with self.connection(True) as con:
-            con.execute("drop table if exists `%s`" % self.table_name)
-            con.execute("create table `%s` (key PRIMARY KEY, value)" % self.table_name)
-            con.execute("vacuum")
+        with self.connection(commit=True) as con:
+            con.execute(f'DROP TABLE IF EXISTS {self.table_name}')
+            self._create_table(con)
+            con.execute('VACUUM')
+
+    def delete_all(self, keys=None, values=None):
+        """Delete multiple records, either by keys or values"""
+        if not keys and not values:
+            return
+
+        column = 'key' if keys else 'value'
+        marks, args = _format_sequence(keys or values)
+        statement = f'DELETE FROM {self.table_name} WHERE {column} IN ({marks})'
+
+        with self.connection(commit=True) as con:
+            con.execute(statement, args)
 
     def vacuum(self):
-        with self.connection(True) as con:
-            con.execute("vacuum")
+        with self.connection(commit=True) as con:
+            con.execute('VACUUM')
 
 
 class DbPickleDict(DbDict):
@@ -161,6 +180,13 @@ class DbPickleDict(DbDict):
 
     def __getitem__(self, key):
         return self.deserialize(super().__getitem__(key))
+
+
+def _format_sequence(values) -> Tuple[str, Iterable]:
+    """Get SQL parameter marks for a sequence-based query, and ensure value is a sequence"""
+    if not isinstance(values, Iterable):
+        values = [values]
+    return ','.join(['?'] * len(values)), values
 
 
 def _get_db_path(db_path: Union[Path, str], use_temp: bool) -> str:

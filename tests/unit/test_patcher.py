@@ -6,15 +6,12 @@ from requests.sessions import Session as OriginalSession
 import requests_cache
 from requests_cache import CachedSession
 from requests_cache.backends import BaseCache
-
-CACHE_NAME = 'requests_cache_test'
-CACHE_BACKEND = 'sqlite'
-FAST_SAVE = False
+from tests.conftest import CACHE_NAME
 
 
 def test_install_uninstall():
     for _ in range(2):
-        requests_cache.install_cache(name=CACHE_NAME, backend=CACHE_BACKEND)
+        requests_cache.install_cache(name=CACHE_NAME, use_temp=True)
         assert isinstance(requests.Session(), CachedSession)
         assert isinstance(requests.sessions.Session(), CachedSession)
         requests_cache.uninstall_cache()
@@ -61,8 +58,8 @@ def test_disabled(cached_request, original_request, installed_session):
 
 @patch.object(OriginalSession, 'request')
 @patch.object(CachedSession, 'request')
-def test_enabled(cached_request, original_request):
-    with requests_cache.enabled():
+def test_enabled(cached_request, original_request, tempfile_path):
+    with requests_cache.enabled(tempfile_path):
         for i in range(3):
             requests.get('some_url')
     assert cached_request.call_count == 3
@@ -70,8 +67,8 @@ def test_enabled(cached_request, original_request):
 
 
 @patch.object(BaseCache, 'remove_expired_responses')
-def test_remove_expired_responses(remove_expired_responses):
-    requests_cache.install_cache(expire_after=360)
+def test_remove_expired_responses(remove_expired_responses, tempfile_path):
+    requests_cache.install_cache(tempfile_path, expire_after=360)
     requests_cache.remove_expired_responses()
     assert remove_expired_responses.called is True
     requests_cache.uninstall_cache()

@@ -84,28 +84,28 @@ class BaseCache:
             return default
 
     def delete(self, key: str):
-        """Delete `key` from cache. Also deletes all responses from response history"""
-        self.delete_history(key)
+        """Delete a response or redirect from the cache, as well any associated redirect history"""
+        # If it's a response key, first delete any associated redirect history
+        try:
+            for r in self.responses[key].history:
+                del self.redirects[create_key(r.request, self.ignored_parameters)]
+        except (KeyError, *DESERIALIZE_ERRORS):
+            pass
+        # Then delete the response itself, or just the redirect if it's a redirect key
         for cache in [self.responses, self.redirects]:
-            # Skip `contains` checks to reduce # of service calls
             try:
                 del cache[key]
             except (AttributeError, KeyError):
                 pass
 
-    def delete_history(self, key: str):
-        """Delete redirect history associated with a response, if any"""
-        try:
-            response = self.responses[key] or self.responses[self.redirects[key]]
-            for r in response.history:
-                del self.redirects[create_key(r.request, self.ignored_parameters)]
-        except Exception:
-            pass
+    # TODO: Implement backend-specific bulk delete methods
+    def delete_all(self, keys):
+        """Remove multiple responses and their associated redirects from the cache"""
+        for key in keys:
+            self.delete(key)
 
     def delete_url(self, url: str):
-        """Delete response + redirects associated with `url` from cache.
-        Works only for GET requests.
-        """
+        """Delete a cached response + redirects for ``GET <url>``"""
         self.delete(url_to_key(url, self.ignored_parameters))
 
     def clear(self):
@@ -115,19 +115,29 @@ class BaseCache:
         self.redirects.clear()
 
     def remove_expired_responses(self, expire_after: ExpirationTime = None):
-        """Remove expired responses from the cache, optionally with revalidation
+        """Remove expired and invalid responses from the cache, optionally with revalidation
 
         Args:
             expire_after: A new expiration time used to revalidate the cache
         """
         logger.info('Removing expired responses.' + (f'Revalidating with: {expire_after}' if expire_after else ''))
-        # _get_valid_responses must be consumed before making any additional writes
-        for key, response in list(self._get_valid_responses(delete_invalid=True)):
+        keys_to_update = {}
+        keys_to_delete = []
+
+        for key, response in self._get_valid_responses(delete_invalid=True):
             # If we're revalidating and it's not yet expired, update the cached item's expiration
             if expire_after is not None and not response.revalidate(expire_after):
-                self.responses[key] = response
+                keys_to_update[key] = response
             if response.is_expired:
-                self.delete(key)
+                keys_to_delete.append(key)
+
+        # Delay updates & deletes until the end, to avoid conflicts with _get_valid_responses()
+        logger.debug(f'Deleting {len(keys_to_delete)} expired responses')
+        self.delete_all(keys_to_delete)
+        if expire_after is not None:
+            logger.debug(f'Updating {len(keys_to_update)} revalidated responses')
+            for key, response in keys_to_update.items():
+                self.responses[key] = response
 
     def remove_old_entries(self, *args, **kwargs):
         msg = 'BaseCache.remove_old_entries() is deprecated; please use CachedSession.remove_expired_responses()'
@@ -165,11 +175,10 @@ class BaseCache:
         for key in self.responses.keys():
             try:
                 yield key, self.responses[key]
-            except DESERIALIZE_ERRORS as e:
-                logger.debug(f'Unable to deserialize response with key {key}: {e}')
+            except DESERIALIZE_ERRORS:
                 keys_to_delete.append(key)
 
-        # Delay deletion until the end, to slightly improve responsiveness when used as a generator
+        # Delay deletion until the end, to improve responsiveness when used as a generator
         if delete_invalid:
             logger.debug(f'Deleting {len(keys_to_delete)} invalid responses')
             for key in keys_to_delete:

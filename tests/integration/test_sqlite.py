@@ -14,7 +14,7 @@ class SQLiteTestCase(BaseStorageTest):
     @classmethod
     def teardown_class(cls):
         try:
-            os.unlink(CACHE_NAME)
+            os.unlink(f'{CACHE_NAME}.sqlite')
         except Exception:
             pass
 
@@ -79,7 +79,7 @@ class SQLiteTestCase(BaseStorageTest):
     @patch('requests_cache.backends.sqlite.sqlite3')
     def test_connection_kwargs(self, mock_sqlite):
         """A spot check to make sure optional connection kwargs gets passed to connection"""
-        cache = self.storage_class('test', timeout=0.5, invalid_kwarg='???')
+        cache = self.storage_class('test', use_temp=True, timeout=0.5, invalid_kwarg='???')
         mock_sqlite.connect.assert_called_with(cache.db_path, timeout=0.5)
 
 
