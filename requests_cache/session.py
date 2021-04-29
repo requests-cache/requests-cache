@@ -8,6 +8,7 @@ from typing import Any, Callable, Dict, Iterable
 from requests import PreparedRequest
 from requests import Session as OriginalSession
 from requests.hooks import dispatch_hook
+from urllib3 import filepost
 
 from .backends import BackendSpecifier, get_valid_kwargs, init_backend
 from .cache_keys import normalize_dict
@@ -86,7 +87,7 @@ class CacheMixin:
         5. :py:meth:`.BaseCache.get_response`
         6. :py:meth:`requests.Session.send` (if not cached)
         """
-        with self.request_expire_after(expire_after):
+        with self.request_expire_after(expire_after), patch_form_boundary(**kwargs):
             response = super().request(
                 method,
                 url,
@@ -258,6 +259,20 @@ class CachedSession(CacheMixin, OriginalSession):
 def coalesce(*values: Any, default=None) -> Any:
     """Get the first non-``None`` value in a list of values"""
     return next((v for v in values if v is not None), default)
+
+
+@contextmanager
+def patch_form_boundary(**request_kwargs):
+    """This patches the form boundary used to separate multipart uploads. Requests does not
+    provide a way to pass a custom boundary to urllib3, so this just monkey-patches it instead.
+    """
+    if request_kwargs.get('files'):
+        original_boundary = filepost.choose_boundary
+        filepost.choose_boundary = lambda: 'my_super_special_form_boundary'
+        yield
+        filepost.choose_boundary = original_boundary
+    else:
+        yield
 
 
 def url_match(url: str, pattern: str) -> bool:
