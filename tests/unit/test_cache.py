@@ -123,16 +123,15 @@ def test_response_history(mock_session):
     assert len(mock_session.cache.redirects) == 1
 
 
-def test_repr():
+def test_repr(mock_session):
     """Test session and cache string representations"""
-    cache_name = 'requests_cache_test'
-    session = CachedSession(cache_name=cache_name, backend='memory', expire_after=10)
-    session.cache.responses['key'] = 'value'
-    session.cache.redirects['key'] = 'value'
-    session.cache.redirects['key_2'] = 'value'
+    mock_session.expire_after = 10.5
+    mock_session.cache.responses['key'] = 'value'
+    mock_session.cache.redirects['key'] = 'value'
+    mock_session.cache.redirects['key_2'] = 'value'
 
-    assert cache_name in repr(session) and '10' in repr(session)
-    assert 'redirects: 2' in str(session.cache) and 'responses: 1' in str(session.cache)
+    assert mock_session._cache_name in repr(mock_session) and '10.5' in repr(mock_session)
+    assert 'redirects: 2' in str(mock_session.cache) and 'responses: 1' in str(mock_session.cache)
 
 
 def test_urls(mock_session):
@@ -432,16 +431,14 @@ def test_cache_disabled__nested(mock_session):
         ('some_other_site.com', None),
     ],
 )
-def test_urls_expire_after(url, expected_expire_after):
-    session = CachedSession(
-        urls_expire_after={
-            '*.site_1.com': 60 * 60,
-            'site_2.com/resource_1': 60 * 60 * 2,
-            'site_2.com/resource_2': 60 * 60 * 24,
-            'site_2.com/static': -1,
-        },
-    )
-    assert session._url_expire_after(url) == expected_expire_after
+def test_urls_expire_after(url, expected_expire_after, mock_session):
+    mock_session.urls_expire_after = {
+        '*.site_1.com': 60 * 60,
+        'site_2.com/resource_1': 60 * 60 * 2,
+        'site_2.com/resource_2': 60 * 60 * 24,
+        'site_2.com/static': -1,
+    }
+    assert mock_session._url_expire_after(url) == expected_expire_after
 
 
 @pytest.mark.parametrize(
@@ -453,26 +450,25 @@ def test_urls_expire_after(url, expected_expire_after):
         ('https://any_other_site.com', 1),
     ],
 )
-def test_urls_expire_after__evaluation_order(url, expected_expire_after):
+def test_urls_expire_after__evaluation_order(url, expected_expire_after, mock_session):
     """If there are multiple matches, the first match should be used in the order defined"""
-    session = CachedSession(
-        urls_expire_after={
-            '*.site_1.com/resource': 60 * 60 * 2,
-            '*.site_1.com': 60 * 60,
-            '*': 1,
-        },
-    )
-    assert session._url_expire_after(url) == expected_expire_after
+    mock_session.urls_expire_after = {
+        '*.site_1.com/resource': 60 * 60 * 2,
+        '*.site_1.com': 60 * 60,
+        '*': 1,
+    }
+    assert mock_session._url_expire_after(url) == expected_expire_after
 
 
-def test_get_expiration_precedence():
-    session = CachedSession(expire_after=1, urls_expire_after={'*.site_1.com': 60 * 60})
-    assert session._get_expiration() == 1
-    assert session._get_expiration('site_2.com') == 1
-    assert session._get_expiration('img.site_1.com/image.jpg') == 60 * 60
-    with session.request_expire_after(30):
-        assert session._get_expiration() == 30
-        assert session._get_expiration('img.site_1.com/image.jpg') == 30
+def test_get_expiration_precedence(mock_session):
+    mock_session.expire_after = 1
+    mock_session.urls_expire_after = {'*.site_1.com': 60 * 60}
+    assert mock_session._get_expiration() == 1
+    assert mock_session._get_expiration('site_2.com') == 1
+    assert mock_session._get_expiration('img.site_1.com/image.jpg') == 60 * 60
+    with mock_session.request_expire_after(30):
+        assert mock_session._get_expiration() == 30
+        assert mock_session._get_expiration('img.site_1.com/image.jpg') == 30
 
 
 def test_remove_expired_responses(mock_session):
@@ -591,14 +587,13 @@ def test_unpickle_errors(mock_session):
     assert resp.json()['message'] == 'mock json response'
 
 
-def test_cache_signing():
-    # Without a secret key, plain pickle should be used
-    session = CachedSession()
+def test_cache_signing(tempfile_path):
+    session = CachedSession(tempfile_path)
     assert session.cache.responses._serializer == pickle
 
     # With a secret key, itsdangerous should be used
     secret_key = str(uuid4())
-    session = CachedSession(secret_key=secret_key)
+    session = CachedSession(tempfile_path, secret_key=secret_key)
     assert isinstance(session.cache.responses._serializer, Serializer)
 
     # Simple serialize/deserialize round trip
@@ -606,6 +601,6 @@ def test_cache_signing():
     assert session.cache.responses['key'] == 'value'
 
     # Without the same signing key, the item shouldn't be considered safe to deserialize
-    session = CachedSession(secret_key='a different key')
+    session = CachedSession(tempfile_path, secret_key='a different key')
     with pytest.raises(BadSignature):
         session.cache.responses['key']
