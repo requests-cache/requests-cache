@@ -1,4 +1,5 @@
 """Classes to wrap cached response objects"""
+# TODO: Move expiration logic here and in CachedSession to a separate module
 from copy import copy
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
@@ -23,6 +24,7 @@ RAW_RESPONSE_ATTRS = [
 CACHE_ATTRS = ['from_cache', 'created_at', 'expires', 'is_expired']
 
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S %Z'
+DO_NOT_CACHE = 0
 ExpirationTime = Union[None, int, float, datetime, timedelta]
 logger = getLogger(__name__)
 
@@ -52,22 +54,19 @@ class CachedResponse(Response):
         self.request = copy(original_response.request)
         self.request.hooks = []
 
-        # Read content to support streaming requests, and reset file pointer on original request
         if hasattr(original_response.raw, '_fp') and not original_response.raw.isclosed():
-            # Cache raw data
+            # Store raw response data
             raw_data = original_response.raw.read(decode_content=False)
-            # Reset `_fp`
             original_response.raw._fp = BytesIO(raw_data)
-            # Read and store (decoded) data
             self._content = original_response.content
-            # Reset `_fp` again
+            # Reset file pointer on original raw response
             original_response.raw._fp = BytesIO(raw_data)
             original_response.raw._fp_bytes_read = 0
             original_response.raw.length_remaining = len(raw_data)
         else:
             self._content = original_response.content
 
-        # Copy raw response
+        # Copy remaining raw response attributes
         self._raw_response = None
         self._raw_response_attrs: Dict[str, Any] = {}
         for k in RAW_RESPONSE_ATTRS:
@@ -85,11 +84,16 @@ class CachedResponse(Response):
 
     def _get_expiration_datetime(self, expire_after: ExpirationTime) -> Optional[datetime]:
         """Convert a time value or delta to an absolute datetime, if it's not already"""
+        # Never expire
         if expire_after is None or expire_after == -1:
             return None
+        # Expire immediately
+        elif expire_after == DO_NOT_CACHE:
+            return self.created_at
+        # Already a datetime
         elif isinstance(expire_after, datetime):
             return expire_after
-
+        # Otherwise, it must be a timedelta or time in seconds
         if not isinstance(expire_after, timedelta):
             expire_after = timedelta(seconds=expire_after)
         return self.created_at + expire_after

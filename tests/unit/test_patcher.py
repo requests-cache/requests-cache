@@ -46,6 +46,13 @@ def test_clear(mock_clear, installed_session):
     mock_clear.assert_called()
 
 
+@patch.object(BaseCache, 'clear')
+def test_clear__not_installed(mock_clear):
+    """If clear is called without a cache installed, it should just fail silently"""
+    requests_cache.clear()
+    mock_clear.assert_not_called()
+
+
 @patch.object(OriginalSession, 'request')
 @patch.object(CachedSession, 'request')
 def test_disabled(cached_request, original_request, installed_session):
