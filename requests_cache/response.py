@@ -1,6 +1,6 @@
 """Classes to wrap cached response objects"""
 from copy import copy
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from io import BytesIO
 from logging import getLogger
 from typing import Any, Dict, Optional, Union
@@ -20,7 +20,9 @@ RAW_RESPONSE_ATTRS = [
     'strict',
     'version',
 ]
+CACHE_ATTRS = ['from_cache', 'created_at', 'expires', 'is_expired']
 
+DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S %Z'
 ExpirationTime = Union[None, int, float, datetime, timedelta]
 logger = getLogger(__name__)
 
@@ -119,6 +121,23 @@ class CachedResponse(Response):
         self.expires = self._get_expiration_datetime(expire_after)
         return self.is_expired
 
+    @property
+    def size(self) -> int:
+        """Get the size of the response body in bytes"""
+        return len(self.content) if self.content else 0
+
+    def __str__(self):
+        return (
+            f'request: {self.request.method} {self.request.url}, response: {self.status_code} '
+            f'({format_file_size(self.size)}), created: {format_datetime(self.created_at)}, '
+            f'expires: {format_datetime(self.expires)} ({"stale" if self.is_expired else "fresh"})'
+        )
+
+    def __repr__(self):
+        repr_attrs = set(RESPONSE_ATTRS + CACHE_ATTRS) - {'_content', 'elapsed'}
+        attr_strs = [f'{k}={getattr(self, k)}' for k in repr_attrs]
+        return f'<{self.__class__.__name__}({" ".join(attr_strs)})>'
+
 
 class CachedHTTPResponse(HTTPResponse):
     """A wrapper for raw urllib response objects, which wraps cached content with support for
@@ -158,6 +177,28 @@ class CachedHTTPResponse(HTTPResponse):
 
 
 AnyResponse = Union[Response, CachedResponse]
+
+
+def format_datetime(value: Optional[datetime]) -> str:
+    """Get a formatted datetime string in the local time zone"""
+    if not value:
+        return "N/A"
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    return value.astimezone().strftime(DATETIME_FORMAT)
+
+
+def format_file_size(n_bytes: int) -> str:
+    """Convert a file size in bytes into a human-readable format"""
+    filesize = float(n_bytes or 0)
+
+    def _format(unit):
+        return f'{int(filesize)} {unit}' if unit == 'bytes' else f'{filesize:.2f} {unit}'
+
+    for unit in ['bytes', 'KiB', 'MiB', 'GiB']:
+        if filesize < 1024 or unit == 'GiB':
+            return _format(unit)
+        filesize /= 1024
 
 
 def set_response_defaults(response: AnyResponse) -> AnyResponse:

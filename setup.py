@@ -20,7 +20,7 @@ extras_require = {
     ],
     # Packages used for testing both locally and in CI jobs
     'test': [
-        'black==20.8b1',
+        'black==21.4b0',
         'flake8',
         'flake8-comprehensions',
         'flake8-polyfill',

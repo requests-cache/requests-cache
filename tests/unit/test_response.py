@@ -6,6 +6,7 @@ from time import sleep
 from urllib3.response import HTTPResponse
 
 from requests_cache import CachedHTTPResponse, CachedResponse
+from requests_cache.response import format_file_size
 from tests.conftest import MOCKED_URL
 
 
@@ -136,3 +137,43 @@ def test_revalidate__shorten_expiration(mock_session):
     # Set expiration in the past and revalidate
     is_expired = response.revalidate(datetime.utcnow() - timedelta(seconds=1))
     assert is_expired is response.is_expired is True
+
+
+def test_size(mock_session):
+    response = CachedResponse(mock_session.get(MOCKED_URL))
+    response._content = None
+    assert response.size == 0
+    response._content = b'1' * 1024
+    assert response.size == 1024
+
+
+def test_str(mock_session):
+    """Just ensure that a subset of relevant attrs get included in the response str; the format
+    may change without breaking the test.
+    """
+    response = CachedResponse(mock_session.get(MOCKED_URL))
+    response._content = b'1010'
+    expected_values = ['GET', MOCKED_URL, 200, '4 bytes', 'created', 'expires', 'fresh']
+    assert all([str(v) in str(response) for v in expected_values])
+
+
+def test_repr(mock_session):
+    """Just ensure that a subset of relevant attrs get included in the response repr"""
+    response = CachedResponse(mock_session.get(MOCKED_URL))
+    expected_values = ['GET', MOCKED_URL, 200, 'ISO-8859-1', response.headers]
+    print(repr(response))
+    assert repr(response).startswith('<CachedResponse(') and repr(response).endswith(')>')
+    assert all([str(v) in repr(response) for v in expected_values])
+
+
+@pytest.mark.parametrize(
+    'n_bytes, expected_size',
+    [
+        (None, '0 bytes'),
+        (5, '5 bytes'),
+        (3 * 1024, '3.00 KiB'),
+        (1024 * 3000, '2.93 MiB'),
+    ],
+)
+def test_format_file_size(n_bytes, expected_size):
+    assert format_file_size(n_bytes) == expected_size

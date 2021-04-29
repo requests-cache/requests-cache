@@ -27,8 +27,8 @@ Cache Inspection
 ----------------
 Here are some ways to get additional information out of the cache session, backend, and responses:
 
-Response Attributes
-~~~~~~~~~~~~~~~~~~~
+Response Details
+~~~~~~~~~~~~~~~~
 The following attributes are available on responses:
 * ``from_cache``: indicates if the response came from the cache
 * ``created_at``: :py:class:`~datetime.datetime` of when the cached response was created or last updated
@@ -41,18 +41,23 @@ Examples:
     >>> session = CachedSession(expire_after=timedelta(days=1))
 
     >>> # Placeholders are added for non-cached responses
-    >>> r = session.get('http://httpbin.org/get')
-    >>> print(r.from_cache, r.created_at, r.expires, r.is_expired)
+    >>> response = session.get('http://httpbin.org/get')
+    >>> print(response.from_cache, response.created_at, response.expires, response.is_expired)
     False None None None
 
     >>> # Values will be populated for cached responses
-    >>> r = session.get('http://httpbin.org/get')
-    >>> print(r.from_cache, r.created_at, r.expires, r.is_expired)
+    >>> response = session.get('http://httpbin.org/get')
+    >>> print(response.from_cache, response.created_at, response.expires, response.is_expired)
     True 2021-01-01 18:00:00 2021-01-02 18:00:00 False
+
+Alternatively, you can just print a response object to get general information about it:
+
+    >>> print(response)
+    'request: GET https://httpbin.org/get, response: 200 (308 bytes), created: 2021-01-01 22:45:00 IST, expires: 2021-01-02 18:45:00 IST (fresh)'
 
 Cache Contents
 ~~~~~~~~~~~~~~
-You can use :py:meth:`.CachedSession.cache.urls` to see all URLs currently in the cache:
+You can use ``CachedSession.cache.urls`` to see all URLs currently in the cache:
 
     >>> session = CachedSession()
     >>> print(session.cache.urls)
@@ -71,6 +76,16 @@ For example, if you wanted to to see all URLs requested with a specific method:
 
 You can also inspect ``CachedSession.cache.redirects``, which maps redirect URLs to keys of the
 responses they redirect to.
+
+Additional ``keys()`` and ``values()`` wrapper methods are available on :py:class:`.BaseCache` to get
+combined keys and responses.
+
+    >>> print('All responses:')
+    >>> for response in session.cache.values():
+    >>>     print(response)
+
+    >>> print('All cache keys for redirects and responses combined:')
+    >>> print(list(session.cache.keys()))
 
 Custom Backends
 ---------------
@@ -155,8 +170,8 @@ Example:
     >>>
     >>> session = CachedSession()
     >>> for i in range(2):
-    ...     r = session.get('https://httpbin.org/stream/20', stream=True)
-    ...     for chunk in r.iter_lines():
+    ...     response = session.get('https://httpbin.org/stream/20', stream=True)
+    ...     for chunk in response.iter_lines():
     ...         print(chunk.decode('utf-8'))
 
 
@@ -187,14 +202,14 @@ Example with `requests-html <https://github.com/psf/requests-html>`_:
     ...     """Session with features from both CachedSession and HTMLSession"""
     >>>
     >>> session = CachedHTMLSession()
-    >>> r = session.get('https://github.com/')
-    >>> print(r.from_cache, r.html.links)
+    >>> response = session.get('https://github.com/')
+    >>> print(response.from_cache, response.html.links)
 
 Or, using the monkey-patch method:
 
     >>> install_cache(session_factory=CachedHTMLSession)
-    >>> r = requests.get('https://github.com/')
-    >>> print(r.from_cache, r.html.links)
+    >>> response = requests.get('https://github.com/')
+    >>> print(response.from_cache, response.html.links)
 
 The same approach can be used with other libraries that subclass :py:class:`requests.Session`.
 

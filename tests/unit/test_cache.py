@@ -18,6 +18,7 @@ from requests.structures import CaseInsensitiveDict
 from requests_cache import ALL_METHODS, CachedSession
 from requests_cache.backends import BACKEND_CLASSES, BaseCache, get_placeholder_backend
 from requests_cache.backends.sqlite import DbDict, DbPickleDict
+from requests_cache.response import CachedResponse
 from tests.conftest import (
     MOCKED_URL,
     MOCKED_URL_404,
@@ -134,7 +135,7 @@ def test_repr():
     assert 'redirects: 2' in str(session.cache) and 'responses: 1' in str(session.cache)
 
 
-def test_cached_urls(mock_session):
+def test_urls(mock_session):
     for url in [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_HTTPS]:
         mock_session.get(url)
 
@@ -142,12 +143,42 @@ def test_cached_urls(mock_session):
     assert set(mock_session.cache.urls) == set(expected_urls)
 
 
-def test_invalid_urls(mock_session):
+def test_urls__with_invalid_response(mock_session):
     responses = [mock_session.get(url) for url in [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_HTTPS]]
     responses[2] = AttributeError
     with patch.object(DbPickleDict, '__getitem__', side_effect=responses):
         expected_urls = [MOCKED_URL, MOCKED_URL_JSON]
         assert set(mock_session.cache.urls) == set(expected_urls)
+
+    # The invalid response should be skipped, but remain in the cache for now
+    assert len(mock_session.cache.responses.keys()) == 3
+
+
+def test_keys(mock_session):
+    for url in [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_REDIRECT]:
+        mock_session.get(url)
+
+    all_keys = set(mock_session.cache.responses.keys()) | set(mock_session.cache.redirects.keys())
+    assert set(mock_session.cache.keys()) == all_keys
+
+
+def test_values(mock_session):
+    for url in [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_HTTPS]:
+        mock_session.get(url)
+
+    responses = list(mock_session.cache.values())
+    assert len(responses) == 3
+    assert all([isinstance(response, CachedResponse) for response in responses])
+
+
+def test_values__with_invalid_response(mock_session):
+    responses = [mock_session.get(url) for url in [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_HTTPS]]
+    responses[2] = AttributeError
+    with patch.object(DbPickleDict, '__getitem__', side_effect=responses):
+        assert len(list(mock_session.cache.values())) == 2
+
+    # The invalid response should be skipped, but remain in the cache for now
+    assert len(mock_session.cache.responses.keys()) == 3
 
 
 def test_filter_fn(mock_session):
