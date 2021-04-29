@@ -18,6 +18,7 @@ contributions that have helped to improve requests-cache:
 * [Florian Demmer](https://github.com/fdemmer)
 * [GDR](https://github.com/gjedeer)
 * [Garrett Reynolds](https://github.com/Garrett-R)
+* [Greg Dingle](https://github.com/gregdingle)
 * [Guangnan Cheng](https://github.com/chengguangnan)
 * [Honza Javorek](https://github.com/honzajavorek)
 * [Ilya](https://github.com/libbkmz)

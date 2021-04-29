@@ -8,6 +8,7 @@
 * Add support for bypassing the cache if `expire_after=0`, and, by extension, making a cache
   whitelist based on URL patterns
 * Add response details to `CachedResponse.__str__()`
+* Add support for caching multipart form uploads
 * Update `BaseCache.urls` to only skip invalid responses, not delete them
 * Update `old_data_on_error` option to also handle error response codes
 * Use thread-local connections for SQLite backend

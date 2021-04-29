@@ -1,6 +1,7 @@
 """Common tests to run for all backends (BaseCache subclasses)"""
 import json
 import pytest
+from io import BytesIO
 from threading import Thread
 from time import sleep, time
 from typing import Dict, Type
@@ -106,6 +107,12 @@ class BaseCacheTest:
         for res in (response_uncached, response_cached):
             assert b'gzipped' in res.content
             assert b'gzipped' in res.raw.read(None, decode_content=True)
+
+    def test_multipart_upload(self):
+        session = self.init_session()
+        session.post(httpbin('post'), files={'file1': BytesIO(b'10' * 1024)})
+        for i in range(5):
+            assert session.post(httpbin('post'), files={'file1': BytesIO(b'10' * 1024)}).from_cache
 
     def test_remove_expired_responses(self):
         session = self.init_session(expire_after=0.01)
