@@ -61,7 +61,7 @@ class DbDict(BaseStorage):
     Args:
         db_path: Database file path
         table_name: Table name
-        fast_save: Use `"PRAGMA synchronous = 0;" <http://www.sqlite.org/pragma.html#pragma_synchronous>`_
+        fast_save: Use `'PRAGMA synchronous = 0;' <http://www.sqlite.org/pragma.html#pragma_synchronous>`_
             to speed up cache saving, but with the potential for data loss
         timeout: Timeout for acquiring a database lock
     """
@@ -77,28 +77,33 @@ class DbDict(BaseStorage):
         self._can_commit = True
         self._local_context = threading.local()
         with sqlite3.connect(self.db_path, **self.connection_kwargs) as con:
-            con.execute("create table if not exists `%s` (key PRIMARY KEY, value)" % self.table_name)
+            self._create_table(con)
+
+    # Initial CREATE TABLE must happen in shared connection; subsequent queries will use thread-local connections
+    def _create_table(self, connection):
+        connection.execute(f'CREATE TABLE IF NOT EXISTS {self.table_name} (key PRIMARY KEY, value)')
 
     @contextmanager
-    def connection(self, commit=False):
-        if not hasattr(self._local_context, "con"):
+    def connection(self, commit=False) -> sqlite3.Connection:
+        """Get a thread-local database connection"""
+        if not hasattr(self._local_context, 'con'):
             logger.debug(f'Opening connection to {self.db_path}:{self.table_name}')
             self._local_context.con = sqlite3.connect(self.db_path, **self.connection_kwargs)
             if self.fast_save:
-                self._local_context.con.execute("PRAGMA synchronous = 0;")
+                self._local_context.con.execute('PRAGMA synchronous = 0;')
         yield self._local_context.con
         if commit and self._can_commit:
             self._local_context.con.commit()
 
     def __del__(self):
-        if hasattr(self._local_context, "con"):
+        if hasattr(self._local_context, 'con'):
             self._local_context.con.close()
 
     @contextmanager
     def bulk_commit(self):
-        """
-        Context manager used to speedup insertion of big number of records
-        ::
+        """Context manager used to speed up insertion of a large number of records
+
+        Example:
 
             >>> d1 = DbDict('test')
             >>> with d1.bulk_commit():
@@ -109,14 +114,14 @@ class DbDict(BaseStorage):
         self._can_commit = False
         try:
             yield
-            if hasattr(self._local_context, "con"):
+            if hasattr(self._local_context, 'con'):
                 self._local_context.con.commit()
         finally:
             self._can_commit = True
 
     def __getitem__(self, key):
         with self.connection() as con:
-            row = con.execute("select value from `%s` where key=?" % self.table_name, (key,)).fetchone()
+            row = con.execute(f'SELECT value FROM {self.table_name} WHERE key=?', (key,)).fetchone()
         # raise error after the with block, otherwise the connection will be locked
         if not row:
             raise KeyError
@@ -125,32 +130,31 @@ class DbDict(BaseStorage):
     def __setitem__(self, key, item):
         with self.connection(commit=True) as con:
             con.execute(
-                "insert or replace into `%s` (key,value) values (?,?)" % self.table_name,
+                f'INSERT OR REPLACE INTO {self.table_name} (key,value) VALUES (?,?)',
                 (key, item),
             )
 
     def __delitem__(self, key):
         with self.connection(commit=True) as con:
-            cur = con.execute("delete from `%s` where key=?" % self.table_name, (key,))
+            cur = con.execute(f'DELETE FROM {self.table_name} WHERE key=?', (key,))
         if not cur.rowcount:
             raise KeyError
 
     def __iter__(self):
         with self.connection() as con:
-            for row in con.execute("select key from `%s`" % self.table_name):
+            for row in con.execute(f'SELECT key FROM {self.table_name}'):
                 yield row[0]
 
     def __len__(self):
         with self.connection() as con:
-            return con.execute("select count(key) from `%s`" % self.table_name).fetchone()[0]
+            return con.execute(f'SELECT COUNT(key) FROM  {self.table_name}').fetchone()[0]
 
     def clear(self):
         with self.connection(commit=True) as con:
-            con.execute("drop table if exists `%s`" % self.table_name)
-            con.execute("create table `%s` (key PRIMARY KEY, value)" % self.table_name)
-            con.execute("vacuum")
+            con.execute(f'DROP TABLE IF EXISTS {self.table_name}')
+            self._create_table(con)
+            con.execute('VACUUM')
 
-    # TODO: Implement a similar method for all other backends
     def delete_all(self, keys=None, values=None):
         """Delete multiple records, either by keys or values"""
         if not keys and not values:
@@ -165,7 +169,7 @@ class DbDict(BaseStorage):
 
     def vacuum(self):
         with self.connection(commit=True) as con:
-            con.execute("vacuum")
+            con.execute('VACUUM')
 
 
 class DbPickleDict(DbDict):
