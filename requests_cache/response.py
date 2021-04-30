@@ -159,11 +159,8 @@ class CachedHTTPResponse(HTTPResponse):
         """Simplified reader for cached content that emulates
         :py:meth:`urllib3.response.HTTPResponse.read()`
         """
-        if 'content-encoding' in self.headers and (
-            decode_content is False or (decode_content is None and not self.decode_content)
-        ):
-            # Warn if content was encoded and decode_content is set to False
-            logger.warning('read() returns decoded data for cached responses, even with decode_content=False set')
+        if 'content-encoding' in self.headers and decode_content is False:
+            logger.warning('read() returns decoded data, even with decode_content=False')
 
         data = self._fp.read(amt)
         # "close" the file to inform consumers to stop reading from it

@@ -152,7 +152,9 @@ class BaseCacheTest:
 
         elapsed = time() - start
         average = (elapsed * 1000) / (N_ITERATIONS * N_THREADS)
-        print(f'{self.backend_class}: Ran {N_ITERATIONS} iterations with {N_THREADS} threads each in {elapsed} s')
+        print(
+            f'{self.backend_class}: Ran {N_ITERATIONS} iterations with {N_THREADS} threads each in {elapsed} s'
+        )
         print(f'Average time per request: {average} ms')
 
         for i in range(N_ITERATIONS):

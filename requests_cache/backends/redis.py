@@ -17,7 +17,9 @@ class RedisCache(BaseCache):
     def __init__(self, namespace='http_cache', connection: Redis = None, **kwargs):
         super().__init__(**kwargs)
         self.responses = RedisDict(namespace, 'responses', connection=connection, **kwargs)
-        self.redirects = RedisDict(namespace, 'redirects', connection=self.responses.connection, **kwargs)
+        self.redirects = RedisDict(
+            namespace, 'redirects', connection=self.responses.connection, **kwargs
+        )
 
 
 class RedisDict(BaseStorage):

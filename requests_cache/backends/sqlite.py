@@ -34,7 +34,9 @@ class DbCache(BaseCache):
         **kwargs,
     ):
         super().__init__(**kwargs)
-        self.responses = DbPickleDict(db_path, table_name='responses', use_temp=use_temp, fast_save=fast_save, **kwargs)
+        self.responses = DbPickleDict(
+            db_path, table_name='responses', use_temp=use_temp, fast_save=fast_save, **kwargs
+        )
         self.redirects = DbDict(db_path, table_name='redirects', use_temp=use_temp, **kwargs)
 
     def bulk_delete(self, keys):
@@ -66,7 +68,9 @@ class DbDict(BaseStorage):
         timeout: Timeout for acquiring a database lock
     """
 
-    def __init__(self, db_path, table_name='http_cache', fast_save=False, use_temp: bool = False, **kwargs):
+    def __init__(
+        self, db_path, table_name='http_cache', fast_save=False, use_temp: bool = False, **kwargs
+    ):
         kwargs.setdefault('suppress_warnings', True)
         super().__init__(**kwargs)
         self.connection_kwargs = get_valid_kwargs(sqlite_template, kwargs)
