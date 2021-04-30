@@ -121,7 +121,10 @@ class BaseCache:
         Args:
             expire_after: A new expiration time used to revalidate the cache
         """
-        logger.info('Removing expired responses.' + (f'Revalidating with: {expire_after}' if expire_after else ''))
+        logger.info(
+            'Removing expired responses.'
+            + (f'Revalidating with: {expire_after}' if expire_after else '')
+        )
         keys_to_update = {}
         keys_to_delete = []
 

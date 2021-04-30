@@ -2,7 +2,7 @@
 requires = ['setuptools', 'wheel']
 
 [tool.black]
-line-length = 120
+line-length = 105
 skip-string-normalization = true
 
 [tool.coverage.html]
@@ -18,7 +18,7 @@ omit = [
 
 [tool.isort]
 profile = "black"
-line_length = 100
+line_length = 105
 skip_gitignore = true
 skip = ['examples/', 'requests_cache/__init__.py']
 known_first_party = ['test']

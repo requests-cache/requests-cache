@@ -1,9 +1,22 @@
 # History
 
 ## 0.7.0 (2021-06-TBD)
+[See all issues and PRs for 0.7](https://github.com/reclosedev/requests-cache/milestone/2?closed=1)
+
+### Backends
 * Add a filesystem backend that stores responses as local files
-* Add option to manually cache response objects
-* Add `use_temp` option to both SQLite and filesystem backends to store files in a temp directory
+* SQLite and filesystem: Add `use_temp` option to store files in a temp directory
+* SQLite: Use persistent thread-local connections, and improve performance for bulk operations
+* DynamoDB: Fix `DynamoDbDict.__iter__` to return keys instead of values
+* MongoDB: Remove usage of deprecated pymongo `Collection.find_and_modify()`
+* Allow passing any backend-specific connection kwargs via `CachedSession` to the underlying connection function or object:
+    * SQLite: `sqlite3.connect`
+    * DynamoDB: `boto3.resource`
+    * Redis: `redis.Redis`
+    * MongoDB and GridFS: `pymongo.MongoClient`
+
+### General
+* Add option to manually cache response objects with `BaseCache.save_response()`
 * Add `BaseCache.keys()` and `values()` methods
 * Add support for bypassing the cache if `expire_after=0`, and, by extension, making a cache
   whitelist based on URL patterns
@@ -11,10 +24,8 @@
 * Add support for caching multipart form uploads
 * Update `BaseCache.urls` to only skip invalid responses, not delete them
 * Update `old_data_on_error` option to also handle error response codes
-* Use thread-local connections for SQLite backend
-* Improve performance for `remove_expired_responses()`
-* Fix `DynamoDbDict.__iter__` to return keys instead of values
 
+-----
 ### 0.6.3 (2021-04-21)
 * Fix false positive warning with `include_get_headers`
 * Fix handling of `decode_content` parameter for `CachedResponse.raw.read()`
@@ -34,7 +45,7 @@
 * Make integration tests easier to run and/or fail more quickly in environments where Docker isn't available
 
 ## 0.6.0 (2021-04-09)
-[See all included issues and PRs](https://github.com/reclosedev/requests-cache/milestone/1?closed=1)
+[See all issues and PRs for 0.6](https://github.com/reclosedev/requests-cache/milestone/1?closed=1)
 
 Thanks to [Code Shelter](https://www.codeshelter.co) and
 [contributors](https://requests-cache.readthedocs.io/en/latest/contributors.html)
