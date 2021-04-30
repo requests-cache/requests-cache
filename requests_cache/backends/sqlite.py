@@ -6,7 +6,7 @@ from os import makedirs
 from os.path import abspath, basename, dirname, expanduser, isabs, join
 from pathlib import Path
 from tempfile import gettempdir
-from typing import Iterable, Tuple, Type, Union
+from typing import Iterable, List, Tuple, Type, Union
 
 from . import BaseCache, BaseStorage, get_valid_kwargs
 
@@ -37,12 +37,12 @@ class DbCache(BaseCache):
         self.responses = DbPickleDict(db_path, table_name='responses', use_temp=use_temp, fast_save=fast_save, **kwargs)
         self.redirects = DbDict(db_path, table_name='redirects', use_temp=use_temp, **kwargs)
 
-    def delete_all(self, keys):
+    def bulk_delete(self, keys):
         """Remove multiple responses and their associated redirects from the cache, with additional cleanup"""
-        self.responses.delete_all(keys=keys)
+        self.responses.bulk_delete(keys=keys)
         self.responses.vacuum()
-        self.redirects.delete_all(keys=keys)
-        self.redirects.delete_all(values=keys)
+        self.redirects.bulk_delete(keys=keys)
+        self.redirects.bulk_delete(values=keys)
         self.redirects.vacuum()
 
 
@@ -95,10 +95,6 @@ class DbDict(BaseStorage):
         if commit and self._can_commit:
             self._local_context.con.commit()
 
-    def __del__(self):
-        if hasattr(self._local_context, 'con'):
-            self._local_context.con.close()
-
     @contextmanager
     def bulk_commit(self):
         """Context manager used to speed up insertion of a large number of records
@@ -119,6 +115,17 @@ class DbDict(BaseStorage):
         finally:
             self._can_commit = True
 
+    def __del__(self):
+        """Close any active connections"""
+        if hasattr(self._local_context, 'con'):
+            self._local_context.con.close()
+
+    def __delitem__(self, key):
+        with self.connection(commit=True) as con:
+            cur = con.execute(f'DELETE FROM {self.table_name} WHERE key=?', (key,))
+        if not cur.rowcount:
+            raise KeyError
+
     def __getitem__(self, key):
         with self.connection() as con:
             row = con.execute(f'SELECT value FROM {self.table_name} WHERE key=?', (key,)).fetchone()
@@ -134,12 +141,6 @@ class DbDict(BaseStorage):
                 (key, item),
             )
 
-    def __delitem__(self, key):
-        with self.connection(commit=True) as con:
-            cur = con.execute(f'DELETE FROM {self.table_name} WHERE key=?', (key,))
-        if not cur.rowcount:
-            raise KeyError
-
     def __iter__(self):
         with self.connection() as con:
             for row in con.execute(f'SELECT key FROM {self.table_name}'):
@@ -149,14 +150,10 @@ class DbDict(BaseStorage):
         with self.connection() as con:
             return con.execute(f'SELECT COUNT(key) FROM  {self.table_name}').fetchone()[0]
 
-    def clear(self):
-        with self.connection(commit=True) as con:
-            con.execute(f'DROP TABLE IF EXISTS {self.table_name}')
-            self._create_table(con)
-            con.execute('VACUUM')
-
-    def delete_all(self, keys=None, values=None):
-        """Delete multiple records, either by keys or values"""
+    def bulk_delete(self, keys=None, values=None):
+        """Delete multiple keys from the cache. Does not raise errors for missing keys.
+        Also supports deleting by value.
+        """
         if not keys and not values:
             return
 
@@ -166,6 +163,12 @@ class DbDict(BaseStorage):
 
         with self.connection(commit=True) as con:
             con.execute(statement, args)
+
+    def clear(self):
+        with self.connection(commit=True) as con:
+            con.execute(f'DROP TABLE IF EXISTS {self.table_name}')
+            self._create_table(con)
+            con.execute('VACUUM')
 
     def vacuum(self):
         with self.connection(commit=True) as con:
@@ -182,11 +185,11 @@ class DbPickleDict(DbDict):
         return self.deserialize(super().__getitem__(key))
 
 
-def _format_sequence(values) -> Tuple[str, Iterable]:
+def _format_sequence(values: Iterable) -> Tuple[str, List]:
     """Get SQL parameter marks for a sequence-based query, and ensure value is a sequence"""
     if not isinstance(values, Iterable):
         values = [values]
-    return ','.join(['?'] * len(values)), values
+    return ','.join(['?'] * len(values)), list(values)
 
 
 def _get_db_path(db_path: Union[Path, str], use_temp: bool) -> str:
