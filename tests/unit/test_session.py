@@ -130,7 +130,7 @@ def test_repr(mock_session):
     mock_session.cache.redirects['key'] = 'value'
     mock_session.cache.redirects['key_2'] = 'value'
 
-    assert mock_session._cache_name in repr(mock_session) and '10.5' in repr(mock_session)
+    assert mock_session.cache.name in repr(mock_session) and '10.5' in repr(mock_session)
     assert 'redirects: 2' in str(mock_session.cache) and 'responses: 1' in str(mock_session.cache)
 
 
@@ -429,51 +429,7 @@ def test_do_not_cache(mock_session):
     assert not mock_session.cache.has_url(MOCKED_URL_JSON)
 
 
-@pytest.mark.parametrize(
-    'url, expected_expire_after',
-    [
-        ('img.site_1.com', 60 * 60),
-        ('http://img.site_1.com/base/img.jpg', 60 * 60),
-        ('https://img.site_2.com/base/img.jpg', None),
-        ('site_2.com/resource_1', 60 * 60 * 2),
-        ('http://site_2.com/resource_1/index.html', 60 * 60 * 2),
-        ('http://site_2.com/resource_2/', 60 * 60 * 24),
-        ('http://site_2.com/static/', -1),
-        ('http://site_2.com/static/img.jpg', -1),
-        ('site_2.com', None),
-        ('some_other_site.com', None),
-    ],
-)
-def test_urls_expire_after(url, expected_expire_after, mock_session):
-    mock_session.urls_expire_after = {
-        '*.site_1.com': 60 * 60,
-        'site_2.com/resource_1': 60 * 60 * 2,
-        'site_2.com/resource_2': 60 * 60 * 24,
-        'site_2.com/static': -1,
-    }
-    assert mock_session._url_expire_after(url) == expected_expire_after
-
-
-@pytest.mark.parametrize(
-    'url, expected_expire_after',
-    [
-        ('https://img.site_1.com/image.jpeg', 60 * 60),
-        ('https://img.site_1.com/resource/1', 60 * 60 * 2),
-        ('https://site_2.com', 1),
-        ('https://any_other_site.com', 1),
-    ],
-)
-def test_urls_expire_after__evaluation_order(url, expected_expire_after, mock_session):
-    """If there are multiple matches, the first match should be used in the order defined"""
-    mock_session.urls_expire_after = {
-        '*.site_1.com/resource': 60 * 60 * 2,
-        '*.site_1.com': 60 * 60,
-        '*': 1,
-    }
-    assert mock_session._url_expire_after(url) == expected_expire_after
-
-
-def test_urls_expire_after__whitelist(mock_session):
+def test_url_whitelist(mock_session):
     """If the default is 0, only URLs matching patterns in urls_expire_after should be cached"""
     mock_session.urls_expire_after = {
         MOCKED_URL_JSON: 60,
@@ -483,17 +439,6 @@ def test_urls_expire_after__whitelist(mock_session):
     assert mock_session.get(MOCKED_URL_JSON).from_cache is True
     mock_session.get(MOCKED_URL)
     assert mock_session.get(MOCKED_URL).from_cache is False
-
-
-def test_get_expiration_precedence(mock_session):
-    mock_session.expire_after = 1
-    mock_session.urls_expire_after = {'*.site_1.com': 60 * 60}
-    assert mock_session._get_expiration() == 1
-    assert mock_session._get_expiration('site_2.com') == 1
-    assert mock_session._get_expiration('img.site_1.com/image.jpg') == 60 * 60
-    with mock_session.request_expire_after(30):
-        assert mock_session._get_expiration() == 30
-        assert mock_session._get_expiration('img.site_1.com/image.jpg') == 30
 
 
 def test_remove_expired_responses(mock_session):

@@ -1,6 +1,7 @@
 """Common tests to run for all backends (BaseCache subclasses)"""
 import json
 import pytest
+from datetime import datetime
 from io import BytesIO
 from threading import Thread
 from time import sleep, time
@@ -12,9 +13,11 @@ from tests.conftest import (
     CACHE_NAME,
     HTTPBIN_FORMATS,
     HTTPBIN_METHODS,
+    HTTPDATE_STR,
     N_ITERATIONS,
     N_THREADS,
     USE_PYTEST_HTTPBIN,
+    assert_delta_approx_equal,
     httpbin,
 )
 
@@ -88,25 +91,43 @@ class BaseCacheTest:
             response_3 = get_json(httpbin('cookies/set/test3/test4'))
             assert response_3 == get_json(httpbin('cookies'))
 
-    def test_response_decode(self):
-        """Test that a gzip-compressed raw response can be manually uncompressed with decode_content"""
+    @pytest.mark.parametrize(
+        'request_headers, expected_expiration',
+        [
+            ({}, 60),
+            ({'Cache-Control': 'max-age=360'}, 360),
+            ({'Cache-Control': 'no-store'}, None),
+            ({'Expires': HTTPDATE_STR, 'Cache-Control': 'max-age=360'}, 360),
+        ],
+    )
+    def test_cache_control_expiration(self, request_headers, expected_expiration):
+        """Test cache headers for both requests and responses. The `/cache/{seconds}` endpoint returns
+        Cache-Control headers, which should be used unless request headers are sent.
+        """
+        session = self.init_session(cache_control=True)
+        now = datetime.utcnow()
+        session.get(httpbin('cache/60'), headers=request_headers)
+        response = session.get(httpbin('cache/60'), headers=request_headers)
+
+        if expected_expiration is None:
+            assert response.expires is None
+        else:
+            assert_delta_approx_equal(now, response.expires, expected_expiration)
+
+    @pytest.mark.parametrize('stream', [True, False])
+    def test_response_decode(self, stream):
+        """Test that gzip-compressed raw responses (including streamed responses) can be manually
+        decompressed with decode_content=True
+        """
         session = self.init_session()
-        response = session.get(httpbin('gzip'))
+        response = session.get(httpbin('gzip'), stream=stream)
         assert b'gzipped' in response.content
+        if stream is True:
+            assert b'gzipped' in response.raw.read(None, decode_content=True)
 
-        cached = CachedResponse(response)
-        assert b'gzipped' in cached.content
-        assert b'gzipped' in cached.raw.read(None, decode_content=True)
-
-    def test_response_decode_stream(self):
-        """Test that streamed gzip-compressed responses can be uncompressed with decode_content"""
-        session = self.init_session()
-        response_uncached = session.get(httpbin('gzip'), stream=True)
-        response_cached = session.get(httpbin('gzip'), stream=True)
-
-        for res in (response_uncached, response_cached):
-            assert b'gzipped' in res.content
-            assert b'gzipped' in res.raw.read(None, decode_content=True)
+        cached_response = CachedResponse(response)
+        assert b'gzipped' in cached_response.content
+        assert b'gzipped' in cached_response.raw.read(None, decode_content=True)
 
     def test_multipart_upload(self):
         session = self.init_session()

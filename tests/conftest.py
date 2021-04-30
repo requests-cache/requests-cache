@@ -2,7 +2,7 @@
 
 Short description:
 * The ``mock_session`` fixture uses pre-configured mock requests, and should be used for unit tests.
-* The ``tempfile_session`` fixture makes real HTTP requests, and should be used for integration test.
+* The ``tempfile_session`` fixture makes real HTTP requests, and should be used for integration tests.
 
 Note: The protocol ``http(s)+mock://`` helps :py:class:`requests_mock.Adapter` play nicely with
 :py:class:`requests.PreparedRequest`. More info here:
@@ -10,6 +10,7 @@ https://requests-mock.readthedocs.io/en/latest/adapter.html
 """
 import os
 import pytest
+from datetime import datetime, timezone
 from functools import wraps
 from logging import basicConfig, getLogger
 from tempfile import NamedTemporaryFile
@@ -45,6 +46,9 @@ HTTPBIN_FORMATS = [
     'robots.txt',
     'xml',
 ]
+
+HTTPDATE_STR = 'Fri, 16 APR 2021 21:13:00 GMT'
+HTTPDATE_DATETIME = datetime(2021, 4, 16, 21, 13, tzinfo=timezone.utc)
 
 MOCKED_URL = 'http+mock://requests-cache.com/text'
 MOCKED_URL_HTTPS = 'https+mock://requests-cache.com/text'
@@ -132,7 +136,7 @@ def tempfile_session() -> CachedSession:
 
 @pytest.fixture(scope='function')
 def tempfile_path() -> CachedSession:
-    """Get a tempfile path that will be deleted after the test finished"""
+    """Get a tempfile path that will be deleted after the test finishes"""
     with NamedTemporaryFile(suffix='.db') as temp:
         yield temp.name
 
@@ -225,3 +229,9 @@ def fail_if_no_connection(func) -> bool:
             pytest.fail('Could not connect to backend')
 
     return wrapper
+
+
+def assert_delta_approx_equal(dt1: datetime, dt2: datetime, target_delta, threshold_seconds=2):
+    """Assert that the given datetimes are approximately ``target_delta`` seconds apart"""
+    diff_in_seconds = (dt2 - dt1).total_seconds()
+    assert abs(diff_in_seconds - target_delta) <= threshold_seconds

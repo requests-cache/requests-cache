@@ -9,6 +9,8 @@ from typing import Any, Dict, Optional, Union
 from requests import Response
 from urllib3.response import HTTPResponse
 
+from .cache_control import get_expiration_datetime
+
 # Reponse attributes to copy
 RESPONSE_ATTRS = Response.__attrs__
 RAW_RESPONSE_ATTRS = [
@@ -37,15 +39,15 @@ class CachedResponse(Response):
 
     Args:
         original_response: Response object
-        expire_after: Time after which this cached response will expire
+        expires: Time after which this cached response will expire
     """
 
-    def __init__(self, original_response: Response, expire_after: ExpirationTime = None):
+    def __init__(self, original_response: Response, expires: datetime = None):
         """Create a CachedResponse based on an original Response"""
         super().__init__()
         # Set cache-specific attrs
         self.created_at = datetime.utcnow()
-        self.expires = self._get_expiration_datetime(expire_after)
+        self.expires = expires
         self.from_cache = True
 
         # Copy basic response attrs and original request
@@ -82,22 +84,6 @@ class CachedResponse(Response):
         """Override pickling behavior in ``requests.Response.__getstate__``"""
         return self.__dict__
 
-    def _get_expiration_datetime(self, expire_after: ExpirationTime) -> Optional[datetime]:
-        """Convert a time value or delta to an absolute datetime, if it's not already"""
-        # Never expire
-        if expire_after is None or expire_after == -1:
-            return None
-        # Expire immediately
-        elif expire_after == DO_NOT_CACHE:
-            return self.created_at
-        # Already a datetime
-        elif isinstance(expire_after, datetime):
-            return expire_after
-        # Otherwise, it must be a timedelta or time in seconds
-        if not isinstance(expire_after, timedelta):
-            expire_after = timedelta(seconds=expire_after)
-        return self.created_at + expire_after
-
     def reset(self):
         """Reset raw response file handler, if previously initialized"""
         self._raw_response = None
@@ -105,7 +91,7 @@ class CachedResponse(Response):
     @property
     def is_expired(self) -> bool:
         """Determine if this cached response is expired"""
-        return self.expires is not None and datetime.utcnow() > self.expires
+        return self.expires is not None and datetime.utcnow() >= self.expires
 
     @property
     def raw(self) -> HTTPResponse:
@@ -121,7 +107,7 @@ class CachedResponse(Response):
 
     def revalidate(self, expire_after: ExpirationTime) -> bool:
         """Set a new expiration for this response, and determine if it is now expired"""
-        self.expires = self._get_expiration_datetime(expire_after)
+        self.expires = get_expiration_datetime(expire_after)
         return self.is_expired
 
     @property
@@ -139,7 +125,7 @@ class CachedResponse(Response):
     def __repr__(self):
         repr_attrs = set(RESPONSE_ATTRS + CACHE_ATTRS) - {'_content', 'elapsed'}
         attr_strs = [f'{k}={getattr(self, k)}' for k in repr_attrs]
-        return f'<{self.__class__.__name__}({" ".join(attr_strs)})>'
+        return f'<{self.__class__.__name__}({", ".join(attr_strs)})>'
 
 
 class CachedHTTPResponse(HTTPResponse):
