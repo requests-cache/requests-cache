@@ -1,3 +1,5 @@
+from typing import Iterable
+
 from pymongo import MongoClient
 
 from . import BaseCache, BaseStorage, get_valid_kwargs
@@ -50,13 +52,8 @@ class MongoDict(BaseStorage):
         self.collection.replace_one({'_id': key}, doc, upsert=True)
 
     def __delitem__(self, key):
-        spec = {'_id': key}
-        if hasattr(self.collection, "find_one_and_delete"):
-            res = self.collection.find_one_and_delete(spec, {'_id': True})
-        else:
-            res = self.collection.find_and_modify(spec, remove=True, fields={'_id': True})
-
-        if res is None:
+        result = self.collection.find_one_and_delete({'_id': key}, {'_id': True})
+        if result is None:
             raise KeyError
 
     def __len__(self):
@@ -65,6 +62,10 @@ class MongoDict(BaseStorage):
     def __iter__(self):
         for d in self.collection.find({}, {'_id': True}):
             yield d['_id']
+
+    def bulk_delete(self, keys: Iterable[str]):
+        """Delete multiple keys from the cache. Does not raise errors for missing keys."""
+        self.collection.delete_many({'_id': {'$in': list(keys)}})
 
     def clear(self):
         self.collection.drop()

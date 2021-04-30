@@ -1,3 +1,5 @@
+from typing import Dict, Iterable
+
 import boto3
 from boto3.resources.base import ServiceResource
 from botocore.exceptions import ClientError
@@ -79,20 +81,21 @@ class DynamoDbDict(BaseStorage):
         self._table = self.connection.Table(table_name)
         self._table.wait_until_exists()
 
+    def composite_key(self, key: str) -> Dict[str, str]:
+        return {'namespace': self._self_key, 'key': str(key)}
+
     def __getitem__(self, key):
-        composite_key = {'namespace': self._self_key, 'key': str(key)}
-        result = self._table.get_item(Key=composite_key)
+        result = self._table.get_item(Key=self.composite_key(key))
         if 'Item' not in result:
             raise KeyError
         return self.deserialize(result['Item']['value'].value)
 
-    def __setitem__(self, key, item):
-        item = {'namespace': self._self_key, 'key': str(key), 'value': self.serialize(item)}
+    def __setitem__(self, key, value):
+        item = {**self.composite_key(key), 'value': self.serialize(value)}
         self._table.put_item(Item=item)
 
     def __delitem__(self, key):
-        composite_key = {'namespace': self._self_key, 'key': str(key)}
-        response = self._table.delete_item(Key=composite_key, ReturnValues='ALL_OLD')
+        response = self._table.delete_item(Key=self.composite_key(key), ReturnValues='ALL_OLD')
         if 'Attributes' not in response:
             raise KeyError
 
@@ -103,6 +106,12 @@ class DynamoDbDict(BaseStorage):
         response = self.__scan_table()
         for v in response['Items']:
             yield v['key']
+
+    def bulk_delete(self, keys: Iterable[str]):
+        """Delete multiple keys from the cache. Does not raise errors for missing keys."""
+        with self._table.batch_writer() as batch:
+            for key in keys:
+                batch.delete_item(Key=self.composite_key(key))
 
     def clear(self):
         response = self.__scan_table()
