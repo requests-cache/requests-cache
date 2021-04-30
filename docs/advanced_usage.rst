@@ -187,7 +187,7 @@ is provided, so you can create a custom class with behavior from multiple Sessio
     >>> from requests_cache import CacheMixin
     >>> from some_other_lib import SomeOtherMixin
     >>>
-    >>> class CustomSession(CacheMixin, SomeOtherMixin ClientSession):
+    >>> class CustomSession(CacheMixin, SomeOtherMixin, Session):
     ...     """Session class with features from both requests-html and requests-cache"""
 
 Requests-HTML
