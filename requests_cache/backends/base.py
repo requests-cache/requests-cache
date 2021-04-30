@@ -95,18 +95,19 @@ class BaseCache:
         for cache in [self.responses, self.redirects]:
             try:
                 del cache[key]
-            except (AttributeError, KeyError):
+            except KeyError:
                 pass
-
-    # TODO: Implement backend-specific bulk delete methods
-    def delete_all(self, keys):
-        """Remove multiple responses and their associated redirects from the cache"""
-        for key in keys:
-            self.delete(key)
 
     def delete_url(self, url: str):
         """Delete a cached response + redirects for ``GET <url>``"""
         self.delete(url_to_key(url, self.ignored_parameters))
+
+    def bulk_delete(self, keys: Iterable[str]):
+        """Remove multiple responses and their associated redirects from the cache"""
+        self.responses.bulk_delete(keys)
+        # Remove any redirects that no longer point to an existing response
+        invalid_redirects = [k for k, v in self.redirects.items() if v not in self.responses]
+        self.redirects.bulk_delete(set(keys + invalid_redirects))
 
     def clear(self):
         """Delete all items from the cache"""
@@ -133,7 +134,7 @@ class BaseCache:
 
         # Delay updates & deletes until the end, to avoid conflicts with _get_valid_responses()
         logger.debug(f'Deleting {len(keys_to_delete)} expired responses')
-        self.delete_all(keys_to_delete)
+        self.bulk_delete(keys_to_delete)
         if expire_after is not None:
             logger.debug(f'Updating {len(keys_to_update)} revalidated responses')
             for key, response in keys_to_update.items():
@@ -181,8 +182,7 @@ class BaseCache:
         # Delay deletion until the end, to improve responsiveness when used as a generator
         if delete_invalid:
             logger.debug(f'Deleting {len(keys_to_delete)} invalid responses')
-            for key in keys_to_delete:
-                self.delete(key)
+            self.bulk_delete(keys_to_delete)
 
     def __str__(self):
         return f'redirects: {len(self.redirects)}\nresponses: {len(self.responses)}'
@@ -233,6 +233,17 @@ class BaseStorage(MutableMapping, ABC):
             return Serializer(secret_key, salt=salt, serializer=pickle)
         else:
             return pickle
+
+    def bulk_delete(self, keys: Iterable[str]):
+        """Delete multiple keys from the cache. Does not raise errors for missing keys. This is a
+        basic version that subclasses should override with a more efficient backend-specific
+        version, if possible.
+        """
+        for k in keys:
+            try:
+                del self[k]
+            except KeyError:
+                pass
 
     def __str__(self):
         return str(list(self.keys()))

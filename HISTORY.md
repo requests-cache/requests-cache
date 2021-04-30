@@ -12,7 +12,7 @@
 * Update `BaseCache.urls` to only skip invalid responses, not delete them
 * Update `old_data_on_error` option to also handle error response codes
 * Use thread-local connections for SQLite backend
-* Improve performance for `remove_expired_responses()`, mainly for SQLite backend
+* Improve performance for `remove_expired_responses()`
 * Fix `DynamoDbDict.__iter__` to return keys instead of values
 
 ### 0.6.3 (2021-04-21)

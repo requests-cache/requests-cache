@@ -72,6 +72,16 @@ class BaseStorageTest:
         assert set(cache.keys()) == {f'key_{i}' for i in range(5, 20)}
         assert set(cache.values()) == {f'value_{i}' for i in range(5, 20)}
 
+    def test_bulk_delete(self):
+        cache = self.init_cache()
+        for i in range(20):
+            cache[f'key_{i}'] = f'value_{i}'
+        cache.bulk_delete([f'key_{i}' for i in range(5)])
+
+        assert len(cache) == 15
+        assert set(cache.keys()) == {f'key_{i}' for i in range(5, 20)}
+        assert set(cache.values()) == {f'value_{i}' for i in range(5, 20)}
+
     def test_keyerrors(self):
         """Accessing or deleting a deleted item should raise a KeyError"""
         cache = self.init_cache()
