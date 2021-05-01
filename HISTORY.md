@@ -15,15 +15,29 @@
     * Redis: `redis.Redis`
     * MongoDB and GridFS: `pymongo.MongoClient`
 
+### Expiration
+* Add optional support for the following **request** headers:
+    * `Cache-Control: max-age`
+    * `Cache-Control: no-cache`
+    * `Cache-Control: no-store`
+* Add optional support for the following **response** headers:
+    * `Cache-Control: max-age`
+    * `Cache-Control: no-store`
+    * `Expires`
+* Add `cache_control` option to `CachedSession` to enable usage of cache headers
+* Add support for HTTP timestamps (RFC 5322) in ``expire_after`` parameters
+* Add support for bypassing the cache if `expire_after=0`
+* Add support for making a cache whitelist using URL patterns
+
 ### General
 * Add option to manually cache response objects with `BaseCache.save_response()`
 * Add `BaseCache.keys()` and `values()` methods
-* Add support for bypassing the cache if `expire_after=0`, and, by extension, making a cache
-  whitelist based on URL patterns
-* Add response details to `CachedResponse.__str__()`
+* Show summarized response details with `str(CachedResponse)`
+* Add more detailed repr methods for `CachedSession`, `CachedResponse`, and `BaseCache`
 * Add support for caching multipart form uploads
 * Update `BaseCache.urls` to only skip invalid responses, not delete them
 * Update `old_data_on_error` option to also handle error response codes
+* Only log request exceptions if `old_data_on_error` is set
 
 -----
 ### 0.6.3 (2021-04-21)
@@ -68,7 +82,12 @@ next time they are requested. They can also be manually converted or removed, if
 * Add `BaseCache.urls` property to get all URLs persisted in the cache
 * Add optional support for `itsdangerous` for more secure serialization
 
-### Cache Expiration
+### Backends
+* SQLite: Allow passing user paths (`~/path-to-cache`) to database file with `db_path` param
+* SQLite: Add `timeout` parameter
+* Make default table names consistent across backends (`'http_cache'`)
+
+### Expiration
 * Cached responses are now stored with an absolute expiration time, so `CachedSession.expire_after`
   no longer applies retroactively. To revalidate previously cached items with a new expiration time,
   see below:
@@ -77,11 +96,6 @@ next time they are requested. They can also be manually converted or removed, if
 * Add support for setting expiration based on URL glob patterns
 * Add support for setting expiration as a `datetime`
 * Add support for explicitly disabling expiration with `-1` (Since `None` may be ambiguous in some cases)
-
-### Backends
-* SQLite: Allow passing user paths (`~/path-to-cache`) to database file with `db_path` param
-* SQLite: Add `timeout` parameter
-* Make default table names consistent across backends (`'http_cache'`)
 
 ### Bugfixes
 * Fix caching requests with data specified in `json` parameter
