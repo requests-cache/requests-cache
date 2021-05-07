@@ -1,18 +1,18 @@
 """Main classes to add caching features to ``requests.Session``"""
 from contextlib import contextmanager
-from fnmatch import fnmatch
 from logging import getLogger
 from threading import RLock
-from typing import Any, Callable, Dict, Iterable
+from typing import Any, Callable, Dict, Iterable, Optional
 
-from requests import PreparedRequest
+from requests import PreparedRequest, Response
 from requests import Session as OriginalSession
 from requests.hooks import dispatch_hook
 from urllib3 import filepost
 
 from .backends import BackendSpecifier, get_valid_kwargs, init_backend
+from .cache_control import CacheActions
 from .cache_keys import normalize_dict
-from .response import DO_NOT_CACHE, AnyResponse, ExpirationTime, set_response_defaults
+from .response import AnyResponse, ExpirationTime, set_response_defaults
 
 ALL_METHODS = ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
 logger = getLogger(__name__)
@@ -33,6 +33,7 @@ class CacheMixin:
         allowable_methods: Iterable['str'] = ('GET', 'HEAD'),
         filter_fn: Callable = None,
         old_data_on_error: bool = False,
+        cache_control: bool = False,
         **kwargs,
     ):
         self.cache = init_backend(backend, cache_name, **kwargs)
@@ -42,8 +43,9 @@ class CacheMixin:
         self.urls_expire_after = urls_expire_after
         self.filter_fn = filter_fn or (lambda r: True)
         self.old_data_on_error = old_data_on_error
+        self.cache_control = cache_control
 
-        self._cache_name = cache_name
+        self.cache.name = cache_name
         self._request_expire_after: ExpirationTime = None
         self._disabled = False
         self._lock = RLock()
@@ -78,17 +80,19 @@ class CacheMixin:
         Returns:
             Either a new or cached response
 
-        **Order of operations:** A request will pass through the following methods:
+        **Order of operations:** For reference, a request will pass through the following methods:
 
         1. :py:func:`requests.get`/:py:meth:`requests.Session.get` or other method-specific functions (optional)
         2. :py:meth:`.CachedSession.request`
         3. :py:meth:`requests.Session.request`
         4. :py:meth:`.CachedSession.send`
         5. :py:meth:`.BaseCache.get_response`
-        6. :py:meth:`requests.Session.send` (if not cached)
+        6. :py:meth:`requests.Session.send` (if not previously cached)
+        7. :py:meth:`.BaseCache.save_response` (if not previously cached)
+
         """
         with self.request_expire_after(expire_after), patch_form_boundary(**kwargs):
-            response = super().request(
+            return super().request(
                 method,
                 url,
                 params=normalize_dict(params),
@@ -96,12 +100,37 @@ class CacheMixin:
                 json=normalize_dict(json),
                 **kwargs,
             )
-            if self._disabled or self._get_expiration(url) == DO_NOT_CACHE:
-                return response
+
+    def send(self, request: PreparedRequest, **kwargs) -> AnyResponse:
+        """Send a prepared request, with caching. See :py:meth:`.request` for notes on behavior."""
+        # Determine which actions to take based on request info, headers, and cache settings
+        cache_key = self.cache.create_key(request, **kwargs)
+        actions = CacheActions(
+            key=cache_key,
+            request=request,
+            request_expire_after=self._request_expire_after,
+            session_expire_after=self.expire_after,
+            urls_expire_after=self.urls_expire_after,
+            cache_control=self.cache_control,
+            **kwargs,
+        )
+        response = None
+
+        # Attempt to fetch the cached response, if possible; otherwise fetch and cache a new response
+        if not (self._disabled or actions.skip_read):
+            response = self.cache.get_response(cache_key)
+        if response is None:
+            response = self._send_and_cache(request, actions, **kwargs)
+        elif response.is_expired and self.old_data_on_error:
+            response = self._resend_and_ignore(request, actions, **kwargs) or response
+        elif response.is_expired:
+            response = self._resend(request, actions, **kwargs)
+
+        # Dispatch any hooks here, because they are removed before pickling
+        response = dispatch_hook('response', request.hooks, response, **kwargs)
 
         # If the request has been filtered out, delete previously cached response if it exists
-        cache_key = self.cache.create_key(response.request, **kwargs)
-        if not response.from_cache and not self.filter_fn(response):
+        if not self.filter_fn(response):
             logger.debug(f'Deleting filtered response for URL: {response.url}')
             self.cache.delete(cache_key)
             return response
@@ -111,60 +140,53 @@ class CacheMixin:
             self.cache.save_redirect(r.request, cache_key)
         return response
 
-    def send(self, request: PreparedRequest, **kwargs) -> AnyResponse:
-        """Send a prepared request, with caching."""
-        # If we shouldn't cache the response, just send the request
-        if not self._is_cacheable(request):
-            logger.debug(f'Request for URL {request.url} is not cacheable')
-            response = super().send(request, **kwargs)
-            return set_response_defaults(response)
+    def _send_and_cache(self, request: PreparedRequest, actions: CacheActions, **kwargs):
+        """Send the request and cache the response, unless disabled by settings or headers"""
+        response = super().send(request, **kwargs)
+        actions.update_from_response(response)
+        if self._is_cacheable(response, actions):
+            logger.debug(f'Skipping cache write for URL: {request.url}')
+            self.cache.save_response(response, actions.key, actions.expires)
+        return set_response_defaults(response)
 
-        # Attempt to fetch the cached response
-        cache_key = self.cache.create_key(request, **kwargs)
-        response = self.cache.get_response(cache_key)
+    def _resend(self, request: PreparedRequest, actions: CacheActions, **kwargs) -> AnyResponse:
+        """Attempt to resend the request and cache the new response. If the request fails, delete
+        the expired cache item.
+        """
+        logger.debug('Expired response; attempting to re-send request')
+        try:
+            return self._send_and_cache(request, actions, **kwargs)
+        except Exception:
+            self.cache.delete(actions.key)
+            raise
 
-        # Attempt to fetch and cache a new response, if needed
-        if response is None:
-            return self._send_and_cache(request, cache_key, **kwargs)
-        if response.is_expired:
-            return self._handle_expired_response(request, response, cache_key, **kwargs)
-
-        # Dispatch hook here, because we've removed it before pickling
-        return dispatch_hook('response', request.hooks, response, **kwargs)
-
-    def _is_cacheable(self, request: PreparedRequest) -> bool:
-        criteria = [
-            not self._disabled,
-            str(request.method) in self.allowable_methods,
-            self.filter_fn(request),
-            self._get_expiration(request.url) != DO_NOT_CACHE,
-        ]
-        return all(criteria)
-
-    def _handle_expired_response(self, request, response, cache_key, **kwargs) -> AnyResponse:
-        """Determine what to do with an expired response, depending on old_data_on_error setting"""
+    def _resend_and_ignore(
+        self, request: PreparedRequest, actions: CacheActions, **kwargs
+    ) -> Optional[AnyResponse]:
+        """Attempt to send the request and cache the new response. If there are any errors, ignore
+        them and and return ``None``.
+        """
         # Attempt to send the request and cache the new response
         logger.debug('Expired response; attempting to re-send request')
         try:
-            new_response = self._send_and_cache(request, cache_key, **kwargs)
-            if self.old_data_on_error:
-                new_response.raise_for_status()
-            return new_response
-        # Return the expired/invalid response on error, if specified; otherwise reraise
+            response = self._send_and_cache(request, actions, **kwargs)
+            response.raise_for_status()
+            return response
         except Exception as e:
-            if self.old_data_on_error:
-                logger.warning('Request failed; using stale cache data: %s', e)
-                return response
-            self.cache.delete(cache_key)
-            raise
+            logger.warning('Request failed; using stale cache data: %s', e)
+            return None
 
-    def _send_and_cache(self, request, cache_key, **kwargs):
-        logger.debug(f'Sending request and caching response for URL: {request.url}')
-        response = super().send(request, **kwargs)
-        expire_after = self._get_expiration(request.url)
-        if response.status_code in self.allowable_codes and expire_after != DO_NOT_CACHE:
-            self.cache.save_response(response, cache_key, expire_after)
-        return set_response_defaults(response)
+    def _is_cacheable(self, response: Response, actions: CacheActions) -> bool:
+        """Perform all checks needed to determine if the given response should be saved to the cache"""
+        cache_criteria = {
+            'disabled cache': self._disabled,
+            'disabled method': response.request.method not in self.allowable_methods,
+            'disabled status': response.status_code not in self.allowable_codes,
+            'disabled by filter': not self.filter_fn(response.request),
+            'disabled by headers or expiration params': actions.skip_write,
+        }
+        logger.debug(f'Pre-cache checks for response from {response.url}: {cache_criteria}')
+        return not any(cache_criteria.values())
 
     @contextmanager
     def cache_disabled(self):
@@ -189,21 +211,6 @@ class CacheMixin:
             finally:
                 self._disabled = False
 
-    def _get_expiration(self, url: str = None) -> ExpirationTime:
-        """Get the appropriate expiration, in order of precedence:
-        1. Per-request expiration
-        2. Per-URL expiration
-        3. Per-session expiration
-        """
-        return coalesce(self._request_expire_after, self._url_expire_after(url), self.expire_after)
-
-    def _url_expire_after(self, url: str) -> ExpirationTime:
-        """Get the expiration time for a URL, if a matching pattern is defined"""
-        for pattern, expire_after in (self.urls_expire_after or {}).items():
-            if url_match(url, pattern):
-                return expire_after
-        return None
-
     @contextmanager
     def request_expire_after(self, expire_after: ExpirationTime = None):
         """Temporarily override ``expire_after`` for an individual request. This is needed to
@@ -223,10 +230,17 @@ class CacheMixin:
         self.cache.remove_expired_responses(expire_after)
 
     def __repr__(self):
-        return (
-            f"<CachedSession({self.cache.__class__.__name__}('{self._cache_name}', ...), "
-            f"expire_after={self.expire_after}, allowable_methods={self.allowable_methods})>"
-        )
+        repr_attrs = [
+            'cache',
+            'expire_after',
+            'urls_expire_after',
+            'allowable_codes',
+            'allowable_methods',
+            'old_data_on_error',
+            'cache_control',
+        ]
+        attr_strs = [f'{k}={repr(getattr(self, k))}' for k in repr_attrs]
+        return f'<CachedSession({", ".join(attr_strs)})>'
 
 
 class CachedSession(CacheMixin, OriginalSession):
@@ -250,14 +264,10 @@ class CachedSession(CacheMixin, OriginalSession):
             returns a boolean indicating whether or not that response should be cached. Will be
             applied to both new and previously cached responses.
         old_data_on_error: Return stale cache data if a new request raises an exception
+        cache_control: Use Cache-Control request and response headers
         secret_key: Optional secret key used to sign cache items for added security
 
     """
-
-
-def coalesce(*values: Any, default=None) -> Any:
-    """Get the first non-``None`` value in a list of values"""
-    return next((v for v in values if v is not None), default)
 
 
 @contextmanager
@@ -272,25 +282,3 @@ def patch_form_boundary(**request_kwargs):
         filepost.choose_boundary = original_boundary
     else:
         yield
-
-
-def url_match(url: str, pattern: str) -> bool:
-    """Determine if a URL matches a pattern.
-
-    Args:
-        url: URL to test. Its base URL (without protocol) will be used.
-        pattern: Glob pattern to match against. A recursive wildcard will be added if not present
-
-    Example:
-        >>> url_match('https://httpbin.org/delay/1', 'httpbin.org/delay')
-        True
-        >>> url_match('https://httpbin.org/stream/1', 'httpbin.org/*/1')
-        True
-        >>> url_match('https://httpbin.org/stream/2', 'httpbin.org/*/1')
-        False
-    """
-    if not url:
-        return False
-    url = url.split('://')[-1]
-    pattern = pattern.split('://')[-1].rstrip('*') + '**'
-    return fnmatch(url, pattern)

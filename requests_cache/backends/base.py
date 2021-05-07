@@ -2,6 +2,7 @@ import pickle
 import warnings
 from abc import ABC
 from collections.abc import MutableMapping
+from datetime import datetime
 from logging import DEBUG, WARNING, getLogger
 from typing import Iterable, Iterator, Tuple, Union
 
@@ -31,6 +32,7 @@ class BaseCache:
         ignored_parameters: Iterable[str] = None,
         **kwargs,
     ):
+        self.name = None
         self.redirects = {}
         self.responses = {}
         self.include_get_headers = include_get_headers
@@ -42,7 +44,7 @@ class BaseCache:
         for response in self.values():
             yield response.url
 
-    def save_response(self, response: AnyResponse, key: str = None, expire_after: ExpirationTime = None):
+    def save_response(self, response: AnyResponse, key: str = None, expires: datetime = None):
         """Save response to cache
 
         Args:
@@ -51,7 +53,7 @@ class BaseCache:
             expire_after: Time in seconds until this cache item should expire
         """
         key = key or self.create_key(response.request)
-        self.responses[key] = CachedResponse(response, expire_after=expire_after)
+        self.responses[key] = CachedResponse(response, expires=expires)
 
     def save_redirect(self, request: PreparedRequest, response_key: str):
         """
@@ -189,6 +191,9 @@ class BaseCache:
 
     def __str__(self):
         return f'redirects: {len(self.redirects)}\nresponses: {len(self.responses)}'
+
+    def __repr__(self):
+        return f'<{self.__class__.__name__}(name={self.name})>'
 
 
 class BaseStorage(MutableMapping, ABC):

@@ -94,6 +94,8 @@ def init_backend(backend: BackendSpecifier, *args, **kwargs) -> BaseCache:
     logger.debug(f'Initializing backend: {backend}')
 
     # Omit 'cache_name' positional arg if an equivalent backend-specific kwarg is specified
+    # TODO: The difference in parameter names here can be problematic. A better solution for this
+    #       would be nice, if it can be done without breaking backwards-compatibility.
     if any([k in kwargs for k in CACHE_NAME_KWARGS]):
         args = tuple()
 

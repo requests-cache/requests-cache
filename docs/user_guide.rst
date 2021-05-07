@@ -180,9 +180,8 @@ or credentials. If you want to ignore specific parameters, specify them with ``i
 
 Request Headers
 ~~~~~~~~~~~~~~~
-By default, request headers are not taken into account when caching responses. In some cases,
-different headers may result in different response data, so you may want to cache them separately.
-To enable this, use ``include_get_headers``:
+In some cases, different headers may result in different response data, so you may want to cache
+them separately. To enable this, use ``include_get_headers``:
 
     >>> session = CachedSession(include_get_headers=True)
     >>> # Both of these requests will be sent and cached separately
@@ -191,11 +190,27 @@ To enable this, use ``include_get_headers``:
 
 Cache Expiration
 ----------------
-By default, cached responses will be stored indefinitely. You can initialize the cache with an
-``expire_after`` value to specify how long responses will be cached.
+By default, cached responses will be stored indefinitely. There are a number of options for
+specifying how long to store responses. The simplest option is to initialize the cache with an
+``expire_after`` value:
 
-Expiration Types
-~~~~~~~~~~~~~~~~
+    >>> # Set expiration for the session using a value in seconds
+    >>> session = CachedSession(expire_after=360)
+
+Expiration Precedence
+~~~~~~~~~~~~~~~~~~~~~
+Expiration can be set on a per-session, per-URL, or per-request basis, in addition to cache
+headers (see sections below for usage details). When there are multiple values provided for a given
+request, the following order of precedence is used:
+
+1. Cache-Control request headers (if enabled)
+2. Cache-Control response headers (if enabled)
+3. Per-request expiration (``expire_after`` argument for :py:meth:`.CachedSession.request`)
+4. Per-URL expiration (``urls_expire_after`` argument for :py:class:`.CachedSession`)
+5. Per-session expiration (``expire_after`` argument for :py:class:`.CacheBackend`)
+    
+Expiration Values
+~~~~~~~~~~~~~~~~~
 ``expire_after`` can be any of the following:
 
 * ``-1`` (to never expire)
@@ -206,29 +221,15 @@ Expiration Types
 
 Examples:
 
-    >>> # Set expiration for the session using a value in seconds
-    >>> session = CachedSession(expire_after=360)
-
-    >>> # To specify a different unit of time, use a timedelta
+    >>> # To specify a unit of time other than seconds, use a timedelta
     >>> from datetime import timedelta
     >>> session = CachedSession(expire_after=timedelta(days=30))
 
     >>> # Update an existing session to disable expiration (i.e., store indefinitely)
     >>> session.expire_after = -1
 
-Expiration Scopes
-~~~~~~~~~~~~~~~~~
-Passing ``expire_after`` to :py:class:`.CachedSession` will set the expiration for the duration of that session.
-Expiration can also be set on a per-URL or per-request basis. The following order of precedence
-is used:
-
-1. Per-request expiration (``expire_after`` argument for :py:meth:`.CachedSession.request`)
-2. Per-URL expiration (``urls_expire_after`` argument for :py:class:`.CachedSession`)
-3. Per-session expiration (``expire_after`` argument for :py:class:`.CachedSession`)
-
-To set expiration for a single request:
-
-    >>> session.get('https://httpbin.org/get', expire_after=360)
+    >>> # Disable caching by default, unless enabled by other settings
+    >>> session = CachedSession(expire_after=0)
 
 URL Patterns
 ~~~~~~~~~~~~
@@ -262,6 +263,37 @@ You can also use this to define a cache whitelist, so only the patterns you defi
 * If there is more than one match, the first match will be used in the order they are defined
 * If no patterns match a request, ``CachedSession.expire_after`` will be used as a default.
 
+Cache-Control
+~~~~~~~~~~~~~
+.. warning::
+    This is **not** intended to be a thorough or strict implementation of header-based HTTP caching,
+    e.g. according to RFC 2616.
+                                                                                                     
+Optional support is included for a simplified subset of
+`Cache-Control <https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control>`_
+and other cache headers in both requests and responses. To enable this behavior, use the
+``cache_control`` option:
+                                                                                                     
+    >>> session = CachedSession(cache_control=True)                                                    
+                                                                                                     
+**Supported request headers:**
+
+* ``Cache-Control: max-age``: Used as the expiration time in seconds
+* ``Cache-Control: no-cache``: Skips reading response data from the cache
+* ``Cache-Control: no-store``: Skips reading and writing response data from/to the cache
+
+**Supported response headers:**
+
+* ``Cache-Control: max-age``: Used as the expiration time in seconds
+* ``Cache-Control: no-store`` Skips writing response data to the cache
+* ``Expires``: Used as an absolute expiration time
+
+**Notes:**
+
+* Unlike a browser or proxy cache, ``max-age=0`` does not currently clear previously cached responses.              
+* If enabled, Cache-Control directives will take priority over any other ``expire_after`` value.
+  See :ref:`user_guide:expiration precedence` for the full order of precedence.
+  
 Removing Expired Responses
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 For better performance, expired responses won't be removed immediately, but will be removed
@@ -278,7 +310,6 @@ You can also apply a different ``expire_after`` to previously cached responses, 
 revalidate the cache with the new expiration time:
 
     >>> session.remove_expired_responses(expire_after=timedelta(days=30))
-
 
 Error Handling
 --------------

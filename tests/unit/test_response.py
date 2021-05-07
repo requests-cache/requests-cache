@@ -28,14 +28,11 @@ def test_basic_attrs(mock_session):
 @pytest.mark.parametrize(
     'expire_after, is_expired',
     [
-        (None, False),
-        (-1, False),
-        (0, True),
         (datetime.utcnow() + timedelta(days=1), False),
         (datetime.utcnow() - timedelta(days=1), True),
     ],
 )
-def test_expiration(expire_after, is_expired, mock_session):
+def test_is_expired(expire_after, is_expired, mock_session):
     response = CachedResponse(mock_session.get(MOCKED_URL), expire_after)
     assert response.from_cache is True
     assert response.is_expired == is_expired
@@ -117,7 +114,7 @@ def test_revalidate__extend_expiration(mock_session):
     # Start with an expired response
     response = CachedResponse(
         mock_session.get(MOCKED_URL),
-        expire_after=datetime.utcnow() - timedelta(seconds=0.01),
+        expires=datetime.utcnow() - timedelta(seconds=0.01),
     )
     assert response.is_expired is True
 
@@ -132,7 +129,7 @@ def test_revalidate__shorten_expiration(mock_session):
     # Start with a non-expired response
     response = CachedResponse(
         mock_session.get(MOCKED_URL),
-        expire_after=datetime.utcnow() + timedelta(seconds=1),
+        expires=datetime.utcnow() + timedelta(seconds=1),
     )
     assert response.is_expired is False
 
