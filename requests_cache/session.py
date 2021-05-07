@@ -152,9 +152,8 @@ class CacheMixin:
             return new_response
         # Return the expired/invalid response on error, if specified; otherwise reraise
         except Exception as e:
-            logger.exception(e)
             if self.old_data_on_error:
-                logger.warning('Request failed; using stale cache data')
+                logger.warning('Request failed; using stale cache data: %s', e)
                 return response
             self.cache.delete(cache_key)
             raise
