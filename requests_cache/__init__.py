@@ -9,18 +9,10 @@ logger = getLogger(__name__)
 
 
 try:
-    from .response import AnyResponse, CachedHTTPResponse, CachedResponse, ExpirationTime
+    from .backends import *
+    from .patcher import *
+    from .response import CachedHTTPResponse, CachedResponse
     from .session import ALL_METHODS, CachedSession, CacheMixin
-    from .patcher import (
-        clear,
-        disabled,
-        enabled,
-        get_cache,
-        install_cache,
-        is_installed,
-        remove_expired_responses,
-        uninstall_cache,
-    )
-# Ignore ImportErrors, if setup.py is invoked outside a virtualenv
+# Log and ignore ImportErrors, if setup.py is invoked outside a virtualenv
 except ImportError as e:
     logger.warning(e)

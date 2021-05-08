@@ -62,7 +62,7 @@
 [See all issues and PRs for 0.6](https://github.com/reclosedev/requests-cache/milestone/1?closed=1)
 
 Thanks to [Code Shelter](https://www.codeshelter.co) and
-[contributors](https://requests-cache.readthedocs.io/en/latest/contributors.html)
+[contributors](https://requests-cache.readthedocs.io/en/stable/contributors.html)
 for making this release possible!
 
 ### Serialization
@@ -114,17 +114,17 @@ next time they are requested. They can also be manually converted or removed, if
 ### General
 * Drop support for python <= 3.5
 * Add `CacheMixin` class to make the features of `CachedSession` usable as a mixin class,
-  for [compatibility with other requests-based libraries](https://requests-cache.readthedocs.io/en/latest/advanced_usage.html#library-compatibility).
+  for [compatibility with other requests-based libraries](https://requests-cache.readthedocs.io/en/stable/advanced_usage.html#library-compatibility).
 * Add `HEAD` to default `allowable_methods`
 
 ### Docs & Tests
 * Add type annotations to main functions/methods in public API, and include in documentation on
-  [readthedocs](https://requests-cache.readthedocs.io/en/latest/)
-* Add [Contributing Guide](https://requests-cache.readthedocs.io/en/latest/contributing.html),
-  [Security](https://requests-cache.readthedocs.io/en/latest/security.html) info,
+  [readthedocs](https://requests-cache.readthedocs.io/en/stable/)
+* Add [Contributing Guide](https://requests-cache.readthedocs.io/en/stable/contributing.html),
+  [Security](https://requests-cache.readthedocs.io/en/stable/security.html) info,
   and more examples & detailed usage info in
-  [User Guide](https://requests-cache.readthedocs.io/en/latest/user_guide.html) and
-  [Advanced Usage](https://requests-cache.readthedocs.io/en/latest/advanced_usage.html) sections.
+  [User Guide](https://requests-cache.readthedocs.io/en/stable/user_guide.html) and
+  [Advanced Usage](https://requests-cache.readthedocs.io/en/stable/advanced_usage.html) sections.
 * Increase test coverage and rewrite most tests using pytest
 * Add containerized backends for both local and CI integration testing
 

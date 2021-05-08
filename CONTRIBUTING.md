@@ -1,12 +1,11 @@
 # Contributing Guide
 
-## Development status
+## Development Status
 While the original author no longer has time to work on requests-cache
 ([see note here](https://github.com/reclosedev/requests-cache/blob/master/CODESHELTER.md)),
 one or more maintainers are available via [Code Shelter](https://www.codeshelter.co) to help keep
 this project going.
 
-Maintenance will mainly focus on bugfixes, security and compatibility updates, etc.
 If there is a new feature you would like to see, the best way to make that happen is to submit a PR
 for it!
 
@@ -18,6 +17,13 @@ If you discover a bug, want to propose a new feature, or have other feedback abo
 If you want to discuss ideas about the project in general, or if you have an issue or PR that hasn't
 received a response in a timely manner, please reach out on the Code Shelter chat server, under
 [projects/requests-cache](https://codeshelter.zulipchat.com/#narrow/stream/186993-projects/topic/requests-cache).
+
+## Pre-release Installation
+If you want to test out the latest in-development changes, you can install pre-release versions:
+```bash
+pip install --pre requests-cache
+```
+Pre-release documentation can be found here: https://requests-cache.readthedocs.io/en/latest/
 
 ## Dev Installation
 To set up for local development:

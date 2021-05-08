@@ -1,7 +1,7 @@
 # Requests-Cache
 [![Build](https://github.com/reclosedev/requests-cache/actions/workflows/build.yml/badge.svg)](https://github.com/reclosedev/requests-cache/actions/workflows/build.yml)
 [![Coverage](https://coveralls.io/repos/github/reclosedev/requests-cache/badge.svg?branch=master)](https://coveralls.io/github/reclosedev/requests-cache?branch=master)
-[![Documentation](https://img.shields.io/readthedocs/requests-cache/latest)](https://requests-cache.readthedocs.io/en/latest/)
+[![Documentation](https://img.shields.io/readthedocs/requests-cache/stable)](https://requests-cache.readthedocs.io/en/stable/)
 [![PyPI](https://img.shields.io/pypi/v/requests-cache?color=blue)](https://pypi.org/project/requests-cache)
 [![PyPI - Python Versions](https://img.shields.io/pypi/pyversions/requests-cache)](https://pypi.org/project/requests-cache)
 [![PyPI - Format](https://img.shields.io/pypi/format/requests-cache?color=blue)](https://pypi.org/project/requests-cache)
@@ -16,17 +16,17 @@ likely to be sent more than once.
 See full project documentation at: https://requests-cache.readthedocs.io
 
 ## Features
-* **Ease of use:** Use as a [drop-in replacement](https://requests-cache.readthedocs.io/en/latest/api.html#sessions)
-  for `requests.Session`, or [install globally](https://requests-cache.readthedocs.io/en/latest/user_guide.html#patching)
+* **Ease of use:** Use as a [drop-in replacement](https://requests-cache.readthedocs.io/en/stable/api.html#sessions)
+  for `requests.Session`, or [install globally](https://requests-cache.readthedocs.io/en/stable/user_guide.html#patching)
   to add caching to all `requests` functions
 * **Customization:** Works out of the box with zero config, but with plenty of options available
   for customizing cache
-  [expiration](https://requests-cache.readthedocs.io/en/latest/user_guide.html#cache-expiration)
-  and other [behavior](https://requests-cache.readthedocs.io/en/latest/user_guide.html#cache-options)
-* **Persistence:** Includes several [storage backends](https://requests-cache.readthedocs.io/en/latest/user_guide.html#cache-backends):
+  [expiration](https://requests-cache.readthedocs.io/en/stable/user_guide.html#cache-expiration)
+  and other [behavior](https://requests-cache.readthedocs.io/en/stable/user_guide.html#cache-options)
+* **Persistence:** Includes several [storage backends](https://requests-cache.readthedocs.io/en/stable/user_guide.html#cache-backends):
   SQLite, Redis, MongoDB, GridFS, DynamoDB, and filesystem.
 * **Compatibility:** Can be used alongside
-  [other popular libraries based on requests](https://requests-cache.readthedocs.io/en/latest/advanced_usage.html#library-compatibility)
+  [other popular libraries based on requests](https://requests-cache.readthedocs.io/en/stable/advanced_usage.html#library-compatibility)
 
 # Quickstart
 First, install with pip:
@@ -34,7 +34,7 @@ First, install with pip:
 pip install requests-cache
 ```
 
-Next, use [requests_cache.CachedSession](https://requests-cache.readthedocs.io/en/latest/api.html#sessions)
+Next, use [requests_cache.CachedSession](https://requests-cache.readthedocs.io/en/stable/api.html#sessions)
 to send and cache requests. To quickly demonstrate how to use it:
 
 **This takes ~1 minute:**
@@ -69,9 +69,9 @@ requests.get('http://httpbin.org/delay/1')
 To find out more about what you can do with requests-cache, see:
 
 * The
-  [User Guide](https://requests-cache.readthedocs.io/en/latest/user_guide.html) and
-  [Advanced Usage](https://requests-cache.readthedocs.io/en/latest/advanced_usage.html) sections
+  [User Guide](https://requests-cache.readthedocs.io/en/stable/user_guide.html) and
+  [Advanced Usage](https://requests-cache.readthedocs.io/en/stable/advanced_usage.html) sections
 * A working example at Real Python:
   [Caching External API Requests](https://realpython.com/blog/python/caching-external-api-requests)
 * More examples in the
-  [examples/](https://github.com/reclosedev/requests-cache/tree/master/examples) folder
+  [examples/](https://requests-cache.readthedocs.io/en/stable/index.html) folder
