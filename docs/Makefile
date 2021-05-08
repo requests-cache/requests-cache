@@ -1,4 +1,5 @@
-# Minimal makefile for Sphinx documentation
+# Minimal makefile for Sphinx documentation.
+# This is only used for local builds, and is not used by Readthedocs.
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 SOURCEDIR     = .
