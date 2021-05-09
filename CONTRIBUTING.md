@@ -26,12 +26,12 @@ pip install --pre requests-cache
 Pre-release documentation can be found here: https://requests-cache.readthedocs.io/en/latest/
 
 ## Dev Installation
-To set up for local development:
+To set up for local development (requires [poetry](https://python-poetry.org/docs/#installation)):
 
 ```bash
 $ git clone https://github.com/reclosedev/requests-cache.git
 $ cd requests-cache
-$ pip install -Ue ".[dev]"
+$ poetry install -E backends
 ```
 
 ## Pre-commit Hooks

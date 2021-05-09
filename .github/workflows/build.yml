@@ -10,6 +10,7 @@ on:
 env:
   LATEST_PY_VERSION: '3.9'
   COVERAGE_ARGS: '--cov --cov-report=term --cov-report=html'
+  COMPLEXITY_ARGS: '--show-complexity --average --order SCORE'
 
 jobs:
   # Run unit tests for each supported python version
@@ -29,6 +30,9 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+      - uses: snok/install-poetry@v1.1.4
+        with:
+          virtualenvs-in-project: true
 
       # Start integration test databases
       - uses: supercharge/mongodb-github-action@1.3.0
@@ -39,40 +43,49 @@ jobs:
           redis-version: 6
       - uses: rrainn/dynamodb-action@v2.0.0
 
-      # Cache packages per python version, and reuse until setup.py changes
-      - name: Cache pip packages
+      # Cache packages per python version, and reuse until lockfile changes
+      - name: Cache python packages
+        id: cache
         uses: actions/cache@v2
         with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('setup.py') }}
-          restore-keys: ${{ runner.os }}-pip-${{ matrix.python-version }}
+          path: .venv
+          key: venv-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
       - name: Install dependencies
-        run: pip install ".[dev]"
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: poetry install -vn -E backends
 
       # Latest python version: Run tests with coverage and send to coveralls
       - name: Run tests with code coverage report
         if: ${{ matrix.python-version == env.LATEST_PY_VERSION }}
         # Run unit tests first (and with multiprocessing) to fail quickly if there are issues
         run: |
+          source $VENV
           pytest tests/unit --numprocesses=auto ${{ env.COVERAGE_ARGS }}
           pytest tests/integration --cov-append ${{ env.COVERAGE_ARGS }}
       - name: Send code coverage report to Coveralls
         if: ${{ matrix.python-version == env.LATEST_PY_VERSION }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: coveralls --service=github
+        run: |
+          source $VENV
+          pip install coveralls
+          coveralls --service=github
 
       # All other python versions: just run tests
       - name: Run tests
         if: ${{ matrix.python-version != env.LATEST_PY_VERSION }}
         run: |
+          source $VENV
           pytest --numprocesses=auto tests/unit
           pytest tests/integration
 
       # Run longer stress tests if this is a release or merge to master
       - name: Run stress tests
         if: startsWith(github.ref, 'refs/tags/v') || endsWith(github.ref, '/master')
-        run: STRESS_TEST_MULTIPLIER=5 pytest tests/integration/ -k 'multithreaded'
+        run: |
+          source $VENV
+          export STRESS_TEST_MULTIPLIER=5
+          pytest tests/integration/ -k 'multithreaded'
 
   # Run code analysis checks
   analyze:
@@ -82,25 +95,29 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ env.LATEST_PY_VERSION }}
+      - uses: snok/install-poetry@v1.1.4
+        with:
+          virtualenvs-in-project: true
 
-      # Cache packages for latest python version, and reuse until setup.py changes
-      - name: Cache pip packages
+      # Cache packages and reuse until lockfile changes
+      - name: Cache python packages
+        id: cache
         uses: actions/cache@v2
         with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ env.LATEST_PY_VERSION }}-${{ hashFiles('setup.py') }}
-          restore-keys: ${{ runner.os }}-pip-${{ env.LATEST_PY_VERSION }}
+          path: .venv
+          key: venv-${{ env.LATEST_PY_VERSION }}-${{ hashFiles('poetry.lock') }}
       - name: Install dependencies
-        run: pip install ".[dev]"
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: poetry install -vn -E backends
 
-      - name: Run linter
-        run: flake8 .
-      - name: Run code style checks
+      - name: Run style checks & linting
         run: |
+          source $VENV
           black --check --diff .
           isort --check --diff .
+          flake8 .
       - name: Run cyclomatic complexity check
-        run: radon cc --show-complexity --average --order SCORE requests_cache
+        run: poetry run radon cc ${{ env.COMPLEXITY_ARGS }} requests_cache
 
   # Deploy pre-release builds from 'pre-release' branch, and stable builds on tags only
   release:
@@ -111,19 +128,15 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-                python-version: ${{ env.LATEST_PY_VERSION }}
+          python-version: ${{ env.LATEST_PY_VERSION }}
+      - uses: snok/install-poetry@v1.1.4
+        with:
+          virtualenvs-in-project: true
 
       - name: Set pre-release version number                                  
         if: ${{ !startsWith(github.ref, 'refs/tags/v') }}                     
-        run: echo "PRE_RELEASE_SUFFIX=.dev${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
-      - name: Install dependencies
-        run: pip install -U ".[build]"
-      - name: Build wheel
-        run: |
-          python setup.py --version
-          python setup.py sdist bdist_wheel
-      - name: Deploy to pypi
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-        run: twine upload dist/*
+        run: poetry version $(poetry version -s).dev${GITHUB_RUN_NUMBER}
+      - name: Build artifacts
+        run: poetry build
+      - name: Publish to pypi
+        run: poetry publish -u  __token__ -p ${{ secrets.PYPI_TOKEN }}
