@@ -1,5 +1,63 @@
+[tool.poetry]
+name = "requests-cache"
+version = "0.7.0"
+description = "A transparent, persistent cache for the requests library"
+authors = ["Roman Haritonov", "Jordan Cook"]
+license = "BSD License"
+readme = "README.md"
+homepage = "https://github.com/reclosedev/requests-cache"
+repository = "https://github.com/reclosedev/requests-cache"
+keywords = ["requests", "cache", "http", "persistence", "sqlite", "redis", "mongodb", "gridfs", "dynamodb"]
+include = [
+    { path = "*.md" },
+    { path = "*.yml" },
+    { path = "docs", format = "sdist" },
+    { path = "examples", format = "sdist" },
+    { path = "tests", format = "sdist" }
+]                                      
+
+[tool.poetry.urls]                                                   
+"Documentation" = "https://requests-cache.readthedocs.io"
+
+[tool.poetry.dependencies]
+python = "^3.6"
+itsdangerous = "^1.1"
+requests = "^2.0"
+url-normalize = "^1.4"
+
+# Optional backend dependencies
+boto3 = { version = "^1.15", optional = true }
+pymongo = { version = "^3.0", optional = true }
+redis = { version = "^3.0", optional = true }
+
+[tool.poetry.extras]
+backends = ["boto3", "pymongo", "redis"]
+
+[tool.poetry.dev-dependencies]
+black = {version = "21.5b0", python = "^3.6.2"}
+isort = "^5.8"
+flake8 = "^3.9"
+flake8-comprehensions = "*"
+flake8-polyfill = "*"
+pre-commit = {version = "^2.12", python = "^3.6.2"}
+psutil = "^5.0"
+pytest = "^6.2"
+pytest-cov = "^2.11"
+pytest-order = "0.11.0"
+pytest-xdist = "^2.2"
+radon = "^4.5"
+requests-mock = "^1.8"
+m2r2 = "^0.2"
+Sphinx = "3.5.3"
+sphinx-autodoc-typehints = "^1.11"
+sphinx-copybutton = "^0.3"
+sphinx-rtd-theme = "^0.5.2"
+sphinxcontrib-apidoc = "^0.3"
+timeout-decorator = "^0.5"
+
 [build-system]
-requires = ['setuptools', 'wheel']
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 105
