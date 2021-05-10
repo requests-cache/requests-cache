@@ -8,7 +8,7 @@ on:
     branches: [master, dev]
   workflow_dispatch:
 env:
-  LATEST_PY_VERSION: '3.9'
+  LATEST_PY_VERSION: 3.9
   COVERAGE_ARGS: '--cov --cov-report=term --cov-report=html'
   COMPLEXITY_ARGS: '--show-complexity --average --order SCORE'
 
@@ -18,7 +18,12 @@ jobs:
     runs-on: ubuntu-18.04
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9, 3.10.0-beta.1]
+        python-version: [3.6]
+        # python-version: [3.6, 3.7, 3.8, 3.9, 3.10.0-beta.1]
+        # One-time test for all versions >= 2.5
+        # requests-version: [2.6, 2.6, 2.7, 2.8, 2.9, 2.10.0, 2.11, 2.12, 2.13, 2.14, 2.16, 2.17, 2.18, 2.19, 2.20.1, 2.21, 2.22, 2.23, 2.24, latest]
+        requests-version: [2.16, 2.17, 2.18, 2.19, 2.20.1, 2.21, 2.22, 2.23, 2.24, latest]
+      fail-fast: false
     services:
       nginx:
         image: kennethreitz/httpbin
@@ -50,31 +55,28 @@ jobs:
         uses: actions/cache@v2
         with:
           path: .venv
-          key: venv-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
+          key: venv-${{ matrix.python-version }}-${{ matrix.requests-version }}-${{ hashFiles('poetry.lock') }}
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        run: poetry install -vn -E backends
+        run: |
+          poetry add requests@${{ matrix.requests-version }}
+          poetry install -v -E backends
 
       # Latest python version: Run tests with coverage and send to coveralls
-      - name: Run tests with code coverage report
-        if: ${{ matrix.python-version == env.LATEST_PY_VERSION }}
-        # Run unit tests first (and with multiprocessing) to fail quickly if there are issues
-        run: |
-          source $VENV
-          pytest tests/unit --numprocesses=auto ${{ env.COVERAGE_ARGS }}
-          pytest tests/integration --cov-append ${{ env.COVERAGE_ARGS }}
-      - name: Send code coverage report to Coveralls
-        if: ${{ matrix.python-version == env.LATEST_PY_VERSION }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          source $VENV
-          pip install coveralls
-          coveralls --service=github
+      # - name: Run tests with code coverage report
+      #   if: ${{ matrix.python-version == env.LATEST_PY_VERSION }} && ${{ matrix.requests-version == 'latest' }} 
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   run: |
+      #     source $VENV
+      #     pytest tests/unit --numprocesses=auto ${{ env.COVERAGE_ARGS }}
+      #     pytest tests/integration --cov-append ${{ env.COVERAGE_ARGS }}
+      #     pip install coveralls
+      #     coveralls --service=github
 
       # All other python versions: just run tests
       - name: Run tests
-        if: ${{ matrix.python-version != env.LATEST_PY_VERSION }}
+        # if: ${{ matrix.python-version != env.LATEST_PY_VERSION }} || ${{ matrix.requests-version != 'latest' }} 
         run: |
           source $VENV
           pytest --numprocesses=auto tests/unit
@@ -107,10 +109,10 @@ jobs:
         uses: actions/cache@v2
         with:
           path: .venv
-          key: venv-${{ env.LATEST_PY_VERSION }}-${{ hashFiles('poetry.lock') }}
+          key: venv-${{ env.LATEST_PY_VERSION }}-latest-${{ hashFiles('poetry.lock') }}
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        run: poetry install -vn -E backends
+        run: poetry install -v -E backends
 
       - name: Run style checks & linting
         run: |
@@ -139,7 +141,7 @@ jobs:
       - name: Set pre-release version number                                  
         if: ${{ !startsWith(github.ref, 'refs/tags/v') }}                     
         run: poetry version $(poetry version -s).dev${GITHUB_RUN_NUMBER}
-      - name: Build artifacts
-        run: poetry build
-      - name: Publish to pypi
-        run: poetry publish -u  __token__ -p ${{ secrets.PYPI_TOKEN }}
+      - name: Build and publish to pypi
+        run: 
+          poetry build
+          poetry publish -u  __token__ -p ${{ secrets.PYPI_TOKEN }}
