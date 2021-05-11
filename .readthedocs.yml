@@ -12,7 +12,8 @@ python:
   version: 3.8
   system_packages: True
   install:
-    - method: poetry
+    - method: pip
       path: .
       extra_requirements:
+        - docs
         - backends
