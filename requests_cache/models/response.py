@@ -34,7 +34,8 @@ class CachedResponse(Response):
     saves a bit of memory and deserialization steps when those objects aren't accessed.
     """
 
-    _content: bytes = attr.ib(default=b'', repr=False, converter=lambda x: x or b'')
+    # _content: bytes = attr.ib(default=b'', repr=False, converter=lambda x: x or b'')
+    _content: bytes = attr.ib(default=None)
     url: str = attr.ib(default=None)
     status_code: int = attr.ib(default=0)
     cookies: RequestsCookieJar = attr.ib(factory=dict)
@@ -47,6 +48,11 @@ class CachedResponse(Response):
     reason: str = attr.ib(default=None)
     request: CachedRequest = attr.ib(factory=CachedRequest)
     raw: CachedHTTPResponse = attr.ib(factory=CachedHTTPResponse, repr=False)
+
+    def __attrs_post_init__(self):
+        """Re-initialize raw response body after deserialization"""
+        if self.raw._body is None and self._content is not None:
+            self.raw.reset(self._content)
 
     @classmethod
     def from_response(cls, original_response: Response, **kwargs):

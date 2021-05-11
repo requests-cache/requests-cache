@@ -3,15 +3,14 @@ from logging import getLogger
 
 import attr
 from requests import Response
-from requests.structures import CaseInsensitiveDict
-from urllib3.response import HTTPResponse, is_fp_closed
+from urllib3.response import HTTPHeaderDict, HTTPResponse, is_fp_closed
 
 logger = getLogger(__name__)
 
 
-@attr.s(auto_attribs=False, auto_detect=True, init=False, kw_only=True)
+@attr.s(auto_attribs=False, auto_detect=True, kw_only=True)
 class CachedHTTPResponse(HTTPResponse):
-    """A serializable dataclass that emulates :py:class:`~urllib3.response.HTTPResponse`.
+    """A serializable dataclass that extends/emulates :py:class:`~urllib3.response.HTTPResponse`.
     Supports streaming requests and generator usage.
 
     The only action this doesn't support is explicitly calling :py:meth:`.read` with
@@ -19,9 +18,9 @@ class CachedHTTPResponse(HTTPResponse):
     """
 
     decode_content: bool = attr.ib(default=None)
-    headers: CaseInsensitiveDict = attr.ib(factory=dict)
+    headers: HTTPHeaderDict = attr.ib(factory=dict)
     reason: str = attr.ib(default=None)
-    request_url: str = attr.ib(default=None)
+    request_url: str = attr.ib(default=None)  # TODO: Not available in urllib <=1.21. Is this needed?
     status: int = attr.ib(default=0)
     strict: int = attr.ib(default=0)
     version: int = attr.ib(default=0)
@@ -71,9 +70,15 @@ class CachedHTTPResponse(HTTPResponse):
             self._fp.close()
         return data
 
-    def reset(self):
-        """Reset raw response file pointer"""
-        self._fp = BytesIO(self._body)
+    def reset(self, body: bytes = None):
+        """Reset raw response file pointer, and optionally update content"""
+        if body is not None:
+            self._body = body
+        self._fp = BytesIO(self._body or b'')
+
+    def set_content(self, body: bytes):
+        self._body = body
+        self.reset()
 
     def stream(self, amt=None, **kwargs):
         """Simplified generator over cached content that emulates

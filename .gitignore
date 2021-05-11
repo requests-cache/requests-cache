@@ -8,6 +8,7 @@ build/
 dist/
 http_cache/
 venv/
+.venv
 
 # Editors
 .~*

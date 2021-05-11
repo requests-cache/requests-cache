@@ -12,13 +12,18 @@ from uuid import uuid4
 
 import requests
 from itsdangerous.exc import BadSignature
-from itsdangerous.serializer import Serializer
 from requests.structures import CaseInsensitiveDict
 
 from requests_cache import ALL_METHODS, CachedSession
-from requests_cache.backends import BACKEND_CLASSES, BaseCache, get_placeholder_backend
-from requests_cache.backends.sqlite import DbDict, DbPickleDict
-from requests_cache.response import CachedResponse
+from requests_cache.backends import (
+    BACKEND_CLASSES,
+    BaseCache,
+    DbDict,
+    DbPickleDict,
+    get_placeholder_backend,
+)
+from requests_cache.models import CachedResponse
+from requests_cache.serializers import PickleSerializer, SafePickleSerializer
 from tests.conftest import (
     MOCKED_URL,
     MOCKED_URL_404,
@@ -559,16 +564,17 @@ def test_unpickle_errors(mock_session):
 
 def test_cache_signing(tempfile_path):
     session = CachedSession(tempfile_path)
-    assert session.cache.responses._serializer == pickle
+    assert isinstance(session.cache.responses.serializer, PickleSerializer)
 
     # With a secret key, itsdangerous should be used
     secret_key = str(uuid4())
     session = CachedSession(tempfile_path, secret_key=secret_key)
-    assert isinstance(session.cache.responses._serializer, Serializer)
+    assert isinstance(session.cache.responses.serializer, SafePickleSerializer)
 
     # Simple serialize/deserialize round trip
-    session.cache.responses['key'] = 'value'
-    assert session.cache.responses['key'] == 'value'
+    response = CachedResponse()
+    session.cache.responses['key'] = response
+    assert session.cache.responses['key'] == response
 
     # Without the same signing key, the item shouldn't be considered safe to deserialize
     session = CachedSession(tempfile_path, secret_key='a different key')

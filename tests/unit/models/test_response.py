@@ -5,13 +5,12 @@ from time import sleep
 
 from urllib3.response import HTTPResponse
 
-from requests_cache import CachedHTTPResponse, CachedResponse
-from requests_cache.response import format_file_size
+from requests_cache.models.response import CachedResponse, format_file_size
 from tests.conftest import MOCKED_URL
 
 
 def test_basic_attrs(mock_session):
-    response = CachedResponse(mock_session.get(MOCKED_URL))
+    response = CachedResponse.from_response(mock_session.get(MOCKED_URL))
 
     assert response.from_cache is True
     assert response.url == MOCKED_URL
@@ -25,62 +24,28 @@ def test_basic_attrs(mock_session):
     assert response.is_expired is False
 
 
+def test_history(mock_session):
+    original_response = mock_session.get(MOCKED_URL)
+    original_response.history = [mock_session.get(MOCKED_URL)] * 3
+    response = CachedResponse.from_response(original_response)
+    assert len(response.history) == 3
+    assert all([isinstance(r, CachedResponse) for r in response.history])
+
+
 @pytest.mark.parametrize(
-    'expire_after, is_expired',
+    'expires, is_expired',
     [
         (datetime.utcnow() + timedelta(days=1), False),
         (datetime.utcnow() - timedelta(days=1), True),
     ],
 )
-def test_is_expired(expire_after, is_expired, mock_session):
-    response = CachedResponse(mock_session.get(MOCKED_URL), expire_after)
+def test_is_expired(expires, is_expired, mock_session):
+    response = CachedResponse.from_response(mock_session.get(MOCKED_URL), expires=expires)
     assert response.from_cache is True
     assert response.is_expired == is_expired
 
 
-def test_history(mock_session):
-    original_response = mock_session.get(MOCKED_URL)
-    original_response.history = [mock_session.get(MOCKED_URL)] * 3
-    response = CachedResponse(original_response)
-    assert len(response.history) == 3
-    assert all([isinstance(r, CachedResponse) for r in response.history])
-
-
-def test_raw_response__read(mock_session):
-    response = CachedResponse(mock_session.get(MOCKED_URL))
-    assert isinstance(response.raw, CachedHTTPResponse)
-    assert response.raw.read(10) == b'mock respo'
-    assert response.raw.read(None) == b'nse'
-    assert response.raw.read(1) == b''
-    assert response.raw._fp.closed is True
-
-
-def test_raw_response__close(mock_session):
-    response = CachedResponse(mock_session.get(MOCKED_URL))
-    response.close()
-    assert response.raw._fp.closed is True
-
-
-def test_raw_response__reset(mock_session):
-    response = CachedResponse(mock_session.get(MOCKED_URL))
-    response.raw.read(None)
-    assert response.raw.read(1) == b''
-    assert response.raw._fp.closed is True
-
-    response.reset()
-    assert response.raw.read(None) == b'mock response'
-
-
-def test_raw_response__stream(mock_session):
-    response = CachedResponse(mock_session.get(MOCKED_URL))
-    data = b''
-    for chunk in response.raw.stream(1):
-        data += chunk
-    assert data == b'mock response'
-    assert response.raw._fp.closed
-
-
-def test_raw_response__iterator(mock_session):
+def test_iterator(mock_session):
     # Set up mock response with streamed content
     url = f'{MOCKED_URL}/stream'
     mock_raw_response = HTTPResponse(
@@ -112,7 +77,7 @@ def test_raw_response__iterator(mock_session):
 
 def test_revalidate__extend_expiration(mock_session):
     # Start with an expired response
-    response = CachedResponse(
+    response = CachedResponse.from_response(
         mock_session.get(MOCKED_URL),
         expires=datetime.utcnow() - timedelta(seconds=0.01),
     )
@@ -127,7 +92,7 @@ def test_revalidate__extend_expiration(mock_session):
 
 def test_revalidate__shorten_expiration(mock_session):
     # Start with a non-expired response
-    response = CachedResponse(
+    response = CachedResponse.from_response(
         mock_session.get(MOCKED_URL),
         expires=datetime.utcnow() + timedelta(seconds=1),
     )
@@ -139,7 +104,7 @@ def test_revalidate__shorten_expiration(mock_session):
 
 
 def test_size(mock_session):
-    response = CachedResponse(mock_session.get(MOCKED_URL))
+    response = CachedResponse.from_response(mock_session.get(MOCKED_URL))
     response._content = None
     assert response.size == 0
     response._content = b'1' * 1024
@@ -150,7 +115,7 @@ def test_str(mock_session):
     """Just ensure that a subset of relevant attrs get included in the response str; the format
     may change without breaking the test.
     """
-    response = CachedResponse(mock_session.get(MOCKED_URL))
+    response = CachedResponse.from_response(mock_session.get(MOCKED_URL))
     response._content = b'1010'
     expected_values = ['GET', MOCKED_URL, 200, '4 bytes', 'created', 'expires', 'fresh']
     assert all([str(v) in str(response) for v in expected_values])
@@ -158,10 +123,10 @@ def test_str(mock_session):
 
 def test_repr(mock_session):
     """Just ensure that a subset of relevant attrs get included in the response repr"""
-    response = CachedResponse(mock_session.get(MOCKED_URL))
+    response = CachedResponse.from_response(mock_session.get(MOCKED_URL))
     expected_values = ['GET', MOCKED_URL, 200, 'ISO-8859-1', response.headers]
     print(repr(response))
-    assert repr(response).startswith('<CachedResponse(') and repr(response).endswith(')>')
+    assert repr(response).startswith('CachedResponse(') and repr(response).endswith(')')
     assert all([str(v) in repr(response) for v in expected_values])
 
 

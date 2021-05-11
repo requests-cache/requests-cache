@@ -2,7 +2,7 @@
 import pytest
 from typing import Dict, Type
 
-from requests_cache.backends.base import BaseStorage
+from requests_cache.backends import BaseStorage
 from tests.conftest import CACHE_NAME
 
 
