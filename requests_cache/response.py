@@ -1,143 +1,84 @@
+# TODO: Maybe split this into separate modules
 """Classes to wrap cached response objects"""
-# TODO: Move expiration logic here and in CachedSession to a separate module
-from copy import copy
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
 from logging import getLogger
-from typing import Any, Dict, Optional, Union
+from typing import Dict, List, Optional, Tuple, Union
 
-from requests import Response
+import attr
+import cattr
+from requests import PreparedRequest, Response
+from requests.cookies import RequestsCookieJar, cookiejar_from_dict
+from requests.structures import CaseInsensitiveDict
 from urllib3.response import HTTPResponse, is_fp_closed
 
 from .cache_control import get_expiration_datetime
 
-# Reponse attributes to copy
-RESPONSE_ATTRS = Response.__attrs__
-RAW_RESPONSE_ATTRS = [
-    'decode_content',
-    'headers',
-    'reason',
-    'request_method',
-    'request_url',
-    'status',
-    'strict',
-    'version',
-]
-CACHE_ATTRS = ['from_cache', 'created_at', 'expires', 'is_expired']
-
-DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S %Z'
-DO_NOT_CACHE = 0
-ExpirationTime = Union[None, int, float, datetime, timedelta]
 logger = getLogger(__name__)
 
+DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S %Z'  # Format used for __str__ only
+DO_NOT_CACHE = 0
 
-class CachedResponse(Response):
-    """A serializable wrapper for :py:class:`requests.Response`. CachedResponse objects will behave
-    the same as the original response, but with some additional cache-related details. This class is
-    responsible for converting and setting cache expiration times, and converting response info into
-    a serializable format.
+ExpirationTime = Union[None, int, float, datetime, timedelta]
+HeaderList = List[Tuple[str, str]]
 
-    Args:
-        original_response: Response object
-        expires: Time after which this cached response will expire
-    """
-
-    def __init__(self, original_response: Response, expires: datetime = None):
-        """Create a CachedResponse based on an original Response"""
-        super().__init__()
-        # Set cache-specific attrs
-        self.created_at = datetime.utcnow()
-        self.expires = expires
-        self.from_cache = True
-
-        # Copy basic response attrs and original request
-        for k in RESPONSE_ATTRS:
-            setattr(self, k, getattr(original_response, k, None))
-        self.request = copy(original_response.request)
-        self.request.hooks = []
-
-        if not is_fp_closed(getattr(original_response.raw, '_fp', None)):
-            # Store raw response data
-            raw_data = original_response.raw.read(decode_content=False)
-            original_response.raw._fp = BytesIO(raw_data)
-            self._content = original_response.content
-            # Reset file pointer on original raw response
-            original_response.raw._fp = BytesIO(raw_data)
-            original_response.raw._fp_bytes_read = 0
-            original_response.raw.length_remaining = len(raw_data)
-        else:
-            self._content = original_response.content
-
-        # Copy remaining raw response attributes
-        self._raw_response = None
-        self._raw_response_attrs: Dict[str, Any] = {}
-        for k in RAW_RESPONSE_ATTRS:
-            if hasattr(original_response.raw, k):
-                self._raw_response_attrs[k] = getattr(original_response.raw, k)
-
-        # Copy redirect history, if any; avoid recursion by not copying redirects of redirects
-        self.history = []
-        if not self.is_redirect:
-            for redirect in original_response.history:
-                self.history.append(CachedResponse(redirect))
-
-    def __getstate__(self):
-        """Override pickling behavior in ``requests.Response.__getstate__``"""
-        return self.__dict__
-
-    def reset(self):
-        """Reset raw response file handler, if previously initialized"""
-        self._raw_response = None
-
-    @property
-    def is_expired(self) -> bool:
-        """Determine if this cached response is expired"""
-        return self.expires is not None and datetime.utcnow() >= self.expires
-
-    @property
-    def raw(self) -> HTTPResponse:
-        """Reconstruct a raw urllib response object from stored attrs"""
-        if not self._raw_response:
-            logger.debug('Rebuilding raw response object')
-            self._raw_response = CachedHTTPResponse(body=self._content, **self._raw_response_attrs)
-        return self._raw_response
-
-    @raw.setter
-    def raw(self, value):
-        """No-op to handle requests.Response attempting to set self.raw"""
-
-    def revalidate(self, expire_after: ExpirationTime) -> bool:
-        """Set a new expiration for this response, and determine if it is now expired"""
-        self.expires = get_expiration_datetime(expire_after)
-        return self.is_expired
-
-    @property
-    def size(self) -> int:
-        """Get the size of the response body in bytes"""
-        return len(self.content) if self.content else 0
-
-    def __str__(self):
-        return (
-            f'request: {self.request.method} {self.request.url}, response: {self.status_code} '
-            f'({format_file_size(self.size)}), created: {format_datetime(self.created_at)}, '
-            f'expires: {format_datetime(self.expires)} ({"stale" if self.is_expired else "fresh"})'
-        )
-
-    def __repr__(self):
-        repr_attrs = set(RESPONSE_ATTRS + CACHE_ATTRS) - {'_content', 'elapsed'}
-        attr_strs = [f'{k}={getattr(self, k)}' for k in repr_attrs]
-        return f'<{self.__class__.__name__}({", ".join(attr_strs)})>'
+# Aliases for the most common attr options
+dataclass = attr.s(
+    auto_attribs=False,
+    auto_detect=True,
+    collect_by_mro=True,
+    kw_only=True,
+    slots=True,
+    weakref_slot=False,
+)
+public_attr = attr.ib(default=None)
+bytes_attr = attr.ib(default=b'', repr=False, converter=lambda x: x or b'')
 
 
+@dataclass
 class CachedHTTPResponse(HTTPResponse):
-    """A wrapper for raw urllib response objects, which wraps cached content with support for
-    streaming requests
+    """A serializable dataclass that emulates :py:class:`~urllib3.response.HTTPResponse`.
+    Supports streaming requests and generator usage.
+
+    The only action this doesn't support is explicitly calling :py:meth:`.read` with
+    ``decode_content=False``, but a use case for this has not come up yet.
     """
 
-    def __init__(self, body: bytes = None, **kwargs):
+    decode_content: bool = public_attr
+    headers: CaseInsensitiveDict = attr.ib(factory=dict)
+    reason: str = public_attr
+    request_url: str = public_attr
+    status: int = public_attr
+    strict: int = public_attr
+    version: int = public_attr
+
+    def __attrs_post_init__(self, body: bytes = None, **kwargs):
         kwargs.setdefault('preload_content', False)
         super().__init__(body=BytesIO(body or b''), **kwargs)
         self._body = body
+
+    @classmethod
+    def from_response(cls, original_response: Response):
+        """Create a CachedHTTPResponse based on an original response object's raw response"""
+        # Copy basic attributes
+        raw = original_response.raw
+        kwargs = {k: getattr(raw, k, None) for k in attr.fields_dict(cls).keys()}
+        # TODO: Better means of handling naming differences between class attrs and method kwargs
+        kwargs['request_url'] = raw._request_url
+
+        # Copy response data and restore response object to its original state
+        if not is_fp_closed(getattr(original_response.raw, '_fp', None)):
+            body = raw.read(decode_content=False)
+            kwargs['body'] = body
+            raw._fp = BytesIO(body)
+            original_response.content  # This property reads, decodes, and stores response content
+
+            # After reading, reset file pointer on original raw response
+            raw._fp = BytesIO(body)
+            raw._fp_bytes_read = 0
+            raw.length_remaining = len(body)
+
+        return cls(**kwargs)
 
     def release_conn(self):
         """No-op for compatibility"""
@@ -155,6 +96,10 @@ class CachedHTTPResponse(HTTPResponse):
             self._fp.close()
         return data
 
+    def reset(self):
+        """Reset raw response file pointer"""
+        self._fp = BytesIO(self._body)
+
     def stream(self, amt=None, **kwargs):
         """Simplified generator over cached content that emulates
         :py:meth:`urllib3.response.HTTPResponse.stream()`
@@ -163,7 +108,168 @@ class CachedHTTPResponse(HTTPResponse):
             yield self.read(amt=amt, **kwargs)
 
 
+@dataclass
+class CachedRequest:
+    """A serializable dataclass that emulates :py:class:`requests.PreparedResponse`"""
+
+    body: bytes = bytes_attr
+    cookies: RequestsCookieJar = public_attr
+    headers: CaseInsensitiveDict = attr.ib(factory=CaseInsensitiveDict)
+    method: str = public_attr
+    url: str = public_attr
+
+    @classmethod
+    def from_request(cls, original_request: PreparedRequest):
+        """Create a CachedRequest based on an original request object"""
+        kwargs = {k: getattr(original_request, k, None) for k in attr.fields_dict(cls).keys()}
+        # TODO: Better means of handling naming differences between class attrs and method kwargs
+        kwargs['cookies'] = original_request._cookies
+        return cls(**kwargs)
+
+    # TODO: Is this necessary, or will cattr.structure() be sufficient?
+    @classmethod
+    def prepare(self, obj) -> PreparedRequest:
+        """Turn a CachedRequest object back into a PreparedRequest. This lets PreparedRequest do the
+        work of normalizing any values that may have changed during (de)serialization.
+        """
+        req = PreparedRequest()
+        kwargs = attr.asdict(obj)
+        # TODO: Better means of handling naming differences between class attrs and method kwargs
+        kwargs['_cookies'] = kwargs.pop('cookies')
+        kwargs['body'] = kwargs.pop('data')
+        req.prepare(**kwargs)
+        return req
+
+    @property
+    def _cookies(self):
+        return self.cookies
+
+
+# TODO: Make this fully take advantage of slots
+# Make a slotted copy of Response to subclass; we don't need its attrs, only its methods
+
+# from requests import Response as OriginalResponse
+# Response = attr.s(slots=True)(OriginalResponse)
+# @attr.s(kw_only=True, slots=True)
+@dataclass
+class CachedResponse(Response):
+    """A serializable dataclass that emulates :py:class:`requests.Response`. Public attributes and
+    methods on CachedResponse objects will behave the same as those from the original response, but
+    with different internals optimized for serialization.
+
+    This means doing some pre- and post-initialization steps common to all serializers, such as
+    breaking nested objects down into their basic attributes and lazily re-initializing them, which
+    saves a bit of memory and deserialization steps when those objects aren't accessed.
+    """
+
+    _content: bytes = bytes_attr
+    url: str = public_attr
+    status_code: int = public_attr
+    cookies: RequestsCookieJar = public_attr
+    created_at: datetime = attr.ib(factory=datetime.utcnow)
+    elapsed: timedelta = attr.ib(factory=timedelta)
+    expires: datetime = public_attr
+    encoding: str = public_attr
+    headers: CaseInsensitiveDict = attr.ib(factory=dict)
+    history: List = attr.ib(factory=list)
+    reason: str = public_attr
+    request: CachedRequest = public_attr
+    raw: CachedHTTPResponse = attr.ib(default=None, repr=False)
+
+    @classmethod
+    def from_response(cls, original_response: Response, **kwargs):
+        """Create a CachedResponse based on an original response object"""
+        obj = cls(**kwargs)
+
+        # Copy basic attributes
+        for k in Response.__attrs__:
+            setattr(obj, k, getattr(original_response, k, None))
+
+        # Store request and raw response
+        obj.request = CachedRequest.from_request(original_response.request)
+        obj.raw = CachedHTTPResponse.from_response(original_response)
+
+        # Store response body, which will have been read & decoded by requests.Response by now
+        obj._content = original_response.content
+
+        # Copy redirect history, if any; avoid recursion by not copying redirects of redirects
+        obj.history = []
+        if not obj.is_redirect:
+            for redirect in original_response.history:
+                obj.history.append(cls.from_response(redirect))
+
+        return obj
+
+    @property
+    def from_cache(self) -> bool:
+        return True
+
+    @property
+    def is_expired(self) -> bool:
+        """Determine if this cached response is expired"""
+        return self.expires is not None and datetime.utcnow() >= self.expires
+
+    def revalidate(self, expire_after: ExpirationTime) -> bool:
+        """Set a new expiration for this response, and determine if it is now expired"""
+        self.expires = get_expiration_datetime(expire_after)
+        return self.is_expired
+
+    def reset(self):
+        if self.raw:
+            self.raw.reset()
+
+    @property
+    def size(self) -> int:
+        """Get the size of the response body in bytes"""
+        return len(self.content) if self.content else 0
+
+    # TODO: Behavior will be different for slotted classes
+    # def __getstate__(self):
+    #     """Override pickling behavior in ``requests.Response.__getstate__``"""
+    #     return self.__dict__
+
+    def __str__(self):
+        return (
+            f'request: {self.request.method} {self.request.url}, response: {self.status_code} '
+            f'({format_file_size(self.size)}), created: {format_datetime(self.created_at)}, '
+            f'expires: {format_datetime(self.expires)} ({"stale" if self.is_expired else "fresh"})'
+        )
+
+
+# TODO: Should this go in a base serializer class instead?
+def get_converter():
+    """Make a converter to structure and unstructure some of the nested objects within a response"""
+    converter = cattr.Converter()
+
+    # Convert datetimes to and from iso-formatted strings
+    converter.register_unstructure_hook(datetime, lambda obj: obj.isoformat() if obj else None)
+    converter.register_structure_hook(
+        datetime, lambda obj, cls: datetime.fromisoformat(obj) if obj else None
+    )
+
+    # Convert timedeltas to and from float values in seconds
+    converter.register_unstructure_hook(timedelta, lambda obj: obj.total_seconds() if obj else None)
+    converter.register_structure_hook(
+        timedelta, lambda obj, cls: timedelta(seconds=obj) if obj else None
+    )
+
+    # Convert dict-like objects to and from plain dicts
+    converter.register_unstructure_hook(RequestsCookieJar, lambda obj: dict(obj.items()))
+    converter.register_structure_hook(RequestsCookieJar, lambda obj, cls: cookiejar_from_dict(obj))
+    converter.register_unstructure_hook(CaseInsensitiveDict, dict)
+    converter.register_structure_hook(CaseInsensitiveDict, lambda obj, cls: CaseInsensitiveDict(obj))
+
+    # Not sure yet if this will be needed
+    # converter.register_unstructure_hook(PreparedRequest, CachedRequest.from_request)
+    # converter.register_structure_hook(PreparedRequest, CachedRequest.prepare)
+    # converter.register_unstructure_hook(HTTPResponse, lambda obj, cls: CachedHTTPResponse.from_response(obj))
+    # converter.register_structure_hook(HTTPResponse, lambda obj, cls: CachedHTTPResponse(obj))
+
+    return converter
+
+
 AnyResponse = Union[Response, CachedResponse]
+ResponseConverter = get_converter()
 
 
 def format_datetime(value: Optional[datetime]) -> str:

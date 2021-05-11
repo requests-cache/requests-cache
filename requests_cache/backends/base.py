@@ -53,7 +53,7 @@ class BaseCache:
             expire_after: Time in seconds until this cache item should expire
         """
         key = key or self.create_key(response.request)
-        self.responses[key] = CachedResponse(response, expires=expires)
+        self.responses[key] = CachedResponse.from_response(response, expires=expires)
 
     def save_redirect(self, request: PreparedRequest, response_key: str):
         """
@@ -77,7 +77,7 @@ class BaseCache:
             if key not in self.responses:
                 key = self.redirects[key]
             response = self.responses[key]
-            response.reset()  # In case response was in memory and raw content has already been read
+            response.reset()  # In case response was in memory and content has already been read
             return response
         except KeyError:
             return default

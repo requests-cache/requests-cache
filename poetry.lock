@@ -34,7 +34,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 name = "attrs"
 version = "21.2.0"
 description = "Classes Without Boilerplate"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
@@ -107,6 +107,20 @@ urllib3 = ">=1.25.4,<1.27"
 
 [package.extras]
 crt = ["awscrt (==0.11.15)"]
+
+[[package]]
+name = "cattrs"
+version = "1.1.0"
+description = "Composable complex class support for attrs."
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+attrs = ">=20.1.0"
+
+[package.extras]
+dev = ["bumpversion", "wheel", "watchdog", "flake8", "tox", "coverage", "sphinx", "pytest", "hypothesis", "pendulum", "isort", "black"]
 
 [[package]]
 name = "certifi"
@@ -1014,7 +1028,7 @@ docs = ["docutils", "m2r2", "Sphinx", "sphinx-autodoc-typehints", "sphinx-copybu
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "e6eb690c7f5ea0f7a4208d3d24b9384034f076d3c41053a65137e5a3eaa13c61"
+content-hash = "de2c0140282b9548afc3e4e95eeba0c7b251f2f2591e0e99897f594e45b8d7ed"
 
 [metadata.files]
 alabaster = [
@@ -1052,6 +1066,10 @@ boto3 = [
 botocore = [
     {file = "botocore-1.20.78-py2.py3-none-any.whl", hash = "sha256:37105b9434d73f9c4d4960ee54c8eb129120f4c6681eb16edf483f03c5e2326d"},
     {file = "botocore-1.20.78.tar.gz", hash = "sha256:e74775f9e64e975787d76390fc5ac5aba875d726bb9ece3b7bd900205b430389"},
+]
+cattrs = [
+    {file = "cattrs-1.1.0-py3-none-any.whl", hash = "sha256:5a544e78c92679a20e6fffe9d242338b9bb261a88a06653154d4368d08bf6f11"},
+    {file = "cattrs-1.1.0.tar.gz", hash = "sha256:6ec92a3816dc94afdcc24d76be738198a21870a0e64eace9c3ef0e56decd00df"},
 ]
 certifi = [
     {file = "certifi-2020.12.5-py2.py3-none-any.whl", hash = "sha256:719a74fb9e33b9bd44cc7f3a8d94bc35e4049deebe19ba7d8e108280cfd59830"},

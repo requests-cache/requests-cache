@@ -21,6 +21,8 @@ include = [
 
 [tool.poetry.dependencies]
 python = "^3.6"
+attrs = "^21.2"
+cattrs = "^1.0"
 itsdangerous = "^1.1"
 requests = "^2.17"
 url-normalize = "^1.4"
