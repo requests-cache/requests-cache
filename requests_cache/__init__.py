@@ -10,7 +10,8 @@ logger = getLogger(__name__)
 try:
     from .backends import *
     from .patcher import *
-    from .response import CachedHTTPResponse, CachedResponse
+    from .models import *
+    from .serializers import *
     from .session import ALL_METHODS, CachedSession, CacheMixin
 # Log and ignore ImportErrors, if setup.py is invoked outside a virtualenv
 except ImportError as e:
