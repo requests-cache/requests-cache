@@ -8,9 +8,9 @@ These can also be found in the
 
 Basic usage (with sessions)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. include:: ../examples/log_requests.py
-    :start-line: 2
-    :end-line: 3
+.. include:: ../examples/basic_usage.py
+    :start-line: 3
+    :end-line: 4
 
 .. admonition:: Example code
     :class: toggle
