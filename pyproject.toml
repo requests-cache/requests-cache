@@ -14,9 +14,9 @@ include = [
     { path = "docs", format = "sdist" },
     { path = "examples", format = "sdist" },
     { path = "tests", format = "sdist" }
-]                                      
+]
 
-[tool.poetry.urls]                                                   
+[tool.poetry.urls]
 "Documentation" = "https://requests-cache.readthedocs.io"
 
 [tool.poetry.dependencies]
@@ -45,7 +45,7 @@ docs = ["docutils", "m2r2", "Sphinx", "sphinx-autodoc-typehints", "sphinx-copybu
         "sphinx-material", "sphinxcontrib-apidoc"]
 
 [tool.poetry.dev-dependencies]
-black = {version = "21.5b0", python = "^3.6.2"}
+black = {version = "21.5b1", python = ">=3.6.2, <3.10"}
 isort = "^5.8"
 flake8 = "^3.9"
 flake8-comprehensions = "*"
