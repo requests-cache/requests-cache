@@ -6,6 +6,8 @@ on:
     tags: ['v*']
   pull_request:
     branches: [master]
+  schedule:
+    - cron: '0 5 * * *'
   workflow_dispatch:
 env:
   LATEST_PY_VERSION: 3.9
@@ -56,26 +58,28 @@ jobs:
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: poetry install -v -E backends
+      - name: Install latest available requests + urllib3 (scheduled tests only)
+        if: ${{ github.event.schedule }}
+        run: |
+          poetry add requests@latest
+          poetry add urllib3@latest
+        
+      # Run tests with coverage report
+      - name: Run tests
+        run: |
+          source $VENV
+          pytest tests/unit --numprocesses=auto ${{ env.COVERAGE_ARGS }}
+          pytest tests/integration --cov-append ${{ env.COVERAGE_ARGS }}
 
-      # Latest python version: Run tests with coverage and send to coveralls
-      - name: Run tests with code coverage report
+      # Latest python version: send coverage report to coveralls
+      - name: Run coveralls
         if: ${{ matrix.python-version == env.LATEST_PY_VERSION }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           source $VENV
-          pytest tests/unit --numprocesses=auto ${{ env.COVERAGE_ARGS }}
-          pytest tests/integration --cov-append ${{ env.COVERAGE_ARGS }}
           pip install coveralls
           coveralls --service=github
-
-      # All other python versions: just run tests
-      - name: Run tests
-        if: ${{ matrix.python-version != env.LATEST_PY_VERSION }}
-        run: |
-          source $VENV
-          pytest --numprocesses=auto tests/unit
-          pytest tests/integration
 
 
   # Run code analysis checks
