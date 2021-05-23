@@ -7,7 +7,7 @@ from logging import getLogger
 from typing import Any, Dict, Optional, Union
 
 from requests import Response
-from urllib3.response import HTTPResponse
+from urllib3.response import HTTPResponse, is_fp_closed
 
 from .cache_control import get_expiration_datetime
 
@@ -56,7 +56,7 @@ class CachedResponse(Response):
         self.request = copy(original_response.request)
         self.request.hooks = []
 
-        if hasattr(original_response.raw, '_fp') and not original_response.raw.isclosed():
+        if not is_fp_closed(getattr(original_response.raw, '_fp', None)):
             # Store raw response data
             raw_data = original_response.raw.read(decode_content=False)
             original_response.raw._fp = BytesIO(raw_data)
@@ -72,7 +72,8 @@ class CachedResponse(Response):
         self._raw_response = None
         self._raw_response_attrs: Dict[str, Any] = {}
         for k in RAW_RESPONSE_ATTRS:
-            self._raw_response_attrs[k] = getattr(original_response.raw, k, None)
+            if hasattr(original_response.raw, k):
+                self._raw_response_attrs[k] = getattr(original_response.raw, k)
 
         # Copy redirect history, if any; avoid recursion by not copying redirects of redirects
         self.history = []
