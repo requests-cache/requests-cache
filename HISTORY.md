@@ -38,6 +38,9 @@
 * Update `BaseCache.urls` to only skip invalid responses, not delete them
 * Update `old_data_on_error` option to also handle error response codes
 * Only log request exceptions if `old_data_on_error` is set
+* Fix some compatibility issues with `requests 2.17` and `2.18`
+* Add minimum `requests` version of `2.17`
+* Run tests for each supported version of `requests`
 * Packaging is now handled with Poetry. For users, installation still works the same. For developers,
   see [Contributing Guide](https://requests-cache.readthedocs.io/en/stable/contributing.html) for details
 

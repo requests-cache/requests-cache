@@ -1,0 +1,106 @@
+# Prior to releases, this will run additional stress tests, plus tests for all supported versions of
+# the requests library. Expected runtime is upwards of 20mins depending on runner availability,
+# which is why these are only run for releases.
+name: Deploy
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      pre-release-suffix:
+        description: 'Version suffix for pre-releases ("a", "b", "rc", etc.)'
+        required: false
+        default: 'dev'
+      pre-release-version:
+        description: 'Version number for pre-releases; defaults to build number'
+        required: false
+        default: ''
+
+env:
+  LATEST_PY_VERSION: 3.9
+
+jobs:
+  # Run tests for all supported requests versions
+  test:
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        python-version: [3.6]
+        requests-version: [2.17, 2.18, 2.19, 2.20.1, 2.21, 2.22, 2.23, 2.24, latest]
+      fail-fast: false
+    services:
+      nginx:
+        image: kennethreitz/httpbin
+        ports:
+          - 80:80
+
+    steps:
+      # Set up python + poetry
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: snok/install-poetry@v1.1.6
+        with:
+          version: 1.2.0a1
+          virtualenvs-in-project: true
+
+      # Start integration test databases
+      - uses: supercharge/mongodb-github-action@1.3.0
+        with:
+          mongodb-version: 4.4
+      - uses: supercharge/redis-github-action@1.2.0
+        with:
+          redis-version: 6
+      - uses: rrainn/dynamodb-action@v2.0.0
+
+      # Cache packages per python version, and reuse until lockfile changes
+      - name: Cache python packages
+        id: cache
+        uses: actions/cache@v2
+        with:
+          path: .venv
+          key: venv-${{ matrix.python-version }}-${{ matrix.requests-version }}-${{ hashFiles('poetry.lock') }}
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          poetry add requests@${{ matrix.requests-version }}
+          poetry install -v -E backends
+
+      # Run unit + integration tests, with additional stress tests
+      # Skip test for streaming responses; requires requests >= 2.19 (tested on latest version in build.yml)
+      - name: Run tests 
+        run: |
+          source $VENV
+          pytest --numprocesses=auto tests/unit
+          pytest tests/integration -k 'not test_response_decode'
+          STRESS_TEST_MULTIPLIER=5 pytest tests/integration/ -k 'multithreaded'
+
+  # Deploy stable builds on tags only, and pre-release builds from manual trigger ("workflow_dispatch")
+  release:
+    needs: [test]
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ env.LATEST_PY_VERSION }}
+      - uses: snok/install-poetry@v1.1.6
+        with:
+          version: 1.2.0a1
+          virtualenvs-in-project: true
+
+      - name: Set pre-release version
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        env:
+          pre-release-suffix: ${{ github.event.inputs.pre-release-suffix || 'dev' }}
+          pre-release-version: ${{ github.event.inputs.pre-release-version || github.run_number }}
+        run: |
+          poetry version $(poetry version -s).${{ env.pre-release-suffix }}${{ env.pre-release-version }}
+          poetry version
+
+      - name: Build and publish to pypi
+        run: |
+          poetry build
+          poetry publish -u  __token__ -p ${{ secrets.PYPI_TOKEN }}
