@@ -1,17 +1,27 @@
-# Prior to package deployments, this will run additional stress tests,
-# plus tests for all supported versions of the requests library.
+# Prior to releases, this will run additional stress tests, plus tests for all supported versions of
+# the requests library. Expected runtime is upwards of 20mins depending on runner availability,
+# which is why these are only run for releases.
 name: Deploy
 
 on:
   push:
-    branches: [pre-release]
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      pre-release-suffix:
+        description: 'Version suffix for pre-releases ("a", "b", "rc", etc.)'
+        required: false
+        default: 'dev'
+      pre-release-version:
+        description: 'Version number for pre-releases; defaults to build number'
+        required: false
+        default: ''
+
 env:
   LATEST_PY_VERSION: 3.9
 
 jobs:
-  # Run unit tests for oldest supported python version and all supported requests versions
+  # Run tests for all supported requests versions
   test:
     runs-on: ubuntu-18.04
     strategy:
@@ -67,10 +77,9 @@ jobs:
           pytest tests/integration -k 'not test_response_decode'
           STRESS_TEST_MULTIPLIER=5 pytest tests/integration/ -k 'multithreaded'
 
-  # Deploy pre-release builds from 'pre-release' branch, and stable builds on tags only
+  # Deploy stable builds on tags only, and pre-release builds from manual trigger ("workflow_dispatch")
   release:
     needs: [test]
-    if: startsWith(github.ref, 'refs/tags/v') || endsWith(github.ref, '/pre-release')
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
@@ -82,10 +91,16 @@ jobs:
           version: 1.2.0a1
           virtualenvs-in-project: true
 
-      - name: Set pre-release version number                                  
-        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}                     
-        run: poetry version $(poetry version -s).dev${GITHUB_RUN_NUMBER}
+      - name: Set pre-release version
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        env:
+          pre-release-suffix: ${{ github.event.inputs.pre-release-suffix || 'dev' }}
+          pre-release-version: ${{ github.event.inputs.pre-release-version || github.run_number }}
+        run: |
+          poetry version $(poetry version -s).${{ env.pre-release-suffix }}${{ env.pre-release-version }}
+          poetry version
+
       - name: Build and publish to pypi
-        run: 
+        run: |
           poetry build
           poetry publish -u  __token__ -p ${{ secrets.PYPI_TOKEN }}
