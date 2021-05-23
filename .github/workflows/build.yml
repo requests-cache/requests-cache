@@ -13,16 +13,12 @@ env:
   COMPLEXITY_ARGS: '--show-complexity --average --order SCORE'
 
 jobs:
-  # Run unit tests for each supported python version
+  # Run unit tests for each supported python version and latest requests version
   test:
     runs-on: ubuntu-18.04
     strategy:
       matrix:
-        python-version: [3.6]
-        # python-version: [3.6, 3.7, 3.8, 3.9, 3.10.0-beta.1]
-        # One-time test for all versions >= 2.5
-        # requests-version: [2.6, 2.6, 2.7, 2.8, 2.9, 2.10.0, 2.11, 2.12, 2.13, 2.14, 2.16, 2.17, 2.18, 2.19, 2.20.1, 2.21, 2.22, 2.23, 2.24, latest]
-        requests-version: [2.16, 2.17, 2.18, 2.19, 2.20.1, 2.21, 2.22, 2.23, 2.24, latest]
+        python-version: [3.6, 3.7, 3.8, 3.9, 3.10.0-beta.1]
       fail-fast: false
     services:
       nginx:
@@ -31,6 +27,7 @@ jobs:
           - 80:80
 
     steps:
+      # Set up python + poetry
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
@@ -55,40 +52,31 @@ jobs:
         uses: actions/cache@v2
         with:
           path: .venv
-          key: venv-${{ matrix.python-version }}-${{ matrix.requests-version }}-${{ hashFiles('poetry.lock') }}
+          key: venv-${{ matrix.python-version }}-latest-${{ hashFiles('poetry.lock') }}
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        run: |
-          poetry add requests@${{ matrix.requests-version }}
-          poetry install -v -E backends
+        run: poetry install -v -E backends
 
       # Latest python version: Run tests with coverage and send to coveralls
-      # - name: Run tests with code coverage report
-      #   if: ${{ matrix.python-version == env.LATEST_PY_VERSION }} && ${{ matrix.requests-version == 'latest' }} 
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   run: |
-      #     source $VENV
-      #     pytest tests/unit --numprocesses=auto ${{ env.COVERAGE_ARGS }}
-      #     pytest tests/integration --cov-append ${{ env.COVERAGE_ARGS }}
-      #     pip install coveralls
-      #     coveralls --service=github
+      - name: Run tests with code coverage report
+        if: ${{ matrix.python-version == env.LATEST_PY_VERSION }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          source $VENV
+          pytest tests/unit --numprocesses=auto ${{ env.COVERAGE_ARGS }}
+          pytest tests/integration --cov-append ${{ env.COVERAGE_ARGS }}
+          pip install coveralls
+          coveralls --service=github
 
       # All other python versions: just run tests
       - name: Run tests
-        # if: ${{ matrix.python-version != env.LATEST_PY_VERSION }} || ${{ matrix.requests-version != 'latest' }} 
+        if: ${{ matrix.python-version != env.LATEST_PY_VERSION }}
         run: |
           source $VENV
           pytest --numprocesses=auto tests/unit
           pytest tests/integration
 
-      # Run longer stress tests if this is a release or merge to master
-      - name: Run stress tests
-        if: startsWith(github.ref, 'refs/tags/v') || endsWith(github.ref, '/master')
-        run: |
-          source $VENV
-          export STRESS_TEST_MULTIPLIER=5
-          pytest tests/integration/ -k 'multithreaded'
 
   # Run code analysis checks
   analyze:
@@ -122,26 +110,3 @@ jobs:
           flake8 .
       - name: Run cyclomatic complexity check
         run: poetry run radon cc ${{ env.COMPLEXITY_ARGS }} requests_cache
-
-  # Deploy pre-release builds from 'pre-release' branch, and stable builds on tags only
-  release:
-    needs: [test, analyze]
-    if: startsWith(github.ref, 'refs/tags/v') || endsWith(github.ref, '/pre-release')
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-        with:
-          python-version: ${{ env.LATEST_PY_VERSION }}
-      - uses: snok/install-poetry@v1.1.6
-        with:
-          version: 1.2.0a1
-          virtualenvs-in-project: true
-
-      - name: Set pre-release version number                                  
-        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}                     
-        run: poetry version $(poetry version -s).dev${GITHUB_RUN_NUMBER}
-      - name: Build and publish to pypi
-        run: 
-          poetry build
-          poetry publish -u  __token__ -p ${{ secrets.PYPI_TOKEN }}
