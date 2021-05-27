@@ -1,4 +1,3 @@
-# TODO: Add option for compression?
 from contextlib import contextmanager
 from os import listdir, makedirs, unlink
 from os.path import abspath, dirname, expanduser, isabs, join

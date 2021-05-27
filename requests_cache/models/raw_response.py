@@ -1,14 +1,14 @@
 from io import BytesIO
 from logging import getLogger
 
-import attr
+from attr import define, field, fields_dict
 from requests import Response
 from urllib3.response import HTTPHeaderDict, HTTPResponse, is_fp_closed
 
 logger = getLogger(__name__)
 
 
-@attr.s(auto_attribs=False, auto_detect=True, kw_only=True)
+@define(auto_attribs=False, slots=False)
 class CachedHTTPResponse(HTTPResponse):
     """A serializable dataclass that extends/emulates :py:class:`~urllib3.response.HTTPResponse`.
     Supports streaming requests and generator usage.
@@ -17,13 +17,13 @@ class CachedHTTPResponse(HTTPResponse):
     ``decode_content=False``, but a use case for this has not come up yet.
     """
 
-    decode_content: bool = attr.ib(default=None)
-    headers: HTTPHeaderDict = attr.ib(factory=dict)
-    reason: str = attr.ib(default=None)
-    request_url: str = attr.ib(default=None)  # TODO: Not available in urllib <=1.21. Is this needed?
-    status: int = attr.ib(default=0)
-    strict: int = attr.ib(default=0)
-    version: int = attr.ib(default=0)
+    decode_content: bool = field(default=None)
+    headers: HTTPHeaderDict = field(factory=dict)
+    reason: str = field(default=None)
+    request_url: str = field(default=None)  # Note: Not available in urllib <=1.21
+    status: int = field(default=0)
+    strict: int = field(default=0)
+    version: int = field(default=0)
 
     def __init__(self, *args, body: bytes = None, **kwargs):
         """First initialize via HTTPResponse, then via attrs"""
@@ -36,8 +36,7 @@ class CachedHTTPResponse(HTTPResponse):
         """Create a CachedHTTPResponse based on an original response"""
         # Copy basic attributes
         raw = original_response.raw
-        kwargs = {k: getattr(raw, k, None) for k in attr.fields_dict(cls).keys()}
-        # TODO: Better means of handling naming differences between class attrs and method kwargs
+        kwargs = {k: getattr(raw, k, None) for k in fields_dict(cls).keys()}
         kwargs['request_url'] = raw._request_url
 
         # Copy response data and restore response object to its original state

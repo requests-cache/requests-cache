@@ -3,27 +3,25 @@ from datetime import datetime, timedelta, timezone
 from logging import getLogger
 from typing import List, Optional, Tuple, Union
 
-import attr
-from requests import Response
+from attr import define, field
+from requests import Response as OriginalResponse
 from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
 
 from ..cache_control import ExpirationTime, get_expiration_datetime
-from . import CachedHTTPResponse, CachedRequest, dataclass
+from . import CachedHTTPResponse, CachedRequest
 
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S %Z'  # Format used for __str__ only
 DO_NOT_CACHE = 0
 
+# Make a slotted copy of requests.Response to subclass
+Response = define(slots=True)(OriginalResponse)
 HeaderList = List[Tuple[str, str]]
 
 logger = getLogger(__name__)
 
 
-# TODO: Make this fully take advantage of slots
-# Make a slotted copy of Response to subclass; we don't need its attrs, only its methods
-# from requests import Response as OriginalResponse
-# Response = attr.s(slots=True)(OriginalResponse)
-@dataclass
+@define(auto_attribs=False)
 class CachedResponse(Response):
     """A serializable dataclass that emulates :py:class:`requests.Response`. Public attributes and
     methods on CachedResponse objects will behave the same as those from the original response, but
@@ -34,20 +32,19 @@ class CachedResponse(Response):
     saves a bit of memory and deserialization steps when those objects aren't accessed.
     """
 
-    # _content: bytes = attr.ib(default=b'', repr=False, converter=lambda x: x or b'')
-    _content: bytes = attr.ib(default=None)
-    url: str = attr.ib(default=None)
-    status_code: int = attr.ib(default=0)
-    cookies: RequestsCookieJar = attr.ib(factory=dict)
-    created_at: datetime = attr.ib(factory=datetime.utcnow)
-    elapsed: timedelta = attr.ib(factory=timedelta)
-    expires: datetime = attr.ib(default=None)
-    encoding: str = attr.ib(default=None)
-    headers: CaseInsensitiveDict = attr.ib(factory=dict)
-    history: List = attr.ib(factory=list)
-    reason: str = attr.ib(default=None)
-    request: CachedRequest = attr.ib(factory=CachedRequest)
-    raw: CachedHTTPResponse = attr.ib(factory=CachedHTTPResponse, repr=False)
+    _content: bytes = field(default=None)
+    url: str = field(default=None)
+    status_code: int = field(default=0)
+    cookies: RequestsCookieJar = field(factory=dict)
+    created_at: datetime = field(factory=datetime.utcnow)
+    elapsed: timedelta = field(factory=timedelta)
+    expires: datetime = field(default=None)
+    encoding: str = field(default=None)
+    headers: CaseInsensitiveDict = field(factory=dict)
+    history: List = field(factory=list)
+    reason: str = field(default=None)
+    request: CachedRequest = field(factory=CachedRequest)
+    raw: CachedHTTPResponse = field(factory=CachedHTTPResponse, repr=False)
 
     def __attrs_post_init__(self):
         """Re-initialize raw response body after deserialization"""

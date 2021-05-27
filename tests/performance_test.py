@@ -1,4 +1,5 @@
-# TODO: finish memory test (not fully profiling the relevant parts yet)
+"""A manual test to compare performance of different serializers"""
+# flake8: noqa: F401
 """
 CPU Results:
 jsonpickle.encode x10000:     5.673
