@@ -10,9 +10,9 @@ from requests.hooks import dispatch_hook
 from urllib3 import filepost
 
 from .backends import BackendSpecifier, get_valid_kwargs, init_backend
-from .cache_control import CacheActions
+from .cache_control import CacheActions, ExpirationTime
 from .cache_keys import normalize_dict
-from .response import AnyResponse, ExpirationTime, set_response_defaults
+from .models.response import AnyResponse, set_response_defaults
 
 ALL_METHODS = ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
 logger = getLogger(__name__)

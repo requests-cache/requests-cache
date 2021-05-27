@@ -1,0 +1,50 @@
+{
+    "_content": "base64-encoded bytes?",
+    "url": "https://httpbin.org/get",
+    "status_code": 200,
+    "cookies": {},
+    "created_at": "2021-05-10T21:25:26.851089",
+    "elapsed": 0.182103,
+    "expires": null,
+    "encoding": "utf-8",
+    "headers": {
+        "Date": "Mon, 10 May 2021 21:25:26 GMT",
+        "Content-Type": "application/json",
+        "Content-Length": "308",
+        "Connection": "keep-alive",
+        "Server": "gunicorn/19.9.0",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Credentials": "true"
+    },
+    "history": [],
+    "reason": "OK",
+    "request": {
+        "body": null,
+        "cookies": {},
+        "headers": {
+            "User-Agent": "python-requests/2.25.1",
+            "Accept-Encoding": "gzip, deflate",
+            "Accept": "*/*",
+            "Connection": "keep-alive"
+        },
+        "method": "GET",
+        "url": "https://httpbin.org/get"
+    },
+    "raw": {
+        "decode_content": false,
+        "headers": {
+            "Date": "Mon, 10 May 2021 21:25:26 GMT",
+            "Content-Type": "application/json",
+            "Content-Length": "308",
+            "Connection": "keep-alive",
+            "Server": "gunicorn/19.9.0",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Credentials": "true"
+        },
+        "reason": "OK",
+        "request_url": "None",
+        "status": 200,
+        "strict": 0,
+        "version": 11
+    }
+}

@@ -57,7 +57,7 @@ jobs:
           key: venv-${{ matrix.python-version }}-latest-${{ hashFiles('poetry.lock') }}
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        run: poetry install -v -E backends
+        run: poetry install -v -E backends -E json
       - name: Install latest available requests + urllib3 (scheduled tests only)
         if: ${{ github.event.schedule }}
         run: |

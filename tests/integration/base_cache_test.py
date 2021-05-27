@@ -124,8 +124,9 @@ class BaseCacheTest:
         assert b'gzipped' in response.content
         if stream is True:
             assert b'gzipped' in response.raw.read(None, decode_content=True)
+        response.raw._fp = BytesIO(response.content)
 
-        cached_response = CachedResponse(response)
+        cached_response = CachedResponse.from_response(response)
         assert b'gzipped' in cached_response.content
         assert b'gzipped' in cached_response.raw.read(None, decode_content=True)
 

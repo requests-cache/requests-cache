@@ -9,8 +9,10 @@ from typing import Iterable, Iterator, Tuple, Union
 import requests
 from requests.models import PreparedRequest
 
+from ..cache_control import ExpirationTime
 from ..cache_keys import create_key, url_to_key
-from ..response import AnyResponse, CachedResponse, ExpirationTime
+from ..models.response import AnyResponse, CachedResponse
+from ..serializers import PickleSerializer, SafePickleSerializer
 
 # Specific exceptions that may be raised during deserialization
 DESERIALIZE_ERRORS = (AttributeError, TypeError, ValueError, pickle.PickleError)
@@ -53,7 +55,7 @@ class BaseCache:
             expire_after: Time in seconds until this cache item should expire
         """
         key = key or self.create_key(response.request)
-        self.responses[key] = CachedResponse(response, expires=expires)
+        self.responses[key] = CachedResponse.from_response(response, expires=expires)
 
     def save_redirect(self, request: PreparedRequest, response_key: str):
         """
@@ -77,12 +79,13 @@ class BaseCache:
             if key not in self.responses:
                 key = self.redirects[key]
             response = self.responses[key]
-            response.reset()  # In case response was in memory and raw content has already been read
+            response.reset()  # In case response was in memory and content has already been read
             return response
         except KeyError:
             return default
         except DESERIALIZE_ERRORS as e:
             logger.error(f'Unable to deserialize response with key {key}: {str(e)}')
+            logger.debug(e, exc_info=True)
             return default
 
     def delete(self, key: str):
@@ -214,8 +217,8 @@ class BaseStorage(MutableMapping, ABC):
         serializer=None,
         **kwargs,
     ):
-        self._serializer = serializer or self._get_serializer(secret_key, salt)
-        logger.debug(f'Initializing {type(self).__name__} with serializer: {self._serializer}')
+        self.serializer = serializer or self._get_serializer(secret_key, salt)
+        logger.debug(f'Initializing {type(self).__name__} with serializer: {self.serializer}')
 
         if not secret_key:
             level = DEBUG if suppress_warnings else WARNING
@@ -223,11 +226,11 @@ class BaseStorage(MutableMapping, ABC):
 
     def serialize(self, item: ResponseOrKey) -> bytes:
         """Serialize a URL or response into bytes"""
-        return self._serializer.dumps(item)
+        return self.serializer.dumps(item)
 
     def deserialize(self, item: Union[ResponseOrKey, bytes]) -> ResponseOrKey:
         """Deserialize a cached URL or response"""
-        return self._serializer.loads(bytes(item))
+        return self.serializer.loads(item)
 
     @staticmethod
     def _get_serializer(secret_key, salt):
@@ -236,11 +239,9 @@ class BaseStorage(MutableMapping, ABC):
         """
         # Import in function scope to make itsdangerous an optional dependency
         if secret_key:
-            from itsdangerous.serializer import Serializer
-
-            return Serializer(secret_key, salt=salt, serializer=pickle)
+            return SafePickleSerializer(secret_key=secret_key, salt=salt)
         else:
-            return pickle
+            return PickleSerializer()
 
     def bulk_delete(self, keys: Iterable[str]):
         """Delete multiple keys from the cache. Does not raise errors for missing keys. This is a

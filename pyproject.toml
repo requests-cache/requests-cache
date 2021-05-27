@@ -21,9 +21,13 @@ include = [
 
 [tool.poetry.dependencies]
 python = "^3.6"
+attrs = "^21.2"
 itsdangerous = "^1.1"
 requests = "^2.17"
 url-normalize = "^1.4"
+
+# Optional serialization dependencies
+cattrs = {version = "^1.7", python = "^3.7", optional = true}
 
 # Optional backend dependencies
 boto3 = { version = "^1.15", optional = true }
@@ -41,6 +45,7 @@ sphinxcontrib-apidoc = { version = "^0.3", optional = true }
 
 [tool.poetry.extras]
 backends = ["boto3", "pymongo", "redis"]
+json = ["cattrs"]
 docs = ["docutils", "m2r2", "Sphinx", "sphinx-autodoc-typehints", "sphinx-copybutton",
         "sphinx-material", "sphinxcontrib-apidoc"]
 
@@ -77,6 +82,8 @@ source = ['requests_cache']
 omit = [
     'requests_cache/__init__.py',
     'requests_cache/backends/__init__.py',
+    'requests_cache/models/__init__.py',
+    'requests_cache/serializers/__init__.py',
 ]
 
 [tool.isort]

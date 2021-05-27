@@ -10,7 +10,7 @@ from typing import Callable, Dict, Iterable, Optional, Type
 import requests
 
 from .backends import BackendSpecifier, BaseCache
-from .response import ExpirationTime
+from .cache_control import ExpirationTime
 from .session import CachedSession, OriginalSession
 
 logger = getLogger(__name__)
