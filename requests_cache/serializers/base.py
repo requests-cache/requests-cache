@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Callable
 
 from requests.cookies import RequestsCookieJar, cookiejar_from_dict
 from requests.structures import CaseInsensitiveDict
@@ -18,9 +18,9 @@ class BaseSerializer:
     Subclasses must provide ``dumps`` and ``loads`` methods.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, converter_factory=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.converter = init_converter()
+        self.converter = init_converter(factory=converter_factory)
 
     def unstructure(self, obj: Any) -> Any:
         if not isinstance(obj, CachedResponse) or not self.converter:
@@ -41,7 +41,7 @@ class BaseSerializer:
         pass
 
 
-def init_converter():
+def init_converter(factory: Callable = None):
     """Make a converter to structure and unstructure some of the nested objects within a response,
     if cattrs is installed.
     """
@@ -50,7 +50,8 @@ def init_converter():
     except ImportError:
         return None
 
-    converter = GenConverter(omit_if_default=True)
+    factory = factory or GenConverter
+    converter = factory(omit_if_default=True)
 
     # Convert datetimes to and from iso-formatted strings
     converter.register_unstructure_hook(datetime, lambda obj: obj.isoformat() if obj else None)
