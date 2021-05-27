@@ -110,6 +110,18 @@ urllib3 = ">=1.25.4,<1.27"
 crt = ["awscrt (==0.11.15)"]
 
 [[package]]
+name = "bson"
+version = "0.5.10"
+description = "BSON codec for Python"
+category = "main"
+optional = true
+python-versions = "*"
+
+[package.dependencies]
+python-dateutil = ">=2.4.0"
+six = ">=1.9.0"
+
+[[package]]
 name = "cattrs"
 version = "1.7.1"
 description = "Composable complex class support for attrs and dataclasses."
@@ -1054,14 +1066,18 @@ docs = ["sphinx", "jaraco.packaging (>=8.2)", "rst.linker (>=1.9)"]
 testing = ["pytest (>=4.6)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pytest-cov", "pytest-enabler", "jaraco.itertools", "func-timeout", "pytest-black (>=0.3.7)", "pytest-mypy"]
 
 [extras]
-backends = ["boto3", "pymongo", "redis"]
+all = ["boto3", "cattrs", "pymongo", "redis", "ujson"]
+bson = ["cattrs", "bson"]
 docs = ["m2r2", "Sphinx", "sphinx-autodoc-typehints", "sphinx-copybutton", "sphinx-rtd-theme", "sphinxcontrib-apidoc"]
+dynamodb = ["boto3"]
 json = ["cattrs", "ujson"]
+mongodb = ["cattrs", "pymongo"]
+redis = ["redis"]
 
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "8576ddbf5e4165bad17f8818200e49999185d8e8e75c6ea11af199aac0881d13"
+content-hash = "1570eaa1b8c4092fb0db3c33e3e1200fcd41eda3e9a18ff8420c14fc9db29723"
 
 [metadata.files]
 alabaster = [
@@ -1099,6 +1115,9 @@ boto3 = [
 botocore = [
     {file = "botocore-1.20.92-py2.py3-none-any.whl", hash = "sha256:950ff7d4985427f8dfbb90aa1a8b48da98506d25319f1af1fe20341be3365633"},
     {file = "botocore-1.20.92.tar.gz", hash = "sha256:5adb6679e3bf7b5ea0ca3363118a0111d087dce18a94fc7a5a542fcc5cba0ddc"},
+]
+bson = [
+    {file = "bson-0.5.10.tar.gz", hash = "sha256:d6511b2ab051139a9123c184de1a04227262173ad593429d21e443d6462d6590"},
 ]
 cattrs = [
     {file = "cattrs-1.7.1-py3-none-any.whl", hash = "sha256:d69bd4a3239e189f0740c3c41178dd0f00e4eac3bcb806937e49942fa83adfee"},
