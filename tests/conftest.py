@@ -225,6 +225,10 @@ def fail_if_no_connection(func) -> bool:
         try:
             timeout(1.0)(func)(*args, **kwargs)
         except Exception as e:
+            # timeout_decorator is not Windows compatible, because it relies on process signals that
+            # don't exist in windows. This is an escape valve for that specific error.
+            if isinstance(e, AttributeError) and str(e) == "module 'signal' has no attribute 'SIGALRM'":
+                return
             logger.error(e)
             pytest.fail('Could not connect to backend')
 
