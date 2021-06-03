@@ -179,8 +179,9 @@ or credentials. If you want to ignore specific parameters, specify them with ``i
     >>> session.get('http://httpbin.org/get', params={'auth-token': 'D9FAEB3449D3'})
 
 In addition to allowing the cache to ignore these parameters when fetching cached results, these
-parameters will also be removed from the cache data. This makes ``ignored_parameters`` a good way to
-prevent key material or other secrets from being saved in the cache backend.
+parameters will also be removed from the cache data, including in the request headers.
+This makes ``ignored_parameters`` a good way to prevent key material or other secrets from being
+saved in the cache backend.
 
 Request Headers
 ~~~~~~~~~~~~~~~
