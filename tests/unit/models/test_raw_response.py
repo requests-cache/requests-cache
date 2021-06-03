@@ -13,7 +13,8 @@ def test_from_response(mock_session):
     assert raw.read(None) == b'mock response'
     assert response.raw.decode_content is raw.decode_content is False
     assert response.raw.reason is raw.reason is None
-    assert response.raw._request_url is raw.request_url is None
+    if hasattr(response.raw, '_request_url'):
+        assert response.raw._request_url is raw.request_url is None
     assert response.raw.status == raw.status == 200
     assert response.raw.strict == raw.strict == 0
     assert response.raw.version == raw.version == 0

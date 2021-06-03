@@ -8,6 +8,8 @@ from time import sleep, time
 from typing import Dict, Type
 from urllib.parse import parse_qs, urlparse
 
+import requests
+
 from requests_cache import ALL_METHODS, CachedResponse, CachedSession
 from requests_cache.backends.base import BaseCache
 from tests.conftest import (
@@ -21,6 +23,8 @@ from tests.conftest import (
     assert_delta_approx_equal,
     httpbin,
 )
+
+REQUESTS_VERSION = tuple([int(v) for v in requests.__version__.split('.')])
 
 
 class BaseCacheTest:
@@ -115,6 +119,7 @@ class BaseCacheTest:
         else:
             assert_delta_approx_equal(now, response.expires, expected_expiration)
 
+    @pytest.mark.skipif(REQUESTS_VERSION < (2, 19), reason='Streaming requests require requests 2.19+')
     @pytest.mark.parametrize('stream', [True, False])
     def test_response_decode(self, stream):
         """Test that gzip-compressed raw responses (including streamed responses) can be manually

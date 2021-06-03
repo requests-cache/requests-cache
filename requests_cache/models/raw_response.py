@@ -20,13 +20,14 @@ class CachedHTTPResponse(HTTPResponse):
     decode_content: bool = field(default=None)
     headers: HTTPHeaderDict = field(factory=dict)
     reason: str = field(default=None)
-    request_url: str = field(default=None)  # Note: Not available in urllib <=1.21
+    request_url: str = field(default=None)
     status: int = field(default=0)
     strict: int = field(default=0)
     version: int = field(default=0)
 
     def __init__(self, *args, body: bytes = None, **kwargs):
         """First initialize via HTTPResponse, then via attrs"""
+        kwargs = {k: v for k, v in kwargs.items() if v is not None}
         super().__init__(body=BytesIO(body or b''), preload_content=False, **kwargs)
         self._body = body
         self.__attrs_init__(*args, **kwargs)
@@ -37,7 +38,9 @@ class CachedHTTPResponse(HTTPResponse):
         # Copy basic attributes
         raw = original_response.raw
         kwargs = {k: getattr(raw, k, None) for k in fields_dict(cls).keys()}
-        kwargs['request_url'] = raw._request_url
+
+        # Note: _request_url is not available in urllib <=1.21
+        kwargs['request_url'] = getattr(raw, '_request_url', None)
 
         # Copy response data and restore response object to its original state
         if hasattr(raw, '_fp') and not is_fp_closed(raw._fp):

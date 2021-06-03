@@ -43,6 +43,7 @@ contributions that have helped to improve requests-cache:
 * [Nathan Cahill](https://github.com/nathancahill)
 * [Nick](https://github.com/kousu)
 * [Olivier Dalang](https://github.com/olivierdalang)
+* [Parker Hancock](https://github.com/parkerhancock)
 * [Paul Furley](https://github.com/paulfurley)
 * [Philipp A.](https://github.com/flying-sheep)
 * [Sebastian Höffner](https://github.com/shoeffner)
