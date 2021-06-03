@@ -37,6 +37,7 @@
 * Add support for caching multipart form uploads
 * Update `BaseCache.urls` to only skip invalid responses, not delete them
 * Update `old_data_on_error` option to also handle error response codes
+* Update `ignored_parameters` to also exclude ignored request params, body params, or headers from cached response data (to avoid storing API keys or other credentials)
 * Only log request exceptions if `old_data_on_error` is set
 * Fix some compatibility issues with `requests 2.17` and `2.18`
 * Add minimum `requests` version of `2.17`
