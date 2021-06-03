@@ -178,6 +178,10 @@ or credentials. If you want to ignore specific parameters, specify them with ``i
     >>> session.get('http://httpbin.org/get', params={'auth-token': '2F63E5DF4F44'})
     >>> session.get('http://httpbin.org/get', params={'auth-token': 'D9FAEB3449D3'})
 
+In addition to allowing the cache to ignore these parameters when fetching cached results, these
+parameters will also be removed from the cache data. This makes ``ignored_parameters`` a good way to
+prevent key material or other secrets from being saved in the cache backend.
+
 Request Headers
 ~~~~~~~~~~~~~~~
 In some cases, different headers may result in different response data, so you may want to cache
@@ -208,7 +212,7 @@ request, the following order of precedence is used:
 3. Per-request expiration (``expire_after`` argument for :py:meth:`.CachedSession.request`)
 4. Per-URL expiration (``urls_expire_after`` argument for :py:class:`.CachedSession`)
 5. Per-session expiration (``expire_after`` argument for :py:class:`.CacheBackend`)
-    
+
 Expiration Values
 ~~~~~~~~~~~~~~~~~
 ``expire_after`` can be any of the following:
@@ -268,14 +272,14 @@ Cache-Control
 .. warning::
     This is **not** intended to be a thorough or strict implementation of header-based HTTP caching,
     e.g. according to RFC 2616.
-                                                                                                     
+
 Optional support is included for a simplified subset of
 `Cache-Control <https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control>`_
 and other cache headers in both requests and responses. To enable this behavior, use the
 ``cache_control`` option:
-                                                                                                     
-    >>> session = CachedSession(cache_control=True)                                                    
-                                                                                                     
+
+    >>> session = CachedSession(cache_control=True)
+
 **Supported request headers:**
 
 * ``Cache-Control: max-age``: Used as the expiration time in seconds
@@ -290,10 +294,10 @@ and other cache headers in both requests and responses. To enable this behavior,
 
 **Notes:**
 
-* Unlike a browser or proxy cache, ``max-age=0`` does not currently clear previously cached responses.              
+* Unlike a browser or proxy cache, ``max-age=0`` does not currently clear previously cached responses.
 * If enabled, Cache-Control directives will take priority over any other ``expire_after`` value.
   See :ref:`user_guide:expiration precedence` for the full order of precedence.
-  
+
 Removing Expired Responses
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 For better performance, expired responses won't be removed immediately, but will be removed
