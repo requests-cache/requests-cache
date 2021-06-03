@@ -10,7 +10,7 @@ import requests
 from requests.models import PreparedRequest
 
 from ..cache_control import ExpirationTime
-from ..cache_keys import create_key, url_to_key
+from ..cache_keys import create_key, remove_ignored_params, url_to_key
 from ..models.response import AnyResponse, CachedResponse
 from ..serializers import PickleSerializer, SafePickleSerializer
 
@@ -32,6 +32,9 @@ class BaseCache:
         *args,
         include_get_headers: bool = False,
         ignored_parameters: Iterable[str] = None,
+        # filter_headers: Iterable[str] = list(),
+        # filter_query_parameters: Iterable[str] = list(),
+        # filter_post_data_parameters: Iterable[str] = list(),
         **kwargs,
     ):
         self.name = None
@@ -39,6 +42,9 @@ class BaseCache:
         self.responses = {}
         self.include_get_headers = include_get_headers
         self.ignored_parameters = ignored_parameters
+        # self.filter_headers = filter_headers
+        # self.filter_query_parameters = filter_query_parameters
+        # self.filter_post_data_parameters = filter_post_data_parameters
 
     @property
     def urls(self) -> Iterator[str]:
@@ -55,7 +61,10 @@ class BaseCache:
             expire_after: Time in seconds until this cache item should expire
         """
         key = key or self.create_key(response.request)
-        self.responses[key] = CachedResponse.from_response(response, expires=expires)
+
+        cached_response = CachedResponse.from_response(response, expires=expires)
+        cached_response.request = remove_ignored_params(cached_response.request, self.ignored_parameters)
+        self.responses[key] = cached_response
 
     def save_redirect(self, request: PreparedRequest, response_key: str):
         """

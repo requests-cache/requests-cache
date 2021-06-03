@@ -6,6 +6,7 @@ from io import BytesIO
 from threading import Thread
 from time import sleep, time
 from typing import Dict, Type
+from urllib.parse import parse_qs, urlparse
 
 from requests_cache import ALL_METHODS, CachedResponse, CachedSession
 from requests_cache.backends.base import BaseCache
@@ -181,3 +182,45 @@ class BaseCacheTest:
 
         for i in range(N_ITERATIONS):
             assert session.cache.has_url(f'{url}?key_{i}=value_{i}')
+
+    @pytest.mark.parametrize('method', HTTPBIN_METHODS)
+    def test_filter_request_headers(self, method):
+        url = httpbin(method.lower())
+        session = self.init_session(
+            ignored_parameters=[
+                'Authorization',
+            ]
+        )
+        response = session.request(method, url, headers={"Authorization": "<Secret Key>"})
+        assert response.from_cache == False
+        response = session.request(method, url, headers={"Authorization": "<Secret Key>"})
+        assert response.from_cache == True
+        assert response.request.headers['Authorization'] == None
+
+    @pytest.mark.parametrize('method', HTTPBIN_METHODS)
+    def test_filter_request_query_parameters(self, method):
+        url = httpbin(method.lower())
+        session = self.init_session(ignored_parameters=['api_key'])
+        response = session.request(method, url, params={"api_key": "<Secret Key>"})
+        assert response.from_cache == False
+        response = session.request(method, url, params={"api_key": "<Secret Key>"})
+        assert response.from_cache == True
+        query = urlparse(response.request.url).query
+        query_dict = parse_qs(query)
+        assert 'api_key' not in query_dict
+
+    @pytest.mark.parametrize('post_type', ['data', 'json'])
+    def test_filter_request_post_data(self, post_type):
+        method = 'POST'
+        url = httpbin(method.lower())
+        session = self.init_session(ignored_parameters=['api_key'])
+        response = session.request(method, url, **{post_type: {"api_key": "<Secret Key>"}})
+        assert response.from_cache == False
+        response = session.request(method, url, **{post_type: {"api_key": "<Secret Key>"}})
+        assert response.from_cache == True
+        if post_type == 'data':
+            body = parse_qs(response.request.body)
+            assert "api_key" not in body
+        elif post_type == 'json':
+            body = json.loads(response.request.body)
+            assert "api_key" not in body
