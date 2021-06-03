@@ -63,10 +63,8 @@ pytest-order = "0.11.0"
 pytest-xdist = "^2.2"
 radon = "^4.5"
 requests-mock = "^1.8"
+rich = ">=10.0"
 timeout-decorator = "^0.5"
-jsonpickle = "^2.0"
-rich = "^10.2"
-memory-profiler = "^0.58"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
