@@ -32,9 +32,6 @@ class BaseCache:
         *args,
         include_get_headers: bool = False,
         ignored_parameters: Iterable[str] = None,
-        # filter_headers: Iterable[str] = list(),
-        # filter_query_parameters: Iterable[str] = list(),
-        # filter_post_data_parameters: Iterable[str] = list(),
         **kwargs,
     ):
         self.name = None
@@ -42,9 +39,6 @@ class BaseCache:
         self.responses = {}
         self.include_get_headers = include_get_headers
         self.ignored_parameters = ignored_parameters
-        # self.filter_headers = filter_headers
-        # self.filter_query_parameters = filter_query_parameters
-        # self.filter_post_data_parameters = filter_post_data_parameters
 
     @property
     def urls(self) -> Iterator[str]:
