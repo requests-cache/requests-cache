@@ -35,6 +35,25 @@ def create_key(
     return key.hexdigest()
 
 
+def remove_ignored_params(
+    request: requests.PreparedRequest, ignored_params: Iterable[str]
+) -> requests.PreparedRequest:
+    if not ignored_params:
+        return request
+    request.headers = remove_ignored_headers(request, ignored_params)
+    request.url = remove_ignored_url_params(request, ignored_params)
+    request.body = remove_ignored_body_params(request, ignored_params)
+    return request
+
+
+def remove_ignored_headers(request: requests.PreparedRequest, ignored_params: Iterable[str]) -> dict:
+    if not ignored_params:
+        return request.headers
+    headers = request.headers.copy()
+    headers.update({k: None for k in ignored_params})
+    return headers
+
+
 def remove_ignored_url_params(request: requests.PreparedRequest, ignored_params: Iterable[str]) -> str:
     url = str(request.url)
     if not ignored_params:

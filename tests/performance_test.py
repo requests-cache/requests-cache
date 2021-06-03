@@ -18,7 +18,7 @@ import jsonpickle
 from memory_profiler import profile
 from rich import print
 
-from requests_cache import *
+from requests_cache import CachedSession
 from requests_cache.serializers import PickleSerializer
 
 ITERATIONS = 10000
