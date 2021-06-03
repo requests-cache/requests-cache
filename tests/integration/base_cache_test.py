@@ -192,19 +192,19 @@ class BaseCacheTest:
             ]
         )
         response = session.request(method, url, headers={"Authorization": "<Secret Key>"})
-        assert response.from_cache == False
+        assert response.from_cache is False
         response = session.request(method, url, headers={"Authorization": "<Secret Key>"})
-        assert response.from_cache == True
-        assert response.request.headers['Authorization'] == None
+        assert response.from_cache is True
+        assert response.request.headers['Authorization'] is None
 
     @pytest.mark.parametrize('method', HTTPBIN_METHODS)
     def test_filter_request_query_parameters(self, method):
         url = httpbin(method.lower())
         session = self.init_session(ignored_parameters=['api_key'])
         response = session.request(method, url, params={"api_key": "<Secret Key>"})
-        assert response.from_cache == False
+        assert response.from_cache is False
         response = session.request(method, url, params={"api_key": "<Secret Key>"})
-        assert response.from_cache == True
+        assert response.from_cache is True
         query = urlparse(response.request.url).query
         query_dict = parse_qs(query)
         assert 'api_key' not in query_dict
@@ -215,9 +215,9 @@ class BaseCacheTest:
         url = httpbin(method.lower())
         session = self.init_session(ignored_parameters=['api_key'])
         response = session.request(method, url, **{post_type: {"api_key": "<Secret Key>"}})
-        assert response.from_cache == False
+        assert response.from_cache is False
         response = session.request(method, url, **{post_type: {"api_key": "<Secret Key>"}})
-        assert response.from_cache == True
+        assert response.from_cache is True
         if post_type == 'data':
             body = parse_qs(response.request.body)
             assert "api_key" not in body
