@@ -12,7 +12,7 @@ from requests.models import PreparedRequest
 from ..cache_control import ExpirationTime
 from ..cache_keys import create_key, remove_ignored_params, url_to_key
 from ..models.response import AnyResponse, CachedResponse
-from ..serializers import PickleSerializer, SafePickleSerializer
+from ..serializers import init_serializer
 
 # Specific exceptions that may be raised during deserialization
 DESERIALIZE_ERRORS = (AttributeError, TypeError, ValueError, pickle.PickleError)
@@ -215,36 +215,17 @@ class BaseStorage(MutableMapping, ABC):
     def __init__(
         self,
         secret_key: Union[Iterable, str, bytes] = None,
-        salt: Union[str, bytes] = b'requests-cache',
+        salt: Union[str, bytes] = None,
         suppress_warnings: bool = False,
         serializer=None,
         **kwargs,
     ):
-        self.serializer = serializer or self._get_serializer(secret_key, salt)
+        self.serializer = init_serializer(serializer, secret_key=secret_key, salt=salt)
         logger.debug(f'Initializing {type(self).__name__} with serializer: {self.serializer}')
 
         if not secret_key:
             level = DEBUG if suppress_warnings else WARNING
             logger.log(level, 'Using a secret key is recommended for this backend')
-
-    def serialize(self, item: ResponseOrKey) -> bytes:
-        """Serialize a URL or response into bytes"""
-        return self.serializer.dumps(item)
-
-    def deserialize(self, item: Union[ResponseOrKey, bytes]) -> ResponseOrKey:
-        """Deserialize a cached URL or response"""
-        return self.serializer.loads(item)
-
-    @staticmethod
-    def _get_serializer(secret_key, salt):
-        """Get the appropriate serializer to use; either ``itsdangerous``, if a secret key is
-        specified, or plain ``pickle`` otherwise.
-        """
-        # Import in function scope to make itsdangerous an optional dependency
-        if secret_key:
-            return SafePickleSerializer(secret_key=secret_key, salt=salt)
-        else:
-            return PickleSerializer()
 
     def bulk_delete(self, keys: Iterable[str]):
         """Delete multiple keys from the cache. Does not raise errors for missing keys. This is a

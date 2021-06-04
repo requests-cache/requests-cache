@@ -1,4 +1,5 @@
 import pickle
+from typing import Iterable, Union
 
 from itsdangerous.serializer import Serializer as SafeSerializer
 
@@ -19,12 +20,17 @@ class PickleSerializer(BaseSerializer):
 class SafePickleSerializer(SafeSerializer, BaseSerializer):
     """Wrapper for itsdangerous + pickle that pre/post-processes with cattrs"""
 
-    def __init__(self, *args, **kwargs):
-        # super().__init__(*args, **kwargs, serializer=pickle)
-        super().__init__(*args, **kwargs, serializer=PickleSerializer())
-
-    # def dumps(self, response: CachedResponse) -> bytes:
-    #     return SafeSerializer.dumps(self, super().unstructure(response))
-
-    # def loads(self, obj: bytes) -> CachedResponse:
-    #     return super().structure(SafeSerializer.loads(self, obj))
+    def __init__(
+        self,
+        *args,
+        secret_key: Union[Iterable, str, bytes] = None,
+        salt: Union[str, bytes] = None,
+        **kwargs
+    ):
+        super().__init__(
+            *args,
+            secret_key=secret_key,
+            salt=salt or b'requests-cache',
+            **kwargs,
+            serializer=PickleSerializer()
+        )

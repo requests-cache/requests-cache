@@ -19,7 +19,11 @@ class BaseSerializer:
     """
 
     def __init__(self, *args, converter_factory=None, **kwargs):
-        super().__init__(*args, **kwargs)
+        from ..backends import get_valid_kwargs
+
+        # If used as a mixin and the superclass is custom serializer, pass along any valid kwargs
+        kwargs = get_valid_kwargs(super().__init__, kwargs)
+        super().__init__(**kwargs)
         self.converter = init_converter(factory=converter_factory)
 
     def unstructure(self, obj: Any) -> Any:
