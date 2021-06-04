@@ -13,11 +13,13 @@ from .base import BaseSerializer
 class JSONSerializer(BaseSerializer):
     """Serializer that converts responses to JSON"""
 
+    is_binary = False
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, converter_factory=make_converter, **kwargs)
 
-    def dumps(self, response: CachedResponse) -> bytes:
+    def dumps(self, response: CachedResponse) -> str:
         return json.dumps(super().unstructure(response), indent=2)
 
-    def loads(self, obj: bytes) -> CachedResponse:
+    def loads(self, obj: str) -> CachedResponse:
         return super().structure(json.loads(obj))

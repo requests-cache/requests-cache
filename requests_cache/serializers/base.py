@@ -18,6 +18,9 @@ class BaseSerializer:
     Subclasses must provide ``dumps`` and ``loads`` methods.
     """
 
+    # Flag to indicate to backends that content should be stored as a binary object
+    is_binary = True
+
     def __init__(self, *args, converter_factory=None, **kwargs):
         from ..backends import get_valid_kwargs
 

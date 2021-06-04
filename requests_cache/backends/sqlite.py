@@ -138,11 +138,11 @@ class DbDict(BaseStorage):
             raise KeyError
         return row[0]
 
-    def __setitem__(self, key, item):
+    def __setitem__(self, key, value):
         with self.connection(commit=True) as con:
             con.execute(
                 f'INSERT OR REPLACE INTO {self.table_name} (key,value) VALUES (?,?)',
-                (key, item),
+                (key, value),
             )
 
     def __iter__(self):
@@ -180,13 +180,16 @@ class DbDict(BaseStorage):
 
 
 class DbPickleDict(DbDict):
-    """Same as :class:`DbDict`, but pickles values before saving"""
+    """Same as :class:`DbDict`, but serializes values before saving"""
 
-    def __setitem__(self, key, item):
-        super().__setitem__(key, sqlite3.Binary(self.serialize(item)))
+    def __setitem__(self, key, value):
+        serialized_value = self.serializer.dumps(value)
+        if self.serializer.is_binary:
+            serialized_value = sqlite3.Binary(serialized_value)
+        super().__setitem__(key, serialized_value)
 
     def __getitem__(self, key):
-        return self.deserialize(super().__getitem__(key))
+        return self.serializer.loads(super().__getitem__(key))
 
 
 def _format_sequence(values: Iterable) -> Tuple[str, List]:
