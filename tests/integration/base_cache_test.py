@@ -12,6 +12,7 @@ import requests
 
 from requests_cache import ALL_METHODS, CachedResponse, CachedSession
 from requests_cache.backends.base import BaseCache
+from requests_cache.serializers import SERIALIZER_CLASSES
 from tests.conftest import (
     CACHE_NAME,
     HTTPBIN_FORMATS,
@@ -34,7 +35,10 @@ class BaseCacheTest:
     init_kwargs: Dict = {}
 
     def init_session(self, clear=True, **kwargs) -> CachedSession:
-        kwargs.update({'allowable_methods': ALL_METHODS, 'suppress_warnings': True})
+        kwargs.update(
+            {'allowable_methods': ALL_METHODS, 'suppress_warnings': True, 'secret_key': 'hunter2'}
+        )
+        kwargs.setdefault('serializer', 'pickle')
         backend = self.backend_class(CACHE_NAME, **self.init_kwargs, **kwargs)
         if clear:
             backend.redirects.clear()
@@ -42,22 +46,24 @@ class BaseCacheTest:
 
         return CachedSession(backend=backend, **self.init_kwargs, **kwargs)
 
+    @pytest.mark.parametrize('serializer', SERIALIZER_CLASSES.keys())
     @pytest.mark.parametrize('method', HTTPBIN_METHODS)
     @pytest.mark.parametrize('field', ['params', 'data', 'json'])
-    def test_all_methods(self, field, method):
-        """Test all relevant combinations of methods and data fields. Requests with different request
-        params, data, or json should be cached under different keys.
+    def test_all_methods(self, field, method, serializer):
+        """Test all relevant combinations of methods X data fields X serializers.
+        Requests with different request params, data, or json should be cached under different keys.
         """
         url = httpbin(method.lower())
-        session = self.init_session()
+        session = self.init_session(serializer=serializer)
         for params in [{'param_1': 1}, {'param_1': 2}, {'param_2': 2}]:
             assert session.request(method, url, **{field: params}).from_cache is False
             assert session.request(method, url, **{field: params}).from_cache is True
 
+    @pytest.mark.parametrize('serializer', SERIALIZER_CLASSES.keys())
     @pytest.mark.parametrize('response_format', HTTPBIN_FORMATS)
-    def test_all_response_formats(self, response_format):
-        """Test that all relevant response formats are cached correctly"""
-        session = self.init_session()
+    def test_all_response_formats(self, response_format, serializer):
+        """Test that all relevant combinations of response formats X serializers are cached correctly"""
+        session = self.init_session(serializer=serializer)
         # Temporary workaround for this issue: https://github.com/kevin1024/pytest-httpbin/issues/60
         if response_format == 'json' and USE_PYTEST_HTTPBIN:
             session.allowable_codes = (200, 404)

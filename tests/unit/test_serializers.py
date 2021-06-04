@@ -1,0 +1,34 @@
+# Note: Almost all serializer logic is covered by parametrized integration tests.
+# Any additional serializer-specific tests can go here.
+import json
+import pytest
+import sys
+from importlib import reload
+from unittest.mock import patch
+
+# TODO: For some reason this doesn't work on python 3.10
+pytestmark = pytest.mark.skipif(
+    (3, 7) > sys.version_info > (3, 9),
+    reason='Requires python 3.7+ version of cattrs',
+)
+
+
+@patch.dict(sys.modules, {'ujson': None, 'cattr.preconf.ujson': None})
+def test_stdlib_json():
+    import requests_cache.serializers.json_serializer
+
+    reload(requests_cache.serializers.json_serializer)
+    from requests_cache.serializers.json_serializer import json as module_json
+
+    assert module_json is json
+
+
+def test_ujson():
+    import ujson
+
+    import requests_cache.serializers.json_serializer
+
+    reload(requests_cache.serializers.json_serializer)
+    from requests_cache.serializers.json_serializer import json as module_json
+
+    assert module_json is ujson

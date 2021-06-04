@@ -1,6 +1,6 @@
 # History
 
-## 0.7.0 (2021-06-TBD)
+## 0.7.0 (2021-07-TBD)
 [See all issues and PRs for 0.7](https://github.com/reclosedev/requests-cache/milestone/2?closed=1)
 
 ### Backends
@@ -29,19 +29,34 @@
 * Add support for bypassing the cache if `expire_after=0`
 * Add support for making a cache whitelist using URL patterns
 
+### Serialization
+* Add data models for all serialized objects
+* Add a BSON serializer
+* Add a JSON serializer
+* Add optional support for `cattrs`
+* Add optional support for `ultrajson`
+
 ### General
 * Add option to manually cache response objects with `BaseCache.save_response()`
 * Add `BaseCache.keys()` and `values()` methods
 * Show summarized response details with `str(CachedResponse)`
 * Add more detailed repr methods for `CachedSession`, `CachedResponse`, and `BaseCache`
 * Add support for caching multipart form uploads
-* Update `BaseCache.urls` to only skip invalid responses, not delete them
+* Update `BaseCache.urls` to only skip invalid responses, not delete them (for better performance)
 * Update `old_data_on_error` option to also handle error response codes
 * Update `ignored_parameters` to also exclude ignored request params, body params, or headers from cached response data (to avoid storing API keys or other credentials)
 * Only log request exceptions if `old_data_on_error` is set
+
+### Compatibility, packaging, and tests
 * Fix some compatibility issues with `requests 2.17` and `2.18`
 * Add minimum `requests` version of `2.17`
 * Run tests for each supported version of `requests`
+* Add some package extras to install optional dependencies (via `pip install`):
+    * `requests-cache[bson]`
+    * `requests-cache[json]`
+    * `requests-cache[dynamodb]`
+    * `requests-cache[mongodb]`
+    * `requests-cache[redis]`
 * Packaging is now handled with Poetry. For users, installation still works the same. For developers,
   see [Contributing Guide](https://requests-cache.readthedocs.io/en/stable/contributing.html) for details
 
@@ -74,6 +89,21 @@ Thanks to [Code Shelter](https://www.codeshelter.co) and
 [contributors](https://requests-cache.readthedocs.io/en/stable/contributors.html)
 for making this release possible!
 
+### Backends
+* SQLite: Allow passing user paths (`~/path-to-cache`) to database file with `db_path` param
+* SQLite: Add `timeout` parameter
+* Make default table names consistent across backends (`'http_cache'`)
+
+### Expiration
+* Cached responses are now stored with an absolute expiration time, so `CachedSession.expire_after`
+  no longer applies retroactively. To revalidate previously cached items with a new expiration time,
+  see below:
+* Add support for overriding original expiration (i.e., revalidating) in `CachedSession.remove_expired_responses()`
+* Add support for setting expiration for individual requests
+* Add support for setting expiration based on URL glob patterns
+* Add support for setting expiration as a `datetime`
+* Add support for explicitly disabling expiration with `-1` (Since `None` may be ambiguous in some cases)
+
 ### Serialization
 **Note:** Due to the following changes, responses cached with previous versions of requests-cache
 will be invalid. These **old responses will be treated as expired**, and will be refreshed the
@@ -90,21 +120,6 @@ next time they are requested. They can also be manually converted or removed, if
   * Improve emulation of raw request behavior used for iteration, streaming requests, etc.
 * Add `BaseCache.urls` property to get all URLs persisted in the cache
 * Add optional support for `itsdangerous` for more secure serialization
-
-### Backends
-* SQLite: Allow passing user paths (`~/path-to-cache`) to database file with `db_path` param
-* SQLite: Add `timeout` parameter
-* Make default table names consistent across backends (`'http_cache'`)
-
-### Expiration
-* Cached responses are now stored with an absolute expiration time, so `CachedSession.expire_after`
-  no longer applies retroactively. To revalidate previously cached items with a new expiration time,
-  see below:
-* Add support for overriding original expiration (i.e., revalidating) in `CachedSession.remove_expired_responses()`
-* Add support for setting expiration for individual requests
-* Add support for setting expiration based on URL glob patterns
-* Add support for setting expiration as a `datetime`
-* Add support for explicitly disabling expiration with `-1` (Since `None` may be ambiguous in some cases)
 
 ### Bugfixes
 * Fix caching requests with data specified in `json` parameter

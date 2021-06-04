@@ -20,8 +20,9 @@ from requests_cache.backends import (
     BaseCache,
     DbDict,
     DbPickleDict,
-    get_placeholder_backend,
+    get_placeholder_class,
 )
+from requests_cache.cache_keys import url_to_key
 from requests_cache.models import CachedResponse
 from requests_cache.serializers import PickleSerializer, SafePickleSerializer
 from tests.conftest import (
@@ -39,7 +40,7 @@ def test_init_unregistered_backend():
         CachedSession(backend='nonexistent')
 
 
-@patch.dict(BACKEND_CLASSES, {'mongo': get_placeholder_backend()})
+@patch.dict(BACKEND_CLASSES, {'mongo': get_placeholder_class()})
 def test_init_missing_backend_dependency():
     """Test that the correct error is thrown when a user does not have a dependency installed"""
     with pytest.raises(ImportError):
@@ -472,13 +473,17 @@ def test_remove_expired_responses__error(mock_session):
     # Start with two cached responses, one of which will raise an error
     mock_session.get(MOCKED_URL)
     mock_session.get(MOCKED_URL_JSON)
-    side_effects = [mock_session.get(MOCKED_URL_JSON), PickleError, PickleError]
 
-    with patch.object(DbPickleDict, '__getitem__', side_effect=side_effects):
+    def error_on_key(key):
+        if key == url_to_key(MOCKED_URL_JSON):
+            raise PickleError
+        return mock_session.get(MOCKED_URL_JSON)
+
+    with patch.object(DbPickleDict, '__getitem__', side_effect=error_on_key):
         mock_session.remove_expired_responses()
     assert len(mock_session.cache.responses) == 1
-    assert mock_session.get(MOCKED_URL).from_cache is False
-    assert mock_session.get(MOCKED_URL_JSON).from_cache is True
+    assert mock_session.get(MOCKED_URL).from_cache is True
+    assert mock_session.get(MOCKED_URL_JSON).from_cache is False
 
 
 def test_remove_expired_responses__extend_expiration(mock_session):

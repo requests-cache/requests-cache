@@ -9,7 +9,6 @@ from urllib3.response import HTTPHeaderDict
 from ..models import CachedResponse
 
 
-# TODO: Document this more thoroughly
 class BaseSerializer:
     """Base serializer class for :py:class:`.CachedResponse` that optionally does
     pre/post-processing with cattrs. This provides an easy starting point for alternative
