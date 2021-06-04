@@ -28,6 +28,7 @@ url-normalize = "^1.4"
 
 # Optional serialization dependencies
 cattrs = {version = "^1.7", python = "^3.7", optional = true}
+cryptography = {version = "^3.4", optional = true}
 
 # Optional backend dependencies
 boto3 = { version = "^1.15", optional = true }
@@ -48,6 +49,7 @@ backends = ["boto3", "pymongo", "redis"]
 json = ["cattrs"]
 docs = ["docutils", "m2r2", "Sphinx", "sphinx-autodoc-typehints", "sphinx-copybutton",
         "sphinx-material", "sphinxcontrib-apidoc"]
+encryption = ["cryptography"]
 
 [tool.poetry.dev-dependencies]
 black = {version = "21.5b1", python = ">=3.6.2, <3.10"}
