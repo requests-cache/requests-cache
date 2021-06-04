@@ -1,6 +1,6 @@
+import gzip
 import os
 import pickle
-import gzip
 import warnings
 from abc import ABC
 from collections.abc import MutableMapping
@@ -244,8 +244,6 @@ class BaseStorage(MutableMapping, ABC):
         if not secret_key:
             level = DEBUG if suppress_warnings else WARNING
             logger.log(level, 'Using a secret key is recommended for this backend')
-
-        
 
     def serialize(self, item: ResponseOrKey) -> bytes:
         """Serialize a URL or response into bytes"""

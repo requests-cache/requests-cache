@@ -10,10 +10,10 @@ https://requests-mock.readthedocs.io/en/latest/adapter.html
 """
 import os
 import pytest
-from pickle import PicklingError
 from datetime import datetime, timezone
 from functools import wraps
 from logging import basicConfig, getLogger
+from pickle import PicklingError
 
 import requests
 from requests_mock import ANY as ANY_METHOD
@@ -226,7 +226,7 @@ def fail_if_no_connection(func) -> bool:
             # error:
             # PicklingError("Can't pickle <function ensure_connection at 0x00000295F96658B0>: it's not the same object as tests.integration.test_gridfs.ensure_connection")
             if isinstance(e, PicklingError):
-                return 
+                return
             breakpoint()
             logger.error(e)
             pytest.fail('Could not connect to backend')
@@ -238,6 +238,7 @@ def assert_delta_approx_equal(dt1: datetime, dt2: datetime, target_delta, thresh
     """Assert that the given datetimes are approximately ``target_delta`` seconds apart"""
     diff_in_seconds = (dt2 - dt1).total_seconds()
     assert abs(diff_in_seconds - target_delta) <= threshold_seconds
+
 
 @pytest.fixture(scope="class")
 def mock_encryption_key():

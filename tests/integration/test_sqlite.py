@@ -104,6 +104,7 @@ class TestDbCache(BaseCacheTest):
         except Exception:
             pass
 
+
 class TestDbCacheCompressed(BaseCacheTest):
     backend_class = DbCache
     init_kwargs = {'use_temp': True, 'compress': True}
@@ -114,6 +115,7 @@ class TestDbCacheCompressed(BaseCacheTest):
             os.unlink(CACHE_NAME)
         except Exception:
             pass
+
 
 @pytest.mark.usefixtures("mock_encryption_key")
 class TestDbCacheEncrypt(BaseCacheTest):
