@@ -238,3 +238,11 @@ def assert_delta_approx_equal(dt1: datetime, dt2: datetime, target_delta, thresh
     """Assert that the given datetimes are approximately ``target_delta`` seconds apart"""
     diff_in_seconds = (dt2 - dt1).total_seconds()
     assert abs(diff_in_seconds - target_delta) <= threshold_seconds
+
+@pytest.fixture(scope="class")
+def mock_encryption_key():
+    old_environ = dict(os.environ)
+    os.environ.update({"REQUESTS_CACHE_KEY": '5s3NklcwLdx149VpviqByTDAwR61VhM5c9-0Z05wL3o='})
+    yield
+    os.environ.clear()
+    os.environ.update(old_environ)

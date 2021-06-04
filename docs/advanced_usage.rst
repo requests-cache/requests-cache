@@ -23,6 +23,14 @@ to both new responses (on write) and previously cached responses (on read). Exam
     >>>
     >>>    session = CachedSession(filter_fn=filter_by_size)
 
+Compression / Encryption
+------------------------
+Requests-Cache supports client-side encryption and compression of responses. All backends support
+keyword arguments ``compress`` and ``encrypt``. Compression is accomplished using Python's
+built-in gzip support, and encryption uses ``cryptography``'s ``Fernet`` encryption, which both
+signs and encrypts contents using a symmetric key. The key should be set using the environment
+variable ``REQUESTS_CACHE_KEY``. Additionally, the ``cryptography`` package will need to be installed.
+
 Cache Inspection
 ----------------
 Here are some ways to get additional information out of the cache session, backend, and responses:

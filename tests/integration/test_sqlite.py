@@ -1,4 +1,5 @@
 import os
+import pytest
 from tempfile import gettempdir
 from threading import Thread
 from unittest.mock import patch
@@ -95,6 +96,29 @@ class TestDbPickleDict(SQLiteTestCase):
 class TestDbCache(BaseCacheTest):
     backend_class = DbCache
     init_kwargs = {'use_temp': True}
+
+    @classmethod
+    def teardown_class(cls):
+        try:
+            os.unlink(CACHE_NAME)
+        except Exception:
+            pass
+
+class TestDbCacheCompressed(BaseCacheTest):
+    backend_class = DbCache
+    init_kwargs = {'use_temp': True, 'compress': True}
+
+    @classmethod
+    def teardown_class(cls):
+        try:
+            os.unlink(CACHE_NAME)
+        except Exception:
+            pass
+
+@pytest.mark.usefixtures("mock_encryption_key")
+class TestDbCacheEncrypt(BaseCacheTest):
+    backend_class = DbCache
+    init_kwargs = {'use_temp': True, 'encrypt': True}
 
     @classmethod
     def teardown_class(cls):

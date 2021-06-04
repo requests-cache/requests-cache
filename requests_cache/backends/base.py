@@ -1,4 +1,6 @@
+import os
 import pickle
+import gzip
 import warnings
 from abc import ABC
 from collections.abc import MutableMapping
@@ -32,6 +34,8 @@ class BaseCache:
         *args,
         include_get_headers: bool = False,
         ignored_parameters: Iterable[str] = None,
+        compress: bool = False,
+        encrypt: bool = False,
         **kwargs,
     ):
         self.name = None
@@ -39,6 +43,8 @@ class BaseCache:
         self.responses = {}
         self.include_get_headers = include_get_headers
         self.ignored_parameters = ignored_parameters
+        self.compress = compress
+        self.encrypt = encrypt
 
     @property
     def urls(self) -> Iterator[str]:
@@ -218,8 +224,20 @@ class BaseStorage(MutableMapping, ABC):
         salt: Union[str, bytes] = b'requests-cache',
         suppress_warnings: bool = False,
         serializer=None,
+        compress=False,
+        encrypt=False,
         **kwargs,
     ):
+        self.compress = compress
+        self.encrypt = encrypt
+        if self.encrypt:
+            try:
+                from cryptography.fernet import Fernet
+            except ImportError as e:
+                logger.error(e)
+                raise e
+            self.fernet = Fernet(os.environ['REQUESTS_CACHE_KEY'])
+
         self.serializer = serializer or self._get_serializer(secret_key, salt)
         logger.debug(f'Initializing {type(self).__name__} with serializer: {self.serializer}')
 
@@ -227,12 +245,23 @@ class BaseStorage(MutableMapping, ABC):
             level = DEBUG if suppress_warnings else WARNING
             logger.log(level, 'Using a secret key is recommended for this backend')
 
+        
+
     def serialize(self, item: ResponseOrKey) -> bytes:
         """Serialize a URL or response into bytes"""
-        return self.serializer.dumps(item)
+        serialized = self.serializer.dumps(item)
+        if self.compress:
+            serialized = gzip.compress(serialized)
+        if self.encrypt:
+            serialized = self.fernet.encrypt(serialized)
+        return serialized
 
     def deserialize(self, item: Union[ResponseOrKey, bytes]) -> ResponseOrKey:
         """Deserialize a cached URL or response"""
+        if self.encrypt:
+            item = self.fernet.decrypt(item)
+        if self.compress:
+            item = gzip.decompress(item)
         return self.serializer.loads(item)
 
     @staticmethod
