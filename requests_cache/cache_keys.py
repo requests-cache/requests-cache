@@ -18,6 +18,11 @@ def create_key(
     **kwargs,
 ) -> str:
     """Create a normalized cache key from a request object"""
+    if request.method is None:
+        # Question: Is method required to be set? probably yes
+        #  if so should raise an error on requests.PreparedRequest.prepare_method
+        #  Or maybe it should be required on init
+        raise TypeError('Incorrectly Configured: requests.PreparedRequest.method must be of type str')
     key = hashlib.sha256()
     key.update(_encode(request.method.upper()))
     url = remove_ignored_url_params(request, ignored_params)
