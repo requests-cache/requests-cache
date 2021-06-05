@@ -100,7 +100,7 @@ class CacheMixin:
 
         # If the request has been filtered out, delete previously cached response if it exists
         cache_key = self.cache.create_key(response.request, **kwargs)
-        if not response.from_cache and not self.filter_fn(response):
+        if not self.filter_fn(response):
             logger.debug(f'Deleting filtered response for URL: {response.url}')
             self.cache.delete(cache_key)
             return response
@@ -113,7 +113,7 @@ class CacheMixin:
     def send(self, request: PreparedRequest, **kwargs) -> AnyResponse:
         """Send a prepared request, with caching."""
         # If we shouldn't cache the response, just send the request
-        if not self._is_cacheable(request):
+        if not self._is_read_enabled(request):
             logger.debug(f'Request for URL {request.url} is not cacheable')
             response = super().send(request, **kwargs)
             return set_response_defaults(response)
@@ -131,13 +131,11 @@ class CacheMixin:
         # Dispatch hook here, because we've removed it before pickling
         return dispatch_hook('response', request.hooks, response, **kwargs)
 
-    def _is_cacheable(self, request: PreparedRequest) -> bool:
-        criteria = [
-            not self._disabled,
-            str(request.method) in self.allowable_methods,
-            self.filter_fn(request),
-        ]
-        return all(criteria)
+    def _is_read_enabled(self, request: PreparedRequest):
+        return not self._disabled and str(request.method) in self.allowable_methods
+
+    def _is_write_enabled(self, response: AnyResponse) -> bool:
+        return response.status_code in self.allowable_codes and self.filter_fn(response)
 
     def _handle_expired_response(self, request, response, cache_key, **kwargs) -> AnyResponse:
         """Determine what to do with an expired response, depending on old_data_on_error setting"""
@@ -157,7 +155,7 @@ class CacheMixin:
     def _send_and_cache(self, request, cache_key, **kwargs):
         logger.debug(f'Sending request and caching response for URL: {request.url}')
         response = super().send(request, **kwargs)
-        if response.status_code in self.allowable_codes:
+        if self._is_write_enabled(response):
             self.cache.save_response(cache_key, response, self._get_expiration(request.url))
         return set_response_defaults(response)
 
