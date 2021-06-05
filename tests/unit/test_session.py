@@ -186,7 +186,7 @@ def test_values__with_invalid_response(mock_session):
 
 
 def test_filter_fn(mock_session):
-    mock_session.filter_fn = lambda r: r.url != MOCKED_URL_JSON
+    mock_session.filter_fn = lambda r: r.request.url != MOCKED_URL_JSON
     mock_session.get(MOCKED_URL)
     mock_session.get(MOCKED_URL_JSON)
 
@@ -197,7 +197,7 @@ def test_filter_fn(mock_session):
 def test_filter_fn__retroactive(mock_session):
     """filter_fn should also apply to previously cached responses"""
     mock_session.get(MOCKED_URL_JSON)
-    mock_session.filter_fn = lambda r: r.url != MOCKED_URL_JSON
+    mock_session.filter_fn = lambda r: r.request.url != MOCKED_URL_JSON
     mock_session.get(MOCKED_URL_JSON)
 
     assert not mock_session.cache.has_url(MOCKED_URL_JSON)

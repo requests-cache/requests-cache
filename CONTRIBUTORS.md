@@ -20,6 +20,7 @@ contributions that have helped to improve requests-cache:
 * [Garrett Reynolds](https://github.com/Garrett-R)
 * [Greg Dingle](https://github.com/gregdingle)
 * [Guangnan Cheng](https://github.com/chengguangnan)
+* [harvey251](https://github.com/harvey251)
 * [Honza Javorek](https://github.com/honzajavorek)
 * [Ilya](https://github.com/libbkmz)
 * [J Rob Gant](https://github.com/rgant)

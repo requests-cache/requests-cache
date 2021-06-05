@@ -182,7 +182,7 @@ class CacheMixin:
             'disabled cache': self._disabled,
             'disabled method': response.request.method not in self.allowable_methods,
             'disabled status': response.status_code not in self.allowable_codes,
-            'disabled by filter': not self.filter_fn(response.request),
+            'disabled by filter': not self.filter_fn(response),
             'disabled by headers or expiration params': actions.skip_write,
         }
         logger.debug(f'Pre-cache checks for response from {response.url}: {cache_criteria}')

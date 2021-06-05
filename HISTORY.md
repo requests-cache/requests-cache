@@ -46,6 +46,9 @@
   see [Contributing Guide](https://requests-cache.readthedocs.io/en/stable/contributing.html) for details
 
 -----
+### 0.6.4 (2021-06-04)
+Fix a bug in which `filter_fn()` would get called on `response.request` instead of `response`
+
 ### 0.6.3 (2021-04-21)
 * Fix false positive warning with `include_get_headers`
 * Fix handling of `decode_content` parameter for `CachedResponse.raw.read()`
