@@ -22,7 +22,7 @@ include = [
 [tool.poetry.dependencies]
 python = "^3.6"
 attrs = "^21.2"
-itsdangerous = "^1.1"
+itsdangerous = ">=2.0.1"
 requests = "^2.17"
 url-normalize = "^1.4"
 
