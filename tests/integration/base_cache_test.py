@@ -13,6 +13,7 @@ import requests
 from requests_cache import ALL_METHODS, CachedResponse, CachedSession
 from requests_cache.backends.base import BaseCache
 from requests_cache.serializers import SERIALIZER_CLASSES
+from requests_cache.serializers.base import BaseSerializer
 from tests.conftest import (
     CACHE_NAME,
     HTTPBIN_FORMATS,
@@ -26,6 +27,7 @@ from tests.conftest import (
 )
 
 REQUESTS_VERSION = tuple([int(v) for v in requests.__version__.split('.')])
+SERIALIZERS = [k for k, v in SERIALIZER_CLASSES.items() if issubclass(v, BaseSerializer)]
 
 
 class BaseCacheTest:
@@ -46,7 +48,7 @@ class BaseCacheTest:
 
         return CachedSession(backend=backend, **self.init_kwargs, **kwargs)
 
-    @pytest.mark.parametrize('serializer', SERIALIZER_CLASSES.keys())
+    @pytest.mark.parametrize('serializer', SERIALIZERS)
     @pytest.mark.parametrize('method', HTTPBIN_METHODS)
     @pytest.mark.parametrize('field', ['params', 'data', 'json'])
     def test_all_methods(self, field, method, serializer):
@@ -59,7 +61,7 @@ class BaseCacheTest:
             assert session.request(method, url, **{field: params}).from_cache is False
             assert session.request(method, url, **{field: params}).from_cache is True
 
-    @pytest.mark.parametrize('serializer', SERIALIZER_CLASSES.keys())
+    @pytest.mark.parametrize('serializer', SERIALIZERS)
     @pytest.mark.parametrize('response_format', HTTPBIN_FORMATS)
     def test_all_response_formats(self, response_format, serializer):
         """Test that all relevant combinations of response formats X serializers are cached correctly"""

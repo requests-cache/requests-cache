@@ -58,6 +58,11 @@ jobs:
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: poetry install -v -E all
+      - name: Workaround for issue with poetry package extras (python 3.10 only)
+        if: ${{ startsWith(matrix.python-version, '3.10') }}
+        run: |
+          source $VENV
+          pip install -U cattrs
       - name: Install latest available requests + urllib3 (scheduled tests only)
         if: ${{ github.event.schedule }}
         run: |
@@ -68,8 +73,8 @@ jobs:
       - name: Run tests
         run: |
           source $VENV
-          pytest tests/unit --numprocesses=auto ${{ env.COVERAGE_ARGS }}
-          pytest tests/integration --cov-append ${{ env.COVERAGE_ARGS }}
+          pytest -x tests/unit --numprocesses=auto ${{ env.COVERAGE_ARGS }}
+          pytest -x tests/integration --cov-append ${{ env.COVERAGE_ARGS }}
 
       # Latest python version: send coverage report to coveralls
       - name: Run coveralls

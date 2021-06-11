@@ -6,10 +6,8 @@ import sys
 from importlib import reload
 from unittest.mock import patch
 
-# TODO: For some reason this doesn't work on python 3.10
 pytestmark = pytest.mark.skipif(
-    (3, 7) > sys.version_info > (3, 9),
-    reason='Requires python 3.7+ version of cattrs',
+    sys.version_info < (3, 7), reason='Requires python 3.7+ version of cattrs'
 )
 
 
