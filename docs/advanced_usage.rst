@@ -150,12 +150,10 @@ Example using an imaginary ``xson`` module that provides ``dumps`` and ``loads``
     ...         super().__init__(*args, **kwargs)
     ...
     ...     def dumps(self, response: CachedResponse) -> bytes:
-    ...         unstructured_response = super().unstructure(response)
-    ...         return xson.dumps(unstructured_response)
+    ...         return xson.dumps(super().dumps(response))
     ...
     ...     def loads(self, obj: bytes) -> CachedResponse:
-    ...         unstructured_response = xson.loads(obj)
-    ...         return super().structure(unstructured_response)
+    ...         return super().loads(xson.loads(obj))
 
 Usage with other requests features
 ----------------------------------

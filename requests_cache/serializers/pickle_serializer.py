@@ -11,10 +11,10 @@ class PickleSerializer(BaseSerializer):
     """Wrapper for pickle that pre/post-processes with cattrs"""
 
     def dumps(self, response: CachedResponse) -> bytes:
-        return pickle.dumps(super().unstructure(response))
+        return pickle.dumps(super().dumps(response))
 
     def loads(self, obj: bytes) -> CachedResponse:
-        return super().structure(pickle.loads(obj))
+        return super().loads(pickle.loads(obj))
 
 
 class SafePickleSerializer(SafeSerializer, BaseSerializer):

@@ -19,7 +19,7 @@ class JSONSerializer(BaseSerializer):
         super().__init__(*args, converter_factory=make_converter, **kwargs)
 
     def dumps(self, response: CachedResponse) -> str:
-        return json.dumps(super().unstructure(response), indent=2)
+        return json.dumps(super().dumps(response), indent=2)
 
     def loads(self, obj: str) -> CachedResponse:
-        return super().structure(json.loads(obj))
+        return super().loads(json.loads(obj))

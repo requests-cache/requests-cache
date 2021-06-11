@@ -1,4 +1,3 @@
-from abc import abstractmethod
 from datetime import datetime, timedelta
 from typing import Any, Callable
 
@@ -14,37 +13,24 @@ class BaseSerializer:
     pre/post-processing with cattrs. This provides an easy starting point for alternative
     serialization formats, and potential for some backend-specific optimizations.
 
-    Subclasses must provide ``dumps`` and ``loads`` methods.
+    Subclasses must call and override ``dumps`` and ``loads`` methods.
     """
 
     # Flag to indicate to backends that content should be stored as a binary object
     is_binary = True
 
     def __init__(self, *args, converter_factory=None, **kwargs):
-        from ..backends import get_valid_kwargs
-
-        # If used as a mixin and the superclass is custom serializer, pass along any valid kwargs
-        kwargs = get_valid_kwargs(super().__init__, kwargs)
-        super().__init__(**kwargs)
         self.converter = init_converter(factory=converter_factory)
 
-    def unstructure(self, obj: Any) -> Any:
+    def dumps(self, obj: Any) -> Any:
         if not isinstance(obj, CachedResponse) or not self.converter:
             return obj
         return self.converter.unstructure(obj)
 
-    def structure(self, obj: Any) -> Any:
+    def loads(self, obj: Any) -> Any:
         if not isinstance(obj, dict) or not self.converter:
             return obj
         return self.converter.structure(obj, CachedResponse)
-
-    @abstractmethod
-    def dumps(self, response: CachedResponse):
-        pass
-
-    @abstractmethod
-    def loads(self, obj) -> CachedResponse:
-        pass
 
 
 def init_converter(factory: Callable = None):

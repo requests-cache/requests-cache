@@ -13,7 +13,7 @@ class BSONSerializer(BaseSerializer):
         super().__init__(*args, converter_factory=make_converter, **kwargs)
 
     def dumps(self, response: CachedResponse) -> bytes:
-        return bson.encode(super().unstructure(response))
+        return bson.encode(super().dumps(response))
 
     def loads(self, obj: bytes) -> CachedResponse:
-        return super().structure(bson.decode(obj))
+        return super().loads(bson.decode(obj))
