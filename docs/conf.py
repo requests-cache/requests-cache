@@ -32,6 +32,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx_autodoc_typehints',
     'sphinx_copybutton',
+    'sphinx_rtd_theme',
     'sphinxcontrib.apidoc',
     'm2r2',
 ]

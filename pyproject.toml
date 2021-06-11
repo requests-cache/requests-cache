@@ -35,9 +35,8 @@ pymongo = { version = "^3.0", optional = true }
 redis = { version = "^3.0", optional = true }
 
 # Documentation dependencies
-docutils = { version = "0.16", optional = true }
 m2r2 = { version = "^0.2", optional = true }
-Sphinx = { version = "3.5.3", optional = true }
+Sphinx = { version = "4.0.2", optional = true }
 sphinx-autodoc-typehints = { version = "^1.11", optional = true }
 sphinx-copybutton = { version = "^0.3", optional = true }
 sphinx-rtd-theme = { version = "0.5.2", optional = true }
@@ -47,10 +46,10 @@ sphinxcontrib-apidoc = { version = "^0.3", optional = true }
 backends = ["boto3", "pymongo", "redis"]
 json = ["cattrs"]
 docs = ["docutils", "m2r2", "Sphinx", "sphinx-autodoc-typehints", "sphinx-copybutton",
-        "sphinx-material", "sphinxcontrib-apidoc"]
+        "sphinx-material", "sphinx-rtd-theme", "sphinxcontrib-apidoc"]
 
 [tool.poetry.dev-dependencies]
-black = {version = "21.5b1", python = ">=3.6.2, <3.10"}
+black = {version = "21.6b0", python = ">=3.6.2, <3.10"}
 isort = "^5.8"
 flake8 = "^3.9"
 flake8-comprehensions = "*"
@@ -58,10 +57,10 @@ flake8-polyfill = "*"
 pre-commit = {version = "^2.12", python = "^3.6.2"}
 psutil = "^5.0"
 pytest = "^6.2"
-pytest-cov = "^2.11"
-pytest-order = "0.11.0"
-pytest-xdist = "^2.2"
-radon = "^4.5"
+pytest-cov = ">=2.11"
+pytest-order = "1.0"
+pytest-xdist = ">=2.2"
+radon = "^5.0"
 requests-mock = "^1.8"
 rich = ">=10.0"
 timeout-decorator = "^0.5"
