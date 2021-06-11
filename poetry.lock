@@ -123,14 +123,14 @@ six = ">=1.9.0"
 
 [[package]]
 name = "cattrs"
-version = "1.7.1"
+version = "1.6.0"
 description = "Composable complex class support for attrs and dataclasses."
 category = "main"
 optional = true
 python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
-attrs = ">=20.1.0"
+attrs = "*"
 
 [[package]]
 name = "certifi"
@@ -859,17 +859,17 @@ type_comments = ["typed-ast (>=1.4.0)"]
 
 [[package]]
 name = "sphinx-copybutton"
-version = "0.3.1"
+version = "0.3.2"
 description = "Add a copy button to each of your code cells."
 category = "main"
 optional = true
-python-versions = "*"
+python-versions = ">=3.6"
 
 [package.dependencies]
 sphinx = ">=1.8"
 
 [package.extras]
-code_style = ["flake8 (>=3.7.0,<3.8.0)", "black", "pre-commit (==1.17.0)"]
+code_style = ["pre-commit (==2.12.1)"]
 
 [[package]]
 name = "sphinx-rtd-theme"
@@ -1077,7 +1077,7 @@ redis = ["redis"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "1570eaa1b8c4092fb0db3c33e3e1200fcd41eda3e9a18ff8420c14fc9db29723"
+content-hash = "4959cef0ec47b2c5acd78c3ce0c5cbd6c0f5b915544543a877d5fe9bcc8cb153"
 
 [metadata.files]
 alabaster = [
@@ -1120,8 +1120,8 @@ bson = [
     {file = "bson-0.5.10.tar.gz", hash = "sha256:d6511b2ab051139a9123c184de1a04227262173ad593429d21e443d6462d6590"},
 ]
 cattrs = [
-    {file = "cattrs-1.7.1-py3-none-any.whl", hash = "sha256:d69bd4a3239e189f0740c3c41178dd0f00e4eac3bcb806937e49942fa83adfee"},
-    {file = "cattrs-1.7.1.tar.gz", hash = "sha256:95265b8aaa45e6de75b5f52ae081e021a2a7a688babdb711e4174e6b18920d08"},
+    {file = "cattrs-1.6.0-py3-none-any.whl", hash = "sha256:c8de53900e3acad94ca83750eb12bb38aa85ce9114be47177c943e2f0eca63b0"},
+    {file = "cattrs-1.6.0.tar.gz", hash = "sha256:3e2cd5dc8a1006d5da53ddcbf4f0b1dd3a21e294323b257678d0a96721f8253a"},
 ]
 certifi = [
     {file = "certifi-2021.5.30-py2.py3-none-any.whl", hash = "sha256:50b1e4f8446b06f41be7dd6338db18e0990601dce795c2b1686458aa7e8fa7d8"},
@@ -1615,8 +1615,8 @@ sphinx-autodoc-typehints = [
     {file = "sphinx_autodoc_typehints-1.12.0-py3-none-any.whl", hash = "sha256:5e81776ec422dd168d688ab60f034fccfafbcd94329e9537712c93003bddc04a"},
 ]
 sphinx-copybutton = [
-    {file = "sphinx-copybutton-0.3.1.tar.gz", hash = "sha256:0e0461df394515284e3907e3f418a0c60ef6ab6c9a27a800c8552772d0a402a2"},
-    {file = "sphinx_copybutton-0.3.1-py3-none-any.whl", hash = "sha256:5125c718e763596e6e52d92e15ee0d6f4800ad3817939be6dee51218870b3e3d"},
+    {file = "sphinx-copybutton-0.3.2.tar.gz", hash = "sha256:f901f17e7dadc063bcfca592c5160f9113ec17501a59e046af3edb82b7527656"},
+    {file = "sphinx_copybutton-0.3.2-py3-none-any.whl", hash = "sha256:f16f8ed8dfc60f2b34a58cb69bfa04722e24be2f6d7e04db5554c32cde4df815"},
 ]
 sphinx-rtd-theme = [
     {file = "sphinx_rtd_theme-0.5.2-py2.py3-none-any.whl", hash = "sha256:4a05bdbe8b1446d77a01e20a23ebc6777c74f43237035e76be89699308987d6f"},

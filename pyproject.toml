@@ -28,7 +28,7 @@ url-normalize = "^1.4"
 
 # Optional serialization dependencies
 bson = {version = ">=0.5", optional = true}
-cattrs = {version = "^1.7", python = "^3.7", optional = true}
+cattrs = {version = "1.6.0", python = "^3.7", optional = true}
 ujson = {version = ">=4.0", optional = true}
 
 # Optional backend dependencies
