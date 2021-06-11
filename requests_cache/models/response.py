@@ -41,7 +41,7 @@ class CachedResponse(Response):
     expires: datetime = field(default=None)
     encoding: str = field(default=None)
     headers: CaseInsensitiveDict = field(factory=dict)
-    history: List = field(factory=list)
+    history: List['CachedResponse'] = field(factory=list)
     reason: str = field(default=None)
     request: CachedRequest = field(factory=CachedRequest)
     raw: CachedHTTPResponse = field(factory=CachedHTTPResponse, repr=False)

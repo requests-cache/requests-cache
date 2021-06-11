@@ -46,6 +46,8 @@ def init_converter(factory: Callable = None):
     if cattrs is installed.
     """
     try:
+        from typing import ForwardRef
+
         from cattr import GenConverter
     except ImportError:
         return None
@@ -68,6 +70,11 @@ def init_converter(factory: Callable = None):
     converter.register_structure_hook(CaseInsensitiveDict, lambda obj, cls: CaseInsensitiveDict(obj))
     converter.register_unstructure_hook(HTTPHeaderDict, dict)
     converter.register_structure_hook(HTTPHeaderDict, lambda obj, cls: HTTPHeaderDict(obj))
+
+    converter.register_structure_hook(
+        ForwardRef('CachedResponse'),
+        lambda obj, cls: converter.structure(obj, CachedResponse),
+    )
 
     return converter
 
