@@ -66,11 +66,11 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           poetry add requests@${{ matrix.requests-version }}
-          poetry install -v -E backends
+          poetry install -v -E all
 
       # Run unit + integration tests, with additional stress tests
       # Skip test for streaming responses; requires requests >= 2.19 (tested on latest version in build.yml)
-      - name: Run tests 
+      - name: Run tests
         run: |
           source $VENV
           pytest --numprocesses=auto tests/unit
