@@ -1,81 +1,116 @@
-"""A manual test to compare performance of different serializers"""
+"""A manual test to compare performance of different serializers
+
+Latest results:
+---------------
+CPU Results (x10000 iterations):
+jsonpickle.encode:      8.846
+jsonpickle.decode:      9.166
+pickle.dumps:           0.433
+pickle.loads:           0.734
+cattrs.unstructure:     1.124
+cattrs.structure:       1.048
+cattrs+pickle.dumps:    1.219
+cattrs+pickle.loads:    1.189
+cattrs+json.dumps:      2.005
+cattrs+json.loads:      2.312
+cattrs+ujson.dumps:     1.803
+cattrs+ujson.loads:     2.128
+cattrs+bson.dumps: 1.550
+cattrs+bson.loads: 1.322
+"""
 # flake8: noqa: F401
-"""
-CPU Results:
-jsonpickle.encode x10000:     5.673
-jsonpickle.decode x10000:     5.448
-pickle.dumps x10000:          0.256
-pickle.loads x10000:          0.260
-cattrs.unstructure x10000:    0.002
-cattrs.structure x10000:      0.002
-cattrs + pickle.dumps x10000: 0.251
-cattrs + pickle.loads x10000: 0.253
-"""
+import json
+import os
 import pickle
+
+import sys
+from os.path import abspath, dirname, join
 from time import perf_counter as time
 
-import jsonpickle
-from memory_profiler import profile
-from rich import print
+import ujson
+from cattr.preconf.json import make_converter
+
+try:
+    from rich import print
+except ImportError:
+    pass
+
+# import jsonpickle
+# from memory_profiler import profile
+
+# Add project path
+sys.path.insert(0, os.path.abspath('..'))
 
 from requests_cache import CachedSession
-from requests_cache.serializers import PickleSerializer
+from requests_cache.serializers import BaseSerializer, BSONSerializer, JSONSerializer, PickleSerializer
 
 ITERATIONS = 10000
 
 session = CachedSession()
-session.cache.clear()
+r = session.get('https://httpbin.org/get?x=y')
 r = session.get('https://httpbin.org/get?x=y')
 
 
-def test_jsonpickle():
-    start = time()
-    serialized = [jsonpickle.encode(r, use_base85=True) for i in range(ITERATIONS)]
-    print(f'jsonpickle.encode x{ITERATIONS}: {time() - start:.3f}')
-
-    start = time()
-    deserialized = [jsonpickle.decode(obj) for obj in serialized]
-    print(f'jsonpickle.decode x{ITERATIONS}: {time() - start:.3f}')
+# def test_jsonpickle():
+#     base_test('jsonpickle', jsonpickle.encode, jsonpickle.decode)
 
 
 def test_pickle():
-    start = time()
-    serialized = [pickle.dumps(r) for i in range(ITERATIONS)]
-    print(f'pickle.dumps x{ITERATIONS}: {time() - start:.3f}')
-
-    start = time()
-    serialized = [pickle.dumps(r) for i in range(ITERATIONS)]
-    print(f'pickle.loads x{ITERATIONS}: {time() - start:.3f}')
+    base_test('pickle', pickle.dumps, pickle.loads)
 
 
 def test_cattrs():
     s = PickleSerializer()
-    start = time()
-    serialized = [s.unstructure(r) for i in range(ITERATIONS)]
-    print(f'cattrs.unstructure x{ITERATIONS}: {time() - start:.3f}')
-
-    start = time()
-    deserialized = [s.structure(obj) for obj in serialized]
-    print(f'cattrs.structure x{ITERATIONS}: {time() - start:.3f}')
+    base_test('cattrs', s.unstructure, s.structure)
 
 
 def test_cattrs_pickle():
     s = PickleSerializer()
+    base_test('cattrs+pickle', s.dumps, s.loads)
+
+
+def test_cattrs_json():
+    s = BaseSerializer(converter_factory=make_converter)
+    base_test(
+        'cattrs+json',
+        lambda obj: json.dumps(s.unstructure(obj)),
+        lambda obj: s.structure(json.loads(obj)),
+    )
+
+
+def test_cattrs_ujson():
+    s = BaseSerializer(converter_factory=make_converter)
+    base_test(
+        'cattrs+ujson',
+        lambda obj: ujson.dumps(s.unstructure(obj)),
+        lambda obj: s.structure(ujson.loads(obj)),
+    )
+
+
+def test_cattrs_bson():
+    s = BSONSerializer()
+    base_test('cattrs+bson', s.dumps, s.loads)
+
+
+def base_test(module, serialize, deserialize):
     start = time()
-    serialized = [s.dumps(r) for i in range(ITERATIONS)]
-    print(f'cattrs + pickle.dumps x{ITERATIONS}: {time() - start:.3f}')
+    serialized = [serialize(r) for i in range(ITERATIONS)]
+    print(f'{module}.{serialize.__name__} x{ITERATIONS}: {time() - start:.3f}')
 
     start = time()
-    deserialized = [s.loads(obj) for obj in serialized]
-    print(f'cattrs + pickle.loads x{ITERATIONS}: {time() - start:.3f}')
+    deserialized = [deserialize(obj) for obj in serialized]
+    print(f'{module}.{deserialize.__name__} x{ITERATIONS}: {time() - start:.3f}')
 
 
 if __name__ == '__main__':
     print('CPU:')
-    test_jsonpickle()
+    # test_jsonpickle()
     test_pickle()
     test_cattrs()
     test_cattrs_pickle()
+    test_cattrs_json()
+    test_cattrs_ujson()
+    test_cattrs_bson()
 
     # Memory
     # print('\nMemory:')

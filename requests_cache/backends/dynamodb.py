@@ -1,6 +1,7 @@
 from typing import Dict, Iterable
 
 import boto3
+from boto3.dynamodb.types import Binary
 from boto3.resources.base import ServiceResource
 from botocore.exceptions import ClientError
 
@@ -90,10 +91,13 @@ class DynamoDbDict(BaseStorage):
         result = self._table.get_item(Key=self.composite_key(key))
         if 'Item' not in result:
             raise KeyError
-        return self.deserialize(result['Item']['value'].value)
+
+        # Depending on the serializer, the value may be either a string or Binary object
+        raw_value = result['Item']['value']
+        return self.serializer.loads(raw_value.value if isinstance(raw_value, Binary) else raw_value)
 
     def __setitem__(self, key, value):
-        item = {**self.composite_key(key), 'value': self.serialize(value)}
+        item = {**self.composite_key(key), 'value': self.serializer.dumps(value)}
         self._table.put_item(Item=item)
 
     def __delitem__(self, key):

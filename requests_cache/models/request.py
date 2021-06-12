@@ -1,11 +1,12 @@
 """Classes to wrap cached response objects"""
 from logging import getLogger
-from typing import Any
 
 from attr import define, field, fields_dict
 from requests import PreparedRequest
 from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
+
+from ..cache_keys import encode
 
 logger = getLogger(__name__)
 
@@ -14,7 +15,7 @@ logger = getLogger(__name__)
 class CachedRequest:
     """A serializable dataclass that emulates :py:class:`requests.PreparedResponse`"""
 
-    body: Any = field(default=None)
+    body: bytes = field(default=None, converter=encode)
     cookies: RequestsCookieJar = field(factory=dict)
     headers: CaseInsensitiveDict = field(factory=CaseInsensitiveDict)
     method: str = field(default=None)

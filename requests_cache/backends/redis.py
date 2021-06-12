@@ -2,6 +2,7 @@ from typing import Iterable
 
 from redis import Redis, StrictRedis
 
+from ..cache_keys import decode, encode
 from . import BaseCache, BaseStorage, get_valid_kwargs
 
 
@@ -43,29 +44,29 @@ class RedisDict(BaseStorage):
         self._self_key = ':'.join([namespace, collection_name])
 
     def __getitem__(self, key):
-        result = self.connection.hget(self._self_key, self.serialize(key))
+        result = self.connection.hget(self._self_key, encode(key))
         if result is None:
             raise KeyError
-        return self.deserialize(result)
+        return self.serializer.loads(result)
 
     def __setitem__(self, key, item):
-        self.connection.hset(self._self_key, self.serialize(key), self.serialize(item))
+        self.connection.hset(self._self_key, encode(key), self.serializer.dumps(item))
 
     def __delitem__(self, key):
-        if not self.connection.hdel(self._self_key, self.serialize(key)):
+        if not self.connection.hdel(self._self_key, encode(key)):
             raise KeyError
 
     def __len__(self):
         return self.connection.hlen(self._self_key)
 
     def __iter__(self):
-        for v in self.connection.hkeys(self._self_key):
-            yield self.deserialize(v)
+        for key in self.connection.hkeys(self._self_key):
+            yield decode(key)
 
     def bulk_delete(self, keys: Iterable[str]):
         """Delete multiple keys from the cache. Does not raise errors for missing keys."""
         if keys:
-            self.connection.hdel(self._self_key, *[self.serialize(key) for key in keys])
+            self.connection.hdel(self._self_key, *[encode(key) for key in keys])
 
     def clear(self):
         self.connection.delete(self._self_key)

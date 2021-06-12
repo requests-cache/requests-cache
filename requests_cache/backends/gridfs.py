@@ -52,14 +52,15 @@ class GridFSPickleDict(BaseStorage):
         result = self.fs.find_one({'_id': key})
         if result is None:
             raise KeyError
-        return self.deserialize(result.read())
+        return self.serializer.loads(result.read())
 
     def __setitem__(self, key, item):
         try:
             self.__delitem__(key)
         except KeyError:
             pass
-        self.fs.put(self.serialize(item), **{'_id': key})
+        encoding = None if self.serializer.is_binary else 'utf-8'
+        self.fs.put(self.serializer.dumps(item), encoding=encoding, **{'_id': key})
 
     def __delitem__(self, key):
         res = self.fs.find_one({'_id': key})

@@ -75,7 +75,7 @@ class MongoPickleDict(MongoDict):
     """Same as :class:`MongoDict`, but pickles values before saving"""
 
     def __setitem__(self, key, item):
-        super().__setitem__(key, self.serialize(item))
+        super().__setitem__(key, self.serializer.dumps(item))
 
     def __getitem__(self, key):
-        return self.deserialize(super().__getitem__(key))
+        return self.serializer.loads(super().__getitem__(key))

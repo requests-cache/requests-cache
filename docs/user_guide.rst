@@ -316,6 +316,53 @@ revalidate the cache with the new expiration time:
 
     >>> session.remove_expired_responses(expire_after=timedelta(days=30))
 
+.. _serializers:
+
+Serializers
+-----------
+By default, responses are serialized using :py:mod:`pickle`. Some other options are also available:
+
+.. note:: These features require python 3.7+ and additional dependencies
+
+JSON Serializer
+~~~~~~~~~~~~~~~
+Storing responses as JSON gives you the benefit of making them human-readable, in exchange for a
+slight reduction in performance. This can be especially useful in combination with the filesystem
+backend.
+
+.. admonition:: Example JSON-serialized Response
+    :class: toggle
+
+    .. literalinclude:: sample_response.json
+        :language: JSON
+
+You can install the extra dependencies for this serializer with:
+
+.. code-block:: bash
+
+    pip install requests-cache[json]
+
+BSON Serializer
+~~~~~~~~~~~~~~~
+`BSON <https://www.mongodb.com/json-and-bson>`_ is a serialization format originally created for
+MongoDB, but it can also be used independently. Compared to JSON, it has better performance
+(although still not as fast as ``pickle``), and adds support for additional data types. It is not
+human-readable, but some tools support reading and editing it directly
+(for example, `bson-converter <https://atom.io/packages/bson-converter>`_ for Atom).
+
+You can install the extra dependencies for this serializer with:
+
+.. code-block:: bash
+
+    pip install requests-cache[mongo]
+
+Or if you would like to use the standalone BSON codec for a different backend, without installing
+MongoDB dependencies:
+
+.. code-block:: bash
+
+    pip install requests-cache[bson]
+
 Error Handling
 --------------
 In some cases, you might cache a response, have it expire, but then encounter an error when

@@ -31,7 +31,7 @@ To set up for local development (requires [poetry](https://python-poetry.org/doc
 ```bash
 $ git clone https://github.com/reclosedev/requests-cache.git
 $ cd requests-cache
-$ poetry install -E backends
+$ poetry install -v -E all
 ```
 
 ## Pre-commit Hooks

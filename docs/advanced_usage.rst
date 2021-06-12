@@ -7,22 +7,6 @@ This section covers some more advanced and use-case-specific features.
 .. contents::
     :local:
 
-Custom Response Filtering
--------------------------
-If you need more advanced behavior for determining what to cache, you can provide a custom filtering
-function via the ``filter_fn`` param. This can by any function that takes a :py:class:`requests.Response`
-object and returns a boolean indicating whether or not that response should be cached. It will be applied
-to both new responses (on write) and previously cached responses (on read). Example:
-
-    >>> from sys import getsizeof
-    >>> from requests_cache import CachedSession
-    >>>
-    >>> def filter_by_size(response):
-    >>>     """Don't cache responses with a body over 1 MB"""
-    >>>     return getsizeof(response.content) <= 1024 * 1024
-    >>>
-    >>>    session = CachedSession(filter_fn=filter_by_size)
-
 Cache Inspection
 ----------------
 Here are some ways to get additional information out of the cache session, backend, and responses:
@@ -87,10 +71,28 @@ combined keys and responses.
     >>> print('All cache keys for redirects and responses combined:')
     >>> print(list(session.cache.keys()))
 
+Custom Response Filtering
+-------------------------
+If you need more advanced behavior for determining what to cache, you can provide a custom filtering
+function via the ``filter_fn`` param. This can by any function that takes a :py:class:`requests.Response`
+object and returns a boolean indicating whether or not that response should be cached. It will be applied
+to both new responses (on write) and previously cached responses (on read). Example:
+
+    >>> from sys import getsizeof
+    >>> from requests_cache import CachedSession
+    >>>
+    >>> def filter_by_size(response):
+    >>>     """Don't cache responses with a body over 1 MB"""
+    >>>     return getsizeof(response.content) <= 1024 * 1024
+    >>>
+    >>>    session = CachedSession(filter_fn=filter_by_size)
+
 Custom Backends
 ---------------
 If the built-in :py:mod:`Cache Backends <requests_cache.backends>` don't suit your needs, you can
-create your own by making subclasses of :py:class:`.BaseCache` and :py:class:`.BaseStorage`:
+create your own by making subclasses of :py:class:`.BaseCache` and :py:class:`.BaseStorage`.
+
+Example:
 
     >>> from requests_cache import CachedSession
     >>> from requests_cache.backends import BaseCache, BaseStorage
@@ -130,6 +132,28 @@ create your own by making subclasses of :py:class:`.BaseCache` and :py:class:`.B
 You can then use your custom backend in a :py:class:`.CachedSession` with the ``backend`` parameter:
 
     >>> session = CachedSession(backend=CustomCache())
+
+Custom Serializers
+------------------
+If the built-in :ref:`serializers` don't suit your needs, you can create your own by subclassing
+:py:class:`.BaseSerializer`.
+
+Example using an imaginary ``xson`` module that provides ``dumps`` and ``loads`` functions:
+
+    >>> import xson
+    >>> from requests_cache.serializers import BaseSerializer
+    >>>
+    >>> class CustomSerializer(BaseSerializer):
+    ...     """Serializer that converts responses to XSON"""
+    ...
+    ...     def __init__(self, *args, **kwargs):
+    ...         super().__init__(*args, **kwargs)
+    ...
+    ...     def dumps(self, response: CachedResponse) -> bytes:
+    ...         return xson.dumps(super().dumps(response))
+    ...
+    ...     def loads(self, obj: bytes) -> CachedResponse:
+    ...         return super().loads(xson.loads(obj))
 
 Usage with other requests features
 ----------------------------------

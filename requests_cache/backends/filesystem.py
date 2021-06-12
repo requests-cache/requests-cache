@@ -48,18 +48,20 @@ class FileDict(BaseStorage):
                 raise KeyError(e)
 
     def __getitem__(self, key):
+        mode = 'rb' if self.serializer.is_binary else 'r'
         with self._try_io():
-            with open(join(self.cache_dir, str(key)), 'rb') as f:
-                return self.deserialize(f.read())
+            with open(join(self.cache_dir, str(key)), mode) as f:
+                return self.serializer.loads(f.read())
 
     def __delitem__(self, key):
         with self._try_io():
             unlink(join(self.cache_dir, str(key)))
 
     def __setitem__(self, key, value):
+        mode = 'wb' if self.serializer.is_binary else 'w'
         with self._try_io():
-            with open(join(self.cache_dir, str(key)), 'wb') as f:
-                f.write(self.serialize(value))
+            with open(join(self.cache_dir, str(key)), mode) as f:
+                f.write(self.serializer.dumps(value))
 
     def __iter__(self):
         for filename in listdir(self.cache_dir):

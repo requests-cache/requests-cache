@@ -19,18 +19,18 @@ def create_key(
 ) -> str:
     """Create a normalized cache key from a request object"""
     key = hashlib.sha256()
-    key.update(_encode(request.method.upper()))
+    key.update(encode(request.method.upper()))
     url = remove_ignored_url_params(request, ignored_params)
     url = url_normalize(url)
-    key.update(_encode(url))
-    key.update(_encode(kwargs.get('verify', True)))
+    key.update(encode(url))
+    key.update(encode(kwargs.get('verify', True)))
 
     body = remove_ignored_body_params(request, ignored_params)
     if body:
-        key.update(_encode(body))
+        key.update(body)
     if include_get_headers and request.headers != DEFAULT_HEADERS:
         for name, value in normalize_dict(request.headers).items():
-            key.update(_encode(f'{name}={value}'))
+            key.update(encode(f'{name}={value}'))
 
     return key.hexdigest()
 
@@ -67,21 +67,23 @@ def remove_ignored_url_params(request: requests.PreparedRequest, ignored_params:
     return url
 
 
-def remove_ignored_body_params(request: requests.PreparedRequest, ignored_params: Iterable[str]) -> str:
+def remove_ignored_body_params(
+    request: requests.PreparedRequest, ignored_params: Iterable[str]
+) -> bytes:
     body = request.body
     content_type = request.headers.get('content-type')
     if not ignored_params or not body or not content_type:
-        return request.body
+        return encode(request.body)
 
     if content_type == 'application/x-www-form-urlencoded':
         body = parse_qsl(body)
         body = filter_params(body, ignored_params)
         body = urlencode(body)
     elif content_type == 'application/json':
-        body = json.loads(_decode(body))
+        body = json.loads(decode(body))
         body = filter_params(sorted(body.items()), ignored_params)
         body = json.dumps(body)
-    return body
+    return encode(body)
 
 
 def filter_params(data: List[Tuple], ignored_params: Iterable[str]) -> List[Tuple]:
@@ -104,7 +106,7 @@ def normalize_dict(items: RequestContent = None, normalize_data: bool = True) ->
     if normalize_data and isinstance(items, (bytes, str)):
         # Attempt to load body as JSON; not doing this by default as it could impact performance
         try:
-            dict_items = json.loads(_decode(items))
+            dict_items = json.loads(decode(items))
             dict_items = json.dumps(sort_dict(dict_items))
             return dict_items.encode('utf-8') if isinstance(items, bytes) else dict_items
         except Exception:
@@ -118,13 +120,13 @@ def url_to_key(url: str, *args, **kwargs) -> str:
     return create_key(request, *args, **kwargs)
 
 
-def _encode(value, encoding='utf-8') -> bytes:
-    """Encode a value, if it hasn't already been"""
+def encode(value, encoding='utf-8') -> bytes:
+    """Encode a value to bytes, if it hasn't already been"""
     return value if isinstance(value, bytes) else str(value).encode(encoding)
 
 
-def _decode(value, encoding='utf-8') -> str:
-    """Decode a value, if hasn't already been.
+def decode(value, encoding='utf-8') -> str:
+    """Decode a value from bytes, if hasn't already been.
     Note: PreparedRequest.body is always encoded in utf-8.
     """
     return value.decode(encoding) if isinstance(value, bytes) else value
