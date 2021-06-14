@@ -12,8 +12,7 @@ import requests
 
 from requests_cache import ALL_METHODS, CachedResponse, CachedSession
 from requests_cache.backends.base import BaseCache
-from requests_cache.serializers import SERIALIZER_CLASSES
-from requests_cache.serializers.base import BaseSerializer
+from requests_cache.serializers import SERIALIZERS
 from tests.conftest import (
     CACHE_NAME,
     HTTPBIN_FORMATS,
@@ -27,7 +26,6 @@ from tests.conftest import (
 )
 
 REQUESTS_VERSION = tuple([int(v) for v in requests.__version__.split('.')])
-SERIALIZERS = [k for k, v in SERIALIZER_CLASSES.items() if issubclass(v, BaseSerializer)]
 
 
 class BaseCacheTest:

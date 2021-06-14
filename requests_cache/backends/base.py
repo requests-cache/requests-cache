@@ -3,7 +3,7 @@ import warnings
 from abc import ABC
 from collections.abc import MutableMapping
 from datetime import datetime
-from logging import DEBUG, WARNING, getLogger
+from logging import getLogger
 from typing import Iterable, Iterator, Tuple, Union
 
 import requests
@@ -12,7 +12,7 @@ from requests.models import PreparedRequest
 from ..cache_control import ExpirationTime
 from ..cache_keys import create_key, remove_ignored_params, url_to_key
 from ..models.response import AnyResponse, CachedResponse
-from ..serializers import init_serializer
+from ..serializers import SERIALIZERS
 
 # Specific exceptions that may be raised during deserialization
 DESERIALIZE_ERRORS = (AttributeError, TypeError, ValueError, pickle.PickleError)
@@ -212,20 +212,31 @@ class BaseStorage(MutableMapping, ABC):
         serializer: Custom serializer that provides ``loads`` and ``dumps`` methods
     """
 
+    DEFAULT_SERIALIZER = 'pickle'
+
     def __init__(
         self,
-        secret_key: Union[Iterable, str, bytes] = None,
-        salt: Union[str, bytes] = None,
-        suppress_warnings: bool = False,
         serializer=None,
+        suppress_warnings: bool = False,
         **kwargs,
     ):
-        self.serializer = init_serializer(serializer, secret_key=secret_key, salt=salt)
-        logger.debug(f'Initializing {type(self).__name__} with serializer: {self.serializer}')
+        serializer = serializer or self.DEFAULT_SERIALIZER
 
-        if not secret_key:
-            level = DEBUG if suppress_warnings else WARNING
-            logger.log(level, 'Using a secret key is recommended for this backend')
+        if "secret_key" in kwargs and serializer == 'pickle':
+            serializer = 'safe_pickle'
+
+        if isinstance(serializer, str):
+            self.serializer = SERIALIZERS[serializer]
+
+        if callable(self.serializer):
+            self.serializer = self.serializer(**kwargs)
+
+        if not is_serializer(self.serializer):
+            breakpoint()
+            raise ValueError(
+                f"Selected serializer {self.serializer} is not a serializer. Must have dumps/loads/is_binary"
+            )
+        logger.debug(f'Initializing {type(self).__name__} with serializer: {self.serializer}')
 
     def bulk_delete(self, keys: Iterable[str]):
         """Delete multiple keys from the cache. Does not raise errors for missing keys. This is a
@@ -240,3 +251,8 @@ class BaseStorage(MutableMapping, ABC):
 
     def __str__(self):
         return str(list(self.keys()))
+
+
+def is_serializer(obj):
+    # Checks if a proposed serializer has these three required attributes
+    return hasattr(obj, 'dumps') and hasattr(obj, 'loads') and hasattr(obj, "is_binary")
