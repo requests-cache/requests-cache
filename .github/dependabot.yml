@@ -5,6 +5,10 @@ updates:
     schedule:
       interval: "daily"
       time: "16:00"
+    # For doc dependencies, only notify for major releases
+    ignore:
+      - dependency-name: "sphinx*"
+        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
