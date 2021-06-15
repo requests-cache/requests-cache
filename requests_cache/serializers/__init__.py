@@ -5,7 +5,7 @@ from itsdangerous import Signer
 from .. import get_placeholder_class
 from .pipeline import SerializerPipeline, Stage
 
-pickle_serializer = Stage(pickle, is_binary=True)
+pickle_serializer = pickle
 
 
 def safe_pickle_serializer(secret_key=None, salt="requests-cache", **kwargs):
@@ -16,7 +16,6 @@ def safe_pickle_serializer(secret_key=None, salt="requests-cache", **kwargs):
             pickle_serializer,
             Stage(Signer(secret_key=secret_key, salt=salt), dumps='sign', loads='unsign'),
         ],
-        is_binary=True,
     )
 
 
@@ -33,7 +32,6 @@ try:
             preconf.json_converter,  # CachedResponse -> JSON
             json,  # JSON -> str
         ],
-        is_binary=False,
     )
 
     try:
@@ -44,7 +42,6 @@ try:
                 preconf.bson_converter,  # CachedResponse -> BSON
                 bson.json_util,  # BSON -> str
             ],
-            is_binary=False,
         )
     except ImportError as e:
         bson_serializer = get_placeholder_class(e)

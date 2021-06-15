@@ -234,7 +234,7 @@ class BaseStorage(MutableMapping, ABC):
         if not is_serializer(self.serializer):
             breakpoint()
             raise ValueError(
-                f"Selected serializer {self.serializer} is not a serializer. Must have dumps/loads/is_binary"
+                f"Selected serializer {self.serializer} is not a serializer. Must have dumps/loads"
             )
         logger.debug(f'Initializing {type(self).__name__} with serializer: {self.serializer}')
 
@@ -255,4 +255,4 @@ class BaseStorage(MutableMapping, ABC):
 
 def is_serializer(obj):
     # Checks if a proposed serializer has these three required attributes
-    return hasattr(obj, 'dumps') and hasattr(obj, 'loads') and hasattr(obj, "is_binary")
+    return hasattr(obj, 'dumps') and hasattr(obj, 'loads')

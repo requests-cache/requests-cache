@@ -59,7 +59,7 @@ try:
             ForwardRef('CachedResponse'),
             lambda obj, cls: converter.structure(obj, CachedResponse),
         )
-        converter = CattrsStage(converter, dumps='unstructure', loads='structure', is_binary=False)
+        converter = CattrsStage(converter, dumps='unstructure', loads='structure')
 
         return converter
 
