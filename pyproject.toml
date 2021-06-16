@@ -32,7 +32,7 @@ cattrs = {version = "^1.7", python = "^3.7", optional = true}
 ujson = {version = ">=4.0", optional = true}
 
 # Optional backend dependencies
-boto3 = { version = "^1.15", optional = true }
+boto3 = { version = "^1.17", optional = true }
 pymongo = { version = "^3.0", optional = true }
 redis = { version = "^3.0", optional = true }
 
