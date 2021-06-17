@@ -14,6 +14,7 @@ Here are some ways to get additional information out of the cache session, backe
 Response Details
 ~~~~~~~~~~~~~~~~
 The following attributes are available on responses:
+
 * ``from_cache``: indicates if the response came from the cache
 * ``created_at``: :py:class:`~datetime.datetime` of when the cached response was created or last updated
 * ``expires``: :py:class:`~datetime.datetime` after which the cached response will expire
