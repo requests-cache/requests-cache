@@ -85,7 +85,7 @@ to both new responses (on write) and previously cached responses (on read). Exam
     >>>     """Don't cache responses with a body over 1 MB"""
     >>>     return getsizeof(response.content) <= 1024 * 1024
     >>>
-    >>>    session = CachedSession(filter_fn=filter_by_size)
+    >>> session = CachedSession(filter_fn=filter_by_size)
 
 Custom Backends
 ---------------
