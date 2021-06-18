@@ -1,5 +1,6 @@
 import datetime
 from functools import partial
+from typing import ForwardRef
 
 from requests.cookies import RequestsCookieJar, cookiejar_from_dict
 from requests.structures import CaseInsensitiveDict
@@ -52,8 +53,9 @@ try:
         converter.register_unstructure_hook(HTTPHeaderDict, dict)
         converter.register_structure_hook(HTTPHeaderDict, lambda obj, cls: HTTPHeaderDict(obj))
 
+        # Tell cattrs that a 'CachedResponse' forward ref is equivalent to the CachedResponse class
         converter.register_structure_hook(
-            CachedResponse,
+            ForwardRef('CachedResponse'),
             lambda obj, cls: converter.structure(obj, CachedResponse),
         )
         converter = CattrsStage(converter, dumps='unstructure', loads='structure')
