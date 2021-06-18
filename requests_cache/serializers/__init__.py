@@ -56,10 +56,10 @@ except ImportError as e:
     bson_serializer = get_placeholder_class(e)
 
 try:
-    import pyyaml
+    import yaml
 
     yaml_serializer = SerializerPipeline(
-        [preconf.pyyaml_converter, Stage(pyyaml, loads='load', dumps='dump')]
+        [preconf.pyyaml_converter, Stage(yaml, loads='load', dumps='dump')]
     )
 except ImportError as e:
     yaml_serializer = get_placeholder_class(e)
