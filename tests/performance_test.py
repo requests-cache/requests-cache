@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """A manual test to compare performance of different serializers
 
 Latest results:
@@ -22,7 +23,6 @@ cattrs+bson.loads: 1.322
 import json
 import os
 import pickle
-
 import sys
 from os.path import abspath, dirname, join
 from time import perf_counter as time
@@ -51,48 +51,48 @@ r = session.get('https://httpbin.org/get?x=y')
 r = session.get('https://httpbin.org/get?x=y')
 
 
-# def test_jsonpickle():
-#     base_test('jsonpickle', jsonpickle.encode, jsonpickle.decode)
+# def run_jsonpickle():
+#     run_serialize_deserialize('jsonpickle', jsonpickle.encode, jsonpickle.decode)
 
 
-def test_pickle():
-    base_test('pickle', pickle.dumps, pickle.loads)
+def run_pickle():
+    run_serialize_deserialize('pickle', pickle.dumps, pickle.loads)
 
 
-def test_cattrs():
+def run_cattrs():
     s = PickleSerializer()
-    base_test('cattrs', s.unstructure, s.structure)
+    run_serialize_deserialize('cattrs', s.unstructure, s.structure)
 
 
-def test_cattrs_pickle():
+def run_cattrs_pickle():
     s = PickleSerializer()
-    base_test('cattrs+pickle', s.dumps, s.loads)
+    run_serialize_deserialize('cattrs+pickle', s.dumps, s.loads)
 
 
-def test_cattrs_json():
+def run_cattrs_json():
     s = BaseSerializer(converter_factory=make_converter)
-    base_test(
+    run_serialize_deserialize(
         'cattrs+json',
         lambda obj: json.dumps(s.unstructure(obj)),
         lambda obj: s.structure(json.loads(obj)),
     )
 
 
-def test_cattrs_ujson():
+def run_cattrs_ujson():
     s = BaseSerializer(converter_factory=make_converter)
-    base_test(
+    run_serialize_deserialize(
         'cattrs+ujson',
         lambda obj: ujson.dumps(s.unstructure(obj)),
         lambda obj: s.structure(ujson.loads(obj)),
     )
 
 
-def test_cattrs_bson():
+def run_cattrs_bson():
     s = BSONSerializer()
-    base_test('cattrs+bson', s.dumps, s.loads)
+    run_serialize_deserialize('cattrs+bson', s.dumps, s.loads)
 
 
-def base_test(module, serialize, deserialize):
+def run_serialize_deserialize(module, serialize, deserialize):
     start = time()
     serialized = [serialize(r) for i in range(ITERATIONS)]
     print(f'{module}.{serialize.__name__} x{ITERATIONS}: {time() - start:.3f}')
@@ -104,17 +104,17 @@ def base_test(module, serialize, deserialize):
 
 if __name__ == '__main__':
     print('CPU:')
-    # test_jsonpickle()
-    test_pickle()
-    test_cattrs()
-    test_cattrs_pickle()
-    test_cattrs_json()
-    test_cattrs_ujson()
-    test_cattrs_bson()
+    # run_jsonpickle()
+    run_pickle()
+    run_cattrs()
+    run_cattrs_pickle()
+    run_cattrs_json()
+    run_cattrs_ujson()
+    run_cattrs_bson()
 
     # Memory
     # print('\nMemory:')
-    # profile(test_jsonpickle)()
-    # profile(test_pickle)()
-    # profile(test_cattrs)()
-    # profile(test_cattrs_pickle)()
+    # profile(run_jsonpickle)()
+    # profile(run_pickle)()
+    # profile(run_cattrs)()
+    # profile(run_cattrs_pickle)()

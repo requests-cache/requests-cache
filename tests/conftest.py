@@ -13,6 +13,7 @@ import pytest
 from datetime import datetime, timezone
 from functools import wraps
 from logging import basicConfig, getLogger
+from os.path import abspath, dirname, join
 from tempfile import NamedTemporaryFile
 
 import requests
@@ -57,6 +58,10 @@ MOCKED_URL_REDIRECT = 'http+mock://requests-cache.com/redirect'
 MOCKED_URL_REDIRECT_TARGET = 'http+mock://requests-cache.com/redirect_target'
 MOCKED_URL_404 = 'http+mock://requests-cache.com/nonexistent'
 MOCK_PROTOCOLS = ['mock://', 'http+mock://', 'https+mock://']
+
+PROJECT_DIR = abspath(dirname(dirname(__file__)))
+SAMPLE_DATA_DIR = join(PROJECT_DIR, 'tests', 'sample_data')
+SAMPLE_CACHE_FILES = [join(SAMPLE_DATA_DIR, path) for path in os.listdir(SAMPLE_DATA_DIR)]
 
 AWS_OPTIONS = {
     'endpoint_url': 'http://localhost:8000',
