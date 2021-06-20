@@ -56,7 +56,7 @@ $ pre-commit uninstall
 * See [conftest.py](https://github.com/reclosedev/requests-cache/blob/master/tests/conftest.py) for
   [pytest fixtures](https://docs.pytest.org/en/stable/fixture.html) that apply the most common
   mocking steps and other test setup.
-  
+
 ### Running Tests
 * Run `pytest` to run all tests
 * Run `pytest tests/unit` to run only unit tests
@@ -107,7 +107,7 @@ $ xdg-open docs/_build/index.html
 
 ### Readthedocs
 Sometimes, there are differences in the Readthedocs build environment that can cause builds to
-succeed locally but fail remotely. To help debug this, you can use the 
+succeed locally but fail remotely. To help debug this, you can use the
 [readthedocs/build](https://github.com/readthedocs/readthedocs-docker-images) container to build
 the docs. A configured build container is included in `docs/docker-compose.yml` to simplify this.
 
@@ -130,10 +130,10 @@ Here are some general guidelines for submitting a pull request:
 Notes for maintainers:
 - Releases are built and published to pypi based on **git tags.**
 - [Milestones](https://github.com/reclosedev/requests-cache/milestones) will be used to track
-progress on major and minor releases. 
+progress on major and minor releases.
 - GitHub Actions will build and deploy packages to PyPi on tagged commits
 on the `master` branch.
-  
+
 Release steps:
 - Update the version in `requests_cache/__init__.py`
 - Update the release notes in `HISTORY.md`
@@ -145,8 +145,19 @@ Release steps:
 ## Pre-Releases
 Pre-release builds are convenient for letting testers try out in-development changes. Versions with
 the suffix `.dev` (among others) can be deployed to PyPI and installed by users with `pip install --pre`,
-and are otherwise ignored by `pip install`. See python packaging docs on
-[pre-release versioning](https://packaging.python.org/guides/distributing-packages-using-setuptools/#pre-release-versioning)
-for more details.
+and are otherwise ignored by `pip install`:
+```
+# Install latest pre-release build:
+pip install -U --pre requests-cache
 
-A pre-release build for requests-cache will automatically be published for **any commits to the dev branch.**
+# Install latest stable build
+pip install -U requests-cache
+```
+
+Notes:
+* See python packaging docs on
+[pre-release versioning](https://packaging.python.org/guides/distributing-packages-using-setuptools/#pre-release-versioning) for more info on how this works.
+for more details.
+* Any collaborator can trigger a pre-release build for requests-cache by going to
+  **Actions > Deploy > Run workflow**.
+* A complete list of builds can by found on [PyPI under 'Release History'](https://pypi.org/project/requests-cache/#history).
