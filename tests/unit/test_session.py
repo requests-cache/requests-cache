@@ -1,7 +1,6 @@
 """CachedSession + BaseCache tests that use mocked responses only"""
 # TODO: This could be split up into some smaller test modules
 import json
-import pickle
 import pytest
 import time
 from collections import UserDict, defaultdict
@@ -22,6 +21,7 @@ from requests_cache.backends import (
     DbPickleDict,
     get_placeholder_class,
 )
+from requests_cache.backends.base import DESERIALIZE_ERRORS
 from requests_cache.cache_keys import url_to_key
 from requests_cache.models import CachedResponse
 from requests_cache.serializers import PickleSerializer, SafePickleSerializer
@@ -353,10 +353,7 @@ def test_include_get_headers_normalize(mock_session):
     assert mock_session.get(MOCKED_URL, headers=reversed_headers).from_cache is True
 
 
-@pytest.mark.parametrize(
-    'exception_cls',
-    [AttributeError, KeyError, TypeError, ValueError, pickle.PickleError],
-)
+@pytest.mark.parametrize('exception_cls', DESERIALIZE_ERRORS)
 def test_cache_error(exception_cls, mock_session):
     """If there is an error while fetching a cached response, a new one should be fetched"""
     mock_session.get(MOCKED_URL)

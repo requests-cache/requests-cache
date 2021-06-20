@@ -15,7 +15,7 @@ from ..models.response import AnyResponse, CachedResponse
 from ..serializers import init_serializer
 
 # Specific exceptions that may be raised during deserialization
-DESERIALIZE_ERRORS = (AttributeError, TypeError, ValueError, pickle.PickleError)
+DESERIALIZE_ERRORS = (AttributeError, ImportError, TypeError, ValueError, pickle.PickleError)
 
 ResponseOrKey = Union[CachedResponse, str]
 logger = getLogger(__name__)
