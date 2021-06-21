@@ -231,11 +231,6 @@ class BaseStorage(MutableMapping, ABC):
         if callable(self.serializer):
             self.serializer = self.serializer(**kwargs)
 
-        if not is_serializer(self.serializer):
-            breakpoint()
-            raise ValueError(
-                f"Selected serializer {self.serializer} is not a serializer. Must have dumps/loads"
-            )
         logger.debug(f'Initializing {type(self).__name__} with serializer: {self.serializer}')
 
     def bulk_delete(self, keys: Iterable[str]):
@@ -251,8 +246,3 @@ class BaseStorage(MutableMapping, ABC):
 
     def __str__(self):
         return str(list(self.keys()))
-
-
-def is_serializer(obj):
-    # Checks if a proposed serializer has these three required attributes
-    return hasattr(obj, 'dumps') and hasattr(obj, 'loads')
