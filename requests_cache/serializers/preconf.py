@@ -1,6 +1,5 @@
 import datetime
 from functools import partial
-from typing import ForwardRef
 
 from requests.cookies import RequestsCookieJar, cookiejar_from_dict
 from requests.structures import CaseInsensitiveDict
@@ -11,6 +10,8 @@ from ..models import CachedResponse
 from .pipeline import Stage
 
 try:
+    from typing import ForwardRef
+
     from cattr import GenConverter
     from cattr.preconf import bson, json, msgpack, orjson, pyyaml, tomlkit, ujson
 
@@ -76,5 +77,5 @@ except ImportError as e:
     msgpack_converter = get_placeholder_class(e)
     orjson_converter = get_placeholder_class(e)
     pyyaml_converter = get_placeholder_class(e)
-    tomlkit_converter = init_converter(tomlkit.make_converter)
+    tomlkit_converter = get_placeholder_class(e)
     ujson_converter = get_placeholder_class(e)
