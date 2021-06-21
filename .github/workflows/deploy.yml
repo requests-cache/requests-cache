@@ -65,6 +65,8 @@ jobs:
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
+          # botocore has a urllib version conflict with older versions of requests
+          poetry add boto3@1.15 botocore@1.18
           poetry add requests@${{ matrix.requests-version }}
           poetry install -v -E all
 
