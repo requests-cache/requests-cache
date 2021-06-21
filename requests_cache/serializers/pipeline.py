@@ -16,8 +16,8 @@ class Stage:
 class SerializerPipeline:
     def __init__(self, steps: List):
         self.steps = steps
-        self.dump_steps = [getattr(step, "dumps") for step in steps]
-        self.load_steps = [getattr(step, "loads") for step in reversed(steps)]
+        self.dump_steps = [step.dumps for step in steps]
+        self.load_steps = [step.loads for step in reversed(steps)]
 
     def dumps(self, value) -> Union[str, bytes]:
         for step in self.dump_steps:

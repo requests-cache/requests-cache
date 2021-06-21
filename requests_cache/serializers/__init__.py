@@ -10,8 +10,6 @@ try:
     from itsdangerous import Signer
 
     def safe_pickle_serializer(secret_key=None, salt="requests-cache", **kwargs):
-        if not secret_key:
-            raise ValueError("Cannot use itsdangerous without a secret key!")
         return SerializerPipeline(
             [
                 pickle_serializer,

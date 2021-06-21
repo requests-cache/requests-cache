@@ -56,8 +56,7 @@ class FileDict(BaseStorage):
                     return self.serializer.loads(f.read())
             except UnicodeDecodeError:
                 self.is_binary = True
-                with open(join(self.cache_dir, str(key)), 'rb') as f:
-                    return self.serializer.loads(f.read())
+                return self.__getitem__(key)
 
     def __delitem__(self, key):
         with self._try_io():
