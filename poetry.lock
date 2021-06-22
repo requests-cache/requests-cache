@@ -74,20 +74,20 @@ uvloop = ["uvloop (>=0.15.2)"]
 
 [[package]]
 name = "boto3"
-version = "1.17.97"
+version = "1.17.98"
 description = "The AWS SDK for Python"
 category = "main"
 optional = true
 python-versions = ">= 2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*"
 
 [package.dependencies]
-botocore = ">=1.20.97,<1.21.0"
+botocore = ">=1.20.98,<1.21.0"
 jmespath = ">=0.7.1,<1.0.0"
 s3transfer = ">=0.4.0,<0.5.0"
 
 [[package]]
 name = "botocore"
-version = "1.20.97"
+version = "1.20.98"
 description = "Low-level, data-driven core of boto 3."
 category = "main"
 optional = true
@@ -1066,7 +1066,7 @@ redis = ["redis"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "a192250c3c708845b07e339a6916cf21cb049b22b5211e10ebcfa3342771940d"
+content-hash = "1e485ef5c0c75c1361dbc16099ff2b81c720d92fb3faa490e1dbf181f8fbad4d"
 
 [metadata.files]
 alabaster = [
@@ -1094,12 +1094,12 @@ black = [
     {file = "black-21.6b0.tar.gz", hash = "sha256:dc132348a88d103016726fe360cb9ede02cecf99b76e3660ce6c596be132ce04"},
 ]
 boto3 = [
-    {file = "boto3-1.17.97-py2.py3-none-any.whl", hash = "sha256:77ea9ff6ce1d4a64839c358a713be80256584f478289a13562d1e0c1b9c362cc"},
-    {file = "boto3-1.17.97.tar.gz", hash = "sha256:0ab5afc51461c30f27aebef944211d16f47697b98ff8d2e2f6e49e59584853bb"},
+    {file = "boto3-1.17.98-py2.py3-none-any.whl", hash = "sha256:2c2f70608934b03f9c08f4cd185de223b5abd18245dd4d4800e1fbc2a2523e31"},
+    {file = "boto3-1.17.98.tar.gz", hash = "sha256:fccfa81cda69bb2317ed97e7149d7d84d19e6ec3bfbe3f721139e7ac0c407c73"},
 ]
 botocore = [
-    {file = "botocore-1.20.97-py2.py3-none-any.whl", hash = "sha256:000cf4a3670ab47e14ddb5bd68fe050c6136029a478cf0b18a78779897d4175c"},
-    {file = "botocore-1.20.97.tar.gz", hash = "sha256:f7e119cf3e0f4a36100f0e983583afa91a84fb27c479a1716820aee4f2e190ab"},
+    {file = "botocore-1.20.98-py2.py3-none-any.whl", hash = "sha256:b955b23fe2fbdbbc8e66f37fe2970de6b5d8169f940b200bcf434751709d38f6"},
+    {file = "botocore-1.20.98.tar.gz", hash = "sha256:b2a49de4ee04b690142c8e7240f0f5758e3f7673dd39cf398efe893bf5e11c3f"},
 ]
 bson = [
     {file = "bson-0.5.10.tar.gz", hash = "sha256:d6511b2ab051139a9123c184de1a04227262173ad593429d21e443d6462d6590"},
