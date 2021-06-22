@@ -37,6 +37,7 @@ class FileDict(BaseStorage):
         super().__init__(**kwargs)
         self.cache_dir = _get_cache_dir(cache_name, use_temp)
         makedirs(self.cache_dir, exist_ok=True)
+        self.is_binary = False
 
     @contextmanager
     def _try_io(self, ignore_errors: bool = False):
@@ -48,17 +49,24 @@ class FileDict(BaseStorage):
                 raise KeyError(e)
 
     def __getitem__(self, key):
-        mode = 'rb' if self.serializer.is_binary else 'r'
+        mode = 'rb' if self.is_binary else 'r'
         with self._try_io():
-            with open(join(self.cache_dir, str(key)), mode) as f:
-                return self.serializer.loads(f.read())
+            try:
+                with open(join(self.cache_dir, str(key)), mode) as f:
+                    return self.serializer.loads(f.read())
+            except UnicodeDecodeError:
+                self.is_binary = True
+                return self.__getitem__(key)
 
     def __delitem__(self, key):
         with self._try_io():
             unlink(join(self.cache_dir, str(key)))
 
     def __setitem__(self, key, value):
-        mode = 'wb' if self.serializer.is_binary else 'w'
+        serialized_value = self.serializer.dumps(value)
+        if isinstance(serialized_value, bytes):
+            self.is_binary = True
+        mode = 'wb' if self.is_binary else 'w'
         with self._try_io():
             with open(join(self.cache_dir, str(key)), mode) as f:
                 f.write(self.serializer.dumps(value))

@@ -1,47 +1,72 @@
-# flake8: noqa: F401
-from logging import getLogger
-from typing import Type, Union
+import pickle
 
 from .. import get_placeholder_class
-from .base import BaseSerializer
-from .pickle_serializer import PickleSerializer, SafePickleSerializer
+from . import preconf
+from .pipeline import SerializerPipeline, Stage
 
-SerializerSpecifier = Union[str, BaseSerializer, Type[BaseSerializer]]
-logger = getLogger(__name__)
+pickle_serializer = pickle
 
 try:
-    from .bson_serializer import BSONSerializer
+    from itsdangerous import Signer
+
+    def safe_pickle_serializer(secret_key=None, salt="requests-cache", **kwargs):
+        return SerializerPipeline(
+            [
+                pickle_serializer,
+                Stage(Signer(secret_key=secret_key, salt=salt), dumps='sign', loads='unsign'),
+            ],
+        )
+
+
 except ImportError as e:
-    BSONSerializer = get_placeholder_class(e)  # type: ignore
+    safe_pickle_serializer = get_placeholder_class(e)
+
+
 try:
-    from .json_serializer import JSONSerializer
+    import ujson as json
+
+    json_serializer = SerializerPipeline(
+        [
+            preconf.ujson_converter,  # CachedResponse -> JSON
+            json,  # JSON -> str
+        ],
+    )
+except ImportError:
+    import json
+
+    json_serializer = SerializerPipeline(
+        [
+            preconf.json_converter,  # CachedResponse -> JSON
+            json,  # JSON -> str
+        ],
+    )
+
+try:
+    import bson.json_util
+
+    bson_serializer = SerializerPipeline(
+        [
+            preconf.bson_converter,  # CachedResponse -> BSON
+            bson.json_util,  # BSON -> str
+        ],
+    )
 except ImportError as e:
-    JSONSerializer = get_placeholder_class(e)  # type: ignore
+    bson_serializer = get_placeholder_class(e)
+
+try:
+    import yaml
+
+    yaml_serializer = SerializerPipeline(
+        [preconf.pyyaml_converter, Stage(yaml, loads='load', dumps='dump')]
+    )
+except ImportError as e:
+    yaml_serializer = get_placeholder_class(e)
 
 
-SERIALIZER_CLASSES = {
-    'bson': BSONSerializer,
-    'json': JSONSerializer,
-    'pickle': PickleSerializer,
-    'safe_pickle': SafePickleSerializer,
+SERIALIZERS = {
+    "pickle": pickle_serializer,
+    "safe_pickle": safe_pickle_serializer,
+    "json": json_serializer,
+    "bson": bson_serializer,
+    "yaml": yaml_serializer,
 }
-
-
-def init_serializer(serializer: SerializerSpecifier = None, *args, **kwargs) -> BaseSerializer:
-    """Initialize a serializer from a name, class, or instance"""
-    logger.debug(f'Initializing serializer: {serializer}')
-
-    # Determine serializer class
-    if isinstance(serializer, BaseSerializer):
-        return serializer
-    elif isinstance(serializer, type):
-        return serializer(*args, **kwargs)
-    # If no serializer is specified and a secret key is available, use itsdangerous; otherwise pickle
-    elif not serializer:
-        serializer = 'safe_pickle' if kwargs.get('secret_key') else 'pickle'
-
-    serializer = str(serializer).lower()
-    if serializer not in SERIALIZER_CLASSES:
-        raise ValueError(f'Invalid serializer: {serializer}. Choose from: {SERIALIZER_CLASSES.keys()}')
-
-    return SERIALIZER_CLASSES[serializer](*args, **kwargs)

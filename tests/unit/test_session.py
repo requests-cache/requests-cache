@@ -10,6 +10,7 @@ from unittest.mock import patch
 from uuid import uuid4
 
 import requests
+from itsdangerous import Signer
 from itsdangerous.exc import BadSignature
 from requests.structures import CaseInsensitiveDict
 
@@ -24,7 +25,7 @@ from requests_cache.backends import (
 from requests_cache.backends.base import DESERIALIZE_ERRORS
 from requests_cache.cache_keys import url_to_key
 from requests_cache.models import CachedResponse
-from requests_cache.serializers import PickleSerializer, SafePickleSerializer
+from requests_cache.serializers import pickle_serializer
 from tests.conftest import (
     MOCKED_URL,
     MOCKED_URL_404,
@@ -566,12 +567,12 @@ def test_unpickle_errors(mock_session):
 
 def test_cache_signing(tempfile_path):
     session = CachedSession(tempfile_path)
-    assert isinstance(session.cache.responses.serializer, PickleSerializer)
+    assert session.cache.responses.serializer == pickle_serializer
 
     # With a secret key, itsdangerous should be used
     secret_key = str(uuid4())
     session = CachedSession(tempfile_path, secret_key=secret_key)
-    assert isinstance(session.cache.responses.serializer, SafePickleSerializer)
+    assert isinstance(session.cache.responses.serializer.steps[1].obj, Signer)
 
     # Simple serialize/deserialize round trip
     response = CachedResponse()

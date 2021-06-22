@@ -136,25 +136,63 @@ You can then use your custom backend in a :py:class:`.CachedSession` with the ``
 
 Custom Serializers
 ------------------
-If the built-in :ref:`serializers` don't suit your needs, you can create your own by subclassing
-:py:class:`.BaseSerializer`.
+If the built-in :ref:`serializers` don't suit your needs, you can use any object with dumps/loads methods that takes
+python classes as input, and returns either :py:class:.`str` or :py:class:`.bytes` objects.
 
-Example using an imaginary ``xson`` module that provides ``dumps`` and ``loads`` functions:
+Example using an imaginary ``custom_pickle`` module that provides ``dumps`` and ``loads`` functions:
 
-    >>> import xson
-    >>> from requests_cache.serializers import BaseSerializer
+    >>> import custom_pickle
+    >>> from requests_cache import CachedSession
     >>>
-    >>> class CustomSerializer(BaseSerializer):
-    ...     """Serializer that converts responses to XSON"""
-    ...
-    ...     def __init__(self, *args, **kwargs):
-    ...         super().__init__(*args, **kwargs)
-    ...
-    ...     def dumps(self, response: CachedResponse) -> bytes:
-    ...         return xson.dumps(super().dumps(response))
-    ...
-    ...     def loads(self, obj: bytes) -> CachedResponse:
-    ...         return super().loads(xson.loads(obj))
+    >>> session = CachedSession(serializer=custom_pickle)
+
+More complex serialization can be done with :py:class:`.SerializerPipeline`. Applications include text-based serialization
+(e.g. json / bson / msgpack / yaml / toml), signing, compression, and/or encryption. Any combination of these can be built using
+a multi-stage serializer composed with :py:class:`.SerializerPipeline`. A valid :py:class:`.SerializerPipeline` is any pipeline
+that starts with python objects, and ends with a :py:class:.`str` or :py:class:`.bytes` object. A valid stage of a pipeline is
+any object with a dumps/loads method. If the object has similar methods (e.g. compress / decompress), those can be aliased
+using :py:class:.`.Stage`.
+
+For example, a compressed pickle serializer can be built as:
+
+    >>> import pickle, gzip
+    >>> from requests_cache.serialzers import SerializerPipeline, Stage
+    >>> compressed_serializer = SerializerPipeline([pickle, Stage(gzip, dumps='compress', loads='decompress')])
+    >>> session = CachedSession(serializer=compressed_serializer)
+
+If you want to build a :py:class:`.SerializerPipeline` that works with a string version of cached requests, then the native
+python objects must first be converted to a dict-of-dicts format. Requeses_cache comes with support for this out of the box
+with cattr converters for most common text formats at `requests_cache.serializers.preconf`. For example, a compressed json
+pipeline could be built as follows:
+
+    >>> import json, gzip, codecs
+    >>> from requests_cache.serializers import SerializerPipeline, Stage
+    >>> from requests_cache.serializers.preconf import json_converter
+    >>> comp_json_serializer = SerializerPipeline([
+    ...     json_converter, # Convert Python objects to dict-of-dicts
+    ...     json, # Convert to string
+    ...     Stage(codecs.utf_8, dumps='encode', loads='decode'), # Convert to bytes
+    ...     Stage(gzip, dumps='compress', loads='decompress'), # Compress
+    ]
+
+Two gotchas to watch out for:
+
+- If you want to work with a string representation, the first stage must come from requests_cache.serializers.preconf
+- If you want to convert a string representation to bytes (e.g. for compression), you must use a codec from codecs
+  (pretty much always codecs.utf_8)
+
+
+Some of the other classes / objects that may be used with :py:class:`.SerializerPipelines` include:
+
+class                              loads    dumps
+=================================  =====    =====
+pickle                             dumps    loads
+gzip / zlib / bz2 / lzma           compress decompress
+codecs.[anything]                  encode   decode
+itsdangerous.Signer                sign     unsign
+itsdangerous.serializer.Serializer dumps    loads
+cryptography.fernet.Fernet         encrypt  decrypt
+
 
 Usage with other requests features
 ----------------------------------

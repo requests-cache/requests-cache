@@ -184,7 +184,7 @@ class DbPickleDict(DbDict):
 
     def __setitem__(self, key, value):
         serialized_value = self.serializer.dumps(value)
-        if self.serializer.is_binary:
+        if isinstance(serialized_value, bytes):
             serialized_value = sqlite3.Binary(serialized_value)
         super().__setitem__(key, serialized_value)
 

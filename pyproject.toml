@@ -34,6 +34,7 @@ ujson = {version = ">=4.0", optional = true}
 # Optional backend dependencies
 boto3 = { version = "^1.17", optional = true }
 pymongo = { version = "^3.0", optional = true }
+pyyaml = {version = ">=5.4", optional = true}
 redis = { version = "^3.0", optional = true }
 
 # Documentation dependencies
@@ -48,6 +49,7 @@ sphinxcontrib-apidoc = { version = "^0.3", optional = true }
 all = ["boto3", "cattrs", "pymongo", "redis", "ujson"]
 bson = ["cattrs", "bson"]  # BSON comes with pymongo, and can also be used as a standalone codec
 json = ["cattrs", "ujson"]
+yaml = ["cattrs", "yaml"]
 dynamodb = ["boto3"]
 mongodb = ["cattrs", "pymongo"]
 redis = ["redis"]
