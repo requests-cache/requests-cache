@@ -12,7 +12,7 @@ from requests.models import PreparedRequest
 from ..cache_control import ExpirationTime
 from ..cache_keys import create_key, remove_ignored_params, url_to_key
 from ..models.response import AnyResponse, CachedResponse
-from ..serializers import SERIALIZERS
+from ..serializers import init_serializer
 
 # Specific exceptions that may be raised during deserialization
 DESERIALIZE_ERRORS = (AttributeError, ImportError, TypeError, ValueError, pickle.PickleError)
@@ -224,29 +224,15 @@ class BaseStorage(MutableMapping, ABC):
     Args:
         secret_key: Optional secret key used to sign cache items for added security
         salt: Optional salt used to sign cache items
-        suppress_warnings: Don't show a warning when not using ``secret_key``
         serializer: Custom serializer that provides ``loads`` and ``dumps`` methods
     """
-
-    DEFAULT_SERIALIZER = 'pickle'
 
     def __init__(
         self,
         serializer=None,
-        suppress_warnings: bool = False,
         **kwargs,
     ):
-        serializer = serializer or self.DEFAULT_SERIALIZER
-
-        if "secret_key" in kwargs and serializer == 'pickle':
-            serializer = 'safe_pickle'
-
-        if isinstance(serializer, str):
-            self.serializer = SERIALIZERS[serializer]
-
-        if callable(self.serializer):
-            self.serializer = self.serializer(**kwargs)
-
+        self.serializer = init_serializer(serializer, **kwargs)
         logger.debug(f'Initializing {type(self).__name__} with serializer: {self.serializer}')
 
     def bulk_delete(self, keys: Iterable[str]):

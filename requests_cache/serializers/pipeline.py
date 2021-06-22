@@ -4,8 +4,7 @@ from ..models import CachedResponse
 
 
 class Stage:
-    # Generic utility class for aliasing dumps and loads to
-    # other methods
+    """Generic class to wrap serialization steps with consistent ``dumps()`` and ``loads()`` methods"""
 
     def __init__(self, obj: Any, dumps: str = "dumps", loads: str = "loads"):
         self.obj = obj
@@ -14,6 +13,8 @@ class Stage:
 
 
 class SerializerPipeline:
+    """A sequence of steps used to serialize and deserialize response objects"""
+
     def __init__(self, steps: List):
         self.steps = steps
         self.dump_steps = [step.dumps for step in steps]

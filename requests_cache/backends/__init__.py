@@ -22,7 +22,6 @@ BACKEND_KWARGS = CACHE_NAME_KWARGS + [
     'region_name',
     'salt',
     'secret_key',
-    'suppress_warnings',
     'write_capacity_units',
 ]
 

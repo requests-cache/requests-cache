@@ -33,7 +33,6 @@ class FileDict(BaseStorage):
     """A dictionary-like interface to files on the local filesystem"""
 
     def __init__(self, cache_name, use_temp: bool = False, **kwargs):
-        kwargs.setdefault('suppress_warnings', True)
         super().__init__(**kwargs)
         self.cache_dir = _get_cache_dir(cache_name, use_temp)
         makedirs(self.cache_dir, exist_ok=True)

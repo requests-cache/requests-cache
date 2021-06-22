@@ -1,72 +1,49 @@
+# flake8: noqa: F401
 import pickle
+from warnings import warn
 
 from .. import get_placeholder_class
-from . import preconf
 from .pipeline import SerializerPipeline, Stage
 
-pickle_serializer = pickle
-
+# If cattrs isn't installed, use plain pickle for pickle_serializer, and placeholders for the rest.
+# Additional checks for format-specific optional libraries are handled in the preconf module.
 try:
-    from itsdangerous import Signer
-
-    def safe_pickle_serializer(secret_key=None, salt="requests-cache", **kwargs):
-        return SerializerPipeline(
-            [
-                pickle_serializer,
-                Stage(Signer(secret_key=secret_key, salt=salt), dumps='sign', loads='unsign'),
-            ],
-        )
-
-
-except ImportError as e:
-    safe_pickle_serializer = get_placeholder_class(e)
-
-
-try:
-    import ujson as json
-
-    json_serializer = SerializerPipeline(
-        [
-            preconf.ujson_converter,  # CachedResponse -> JSON
-            json,  # JSON -> str
-        ],
-    )
-except ImportError:
-    import json
-
-    json_serializer = SerializerPipeline(
-        [
-            preconf.json_converter,  # CachedResponse -> JSON
-            json,  # JSON -> str
-        ],
-    )
-
-try:
-    import bson.json_util
-
-    bson_serializer = SerializerPipeline(
-        [
-            preconf.bson_converter,  # CachedResponse -> BSON
-            bson.json_util,  # BSON -> str
-        ],
+    from .cattrs import CattrStage
+    from .preconf import (
+        bson_serializer,
+        json_serializer,
+        pickle_serializer,
+        safe_pickle_serializer,
+        yaml_serializer,
     )
 except ImportError as e:
+    CattrStage = get_placeholder_class(e)
     bson_serializer = get_placeholder_class(e)
-
-try:
-    import yaml
-
-    yaml_serializer = SerializerPipeline(
-        [preconf.pyyaml_converter, Stage(yaml, loads='load', dumps='dump')]
-    )
-except ImportError as e:
+    json_serializer = get_placeholder_class(e)
+    pickle_serializer = pickle
+    safe_pickle_serializer = get_placeholder_class(e)
     yaml_serializer = get_placeholder_class(e)
 
 
 SERIALIZERS = {
-    "pickle": pickle_serializer,
-    "safe_pickle": safe_pickle_serializer,
-    "json": json_serializer,
-    "bson": bson_serializer,
-    "yaml": yaml_serializer,
+    'bson': bson_serializer,
+    'json': json_serializer,
+    'pickle': pickle_serializer,
+    'yaml': yaml_serializer,
 }
+
+
+def init_serializer(serializer=None, **kwargs):
+    """Initialize a serializer from a name, class, or instance"""
+    serializer = serializer or 'pickle'
+    # Backwards=compatibility with 0.6; will be removed in 0.8
+    if serializer == 'safe_pickle' or (serializer == 'pickle' and 'secret_key' in kwargs):
+        serializer = safe_pickle_serializer(**kwargs)
+        msg = (
+            'Please initialize with safe_pickle_serializer(secret_key) instead. '
+            'This usage is deprecated and will be removed in a future version.'
+        )
+        warn(DeprecationWarning(msg))
+    elif isinstance(serializer, str):
+        serializer = SERIALIZERS[serializer]
+    return serializer

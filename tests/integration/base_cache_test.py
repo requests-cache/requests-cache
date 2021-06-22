@@ -12,7 +12,7 @@ import requests
 
 from requests_cache import ALL_METHODS, CachedResponse, CachedSession
 from requests_cache.backends.base import BaseCache
-from requests_cache.serializers import SERIALIZERS
+from requests_cache.serializers import SERIALIZERS, SerializerPipeline, safe_pickle_serializer
 from tests.conftest import (
     CACHE_NAME,
     HTTPBIN_FORMATS,
@@ -27,6 +27,13 @@ from tests.conftest import (
 
 REQUESTS_VERSION = tuple([int(v) for v in requests.__version__.split('.')])
 
+# Handle optional dependencies if they're not installed; if so, skips will be shown in pytest output
+TEST_SERIALIZERS = SERIALIZERS.copy()
+try:
+    TEST_SERIALIZERS['safe_pickle'] = safe_pickle_serializer(secret_key='hunter2')
+except ImportError:
+    TEST_SERIALIZERS['safe_pickle'] = 'safe_pickle_placeholder'
+
 
 class BaseCacheTest:
     """Base class for testing cache backend classes"""
@@ -35,9 +42,7 @@ class BaseCacheTest:
     init_kwargs: Dict = {}
 
     def init_session(self, clear=True, **kwargs) -> CachedSession:
-        kwargs.update(
-            {'allowable_methods': ALL_METHODS, 'suppress_warnings': True, 'secret_key': 'hunter2'}
-        )
+        kwargs.setdefault('allowable_methods', ALL_METHODS)
         kwargs.setdefault('serializer', 'pickle')
         backend = self.backend_class(CACHE_NAME, **self.init_kwargs, **kwargs)
         if clear:
@@ -46,23 +51,29 @@ class BaseCacheTest:
 
         return CachedSession(backend=backend, **self.init_kwargs, **kwargs)
 
-    @pytest.mark.parametrize('serializer', SERIALIZERS)
+    @pytest.mark.parametrize('serializer', TEST_SERIALIZERS.values())
     @pytest.mark.parametrize('method', HTTPBIN_METHODS)
     @pytest.mark.parametrize('field', ['params', 'data', 'json'])
     def test_all_methods(self, field, method, serializer):
         """Test all relevant combinations of methods X data fields X serializers.
         Requests with different request params, data, or json should be cached under different keys.
         """
+        if not isinstance(serializer, SerializerPipeline):
+            pytest.skip(f'Dependencies not installed for {serializer}')
+
         url = httpbin(method.lower())
         session = self.init_session(serializer=serializer)
         for params in [{'param_1': 1}, {'param_1': 2}, {'param_2': 2}]:
             assert session.request(method, url, **{field: params}).from_cache is False
             assert session.request(method, url, **{field: params}).from_cache is True
 
-    @pytest.mark.parametrize('serializer', SERIALIZERS)
+    @pytest.mark.parametrize('serializer', TEST_SERIALIZERS.values())
     @pytest.mark.parametrize('response_format', HTTPBIN_FORMATS)
     def test_all_response_formats(self, response_format, serializer):
         """Test that all relevant combinations of response formats X serializers are cached correctly"""
+        if not isinstance(serializer, SerializerPipeline):
+            pytest.skip(f'Dependencies not installed for {serializer}')
+
         session = self.init_session(serializer=serializer)
         # Temporary workaround for this issue: https://github.com/kevin1024/pytest-httpbin/issues/60
         if response_format == 'json' and USE_PYTEST_HTTPBIN:

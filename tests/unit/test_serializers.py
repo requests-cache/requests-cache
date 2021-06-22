@@ -13,10 +13,10 @@ pytestmark = pytest.mark.skipif(
 
 @patch.dict(sys.modules, {'ujson': None, 'cattr.preconf.ujson': None})
 def test_stdlib_json():
-    import requests_cache.serializers
+    import requests_cache.serializers.preconf
 
-    reload(requests_cache.serializers)
-    from requests_cache.serializers import json as module_json
+    reload(requests_cache.serializers.preconf)
+    from requests_cache.serializers.preconf import json as module_json
 
     assert module_json is json
 
@@ -24,9 +24,9 @@ def test_stdlib_json():
 def test_ujson():
     import ujson
 
-    import requests_cache.serializers
+    import requests_cache.serializers.preconf
 
-    reload(requests_cache.serializers)
-    from requests_cache.serializers import json as module_json
+    reload(requests_cache.serializers.preconf)
+    from requests_cache.serializers.preconf import json as module_json
 
     assert module_json is ujson

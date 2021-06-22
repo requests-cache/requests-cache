@@ -12,10 +12,15 @@ def get_placeholder_class(original_exception: Exception = None):
     """
 
     class Placeholder:
-        def __init__(*args, **kwargs):
-            msg = 'Dependencies are not installed for this feature'
-            logger.error(msg)
-            raise original_exception or ImportError(msg)
+        msg = 'Dependencies are not installed for this feature'
+
+        def __init__(self, *args, **kwargs):
+            logger.error(self.msg)
+            raise original_exception or ImportError(self.msg)
+
+        def __getattr__(self, *args, **kwargs):
+            logger.error(self.msg)
+            raise original_exception or ImportError(self.msg)
 
     return Placeholder
 

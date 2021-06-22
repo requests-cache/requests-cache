@@ -22,7 +22,7 @@ class TestRedisDict(BaseStorageTest):
 
     @patch('requests_cache.backends.redis.StrictRedis')
     def test_connection_kwargs(self, mock_redis):
-        """A spot check to make sure optional connection kwargs gets passed to connection"""
+        """A spot check to make sure optional connection kwargs get passed to connection"""
         RedisCache('test', username='user', password='pass', invalid_kwarg='???')
         mock_redis.assert_called_with(username='user', password='pass')
 

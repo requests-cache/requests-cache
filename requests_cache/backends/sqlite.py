@@ -71,7 +71,6 @@ class DbDict(BaseStorage):
     def __init__(
         self, db_path, table_name='http_cache', fast_save=False, use_temp: bool = False, **kwargs
     ):
-        kwargs.setdefault('suppress_warnings', True)
         super().__init__(**kwargs)
         self.connection_kwargs = get_valid_kwargs(sqlite_template, kwargs)
         self.db_path = _get_db_path(db_path, use_temp)

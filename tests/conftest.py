@@ -121,7 +121,6 @@ def mock_session() -> CachedSession:
             db_path=temp.name,
             backend='sqlite',
             allowable_methods=ALL_METHODS,
-            suppress_warnings=True,
         )
         yield mount_mock_adapter(session)
 
@@ -134,7 +133,6 @@ def tempfile_session() -> CachedSession:
             cache_name=temp.name,
             backend='sqlite',
             allowable_methods=ALL_METHODS,
-            suppress_warnings=True,
         )
         yield session
 
@@ -156,7 +154,6 @@ def installed_session() -> CachedSession:
             cache_name=temp.name,
             backend='sqlite',
             allowable_methods=ALL_METHODS,
-            suppress_warnings=True,
         )
         yield requests.Session()
     requests_cache.uninstall_cache()
