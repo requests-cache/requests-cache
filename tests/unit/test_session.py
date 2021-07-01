@@ -35,6 +35,8 @@ from tests.conftest import (
     MOCKED_URL_REDIRECT_TARGET,
 )
 
+YESTERDAY = datetime.utcnow() - timedelta(days=1)
+
 
 def test_init_unregistered_backend():
     with pytest.raises(ValueError):
@@ -177,11 +179,16 @@ def test_values(mock_session):
     assert all([isinstance(response, CachedResponse) for response in responses])
 
 
-def test_values__with_invalid_response(mock_session):
+@pytest.mark.parametrize('check_expiry, expected_count', [(True, 1), (False, 2)])
+def test_values__with_invalid_responses(check_expiry, expected_count, mock_session):
+    """values() should always exclude invalid responses, and optionally exclude expired responses"""
     responses = [mock_session.get(url) for url in [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_HTTPS]]
-    responses[2] = AttributeError
+    responses[1] = AttributeError
+    responses[2] = CachedResponse(expires=YESTERDAY, url='test')
+
     with patch.object(DbPickleDict, '__getitem__', side_effect=responses):
-        assert len(list(mock_session.cache.values())) == 2
+        values = mock_session.cache.values(check_expiry=check_expiry)
+        assert len(list(values)) == expected_count
 
     # The invalid response should be skipped, but remain in the cache for now
     assert len(mock_session.cache.responses.keys()) == 3
@@ -197,13 +204,15 @@ class TimeBomb:
         raise ValueError('Invalid response!')
 
 
-def test_valid_response_count(mock_session):
-    """valid_response_count() should count only valid and unexpired responses"""
+@pytest.mark.parametrize('check_expiry, expected_count', [(True, 2), (False, 3)])
+def test_response_count(check_expiry, expected_count, mock_session):
+    """response_count() should always exclude invalid responses, and optionally exclude expired responses"""
     mock_session.get(MOCKED_URL)
     mock_session.get(MOCKED_URL_JSON)
 
+    mock_session.cache.responses['expired_response'] = CachedResponse(expires=YESTERDAY)
     mock_session.cache.responses['invalid_response'] = TimeBomb()
-    assert mock_session.cache.valid_response_count() == 2
+    assert mock_session.cache.response_count(check_expiry=check_expiry) == expected_count
 
 
 def test_filter_fn(mock_session):

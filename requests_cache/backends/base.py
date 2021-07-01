@@ -136,7 +136,7 @@ class BaseCache:
         keys_to_update = {}
         keys_to_delete = []
 
-        for key, response in self._get_valid_responses(delete_invalid=True):
+        for key, response in self._get_valid_responses(delete=True):
             # If we're revalidating and it's not yet expired, update the cached item's expiration
             if expire_after is not None and not response.revalidate(expire_after):
                 keys_to_update[key] = response
@@ -168,42 +168,49 @@ class BaseCache:
         """Returns `True` if cache has `url`, `False` otherwise. Works only for GET request urls"""
         return self.has_key(url_to_key(url, self.ignored_parameters))  # noqa: W601
 
-    def keys(self) -> Iterator[str]:
-        """Get all cache keys for redirects and (valid) responses combined"""
+    def keys(self, check_expiry=False) -> Iterator[str]:
+        """Get all cache keys for redirects and valid responses combined"""
         yield from self.redirects.keys()
-        for key, _ in self._get_valid_responses():
+        for key, _ in self._get_valid_responses(check_expiry=check_expiry):
             yield key
 
-    def values(self) -> Iterator[CachedResponse]:
+    def values(self, check_expiry=False) -> Iterator[CachedResponse]:
         """Get all valid response objects from the cache"""
-        for _, response in self._get_valid_responses():
+        for _, response in self._get_valid_responses(check_expiry=check_expiry):
             yield response
 
     def response_count(self, check_expiry=False) -> int:
-        """Get the number of valid responses in the cache, excluding invalid (unusable) responses.
+        """Get the number of responses in the cache, excluding invalid (unusable) responses.
         Can also optionally exclude expired responses.
         """
-        return len(list(self._get_valid_responses(check_expiry=check_expiry)))
+        return len(list(self.values(check_expiry=check_expiry)))
 
-    def _get_valid_responses(self, delete_invalid=False) -> Iterator[Tuple[str, CachedResponse]]:
+    def _get_valid_responses(
+        self, check_expiry=False, delete=False
+    ) -> Iterator[Tuple[str, CachedResponse]]:
         """Get all responses from the cache, and skip (+ optionally delete) any invalid ones that
-        can't be deserialized"""
-        keys_to_delete = []
+        can't be deserialized. Can also optionally check response expiry and exclude expired responses.
+        """
+        invalid_keys = []
 
         for key in self.responses.keys():
             try:
-                yield key, self.responses[key]
+                response = self.responses[key]
+                if check_expiry and response.is_expired:
+                    invalid_keys.append(key)
+                else:
+                    yield key, response
             except DESERIALIZE_ERRORS:
-                keys_to_delete.append(key)
+                invalid_keys.append(key)
 
         # Delay deletion until the end, to improve responsiveness when used as a generator
-        if delete_invalid:
-            logger.debug(f'Deleting {len(keys_to_delete)} invalid responses')
-            self.bulk_delete(keys_to_delete)
+        if delete:
+            logger.debug(f'Deleting {len(invalid_keys)} invalid/expired responses')
+            self.bulk_delete(invalid_keys)
 
     def __str__(self):
-        """Show a count of total rows. For performance reasons, this does not check for invalid or
-        expired responses.
+        """Show a count of total **rows** currently stored in the backend. For performance reasons,
+        this does not check for invalid or expired responses.
         """
         return f'Total rows: {len(self.responses)} responses, {len(self.redirects)} redirects'
 
