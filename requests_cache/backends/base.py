@@ -179,6 +179,12 @@ class BaseCache:
         for _, response in self._get_valid_responses():
             yield response
 
+    def response_count(self, check_expiry=False) -> int:
+        """Get the number of valid responses in the cache, excluding invalid (unusable) responses.
+        Can also optionally exclude expired responses.
+        """
+        return len(list(self._get_valid_responses(check_expiry=check_expiry)))
+
     def _get_valid_responses(self, delete_invalid=False) -> Iterator[Tuple[str, CachedResponse]]:
         """Get all responses from the cache, and skip (+ optionally delete) any invalid ones that
         can't be deserialized"""

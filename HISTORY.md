@@ -39,6 +39,7 @@
 ### General
 * Add option to manually cache response objects with `BaseCache.save_response()`
 * Add `BaseCache.keys()` and `values()` methods
+* Add `BaseCache.response_count()` method to get an accurate count of responses (excluding invalid and expired)
 * Show summarized response details with `str(CachedResponse)`
 * Add more detailed repr methods for `CachedSession`, `CachedResponse`, and `BaseCache`
 * Add support for caching multipart form uploads
@@ -112,7 +113,7 @@ next time they are requested. They can also be manually converted or removed, if
 * Add [example script](https://github.com/reclosedev/requests-cache/blob/master/examples/convert_cache.py)
   to convert an existing cache from previous serialization format to new one
 * When running `remove_expired_responses()`, also remove responses that are invalid due to updated
-  serialization format 
+  serialization format
 * Add `CachedResponse` class to wrap cached `requests.Response` objects, which makes additional
   cache information available to client code
 * Add `CachedHTTPResponse` class to wrap `urllib3.response.HTTPResponse` objects, available via `CachedResponse.raw`

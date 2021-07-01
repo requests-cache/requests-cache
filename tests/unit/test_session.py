@@ -187,6 +187,25 @@ def test_values__with_invalid_response(mock_session):
     assert len(mock_session.cache.responses.keys()) == 3
 
 
+class TimeBomb:
+    """Class that will raise an error when unpickled"""
+
+    def __init__(self):
+        self.foo = 'bar'
+
+    def __setstate__(self, value):
+        raise ValueError('Invalid response!')
+
+
+def test_valid_response_count(mock_session):
+    """valid_response_count() should count only valid and unexpired responses"""
+    mock_session.get(MOCKED_URL)
+    mock_session.get(MOCKED_URL_JSON)
+
+    mock_session.cache.responses['invalid_response'] = TimeBomb()
+    assert mock_session.cache.valid_response_count() == 2
+
+
 def test_filter_fn(mock_session):
     mock_session.filter_fn = lambda r: r.request.url != MOCKED_URL_JSON
     mock_session.get(MOCKED_URL)
