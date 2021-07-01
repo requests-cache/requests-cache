@@ -202,7 +202,10 @@ class BaseCache:
             self.bulk_delete(keys_to_delete)
 
     def __str__(self):
-        return f'redirects: {len(self.redirects)}\nresponses: {len(self.responses)}'
+        """Show a count of total rows. For performance reasons, this does not check for invalid or
+        expired responses.
+        """
+        return f'Total rows: {len(self.responses)} responses, {len(self.redirects)} redirects'
 
     def __repr__(self):
         return f'<{self.__class__.__name__}(name={self.name})>'

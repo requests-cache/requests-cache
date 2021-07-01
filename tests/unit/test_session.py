@@ -138,7 +138,7 @@ def test_repr(mock_session):
     mock_session.cache.redirects['key_2'] = 'value'
 
     assert mock_session.cache.name in repr(mock_session) and '10.5' in repr(mock_session)
-    assert 'redirects: 2' in str(mock_session.cache) and 'responses: 1' in str(mock_session.cache)
+    assert '2 redirects' in str(mock_session.cache) and '1 responses' in str(mock_session.cache)
 
 
 def test_urls(mock_session):
