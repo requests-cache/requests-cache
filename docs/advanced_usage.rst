@@ -72,6 +72,18 @@ combined keys and responses.
     >>> print('All cache keys for redirects and responses combined:')
     >>> print(list(session.cache.keys()))
 
+Both methods also take a ``check_expiry`` argument to exclude expired responses:
+
+    >>> print('All unexpired responses:')
+    >>> for response in session.cache.values(check_expiry=True):
+    >>>     print(response)
+
+Similarly, you can get a count of responses with :py:meth:`.BaseCache.response_count`, and optionally
+exclude expired responses:
+
+    >>> print(f'Total responses: {session.cache.response_count()}')
+    >>> print(f'Unexpired responses: {session.cache.response_count(check_expiry=True)}')
+
 Custom Response Filtering
 -------------------------
 If you need more advanced behavior for determining what to cache, you can provide a custom filtering
