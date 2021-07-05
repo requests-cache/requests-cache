@@ -35,15 +35,21 @@ directly:
 
 Signing Cached Responses
 ------------------------
-Once you have your key, just pass it to :py:class:`.CachedSession` or :py:func:`.install_cache` to start using it:
+Once you have your key, create a :py:func:`.safe_pickle_serializer` with it:
 
-    >>> from requests_cache import CachedSession
-    >>> session = CachedSession(secret_key=secret_key)
+    >>> from requests_cache import CachedSession, safe_pickle_serializer
+    >>> serializer = safe_pickle_serializer(secret_key=secret_key)
+    >>> session = CachedSession(serializer=serializer)
     >>> session.get('https://httpbin.org/get')
+
+.. note::
+    You can also make your own :ref:`custom serializer <advanced_usage:custom serializers>`
+    using ``itsdangerous``, if you would like more control over how responses are serialized.
 
 You can verify that it's working by modifying the cached item (*without* your key):
 
-    >>> session_2 = CachedSession(secret_key='a different key')
+    >>> serializer_2 = safe_pickle_serializer(secret_key='a different key')
+    >>> session_2 = CachedSession(serializer=serializer_2)
     >>> cache_key = list(session_2.cache.responses.keys())[0]
     >>> session_2.cache.responses[cache_key] = 'exploit!'
 

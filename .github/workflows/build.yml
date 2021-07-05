@@ -73,8 +73,8 @@ jobs:
       - name: Run tests
         run: |
           source $VENV
-          pytest -x tests/unit --numprocesses=auto ${{ env.COVERAGE_ARGS }}
-          pytest -x tests/integration --cov-append ${{ env.COVERAGE_ARGS }}
+          pytest -rs -x tests/unit --numprocesses=auto ${{ env.COVERAGE_ARGS }}
+          pytest -rs -x tests/integration --cov-append ${{ env.COVERAGE_ARGS }}
 
       # Latest python version: send coverage report to coveralls
       - name: Run coveralls

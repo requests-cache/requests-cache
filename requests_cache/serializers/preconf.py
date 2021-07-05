@@ -1,81 +1,83 @@
-import datetime
-from functools import partial
+"""The ``cattrs`` library includes a number of pre-configured converters that perform some
+additional steps required for specific serialization formats.
 
-from requests.cookies import RequestsCookieJar, cookiejar_from_dict
-from requests.structures import CaseInsensitiveDict
-from urllib3.response import HTTPHeaderDict
+This module wraps those converters as serializer :py:class:`.Stage` objects. These are then used as
+a stage in a :py:class:`.SerializerPipeline`, which runs after the base converter and before the
+format's ``dumps()`` (or equivalent) method.
+
+For any optional libraries that aren't installed, the corresponding serializer will be a placeholder
+class that raises an ``ImportError`` at initialization time instead of at import time.
+
+Requires python 3.7+.
+"""
+import pickle
+
+from cattr.preconf import bson, json, msgpack, orjson, pyyaml, tomlkit, ujson
 
 from .. import get_placeholder_class
-from ..models import CachedResponse
-from .pipeline import Stage
+from .cattrs import CattrStage
+from .pipeline import SerializerPipeline, Stage
 
+base_stage = CattrStage()
+bson_preconf_stage = CattrStage(bson.make_converter)
+json_preconf_stage = CattrStage(json.make_converter)
+msgpack_preconf_stage = CattrStage(msgpack.make_converter)
+orjson_preconf_stage = CattrStage(orjson.make_converter)
+yaml_preconf_stage = CattrStage(pyyaml.make_converter)
+toml_preconf_stage = CattrStage(tomlkit.make_converter)
+ujson_preconf_stage = CattrStage(ujson.make_converter)
+
+
+# Pickle serializer that uses the cattrs base converter
+pickle_serializer = SerializerPipeline([base_stage, pickle])
+
+# Pickle serializer with an additional stage using itsdangerous
 try:
-    from typing import ForwardRef
+    from itsdangerous import Signer
 
-    from cattr import GenConverter
-    from cattr.preconf import bson, json, msgpack, orjson, pyyaml, tomlkit, ujson
+    def signer_stage(secret_key=None, salt='requests-cache'):
+        return Stage(Signer(secret_key=secret_key, salt=salt), dumps='sign', loads='unsign')
 
-    def to_datetime(obj, cls) -> datetime:
-        if isinstance(obj, str):
-            obj = datetime.fromisoformat(obj)
-        return obj
-
-    def to_timedelta(obj, cls) -> datetime.timedelta:
-        if isinstance(obj, (int, float)):
-            obj = datetime.timedelta(seconds=obj)
-        return obj
-
-    class CattrsStage(Stage):
-        def __init__(self, converter, *args, **kwargs):
-            super().__init__(converter, *args, **kwargs)
-            self.loads = partial(converter.structure, cl=CachedResponse)
-
-    def init_converter(factory: GenConverter = None):
-        """Make a converter to structure and unstructure some of the nested objects within a response,
-        if cattrs is installed.
+    def safe_pickle_serializer(secret_key=None, salt='requests-cache', **kwargs):
+        """Create a serializer that uses ``itsdangerous`` to add a signature to responses during
+        writes, and validate that signature with a secret key during reads.
         """
-        converter = factory(omit_if_default=True)
+        return SerializerPipeline([base_stage, pickle, signer_stage(secret_key, salt)])
 
-        # Convert datetimes to and from iso-formatted strings
-        converter.register_unstructure_hook(datetime, lambda obj: obj.isoformat() if obj else None)
-        converter.register_structure_hook(datetime, to_datetime)
-
-        # Convert timedeltas to and from float values in seconds
-        converter.register_unstructure_hook(
-            datetime.timedelta, lambda obj: obj.total_seconds() if obj else None
-        )
-        converter.register_structure_hook(datetime.timedelta, to_timedelta)
-
-        # Convert dict-like objects to and from plain dicts
-        converter.register_unstructure_hook(RequestsCookieJar, lambda obj: dict(obj.items()))
-        converter.register_structure_hook(RequestsCookieJar, lambda obj, cls: cookiejar_from_dict(obj))
-        converter.register_unstructure_hook(CaseInsensitiveDict, dict)
-        converter.register_structure_hook(CaseInsensitiveDict, lambda obj, cls: CaseInsensitiveDict(obj))
-        converter.register_unstructure_hook(HTTPHeaderDict, dict)
-        converter.register_structure_hook(HTTPHeaderDict, lambda obj, cls: HTTPHeaderDict(obj))
-
-        # Tell cattrs that a 'CachedResponse' forward ref is equivalent to the CachedResponse class
-        converter.register_structure_hook(
-            ForwardRef('CachedResponse'),
-            lambda obj, cls: converter.structure(obj, CachedResponse),
-        )
-        converter = CattrsStage(converter, dumps='unstructure', loads='structure')
-
-        return converter
-
-    bson_converter = init_converter(bson.make_converter)
-    json_converter = init_converter(json.make_converter)
-    msgpack_converter = init_converter(msgpack.make_converter)
-    orjson_converter = init_converter(orjson.make_converter)
-    pyyaml_converter = init_converter(pyyaml.make_converter)
-    tomlkit_converter = init_converter(tomlkit.make_converter)
-    ujson_converter = init_converter(ujson.make_converter)
 
 except ImportError as e:
-    bson_converter = get_placeholder_class(e)
-    json_converter = get_placeholder_class(e)
-    msgpack_converter = get_placeholder_class(e)
-    orjson_converter = get_placeholder_class(e)
-    pyyaml_converter = get_placeholder_class(e)
-    tomlkit_converter = get_placeholder_class(e)
-    ujson_converter = get_placeholder_class(e)
+    signer_stage = get_placeholder_class(e)
+    safe_pickle_serializer = get_placeholder_class(e)
+
+# BSON serializer using either PyMongo's bson.json_util if installed, otherwise standalone bson codec
+try:
+    try:
+        from bson import json_util as bson
+    except ImportError:
+        import bson
+
+    bson_serializer = SerializerPipeline([bson_preconf_stage, bson])
+except ImportError as e:
+    bson_serializer = get_placeholder_class(e)
+
+# JSON serailizer using ultrajson if installed, otherwise stdlib json
+try:
+    import ujson as json
+
+    converter = ujson_preconf_stage
+except ImportError:
+    import json
+
+    converter = json_preconf_stage
+
+json_serializer = SerializerPipeline([converter, json])
+
+# YAML serializer using pyyaml
+try:
+    import yaml
+
+    yaml_serializer = SerializerPipeline(
+        [yaml_preconf_stage, Stage(yaml, loads='safe_load', dumps='safe_dump')]
+    )
+except ImportError as e:
+    yaml_serializer = get_placeholder_class(e)
