@@ -117,5 +117,6 @@ jobs:
           black --check --diff .
           isort --check --diff .
           flake8 .
+          mypy requests_cache
       - name: Run cyclomatic complexity check
         run: poetry run radon cc ${{ env.COMPLEXITY_ARGS }} requests_cache

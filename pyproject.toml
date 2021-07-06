@@ -63,6 +63,7 @@ isort = "^5.8"
 flake8 = "^3.9"
 flake8-comprehensions = "*"
 flake8-polyfill = "*"
+mypy = "^0.910"
 pre-commit = {version = "^2.12", python = "^3.6.2"}
 psutil = "^5.0"
 pytest = "^6.2"
@@ -73,6 +74,10 @@ radon = "^5.0"
 requests-mock = "^1.8"
 rich = ">=10.0"
 timeout-decorator = "^0.5"
+types-pyyaml = ">=5.4.3"
+types-redis = ">=3.5.4"
+types-requests = ">=0.1.8"
+types-ujson = ">=0.1.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
