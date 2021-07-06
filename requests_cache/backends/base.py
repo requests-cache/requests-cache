@@ -1,17 +1,15 @@
 import pickle
 import warnings
 from abc import ABC
+from collections import UserDict
 from collections.abc import MutableMapping
 from datetime import datetime
 from logging import getLogger
 from typing import Iterable, Iterator, Tuple, Union
 
-import requests
-from requests.models import PreparedRequest
-
 from ..cache_control import ExpirationTime
 from ..cache_keys import create_key, remove_ignored_params, url_to_key
-from ..models.response import AnyResponse, CachedResponse
+from ..models import AnyRequest, AnyResponse, CachedResponse
 from ..serializers import init_serializer
 
 # Specific exceptions that may be raised during deserialization
@@ -34,9 +32,9 @@ class BaseCache:
         ignored_parameters: Iterable[str] = None,
         **kwargs,
     ):
-        self.name = None
-        self.redirects = {}
-        self.responses = {}
+        self.name: str = ''
+        self.redirects: BaseStorage = DictStorage()
+        self.responses: BaseStorage = DictStorage()
         self.include_get_headers = include_get_headers
         self.ignored_parameters = ignored_parameters
 
@@ -60,7 +58,7 @@ class BaseCache:
         cached_response.request = remove_ignored_params(cached_response.request, self.ignored_parameters)
         self.responses[key] = cached_response
 
-    def save_redirect(self, request: PreparedRequest, response_key: str):
+    def save_redirect(self, request: AnyRequest, response_key: str):
         """
         Map a redirect request to a response. This makes it possible to associate many keys with a
         single response.
@@ -115,7 +113,7 @@ class BaseCache:
         self.responses.bulk_delete(keys)
         # Remove any redirects that no longer point to an existing response
         invalid_redirects = [k for k, v in self.redirects.items() if v not in self.responses]
-        self.redirects.bulk_delete(set(keys + invalid_redirects))
+        self.redirects.bulk_delete(set(keys) | set(invalid_redirects))
 
     def clear(self):
         """Delete all items from the cache"""
@@ -156,9 +154,9 @@ class BaseCache:
         warnings.warn(DeprecationWarning(msg))
         self.remove_expired_responses(*args, **kwargs)
 
-    def create_key(self, request: requests.PreparedRequest, **kwargs) -> str:
+    def create_key(self, request: AnyRequest, **kwargs) -> str:
         """Create a normalized cache key from a request object"""
-        return create_key(request, self.ignored_parameters, self.include_get_headers, **kwargs)
+        return create_key(request, self.ignored_parameters, self.include_get_headers, **kwargs)  # type: ignore
 
     def has_key(self, key: str) -> bool:
         """Returns `True` if cache has `key`, `False` otherwise"""
@@ -248,3 +246,7 @@ class BaseStorage(MutableMapping, ABC):
 
     def __str__(self):
         return str(list(self.keys()))
+
+
+class DictStorage(UserDict, BaseStorage):
+    """A basic dict wrapper class for non-persistent storage"""

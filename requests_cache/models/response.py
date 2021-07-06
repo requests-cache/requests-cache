@@ -1,7 +1,7 @@
 """Classes to wrap cached response objects"""
 from datetime import datetime, timedelta, timezone
 from logging import getLogger
-from typing import List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
 from attr import define, field
 from requests import Response as OriginalResponse
@@ -22,7 +22,7 @@ logger = getLogger(__name__)
 
 
 @define(auto_attribs=False)
-class CachedResponse(Response):
+class CachedResponse(Response):  # type: ignore
     """A serializable dataclass that emulates :py:class:`requests.Response`. Public attributes and
     methods on CachedResponse objects will behave the same as those from the original response, but
     with different internals optimized for serialization.
@@ -35,10 +35,10 @@ class CachedResponse(Response):
     _content: bytes = field(default=None)
     url: str = field(default=None)
     status_code: int = field(default=0)
-    cookies: RequestsCookieJar = field(factory=dict)
+    cookies: RequestsCookieJar = field(factory=RequestsCookieJar)
     created_at: datetime = field(factory=datetime.utcnow)
     elapsed: timedelta = field(factory=timedelta)
-    expires: datetime = field(default=None)
+    expires: Optional[datetime] = field(default=None)
     encoding: str = field(default=None)
     headers: CaseInsensitiveDict = field(factory=dict)
     history: List['CachedResponse'] = field(factory=list)
@@ -52,7 +52,7 @@ class CachedResponse(Response):
             self.raw.reset(self._content)
 
     @classmethod
-    def from_response(cls, original_response: Response, **kwargs):
+    def from_response(cls, original_response: OriginalResponse, **kwargs):
         """Create a CachedResponse based on an original response object"""
         obj = cls(**kwargs)
 
@@ -115,9 +115,6 @@ class CachedResponse(Response):
         )
 
 
-AnyResponse = Union[Response, CachedResponse]
-
-
 def format_datetime(value: Optional[datetime]) -> str:
     """Get a formatted datetime string in the local time zone"""
     if not value:
@@ -139,14 +136,19 @@ def format_file_size(n_bytes: int) -> str:
             return _format(unit)
         filesize /= 1024
 
+    if TYPE_CHECKING:
+        return _format(unit)
 
-def set_response_defaults(response: AnyResponse) -> AnyResponse:
+
+def set_response_defaults(
+    response: Union[OriginalResponse, CachedResponse]
+) -> Union[OriginalResponse, CachedResponse]:
     """Set some default CachedResponse values on a requests.Response object, so they can be
     expected to always be present
     """
     if not isinstance(response, CachedResponse):
-        response.created_at = None
-        response.expires = None
-        response.from_cache = False
-        response.is_expired = False
+        response.created_at = None  # type: ignore
+        response.expires = None  # type: ignore
+        response.from_cache = False  # type: ignore
+        response.is_expired = False  # type: ignore
     return response

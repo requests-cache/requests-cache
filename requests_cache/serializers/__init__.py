@@ -5,6 +5,19 @@ from warnings import warn
 from .. import get_placeholder_class
 from .pipeline import SerializerPipeline, Stage
 
+__all__ = [
+    'SERIALIZERS',
+    'CattrStage',
+    'SerializerPipeline',
+    'Stage',
+    'bson_serializer',
+    'json_serializer',
+    'pickle_serializer',
+    'safe_pickle_serializer',
+    'yaml_serializer',
+    'init_serializer',
+]
+
 # If cattrs isn't installed, use plain pickle for pickle_serializer, and placeholders for the rest.
 # Additional checks for format-specific optional libraries are handled in the preconf module.
 try:
@@ -17,10 +30,10 @@ try:
         yaml_serializer,
     )
 except ImportError as e:
-    CattrStage = get_placeholder_class(e)
+    CattrStage = get_placeholder_class(e)  # type: ignore
     bson_serializer = get_placeholder_class(e)
     json_serializer = get_placeholder_class(e)
-    pickle_serializer = pickle
+    pickle_serializer = pickle  # type: ignore
     safe_pickle_serializer = get_placeholder_class(e)
     yaml_serializer = get_placeholder_class(e)
 

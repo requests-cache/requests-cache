@@ -208,16 +208,12 @@ class BaseCacheTest:
     @pytest.mark.parametrize('method', HTTPBIN_METHODS)
     def test_filter_request_headers(self, method):
         url = httpbin(method.lower())
-        session = self.init_session(
-            ignored_parameters=[
-                'Authorization',
-            ]
-        )
+        session = self.init_session(ignored_parameters=['Authorization'])
         response = session.request(method, url, headers={"Authorization": "<Secret Key>"})
         assert response.from_cache is False
         response = session.request(method, url, headers={"Authorization": "<Secret Key>"})
         assert response.from_cache is True
-        assert response.request.headers['Authorization'] is None
+        assert response.request.headers.get('Authorization') is None
 
     @pytest.mark.parametrize('method', HTTPBIN_METHODS)
     def test_filter_request_query_parameters(self, method):

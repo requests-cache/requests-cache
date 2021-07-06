@@ -12,15 +12,17 @@ Requires python 3.7+.
 """
 import pickle
 
-from cattr.preconf import bson, json, msgpack, orjson, pyyaml, tomlkit, ujson
+from cattr.preconf import bson as bson_preconf
+from cattr.preconf import json as json_preconf
+from cattr.preconf import msgpack, orjson, pyyaml, tomlkit, ujson
 
 from .. import get_placeholder_class
 from .cattrs import CattrStage
 from .pipeline import SerializerPipeline, Stage
 
 base_stage = CattrStage()
-bson_preconf_stage = CattrStage(bson.make_converter)
-json_preconf_stage = CattrStage(json.make_converter)
+bson_preconf_stage = CattrStage(bson_preconf.make_converter)
+json_preconf_stage = CattrStage(json_preconf.make_converter)
 msgpack_preconf_stage = CattrStage(msgpack.make_converter)
 orjson_preconf_stage = CattrStage(orjson.make_converter)
 yaml_preconf_stage = CattrStage(pyyaml.make_converter)
@@ -66,7 +68,7 @@ try:
 
     converter = ujson_preconf_stage
 except ImportError:
-    import json
+    import json  # type: ignore
 
     converter = json_preconf_stage
 
