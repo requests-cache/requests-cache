@@ -60,6 +60,7 @@
     * `requests-cache[redis]`
 * Packaging is now handled with Poetry. For users, installation still works the same. For developers,
   see [Contributing Guide](https://requests-cache.readthedocs.io/en/stable/contributing.html) for details
+* requests-cache is now fully typed and PEP-561 compliant
 
 -----
 ### 0.6.4 (2021-06-04)

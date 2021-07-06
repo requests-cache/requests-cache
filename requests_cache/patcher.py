@@ -42,7 +42,7 @@ def install_cache(
             :py:class:`.CachedSession` or :py:class:`.CacheMixin`
     """
 
-    class _ConfiguredCachedSession(session_factory):
+    class _ConfiguredCachedSession(session_factory):  # type: ignore  # See mypy issue #5865
         def __init__(self):
             super().__init__(
                 cache_name=cache_name,
@@ -105,7 +105,7 @@ def enabled(*args, **kwargs):
 
 def get_cache() -> Optional[BaseCache]:
     """Get the internal cache object from the currently installed ``CachedSession`` (if any)"""
-    return requests.Session().cache if is_installed() else None
+    return getattr(requests.Session(), 'cache', None)
 
 
 def is_installed() -> bool:
@@ -126,9 +126,9 @@ def remove_expired_responses(expire_after: ExpirationTime = None):
         expire_after: A new expiration time used to revalidate the cache
     """
     if is_installed():
-        return requests.Session().remove_expired_responses(expire_after)
+        return requests.Session().remove_expired_responses(expire_after)  # type: ignore
 
 
 def _patch_session_factory(session_factory: Type[OriginalSession] = CachedSession):
     logger.debug(f'Patching requests.Session with class: {session_factory.__name__}')
-    requests.Session = requests.sessions.Session = session_factory  # noqa
+    requests.Session = requests.sessions.Session = session_factory  # type: ignore

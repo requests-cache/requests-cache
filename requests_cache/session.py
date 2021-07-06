@@ -2,7 +2,7 @@
 from contextlib import contextmanager
 from logging import getLogger
 from threading import RLock
-from typing import Any, Callable, Dict, Iterable, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, Optional
 
 from requests import PreparedRequest, Response
 from requests import Session as OriginalSession
@@ -12,13 +12,19 @@ from urllib3 import filepost
 from .backends import BackendSpecifier, get_valid_kwargs, init_backend
 from .cache_control import CacheActions, ExpirationTime
 from .cache_keys import normalize_dict
-from .models.response import AnyResponse, set_response_defaults
+from .models import AnyResponse, set_response_defaults
 
 ALL_METHODS = ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
+
 logger = getLogger(__name__)
+# MIXIN_BASE: Type = OriginalSession if TYPE_CHECKING else object
+if TYPE_CHECKING:
+    MIXIN_BASE = OriginalSession
+else:
+    MIXIN_BASE = object
 
 
-class CacheMixin:
+class CacheMixin(MIXIN_BASE):
     """Mixin class that extends :py:class:`requests.Session` with caching features.
     See :py:class:`.CachedSession` for usage information.
     """
@@ -30,7 +36,7 @@ class CacheMixin:
         expire_after: ExpirationTime = -1,
         urls_expire_after: Dict[str, ExpirationTime] = None,
         allowable_codes: Iterable[int] = (200,),
-        allowable_methods: Iterable['str'] = ('GET', 'HEAD'),
+        allowable_methods: Iterable[str] = ('GET', 'HEAD'),
         filter_fn: Callable = None,
         old_data_on_error: bool = False,
         cache_control: bool = False,
@@ -45,16 +51,16 @@ class CacheMixin:
         self.old_data_on_error = old_data_on_error
         self.cache_control = cache_control
 
-        self.cache.name = cache_name
+        self.cache.name = cache_name  # Set to handle backend=<instance>
         self._request_expire_after: ExpirationTime = None
         self._disabled = False
         self._lock = RLock()
 
         # If the superclass is custom Session, pass along valid kwargs (if any)
         session_kwargs = get_valid_kwargs(super().__init__, kwargs)
-        super().__init__(**session_kwargs)
+        super().__init__(**session_kwargs)  # type: ignore
 
-    def request(
+    def request(  # type: ignore  # Note: Session.request() doesn't have expire_after param
         self,
         method: str,
         url: str,
@@ -114,20 +120,25 @@ class CacheMixin:
             cache_control=self.cache_control,
             **kwargs,
         )
-        response = None
 
-        # Attempt to fetch the cached response, if possible; otherwise fetch and cache a new response
+        # Attempt to fetch a cached response
+        response: Optional[AnyResponse] = None
         if not (self._disabled or actions.skip_read):
             response = self.cache.get_response(cache_key)
+        is_expired = getattr(response, 'is_expired', False)
+
+        # If the cache is disabled, doesn't have the response, or it's expired, then fetch a new one
         if response is None:
             response = self._send_and_cache(request, actions, **kwargs)
-        elif response.is_expired and self.old_data_on_error:
+        elif is_expired and self.old_data_on_error:
             response = self._resend_and_ignore(request, actions, **kwargs) or response
-        elif response.is_expired:
+        elif is_expired:
             response = self._resend(request, actions, **kwargs)
 
         # Dispatch any hooks here, because they are removed before pickling
         response = dispatch_hook('response', request.hooks, response, **kwargs)
+        if TYPE_CHECKING:
+            assert response is not None
 
         # If the request has been filtered out, delete previously cached response if it exists
         if not self.filter_fn(response):
@@ -180,7 +191,7 @@ class CacheMixin:
         """Perform all checks needed to determine if the given response should be saved to the cache"""
         cache_criteria = {
             'disabled cache': self._disabled,
-            'disabled method': response.request.method not in self.allowable_methods,
+            'disabled method': str(response.request.method) not in self.allowable_methods,
             'disabled status': response.status_code not in self.allowable_codes,
             'disabled by filter': not self.filter_fn(response),
             'disabled by headers or expiration params': actions.skip_write,

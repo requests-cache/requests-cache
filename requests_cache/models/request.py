@@ -16,7 +16,7 @@ class CachedRequest:
     """A serializable dataclass that emulates :py:class:`requests.PreparedResponse`"""
 
     body: bytes = field(default=None, converter=encode)
-    cookies: RequestsCookieJar = field(factory=dict)
+    cookies: RequestsCookieJar = field(factory=RequestsCookieJar)
     headers: CaseInsensitiveDict = field(factory=CaseInsensitiveDict)
     method: str = field(default=None)
     url: str = field(default=None)
@@ -25,7 +25,7 @@ class CachedRequest:
     def from_request(cls, original_request: PreparedRequest):
         """Create a CachedRequest based on an original request object"""
         kwargs = {k: getattr(original_request, k, None) for k in fields_dict(cls).keys()}
-        kwargs['cookies'] = original_request._cookies
+        kwargs['cookies'] = getattr(original_request, '_cookies', None)
         return cls(**kwargs)
 
     @property

@@ -38,15 +38,15 @@ def init_converter(factory: Callable[..., GenConverter] = None):
     converter = factory(omit_if_default=True)
 
     # Convert datetimes to and from iso-formatted strings
-    converter.register_unstructure_hook(datetime, lambda obj: obj.isoformat() if obj else None)
+    converter.register_unstructure_hook(datetime, lambda obj: obj.isoformat() if obj else None)  # type: ignore
     converter.register_structure_hook(datetime, to_datetime)
 
     # Convert timedeltas to and from float values in seconds
-    converter.register_unstructure_hook(timedelta, lambda obj: obj.total_seconds() if obj else None)
+    converter.register_unstructure_hook(timedelta, lambda obj: obj.total_seconds() if obj else None)  # type: ignore
     converter.register_structure_hook(timedelta, to_timedelta)
 
     # Convert dict-like objects to and from plain dicts
-    converter.register_unstructure_hook(RequestsCookieJar, lambda obj: dict(obj.items()))
+    converter.register_unstructure_hook(RequestsCookieJar, lambda obj: dict(obj.items()))  # type: ignore
     converter.register_structure_hook(RequestsCookieJar, lambda obj, cls: cookiejar_from_dict(obj))
     converter.register_unstructure_hook(CaseInsensitiveDict, dict)
     converter.register_structure_hook(CaseInsensitiveDict, lambda obj, cls: CaseInsensitiveDict(obj))
