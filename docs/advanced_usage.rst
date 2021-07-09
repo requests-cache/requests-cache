@@ -161,9 +161,9 @@ Example using an imaginary ``custom_pickle`` module that provides ``dumps`` and 
 More complex serialization can be done with :py:class:`.SerializerPipeline`. Applications include text-based serialization
 (e.g. json / bson / msgpack / yaml / toml), signing, compression, and/or encryption. Any combination of these can be built using
 a multi-stage serializer composed with :py:class:`.SerializerPipeline`. A valid :py:class:`.SerializerPipeline` is any pipeline
-that starts with python objects, and ends with a :py:class:.`str` or :py:class:`.bytes` object. A valid stage of a pipeline is
+that starts with python objects, and ends with a :py:class:`.str`. or :py:class:`.bytes`. object. A valid stage of a pipeline is
 any object with a dumps/loads method. If the object has similar methods (e.g. compress / decompress), those can be aliased
-using :py:class:.`.Stage`.
+using :py:class:`.Stage`.
 
 For example, a compressed pickle serializer can be built as:
 
@@ -196,15 +196,16 @@ Two gotchas to watch out for:
 
 Some of the other classes / objects that may be used with :py:class:`.SerializerPipelines` include:
 
-class                              loads    dumps
-=================================  =====    =====
-pickle                             dumps    loads
-gzip / zlib / bz2 / lzma           compress decompress
-codecs.[anything]                  encode   decode
-itsdangerous.Signer                sign     unsign
-itsdangerous.serializer.Serializer dumps    loads
-cryptography.fernet.Fernet         encrypt  decrypt
-
+==================================  ========  ==========
+class                               loads     dumps
+==================================  ========  ==========
+pickle                              dumps     loads
+gzip / zlib / bz2 / lzma            compress  decompress
+codecs.[anything]                   encode    decode
+itsdangerous.Signer                 sign      unsign
+itsdangerous.serializer.Serializer  dumps     loads
+cryptography.fernet.Fernet          encrypt   decrypt
+==================================  ========  ==========
 
 Usage with other requests features
 ----------------------------------
