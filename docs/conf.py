@@ -5,7 +5,6 @@ from os.path import abspath, dirname, join
 
 # Add project path
 sys.path.insert(0, os.path.abspath('..'))
-
 from requests_cache import __version__  # noqa: E402
 
 PROJECT_DIR = abspath(dirname(dirname(__file__)))
@@ -22,19 +21,29 @@ html_static_path = ['_static']
 exclude_patterns = ['_build']
 templates_path = ['_templates']
 
-# Sphinx extension modules
+# Sphinx extensions
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosectionlabel',
+    'sphinx.ext.autosummary',
     'sphinx.ext.extlinks',
     'sphinx.ext.intersphinx',
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
     'sphinx_autodoc_typehints',
     'sphinx_copybutton',
-    'sphinx_rtd_theme',
+    'sphinx_inline_tabs',
     'sphinxcontrib.apidoc',
-    'm2r2',
+    'myst_parser',
+]
+
+# MyST extensions
+myst_enable_extensions = [
+    'colon_fence',
+    'html_image',
+    'linkify',
+    'replacements',
+    'smartquotes',
 ]
 
 # Exclude auto-generated page for top-level __init__.py
@@ -63,17 +72,38 @@ napoleon_include_special_with_doc = False
 copybutton_prompt_text = r'>>> |\.\.\. |\$ '
 copybutton_prompt_is_regexp = True
 
+# Generate labels in the format <page>:<section>
+autosectionlabel_prefix_document = True
+
 # Use apidoc to auto-generate rst sources
 apidoc_module_dir = PACKAGE_DIR
 apidoc_output_dir = 'modules'
 apidoc_excluded_paths = []
 apidoc_module_first = True
 apidoc_toc_file = False
-autosectionlabel_prefix_document = True
+
+
+# HTML general settings
+# html_favicon = join('images', 'favicon.ico')
+html_js_files = ['collapsible_container.js']
+html_css_files = ['collapsible_container.css', 'table.css']
+html_show_sphinx = False
+pygments_style = 'friendly'
+pygments_dark_style = 'material'
 
 # HTML theme settings
-pygments_style = 'sphinx'
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'furo'
+html_theme_options = {
+    # 'light_css_variables': {
+    #     'color-brand-primary': '#00766c',  # MD light-blue-600; light #64d8cb | med #26a69a
+    #     'color-brand-content': '#006db3',  # MD teal-400;       light #63ccff | med #039be5
+    # },
+    # 'dark_css_variables': {
+    #     'color-brand-primary': '#64d8cb',
+    #     'color-brand-content': '#63ccff',
+    # },
+    # 'sidebar_hide_name': True,
+}
 
 
 def setup(app):
