@@ -138,7 +138,7 @@ def test_init_from_settings(url, request_expire_after, expected_expiration):
 def test_update_from_response(headers, expected_expiration):
     """Test with Cache-Control response headers"""
     url = 'https://img.site.com/base/img.jpg'
-    actions = CacheActions(key='key', request=MagicMock(url=url))
+    actions = CacheActions(key='key', request=MagicMock(url=url), cache_control=True)
     actions.update_from_response(MagicMock(url=url, headers=headers))
 
     if expected_expiration == DO_NOT_CACHE:
@@ -146,6 +146,13 @@ def test_update_from_response(headers, expected_expiration):
     else:
         assert actions.expire_after == expected_expiration
         assert actions.skip_write is False
+
+
+def test_update_from_response__ignored():
+    url = 'https://img.site.com/base/img.jpg'
+    actions = CacheActions(key='key', request=MagicMock(url=url), cache_control=False)
+    actions.update_from_response(MagicMock(url=url, headers={'Cache-Control': 'max-age=5'}))
+    assert actions.expire_after is None
 
 
 @pytest.mark.parametrize('directive', IGNORED_DIRECTIVES)

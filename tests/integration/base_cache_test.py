@@ -114,19 +114,23 @@ class BaseCacheTest:
             assert response_3 == get_json(httpbin('cookies'))
 
     @pytest.mark.parametrize(
-        'request_headers, expected_expiration',
+        'cache_control, request_headers, expected_expiration',
         [
-            ({}, 60),
-            ({'Cache-Control': 'max-age=360'}, 360),
-            ({'Cache-Control': 'no-store'}, None),
-            ({'Expires': HTTPDATE_STR, 'Cache-Control': 'max-age=360'}, 360),
+            (True, {}, 60),
+            (True, {'Cache-Control': 'max-age=360'}, 360),
+            (True, {'Cache-Control': 'no-store'}, None),
+            (True, {'Expires': HTTPDATE_STR, 'Cache-Control': 'max-age=360'}, 360),
+            (False, {}, None),
+            (False, {'Cache-Control': 'max-age=360'}, None),
+            (False, {'Expires': HTTPDATE_STR, 'Cache-Control': 'max-age=360'}, None),
         ],
     )
-    def test_cache_control_expiration(self, request_headers, expected_expiration):
+    def test_cache_control_expiration(self, cache_control, request_headers, expected_expiration):
         """Test cache headers for both requests and responses. The `/cache/{seconds}` endpoint returns
         Cache-Control headers, which should be used unless request headers are sent.
+        No headers should be used if `cache_control=False`.
         """
-        session = self.init_session(cache_control=True)
+        session = self.init_session(cache_control=cache_control)
         now = datetime.utcnow()
         session.get(httpbin('cache/60'), headers=request_headers)
         response = session.get(httpbin('cache/60'), headers=request_headers)

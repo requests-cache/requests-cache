@@ -50,6 +50,7 @@ class CacheActions:
     ):
         """Initialize from request info and cache settings"""
         self.key = key
+        self.cache_control = cache_control
         if cache_control and has_cache_headers(request.headers):
             self._init_from_headers(request.headers)
         else:
@@ -91,10 +92,18 @@ class CacheActions:
 
     def update_from_response(self, response: Response):
         """Update expiration + actions based on response headers, if not previously set by request"""
+        if not self.cache_control:
+            return
         directives = get_cache_directives(response.headers)
         do_not_cache = directives.get('max-age') == DO_NOT_CACHE
         self.expire_after = coalesce(self.expires, directives.get('max-age'), directives.get('expires'))
         self.skip_write = self.skip_write or do_not_cache or 'no-store' in directives
+
+    def __str__(self):
+        return (
+            f'Expire after: {self.expire_after} | Skip read: {self.skip_read} | '
+            f'Skip write: {self.skip_write}'
+        )
 
 
 def coalesce(*values: Any, default=None) -> Any:

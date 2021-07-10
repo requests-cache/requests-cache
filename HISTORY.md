@@ -1,4 +1,6 @@
 # History
+## 0.7.1 (2021-07-09)
+* Fix a bug in which Cache-Control headers would be used unexpectedly
 
 ## 0.7.0 (2021-07-07)
 [See all issues and PRs for 0.7](https://github.com/reclosedev/requests-cache/milestone/2?closed=1)
