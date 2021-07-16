@@ -4,7 +4,7 @@ from logging import getLogger
 from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
 from attr import define, field
-from requests import Response as OriginalResponse
+from requests import PreparedRequest, Response
 from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
 
@@ -12,17 +12,12 @@ from ..cache_control import ExpirationTime, get_expiration_datetime
 from . import CachedHTTPResponse, CachedRequest
 
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S %Z'  # Format used for __str__ only
-DO_NOT_CACHE = 0
-
-# Make a slotted copy of requests.Response to subclass
-Response = define(slots=True)(OriginalResponse)
 HeaderList = List[Tuple[str, str]]
-
 logger = getLogger(__name__)
 
 
-@define(auto_attribs=False)
-class CachedResponse(Response):  # type: ignore
+@define(auto_attribs=False, slots=False)
+class CachedResponse(Response):
     """A serializable dataclass that emulates :py:class:`requests.Response`. Public attributes and
     methods on CachedResponse objects will behave the same as those from the original response, but
     with different internals optimized for serialization.
@@ -52,7 +47,7 @@ class CachedResponse(Response):  # type: ignore
             self.raw.reset(self._content)
 
     @classmethod
-    def from_response(cls, original_response: OriginalResponse, **kwargs):
+    def from_response(cls, original_response: Response, **kwargs):
         """Create a CachedResponse based on an original response object"""
         obj = cls(**kwargs)
 
@@ -140,9 +135,7 @@ def format_file_size(n_bytes: int) -> str:
         return _format(unit)
 
 
-def set_response_defaults(
-    response: Union[OriginalResponse, CachedResponse]
-) -> Union[OriginalResponse, CachedResponse]:
+def set_response_defaults(response: Union[Response, CachedResponse]) -> Union[Response, CachedResponse]:
     """Set some default CachedResponse values on a requests.Response object, so they can be
     expected to always be present
     """
