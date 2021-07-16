@@ -1,4 +1,9 @@
 # History
+
+## 0.7.2 (2021-07-TBD)
+* Add support for `Response.next` when 302 responses are cached directly
+* Make `CachedResponse` a non-slotted class to allow client code to set arbitrary attributes on it
+
 ## 0.7.1 (2021-07-09)
 * Fix a bug in which Cache-Control headers would be used unexpectedly
 
