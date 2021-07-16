@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "requests-cache"
-version = "0.7.1"
+version = "0.7.2"
 description = "A transparent, persistent cache for the requests library"
 authors = ["Roman Haritonov", "Jordan Cook"]
 license = "BSD License"
@@ -60,7 +60,7 @@ docs = ["furo", "linkify-it-py", "myst-parser", "sphinx", "sphinx-autodoc-typehi
         "sphinx-copybutton", "sphinx-inline-tabs", "sphinxcontrib-apidoc"]
         
 [tool.poetry.dev-dependencies]
-black = {version = "21.6b0", python = ">=3.6.2, <3.10"}
+black = {version = "21.7b0", python = ">=3.6.2, <3.10"}
 isort = "^5.8"
 flake8 = "^3.9"
 flake8-comprehensions = "*"

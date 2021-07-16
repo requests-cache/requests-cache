@@ -4,7 +4,7 @@ from logging import getLogger
 from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
 from attr import define, field
-from requests import Response as OriginalResponse
+from requests import PreparedRequest, Response
 from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
 
@@ -12,17 +12,12 @@ from ..cache_control import ExpirationTime, get_expiration_datetime
 from . import CachedHTTPResponse, CachedRequest
 
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S %Z'  # Format used for __str__ only
-DO_NOT_CACHE = 0
-
-# Make a slotted copy of requests.Response to subclass
-Response = define(slots=True)(OriginalResponse)
 HeaderList = List[Tuple[str, str]]
-
 logger = getLogger(__name__)
 
 
-@define(auto_attribs=False)
-class CachedResponse(Response):  # type: ignore
+@define(auto_attribs=False, slots=False)
+class CachedResponse(Response):
     """A serializable dataclass that emulates :py:class:`requests.Response`. Public attributes and
     methods on CachedResponse objects will behave the same as those from the original response, but
     with different internals optimized for serialization.
@@ -33,6 +28,7 @@ class CachedResponse(Response):  # type: ignore
     """
 
     _content: bytes = field(default=None)
+    _next: Optional[CachedRequest] = field(default=None)
     url: str = field(default=None)
     status_code: int = field(default=0)
     cookies: RequestsCookieJar = field(factory=RequestsCookieJar)
@@ -41,9 +37,9 @@ class CachedResponse(Response):  # type: ignore
     expires: Optional[datetime] = field(default=None)
     encoding: str = field(default=None)
     headers: CaseInsensitiveDict = field(factory=dict)
-    history: List['CachedResponse'] = field(factory=list)
+    history: List['CachedResponse'] = field(factory=list)  # type: ignore
     reason: str = field(default=None)
-    request: CachedRequest = field(factory=CachedRequest)
+    request: CachedRequest = field(factory=CachedRequest)  # type: ignore
     raw: CachedHTTPResponse = field(factory=CachedHTTPResponse, repr=False)
 
     def __attrs_post_init__(self):
@@ -52,7 +48,7 @@ class CachedResponse(Response):  # type: ignore
             self.raw.reset(self._content)
 
     @classmethod
-    def from_response(cls, original_response: OriginalResponse, **kwargs):
+    def from_response(cls, original_response: Response, **kwargs):
         """Create a CachedResponse based on an original response object"""
         obj = cls(**kwargs)
 
@@ -60,9 +56,12 @@ class CachedResponse(Response):  # type: ignore
         for k in Response.__attrs__:
             setattr(obj, k, getattr(original_response, k, None))
 
-        # Store request and raw response
+        # Store request, raw response, and next response (if it's a redirect response)
         obj.request = CachedRequest.from_request(original_response.request)
         obj.raw = CachedHTTPResponse.from_response(original_response)
+        obj._next = (
+            CachedRequest.from_request(original_response.next) if original_response.next else None
+        )
 
         # Store response body, which will have been read & decoded by requests.Response by now
         obj._content = original_response.content
@@ -93,6 +92,11 @@ class CachedResponse(Response):  # type: ignore
         """Determine if this cached response is expired"""
         return self.expires is not None and datetime.utcnow() >= self.expires
 
+    @property
+    def next(self) -> Optional[PreparedRequest]:
+        """Returns a PreparedRequest for the next request in a redirect chain, if there is one."""
+        return self._next.prepare() if self._next else None
+
     def revalidate(self, expire_after: ExpirationTime) -> bool:
         """Set a new expiration for this response, and determine if it is now expired"""
         self.expires = get_expiration_datetime(expire_after)
@@ -106,6 +110,12 @@ class CachedResponse(Response):  # type: ignore
     def size(self) -> int:
         """Get the size of the response body in bytes"""
         return len(self.content) if self.content else 0
+
+    def __getstate__(self):
+        """Override pickling behavior in ``requests.Response.__getstate__``;
+        only required for python 3.6
+        """
+        return self.__dict__
 
     def __str__(self):
         return (
@@ -140,9 +150,7 @@ def format_file_size(n_bytes: int) -> str:
         return _format(unit)
 
 
-def set_response_defaults(
-    response: Union[OriginalResponse, CachedResponse]
-) -> Union[OriginalResponse, CachedResponse]:
+def set_response_defaults(response: Union[Response, CachedResponse]) -> Union[Response, CachedResponse]:
     """Set some default CachedResponse values on a requests.Response object, so they can be
     expected to always be present
     """

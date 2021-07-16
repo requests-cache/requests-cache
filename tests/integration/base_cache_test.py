@@ -9,6 +9,7 @@ from typing import Dict, Type
 from urllib.parse import parse_qs, urlparse
 
 import requests
+from requests.models import PreparedRequest
 
 from requests_cache import ALL_METHODS, CachedResponse, CachedSession
 from requests_cache.backends.base import BaseCache
@@ -87,14 +88,28 @@ class BaseCacheTest:
 
     @pytest.mark.parametrize('n_redirects', range(1, 5))
     @pytest.mark.parametrize('endpoint', ['redirect', 'absolute-redirect', 'relative-redirect'])
-    def test_redirects(self, endpoint, n_redirects):
-        """Test all types of redirect endpoints with different numbers of consecutive redirects"""
+    def test_redirect_history(self, endpoint, n_redirects):
+        """Test redirect caching (in separate `redirects` cache) with all types of redirect endpoints,
+        using different numbers of consecutive redirects
+        """
         session = self.init_session()
         session.get(httpbin(f'{endpoint}/{n_redirects}'))
         r2 = session.get(httpbin('get'))
 
         assert r2.from_cache is True
         assert len(session.cache.redirects) == n_redirects
+
+    @pytest.mark.parametrize('endpoint', ['redirect', 'absolute-redirect', 'relative-redirect'])
+    def test_redirect_responses(self, endpoint):
+        """Test redirect caching (in main `responses` cache) with all types of redirect endpoints"""
+        session = self.init_session(allowable_codes=(200, 302))
+        r1 = session.head(httpbin(f'{endpoint}/2'))
+        r2 = session.head(httpbin(f'{endpoint}/2'))
+
+        assert r2.from_cache is True
+        assert len(session.cache.redirects) == 0
+        assert isinstance(r1.next, PreparedRequest) and r1.next.url.endswith('redirect/1')
+        assert isinstance(r2.next, PreparedRequest) and r2.next.url.endswith('redirect/1')
 
     def test_cookies(self):
         session = self.init_session()
