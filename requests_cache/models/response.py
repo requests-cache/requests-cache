@@ -28,6 +28,7 @@ class CachedResponse(Response):
     """
 
     _content: bytes = field(default=None)
+    _next: Optional[CachedRequest] = field(default=None)
     url: str = field(default=None)
     status_code: int = field(default=0)
     cookies: RequestsCookieJar = field(factory=RequestsCookieJar)
@@ -36,9 +37,9 @@ class CachedResponse(Response):
     expires: Optional[datetime] = field(default=None)
     encoding: str = field(default=None)
     headers: CaseInsensitiveDict = field(factory=dict)
-    history: List['CachedResponse'] = field(factory=list)
+    history: List['CachedResponse'] = field(factory=list)  # type: ignore
     reason: str = field(default=None)
-    request: CachedRequest = field(factory=CachedRequest)
+    request: CachedRequest = field(factory=CachedRequest)  # type: ignore
     raw: CachedHTTPResponse = field(factory=CachedHTTPResponse, repr=False)
 
     def __attrs_post_init__(self):
@@ -55,9 +56,12 @@ class CachedResponse(Response):
         for k in Response.__attrs__:
             setattr(obj, k, getattr(original_response, k, None))
 
-        # Store request and raw response
+        # Store request, raw response, and next response (if it's a redirect response)
         obj.request = CachedRequest.from_request(original_response.request)
         obj.raw = CachedHTTPResponse.from_response(original_response)
+        obj._next = (
+            CachedRequest.from_request(original_response.next) if original_response.next else None
+        )
 
         # Store response body, which will have been read & decoded by requests.Response by now
         obj._content = original_response.content
@@ -87,6 +91,11 @@ class CachedResponse(Response):
     def is_expired(self) -> bool:
         """Determine if this cached response is expired"""
         return self.expires is not None and datetime.utcnow() >= self.expires
+
+    @property
+    def next(self) -> Optional[PreparedRequest]:
+        """Returns a PreparedRequest for the next request in a redirect chain, if there is one."""
+        return self._next.prepare() if self._next else None
 
     def revalidate(self, expire_after: ExpirationTime) -> bool:
         """Set a new expiration for this response, and determine if it is now expired"""
