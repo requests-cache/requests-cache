@@ -58,7 +58,7 @@ mongodb = ["cattrs", "pymongo"]
 redis = ["redis"]
 docs = ["furo", "linkify-it-py", "myst-parser", "sphinx", "sphinx-autodoc-typehints",
         "sphinx-copybutton", "sphinx-inline-tabs", "sphinxcontrib-apidoc"]
-        
+
 [tool.poetry.dev-dependencies]
 black = {version = "21.7b0", python = ">=3.6.2, <3.10"}
 isort = "^5.8"

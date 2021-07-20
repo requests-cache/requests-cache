@@ -112,7 +112,7 @@ class CacheMixin(MIXIN_BASE):
         # Determine which actions to take based on request info, headers, and cache settings
         cache_key = self.cache.create_key(request, **kwargs)
         actions = CacheActions(
-            key=cache_key,
+            cache_key=cache_key,
             request=request,
             request_expire_after=self._request_expire_after,
             session_expire_after=self.expire_after,
@@ -155,10 +155,11 @@ class CacheMixin(MIXIN_BASE):
         """Send the request and cache the response, unless disabled by settings or headers"""
         response = super().send(request, **kwargs)
         actions.update_from_response(response)
+
         if self._is_cacheable(response, actions):
             logger.debug(f'Skipping cache write for URL: {request.url}')
-            self.cache.save_response(response, actions.key, actions.expires)
-        return set_response_defaults(response)
+            self.cache.save_response(response, actions.cache_key, actions.expires)
+        return set_response_defaults(response, actions.cache_key)
 
     def _resend(self, request: PreparedRequest, actions: CacheActions, **kwargs) -> AnyResponse:
         """Attempt to resend the request and cache the new response. If the request fails, delete
@@ -168,7 +169,7 @@ class CacheMixin(MIXIN_BASE):
         try:
             return self._send_and_cache(request, actions, **kwargs)
         except Exception:
-            self.cache.delete(actions.key)
+            self.cache.delete(actions.cache_key)
             raise
 
     def _resend_and_ignore(
