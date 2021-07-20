@@ -2,6 +2,7 @@
 
 ## 0.7.2 (2021-07-TBD)
 * Add support for `Response.next` when 302 responses are cached directly
+* Add a `CachedResponse.cache_key` attribute
 * Make `CachedResponse` a non-slotted class to allow client code to set arbitrary attributes on it
 
 ## 0.7.1 (2021-07-09)
