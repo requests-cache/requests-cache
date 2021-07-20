@@ -31,6 +31,7 @@ class CachedResponse(Response):
     _next: Optional[CachedRequest] = field(default=None)
     url: str = field(default=None)
     status_code: int = field(default=0)
+    cache_key: str = field(default=None)
     cookies: RequestsCookieJar = field(factory=RequestsCookieJar)
     created_at: datetime = field(factory=datetime.utcnow)
     elapsed: timedelta = field(factory=timedelta)
@@ -150,11 +151,14 @@ def format_file_size(n_bytes: int) -> str:
         return _format(unit)
 
 
-def set_response_defaults(response: Union[Response, CachedResponse]) -> Union[Response, CachedResponse]:
+def set_response_defaults(
+    response: Union[Response, CachedResponse], cache_key: str = None
+) -> Union[Response, CachedResponse]:
     """Set some default CachedResponse values on a requests.Response object, so they can be
     expected to always be present
     """
     if not isinstance(response, CachedResponse):
+        response.cache_key = cache_key  # type: ignore
         response.created_at = None  # type: ignore
         response.expires = None  # type: ignore
         response.from_cache = False  # type: ignore

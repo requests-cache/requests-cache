@@ -43,13 +43,13 @@ class CacheActions:
 
     def __init__(
         self,
-        key: str,
+        cache_key: str,
         request: PreparedRequest,
         cache_control: bool = False,
         **kwargs,
     ):
         """Initialize from request info and cache settings"""
-        self.key = key
+        self.cache_key = cache_key
         self.cache_control = cache_control
         if cache_control and has_cache_headers(request.headers):
             self._init_from_headers(request.headers)

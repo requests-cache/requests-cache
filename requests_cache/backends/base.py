@@ -44,19 +44,18 @@ class BaseCache:
         for response in self.values():
             yield response.url
 
-    def save_response(self, response: AnyResponse, key: str = None, expires: datetime = None):
+    def save_response(self, response: AnyResponse, cache_key: str = None, expires: datetime = None):
         """Save response to cache
 
         Args:
-            key: key for this response
+            cache_key: Cache key for this response; will otherwise be generated based on request
             response: response to save
             expire_after: Time in seconds until this cache item should expire
         """
-        key = key or self.create_key(response.request)
-
-        cached_response = CachedResponse.from_response(response, expires=expires)
+        cache_key = cache_key or self.create_key(response.request)
+        cached_response = CachedResponse.from_response(response, cache_key=cache_key, expires=expires)
         cached_response.request = remove_ignored_params(cached_response.request, self.ignored_parameters)
-        self.responses[key] = cached_response
+        self.responses[cache_key] = cached_response
 
     def save_redirect(self, request: AnyRequest, response_key: str):
         """
