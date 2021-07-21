@@ -10,7 +10,7 @@ user_guide
 advanced_usage
 security
 examples
-api
+reference
 contributing
 contributors
 related_projects

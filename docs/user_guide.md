@@ -4,7 +4,12 @@ This section covers the main features of requests-cache.
 ## Installation
 Install with pip:
 ```
-$ pip install requests-cache
+pip install requests-cache
+```
+
+Or with Conda, if you prefer:
+```
+conda install -c conda-forge requests-cache
 ```
 
 ### Requirements
@@ -12,8 +17,9 @@ $ pip install requests-cache
 - You may need additional dependencies depending on which backend you want to use. To install with
   extra dependencies for all supported {ref}`user_guide:cache backends`:
   ```
-  $ pip install requests-cache\[backends\]
+  pip install requests-cache[backends]
   ```
+
 ### Optional Setup Steps
 - See {ref}`security` for recommended setup steps for more secure cache serialization.
 - See {ref}`Contributing Guide <contributing:dev installation>` for setup steps for local development.

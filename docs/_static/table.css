@@ -1,0 +1,15 @@
+/* Slightly modified table styles from Furo theme*/
+
+table.docutils {
+  border-radius: 0.2rem;
+  border-spacing: 0;
+  border-collapse: collapse;
+  box-shadow:0 2px 2px 0 rgba(0,0,0,.14),0 1px 5px 0 rgba(0,0,0,.12),0 3px 1px -2px rgba(0,0,0,.2);
+}
+
+table.docutils td {text-align: left}
+table.docutils tr{transition:background-color .125s}
+table.docutils tr:hover{
+    background-color:rgba(0,0,0,.035);
+    box-shadow:inset 0 .05rem 0 #fff
+}
