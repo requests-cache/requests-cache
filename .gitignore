@@ -10,6 +10,11 @@ http_cache/
 venv/
 .venv
 
+# JS
+node_modules/
+package-lock.json
+package.json
+
 # Editors
 .~*
 .idea/
