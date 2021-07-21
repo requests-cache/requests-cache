@@ -13,8 +13,8 @@ class GridFSCache(BaseCache):
     Example:
 
         >>> requests_cache.install_cache(backend='gridfs')
-
-        Or:
+        >>>
+        >>> # Or, to provide custom connection settings:
         >>> from pymongo import MongoClient
         >>> requests_cache.install_cache(backend='gridfs', connection=MongoClient('alternate-host'))
 

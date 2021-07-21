@@ -1,0 +1,37 @@
+url: https://httpbin.org/get
+status_code: 200
+reason: OK
+_content: !!binary |
+  ewogICJhcmdzIjoge30sIAogICJoZWFkZXJzIjogewogICAgIkFjY2VwdCI6ICIqLyoiLCAKICAg
+  ICJBY2NlcHQtRW5jb2RpbmciOiAiZ3ppcCwgZGVmbGF0ZSIsIAogICAgIkhvc3QiOiAiaHR0cGJp
+  bi5vcmciLCAKICAgICJVc2VyLUFnZW50IjogInB5dGhvbi1yZXF1ZXN0cy8yLjI2LjAiLCAKICAg
+  ICJYLUFtem4tVHJhY2UtSWQiOiAiUm9vdD0xLTYwZjhhMDcxLTBiN2JmN2VjNGMyZTdmNjA2YWI4
+  ZDYyNCIKICB9LCAKICAib3JpZ2luIjogIjE3My4xOS4xNDEuMjUyIiwgCiAgInVybCI6ICJodHRw
+  czovL2h0dHBiaW4ub3JnL2dldCIKfQo=
+cache_key: 4dc151d95200ec91fa77021989f5194e9be47e87f8f228306f3a8d5434b9e547
+created_at: '2021-07-21T22:32:17.592974'
+elapsed: 0.187586
+encoding: utf-8
+headers:
+  Access-Control-Allow-Credentials: 'true'
+  Access-Control-Allow-Origin: '*'
+  Connection: keep-alive
+  Content-Length: '308'
+  Content-Type: application/json
+  Date: Wed, 21 Jul 2021 22:32:17 GMT
+  Server: gunicorn/19.9.0
+request:
+  method: GET
+  url: https://httpbin.org/get
+  body: !!binary |
+    Tm9uZQ==
+  headers:
+    Accept: '*/*'
+    Accept-Encoding: gzip, deflate
+    Connection: keep-alive
+    User-Agent: python-requests/2.26.0
+raw:
+  decode_content: false
+  reason: OK
+  status: 200
+  version: 11
