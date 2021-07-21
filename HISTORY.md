@@ -1,11 +1,11 @@
 # History
 
-## 0.7.2 (2021-07-TBD)
-* Add support for `Response.next` when 302 responses are cached directly
+### 0.7.2 (2021-07-21)
+* Add support for `Response.next` (to get the next request in a redirect chain) when 302 responses are cached directly
 * Add a `CachedResponse.cache_key` attribute
 * Make `CachedResponse` a non-slotted class to allow client code to set arbitrary attributes on it
 
-## 0.7.1 (2021-07-09)
+### 0.7.1 (2021-07-09)
 * Fix a bug in which Cache-Control headers would be used unexpectedly
 
 ## 0.7.0 (2021-07-07)
