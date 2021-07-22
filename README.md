@@ -74,4 +74,4 @@ To find out more about what you can do with requests-cache, see:
 * A working example at Real Python:
   [Caching External API Requests](https://realpython.com/blog/python/caching-external-api-requests)
 * More examples in the
-  [examples/](https://requests-cache.readthedocs.io/en/stable/index.html) folder
+  [examples/](https://github.com/reclosedev/requests-cache/tree/master/examples) folder
