@@ -321,9 +321,9 @@ These features require python 3.7+ and additional dependencies
 :::
 
 ### JSON Serializer
-Storing responses as JSON gives you the benefit of making them human-readable, in exchange for a
-slight reduction in performance. This can be especially useful in combination with the filesystem
-backend.
+Storing responses as JSON gives you the benefit of making them human-readable and editable, in
+exchange for a slight reduction in performance. This can be especially useful in combination with
+the filesystem backend.
 
 :::{admonition} Example JSON-serialized Response
 :class: toggle
@@ -335,6 +335,21 @@ backend.
 You can install the extra dependencies for this serializer with:
 ```bash
 pip install requests-cache[json]
+```
+
+### YAML Serializer
+YAML is another option if you need a human-readable/editable format, with the same tradeoffs as JSON.
+
+:::{admonition} Example YAML-serialized Response
+:class: toggle
+```{literalinclude} sample_response.yaml
+:language: YAML
+```
+:::
+
+You can install the extra dependencies for this serializer with:
+```bash
+pip install requests-cache[yaml]
 ```
 
 ### BSON Serializer
@@ -354,6 +369,7 @@ MongoDB dependencies:
 ```bash
 pip install requests-cache[bson]
 ```
+
 
 ## Error Handling
 In some cases, you might cache a response, have it expire, but then encounter an error when

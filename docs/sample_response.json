@@ -1,50 +1,36 @@
 {
-    "_content": "base64-encoded bytes?",
-    "url": "https://httpbin.org/get",
-    "status_code": 200,
-    "cookies": {},
-    "created_at": "2021-05-10T21:25:26.851089",
-    "elapsed": 0.182103,
-    "expires": null,
-    "encoding": "utf-8",
+  "url": "https://httpbin.org/get",
+  "status_code": 200,
+  "reason": "OK",
+  "_content": "dkP>RB4Ki8b0Rt*dwnb*3LqdNXk}q!WpZ;OIv{%rARr(hB0*zgWpH#NIv^q{FDfD|APOKLARr<^V`F7-bS*`0V{c?>Zf7DoAR=daX>cqcWMyV-VRU68EFcOXARr(jNN;m=B03-<XmoUNVrgzJZ*pfMEFcOXARr(jRdZ!>EkS2xZge6#AR=&ibZBpGEplaXb!BsOb1yP3GBz$SA}k;ZARr(hB3La!ZF+7kRB~ZsWi3f$B03-<Qg3f`JuxjdFlIPmF)(2*GB7hXGcjZ_Gh<>hGc{o{G%#g2VK_22A_^cNeJmgfARr=da%pF2ZX!A$A~82JE-^VSF*GqQGBq+HEFcOXAR={gY$7@!B4~7UaC15@FKBdhaAIk0E^l&YFK1<RA_{#9",
+  "cache_key": "4dc151d95200ec91fa77021989f5194e9be47e87f8f228306f3a8d5434b9e547",
+  "created_at": "2021-07-21T22:34:50.343095",
+  "elapsed": 0.242198,
+  "encoding": "utf-8",
+  "headers": {
+    "Date": "Wed, 21 Jul 2021 22:34:50 GMT",
+    "Content-Type": "application/json",
+    "Content-Length": "308",
+    "Connection": "keep-alive",
+    "Server": "gunicorn/19.9.0",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Credentials": "true"
+  },
+  "request": {
+    "body": "PH%2y",
     "headers": {
-        "Date": "Mon, 10 May 2021 21:25:26 GMT",
-        "Content-Type": "application/json",
-        "Content-Length": "308",
-        "Connection": "keep-alive",
-        "Server": "gunicorn/19.9.0",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Credentials": "true"
+      "User-Agent": "python-requests/2.26.0",
+      "Accept-Encoding": "gzip, deflate",
+      "Accept": "*/*",
+      "Connection": "keep-alive"
     },
-    "history": [],
+    "method": "GET",
+    "url": "https://httpbin.org/get"
+  },
+  "raw": {
+    "decode_content": false,
     "reason": "OK",
-    "request": {
-        "body": null,
-        "cookies": {},
-        "headers": {
-            "User-Agent": "python-requests/2.25.1",
-            "Accept-Encoding": "gzip, deflate",
-            "Accept": "*/*",
-            "Connection": "keep-alive"
-        },
-        "method": "GET",
-        "url": "https://httpbin.org/get"
-    },
-    "raw": {
-        "decode_content": false,
-        "headers": {
-            "Date": "Mon, 10 May 2021 21:25:26 GMT",
-            "Content-Type": "application/json",
-            "Content-Length": "308",
-            "Connection": "keep-alive",
-            "Server": "gunicorn/19.9.0",
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Credentials": "true"
-        },
-        "reason": "OK",
-        "request_url": "None",
-        "status": 200,
-        "strict": 0,
-        "version": 11
-    }
+    "status": 200,
+    "version": 11
+  }
 }
