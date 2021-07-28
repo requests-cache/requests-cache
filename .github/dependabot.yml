@@ -1,17 +1,5 @@
 version: 2
 updates:
-  # Update requests + urllib 3 immediately (including patch releases)
-  - package-ecosystem: "pip"
-    directory: "/"
-    schedule:
-      interval: "daily"
-      time: "16:00"
-      allow:
-        - dependency-name: "requests"
-        - dependency-name: "urllib3"
-    assignees:
-      - "JWCook"
-  # Update other packages weekly, and only for major and minor releases
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
@@ -21,7 +9,6 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-patch"]
-  # Update GitHub Actions weekly
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
