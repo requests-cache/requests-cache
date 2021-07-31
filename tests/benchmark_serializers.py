@@ -42,7 +42,7 @@ except ImportError:
 sys.path.insert(0, os.path.abspath('..'))
 
 from requests_cache import CachedSession
-from requests_cache.serializers import BaseSerializer, BSONSerializer, JSONSerializer, PickleSerializer
+from requests_cache.serializers import CattrStage, bson_serializer, json_serializer, pickle_serializer
 
 ITERATIONS = 10000
 
@@ -56,50 +56,43 @@ r = session.get('https://httpbin.org/get?x=y')
 
 
 def run_pickle():
-    run_serialize_deserialize('pickle', pickle.dumps, pickle.loads)
+    run_serialize_deserialize('pickle', pickle)
 
 
 def run_cattrs():
-    s = PickleSerializer()
-    run_serialize_deserialize('cattrs', s.unstructure, s.structure)
+    run_serialize_deserialize('cattrs', CattrStage)
 
 
 def run_cattrs_pickle():
-    s = PickleSerializer()
-    run_serialize_deserialize('cattrs+pickle', s.dumps, s.loads)
+    run_serialize_deserialize('cattrs+pickle', pickle_serializer)
 
 
-def run_cattrs_json():
-    s = BaseSerializer(converter_factory=make_converter)
-    run_serialize_deserialize(
-        'cattrs+json',
-        lambda obj: json.dumps(s.unstructure(obj)),
-        lambda obj: s.structure(json.loads(obj)),
-    )
+# def run_cattrs_json():
+#     s = CattrStage(converter_factory=make_converter)
+#     run_serialize_deserialize(
+#         'cattrs+json',
+#         lambda obj: json.dumps(s.unstructure(obj)),
+#         lambda obj: s.structure(json.loads(obj)),
+#     )
 
 
 def run_cattrs_ujson():
-    s = BaseSerializer(converter_factory=make_converter)
-    run_serialize_deserialize(
-        'cattrs+ujson',
-        lambda obj: ujson.dumps(s.unstructure(obj)),
-        lambda obj: s.structure(ujson.loads(obj)),
-    )
+    s = CattrStage(converter_factory=make_converter)
+    run_serialize_deserialize('cattrs+ujson', json_serializer)
 
 
 def run_cattrs_bson():
-    s = BSONSerializer()
-    run_serialize_deserialize('cattrs+bson', s.dumps, s.loads)
+    run_serialize_deserialize('cattrs+bson', bson_serializer)
 
 
-def run_serialize_deserialize(module, serialize, deserialize):
+def run_serialize_deserialize(module, serializer):
     start = time()
-    serialized = [serialize(r) for i in range(ITERATIONS)]
-    print(f'{module}.{serialize.__name__} x{ITERATIONS}: {time() - start:.3f}')
+    serialized = [serializer.dumps(r) for i in range(ITERATIONS)]
+    print(f'{module}.{serializer.__name__}.loads() x{ITERATIONS}: {time() - start:.3f}')
 
     start = time()
-    deserialized = [deserialize(obj) for obj in serialized]
-    print(f'{module}.{deserialize.__name__} x{ITERATIONS}: {time() - start:.3f}')
+    deserialized = [serializer.loads(obj) for obj in serialized]
+    print(f'{module}.{serializer.__name__}.dumps() x{ITERATIONS}: {time() - start:.3f}')
 
 
 if __name__ == '__main__':
@@ -108,7 +101,7 @@ if __name__ == '__main__':
     run_pickle()
     run_cattrs()
     run_cattrs_pickle()
-    run_cattrs_json()
+    # run_cattrs_json()
     run_cattrs_ujson()
     run_cattrs_bson()
 
