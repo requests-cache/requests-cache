@@ -315,13 +315,13 @@ def test_clear(mock_session):
     assert not mock_session.cache.has_url(MOCKED_URL_REDIRECT)
 
 
-def test_delete_response(mock_session):
+def test_delete_url(mock_session):
     mock_session.get(MOCKED_URL)
     mock_session.cache.delete_url(MOCKED_URL)
     assert not mock_session.cache.has_url(MOCKED_URL)
 
 
-def test_delete_nonexistent_response(mock_session):
+def test_delete_url__nonexistent_response(mock_session):
     """Deleting a response that was either already deleted (or never added) should fail silently"""
     mock_session.cache.delete_url(MOCKED_URL)
 
@@ -331,12 +331,22 @@ def test_delete_nonexistent_response(mock_session):
     mock_session.cache.delete_url(MOCKED_URL)  # Should fail silently
 
 
-def test_delete_redirect(mock_session):
+def test_delete_url__redirect(mock_session):
     mock_session.get(MOCKED_URL_REDIRECT)
     assert mock_session.cache.has_url(MOCKED_URL_REDIRECT)
 
     mock_session.cache.delete_url(MOCKED_URL_REDIRECT)
     assert not mock_session.cache.has_url(MOCKED_URL_REDIRECT)
+
+
+def test_delete_urls(mock_session):
+    urls = [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_REDIRECT]
+    for url in urls:
+        mock_session.get(url)
+
+    mock_session.cache.delete_urls(urls)
+    for url in urls:
+        assert not mock_session.cache.has_url(MOCKED_URL_REDIRECT)
 
 
 def test_save_response_manual(mock_session):
