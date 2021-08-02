@@ -10,6 +10,7 @@ from typing import Collection, Iterable, Iterator, List, Tuple, Type, Union
 
 from . import BaseCache, BaseStorage, get_valid_kwargs
 
+SQLITE_MAX_VARIABLE_NUMBER = 999
 logger = getLogger(__name__)
 
 
@@ -96,9 +97,8 @@ class DbDict(BaseStorage):
         This must be done in shared connection, but all subsequent queries can use thread-local connections.
         """
         self.close()
-        with self._lock:
-            with sqlite3.connect(self.db_path, **self.connection_kwargs) as con:
-                con.execute(f'CREATE TABLE IF NOT EXISTS {self.table_name} (key PRIMARY KEY, value)')
+        with self._lock, sqlite3.connect(self.db_path, **self.connection_kwargs) as con:
+            con.execute(f'CREATE TABLE IF NOT EXISTS {self.table_name} (key PRIMARY KEY, value)')
 
     @contextmanager
     def connection(self, commit=False) -> Iterator[sqlite3.Connection]:
@@ -172,18 +172,19 @@ class DbDict(BaseStorage):
             return con.execute(f'SELECT COUNT(key) FROM  {self.table_name}').fetchone()[0]
 
     def bulk_delete(self, keys=None, values=None):
-        """Delete multiple keys from the cache. Does not raise errors for missing keys.
+        """Delete multiple keys from the cache, without raising errors for any missing keys.
         Also supports deleting by value.
         """
         if not keys and not values:
             return
 
         column = 'key' if keys else 'value'
-        marks, args = _format_sequence(keys or values)
-        statement = f'DELETE FROM {self.table_name} WHERE {column} IN ({marks})'
-
         with self.connection(commit=True) as con:
-            con.execute(statement, args)
+            # Split into small enough chunks for SQLite to handle
+            for chunk in chunkify(keys or values):
+                marks, args = _format_sequence(chunk)
+                statement = f'DELETE FROM {self.table_name} WHERE {column} IN ({marks})'
+                con.execute(statement, args)
 
     def clear(self):
         with self.connection(commit=True) as con:
@@ -207,6 +208,13 @@ class DbPickleDict(DbDict):
 
     def __getitem__(self, key):
         return self.serializer.loads(super().__getitem__(key))
+
+
+def chunkify(iterable: Iterable, max_size=SQLITE_MAX_VARIABLE_NUMBER) -> Iterator[List]:
+    """Split an iterable into chunks of a max size"""
+    iterable = list(iterable)
+    for index in range(0, len(iterable), max_size):
+        yield iterable[index : index + max_size]
 
 
 def _format_sequence(values: Collection) -> Tuple[str, List]:

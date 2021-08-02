@@ -29,11 +29,34 @@ class SQLiteTestCase(BaseStorageTest):
         with cache.bulk_commit():
             pass
 
-        n = 1000
+        n_items = 1000
         with cache.bulk_commit():
-            for i in range(n):
-                cache[i] = i
-        assert list(cache.keys()) == list(range(n))
+            for i in range(n_items):
+                cache[f'key_{i}'] = f'value_{i}'
+        assert set(cache.keys()) == {f'key_{i}' for i in range(n_items)}
+        assert set(cache.values()) == {f'value_{i}' for i in range(n_items)}
+
+    def test_chunked_bulk_delete(self):
+        """When deleting more items than SQLite can handle in a single statement, it should be
+        chunked into multiple smaller statements
+        """
+        # Populate the cache with more items than can fit in a single delete statement
+        cache = self.init_cache()
+        with cache.bulk_commit():
+            for i in range(2000):
+                cache[f'key_{i}'] = f'value_{i}'
+
+        keys = list(cache.keys())
+
+        # First pass to ensure that bulk_delete is split across three statements
+        with patch.object(cache, 'connection') as mock_connection:
+            con = mock_connection().__enter__.return_value
+            cache.bulk_delete(keys)
+            assert con.execute.call_count == 3
+
+        # Second pass to actually delete keys and make sure it doesn't explode
+        cache.bulk_delete(keys)
+        assert len(cache) == 0
 
     def test_switch_commit(self):
         cache = self.init_cache()
