@@ -47,8 +47,7 @@ class BaseCacheTest:
         kwargs.setdefault('serializer', 'pickle')
         backend = self.backend_class(CACHE_NAME, **self.init_kwargs, **kwargs)
         if clear:
-            backend.redirects.clear()
-            backend.responses.clear()
+            backend.clear()
 
         return CachedSession(backend=backend, **self.init_kwargs, **kwargs)
 
