@@ -107,6 +107,10 @@ class BaseCache:
         """Delete a cached response + redirects for ``GET <url>``"""
         self.delete(url_to_key(url, self.ignored_parameters))
 
+    def delete_urls(self, urls: Iterable[str]):
+        """Delete cached responses + redirects for multiple request URLs (``GET`` requests only)"""
+        self.bulk_delete([url_to_key(url, self.ignored_parameters) for url in urls])
+
     def bulk_delete(self, keys: Iterable[str]):
         """Remove multiple responses and their associated redirects from the cache"""
         self.responses.bulk_delete(keys)

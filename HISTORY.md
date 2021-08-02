@@ -1,5 +1,11 @@
 # History
 
+### 0.7.3 (2021-08-TBD)
+* Update `DbCache.clear()` (SQLite) to succeed even if the database is corrupted
+* Update `DbDict.bulk_delete()` (SQLite) to split the operation into multiple statements to support
+  deleting more items than SQLite's variable limit (999)
+* Add a `BaseCache.delete_urls()` method to bulk delete multiple responses from the cache based on request URL
+
 ### 0.7.2 (2021-07-21)
 * Add support for `Response.next` (to get the next request in a redirect chain) when 302 responses are cached directly
 * Add a `CachedResponse.cache_key` attribute

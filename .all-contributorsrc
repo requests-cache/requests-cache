@@ -622,6 +622,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "Avasam",
+      "name": "Samuel T.",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1350584?v=4",
+      "profile": "https://www.facebook.com/avasamdev",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
