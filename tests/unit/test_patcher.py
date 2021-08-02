@@ -5,7 +5,7 @@ from requests.sessions import Session as OriginalSession
 
 import requests_cache
 from requests_cache import CachedSession
-from requests_cache.backends import BaseCache
+from requests_cache.backends import BaseCache, DbCache
 from tests.conftest import CACHE_NAME
 
 
@@ -40,13 +40,13 @@ def test_inheritance_after_monkey_patch(installed_session):
     assert "new_one" in s.__attrs__
 
 
-@patch.object(BaseCache, 'clear')
+@patch.object(DbCache, 'clear')
 def test_clear(mock_clear, installed_session):
     requests_cache.clear()
     mock_clear.assert_called()
 
 
-@patch.object(BaseCache, 'clear')
+@patch.object(DbCache, 'clear')
 def test_clear__not_installed(mock_clear):
     """If clear is called without a cache installed, it should just fail silently"""
     requests_cache.clear()
