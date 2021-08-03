@@ -23,7 +23,7 @@ COVERAGE_ARGS = '--cov --cov-report=term --cov-report=html'  # Generate HTML + s
 XDIST_ARGS = '--numprocesses=auto --dist=loadfile'  # Run tests in parallel, grouped by test module
 
 
-@session(python=['3.6', '3.7', '3.8', '3.9', '3.10'])
+@session(python=['3.7', '3.8', '3.9', '3.10'])
 def test(session):
     """Run tests for a specific python version"""
     test_paths = session.posargs or [UNIT_TESTS]

@@ -1,9 +1,13 @@
 # flake8: noqa: F401
-import pickle
-from warnings import warn
-
-from .. import get_placeholder_class
+from .cattrs import CattrStage
 from .pipeline import SerializerPipeline, Stage
+from .preconf import (
+    bson_serializer,
+    json_serializer,
+    pickle_serializer,
+    safe_pickle_serializer,
+    yaml_serializer,
+)
 
 __all__ = [
     'SERIALIZERS',
@@ -17,26 +21,6 @@ __all__ = [
     'yaml_serializer',
     'init_serializer',
 ]
-
-# If cattrs isn't installed, use plain pickle for pickle_serializer, and placeholders for the rest.
-# Additional checks for format-specific optional libraries are handled in the preconf module.
-try:
-    from .cattrs import CattrStage
-    from .preconf import (
-        bson_serializer,
-        json_serializer,
-        pickle_serializer,
-        safe_pickle_serializer,
-        yaml_serializer,
-    )
-except ImportError as e:
-    CattrStage = get_placeholder_class(e)  # type: ignore
-    bson_serializer = get_placeholder_class(e)
-    json_serializer = get_placeholder_class(e)
-    pickle_serializer = pickle  # type: ignore
-    safe_pickle_serializer = get_placeholder_class(e)
-    yaml_serializer = get_placeholder_class(e)
-
 
 SERIALIZERS = {
     'bson': bson_serializer,
