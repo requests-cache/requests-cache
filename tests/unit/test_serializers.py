@@ -12,10 +12,6 @@ from itsdangerous.exc import BadSignature
 
 from requests_cache import CachedResponse, CachedSession, pickle_serializer
 
-pytestmark = pytest.mark.skipif(
-    sys.version_info < (3, 7), reason='Requires python 3.7+ version of cattrs'
-)
-
 
 def test_stdlib_json():
     import requests_cache.serializers.preconf
