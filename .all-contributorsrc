@@ -629,7 +629,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/1350584?v=4",
       "profile": "https://www.facebook.com/avasamdev",
       "contributions": [
-        "bug"
+        "bug",
+        "ideas"
       ]
     }
   ],
@@ -638,7 +639,7 @@
   "types": {
     "feature": {
       "symbol": "✨",
-      "Description": "New feature"
+      "description": "New features"
     }
   }
 }
