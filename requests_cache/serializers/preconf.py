@@ -11,6 +11,7 @@ class that raises an ``ImportError`` at initialization time instead of at import
 Requires python 3.7+.
 """
 import pickle
+from functools import partial
 
 from cattr.preconf import bson as bson_preconf
 from cattr.preconf import json as json_preconf
@@ -33,6 +34,7 @@ ujson_preconf_stage = CattrStage(ujson.make_converter)
 # Pickle serializer that uses the cattrs base converter
 pickle_serializer = SerializerPipeline([base_stage, pickle])
 
+
 # Pickle serializer with an additional stage using itsdangerous
 try:
     from itsdangerous import Signer
@@ -51,6 +53,7 @@ except ImportError as e:
     signer_stage = get_placeholder_class(e)
     safe_pickle_serializer = get_placeholder_class(e)
 
+
 # BSON serializer using either PyMongo's bson.json_util if installed, otherwise standalone bson codec
 try:
     try:
@@ -62,6 +65,7 @@ try:
 except ImportError as e:
     bson_serializer = get_placeholder_class(e)
 
+
 # JSON serailizer using ultrajson if installed, otherwise stdlib json
 try:
     import ujson as json
@@ -72,7 +76,10 @@ except ImportError:
 
     converter = json_preconf_stage
 
-json_serializer = SerializerPipeline([converter, json])
+json_stage = Stage(json)
+json_stage.dumps = partial(json.dumps, indent=2)
+json_serializer = SerializerPipeline([converter, json_stage])
+
 
 # YAML serializer using pyyaml
 try:

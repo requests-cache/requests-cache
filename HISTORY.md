@@ -1,9 +1,12 @@
 # History
 
 ### 0.7.3 (2021-08-TBD)
-* Update `DbCache.clear()` (SQLite) to succeed even if the database is corrupted
-* Update `DbDict.bulk_delete()` (SQLite) to split the operation into multiple statements to support
+* SQLite backend: Update `DbCache.clear()` to succeed even if the database is corrupted
+* SQLite backend: update `DbDict.bulk_delete()` to split the operation into multiple statements to support
   deleting more items than SQLite's variable limit (999)
+* Filesystem backend: When using JSON serializer, pretty-print JSON by default
+* Filesystem backend: Add an appropriate file extension to cache files (`.json`, `.yaml`, `.pkl`, etc.) by default.
+  Can be overridden or disabled with the `extension` parameter.
 * Add a `BaseCache.delete_urls()` method to bulk delete multiple responses from the cache based on request URL
 
 ### 0.7.2 (2021-07-21)

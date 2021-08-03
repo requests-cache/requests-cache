@@ -1,12 +1,13 @@
 from contextlib import contextmanager
 from os import listdir, makedirs, unlink
-from os.path import abspath, dirname, expanduser, isabs, join
+from os.path import abspath, dirname, expanduser, isabs, join, splitext
 from pathlib import Path
 from pickle import PickleError
 from shutil import rmtree
 from tempfile import gettempdir
 from typing import Union
 
+from ..serializers import SERIALIZERS
 from . import BaseCache, BaseStorage
 from .sqlite import DbDict
 
@@ -20,6 +21,8 @@ class FileCache(BaseCache):
         cache_name: Base directory for cache files
         use_temp: Store cache files in a temp directory (e.g., ``/tmp/http_cache/``).
             Note: if ``cache_name`` is an absolute path, this option will be ignored.
+        extension: Extension for cache files. If not specified, the serializer default extension
+            will be used.
     """
 
     def __init__(self, cache_name: Union[Path, str] = 'http_cache', use_temp: bool = False, **kwargs):
@@ -32,11 +35,12 @@ class FileCache(BaseCache):
 class FileDict(BaseStorage):
     """A dictionary-like interface to files on the local filesystem"""
 
-    def __init__(self, cache_name, use_temp: bool = False, **kwargs):
+    def __init__(self, cache_name, use_temp: bool = False, extension: str = None, **kwargs):
         super().__init__(**kwargs)
         self.cache_dir = _get_cache_dir(cache_name, use_temp)
-        makedirs(self.cache_dir, exist_ok=True)
+        self.extension = extension if extension is not None else _get_default_ext(self.serializer)
         self.is_binary = False
+        makedirs(self.cache_dir, exist_ok=True)
 
     @contextmanager
     def _try_io(self, ignore_errors: bool = False):
@@ -47,11 +51,15 @@ class FileDict(BaseStorage):
             if not ignore_errors:
                 raise KeyError(e)
 
+    def _path(self, key):
+        ext = f'.{self.extension}' if self.extension else ''
+        return join(self.cache_dir, f'{key}{ext}')
+
     def __getitem__(self, key):
         mode = 'rb' if self.is_binary else 'r'
         with self._try_io():
             try:
-                with open(join(self.cache_dir, str(key)), mode) as f:
+                with open(self._path(key), mode) as f:
                     return self.serializer.loads(f.read())
             except UnicodeDecodeError:
                 self.is_binary = True
@@ -59,7 +67,7 @@ class FileDict(BaseStorage):
 
     def __delitem__(self, key):
         with self._try_io():
-            unlink(join(self.cache_dir, str(key)))
+            unlink(self._path(key))
 
     def __setitem__(self, key, value):
         serialized_value = self.serializer.dumps(value)
@@ -67,12 +75,12 @@ class FileDict(BaseStorage):
             self.is_binary = True
         mode = 'wb' if self.is_binary else 'w'
         with self._try_io():
-            with open(join(self.cache_dir, str(key)), mode) as f:
+            with open(self._path(key), mode) as f:
                 f.write(self.serializer.dumps(value))
 
     def __iter__(self):
         for filename in listdir(self.cache_dir):
-            yield filename
+            yield splitext(filename)[0]
 
     def __len__(self):
         return len(listdir(self.cache_dir))
@@ -85,7 +93,7 @@ class FileDict(BaseStorage):
     def paths(self):
         """Get file paths to all cached responses"""
         for key in self:
-            yield join(self.cache_dir, key)
+            yield self._path(key)
 
 
 def _get_cache_dir(cache_dir: Union[Path, str], use_temp: bool) -> str:
@@ -97,3 +105,10 @@ def _get_cache_dir(cache_dir: Union[Path, str], use_temp: bool) -> str:
     cache_dir = abspath(expanduser(str(cache_dir)))
     makedirs(cache_dir, exist_ok=True)
     return cache_dir
+
+
+def _get_default_ext(serializer) -> str:
+    for k, v in SERIALIZERS.items():
+        if serializer is v:
+            return k.replace('pickle', 'pkl')
+    return ''
