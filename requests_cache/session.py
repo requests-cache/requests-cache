@@ -259,7 +259,7 @@ class CachedSession(CacheMixin, OriginalSession):
     """Class that extends :py:class:`requests.Session` with caching features.
 
     See individual :py:mod:`backend classes <requests_cache.backends>` for additional backend-specific arguments.
-    Also see :ref:`advanced_usage` for more details and examples on how the following arguments
+    Also see :ref:`user-guide` for more details and examples on how the following arguments
     affect cache behavior.
 
     Args:

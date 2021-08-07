@@ -75,7 +75,7 @@ jobs:
       - name: Run tests
         run: |
           source $VENV
-          pytest --numprocesses=auto tests/unit
+          pytest --numprocesses=auto tests/unit tests/compat
           pytest tests/integration -k 'not test_response_decode'
           STRESS_TEST_MULTIPLIER=5 pytest tests/integration/ -k 'multithreaded'
 

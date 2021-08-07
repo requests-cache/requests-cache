@@ -331,9 +331,8 @@ Or if you are using {py:func}`.install_cache`, you can use the `session_factory`
 The same approach can be used with other libraries that subclass {py:class}`requests.Session`.
 
 ### Requests-futures
-Example with [requests-futures](https://github.com/ross/requests-futures):
-
-Some libraries, including `requests-futures`, support wrapping an existing session object:
+Some libraries, including [requests-futures](https://github.com/ross/requests-futures),
+support wrapping an existing session object:
 ```python
 >>> session = FutureSession(session=CachedSession())
 ```
@@ -342,39 +341,9 @@ In this case, `FutureSession` must wrap `CachedSession` rather than the other wa
 `FutureSession` returns (as you might expect) futures rather than response objects.
 See [issue #135](https://github.com/reclosedev/requests-cache/issues/135) for more notes on this.
 
-### Requests-mock
-Example with [requests-mock](https://github.com/jamielennox/requests-mock):
-
-Requests-mock works a bit differently. It has multiple methods of mocking requests, and the
-method most compatible with requests-cache is attaching its
-[adapter](https://requests-mock.readthedocs.io/en/latest/adapter.html) to a CachedSession:
-```python
->>> import requests
->>> from requests_mock import Adapter
->>> from requests_cache import CachedSession
->>>
->>> # Set up a CachedSession that will make mock requests where it would normally make real requests
->>> adapter = Adapter()
->>> adapter.register_uri(
-...     'GET',
-...     'mock://some_test_url',
-...     headers={'Content-Type': 'text/plain'},
-...     text='mock response',
-...     status_code=200,
-... )
->>> session = CachedSession()
->>> session.mount('mock://', adapter)
->>>
->>> session.get('mock://some_test_url', text='mock_response')
->>> response = session.get('mock://some_test_url')
->>> print(response.text)
-```
-
 ### Internet Archive
-
-Example with [internetarchive](https://github.com/jjjake/internetarchive):
-
-Usage is the same as other libraries that subclass `requests.Session`:
+Usage with [internetarchive](https://github.com/jjjake/internetarchive) is the same as other libraries
+that subclass `requests.Session`:
 :::{admonition} Example code
 :class: toggle
 ```python
@@ -383,5 +352,68 @@ Usage is the same as other libraries that subclass `requests.Session`:
 >>>
 >>> class CachedArchiveSession(CacheMixin, ArchiveSession):
 ...     """Session with features from both CachedSession and ArchiveSession"""
+```
+:::
+
+### Requests-mock
+[requests-mock](https://github.com/jamielennox/requests-mock) has multiple methods for mocking
+requests, including a contextmanager, decorator, fixture, and adapter. There are a few different
+options for using it with requests-cache, depending on how you want your tests to work.
+
+#### Disabling requests-cache
+If you have an application that uses requests-cache and you just want to use requests-mock in
+your tests, the easiest thing to do is to disable requests-cache.
+
+For example, if you are using {py:func}`.install_cache` in your application and the
+requests-mock [pytest fixture](https://requests-mock.readthedocs.io/en/latest/pytest.html) in your
+tests, you could wrap it in another fixture that uses {py:func}`.uninstall_cache` or {py:func}`.disabled`:
+:::{admonition} Example code
+:class: toggle
+```{literalinclude} ../tests/compat/test_requests_mock_disable_cache.py
+```
+:::
+
+Or if you use a `CachedSession` object, you could replace it with a regular `Session`, for example:
+:::{admonition} Example code
+:class: toggle
+```python
+import unittest
+import pytest
+import requests
+
+@pytest.fixure(scope='function', autouse=True)
+def disable_requests_cache():
+    """Replace CachedSession with a regular Session for all test functions"""
+    with unittest.mock.patch('requests_cache.CachedSession', requests.Session):
+        yield
+```
+:::
+
+#### Combining requests-cache with requests-mock
+If you want both caching and mocking features at the same time, you can attach requests-mock's
+[adapter](https://requests-mock.readthedocs.io/en/latest/adapter.html) to a `CachedSession`:
+
+:::{admonition} Example code
+:class: toggle
+```{literalinclude} ../tests/compat/test_requests_mock_combine_cache.py
+```
+:::
+
+#### Building a mocker using requests-cache data
+Another approach is to use cached data to dynamically define mock requests + responses.
+This has the advantage of only using request-mock's behavior for
+[request matching](https://requests-mock.readthedocs.io/en/latest/matching.html).
+
+:::{admonition} Example code
+:class: toggle
+```{literalinclude} ../tests/compat/test_requests_mock_load_cache.py
+:lines: 21-40
+```
+:::
+
+To turn that into a complete example:
+:::{admonition} Example code
+:class: toggle
+```{literalinclude} ../tests/compat/test_requests_mock_load_cache.py
 ```
 :::
