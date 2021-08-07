@@ -171,7 +171,7 @@ By default, all request parameters are taken into account when caching responses
 there may be request parameters that don't affect the response data, for example authentication tokens
 or credentials. If you want to ignore specific parameters, specify them with `ignored_parameters`:
 ```python
->>> session = CachedSession(ignored_parameters=\['auth-token'\])
+>>> session = CachedSession(ignored_parameters=['auth-token'])
 >>> # Only the first request will be sent
 >>> session.get('http://httpbin.org/get', params={'auth-token': '2F63E5DF4F44'})
 >>> session.get('http://httpbin.org/get', params={'auth-token': 'D9FAEB3449D3'})
@@ -239,7 +239,7 @@ you're requesting. For example, you might request one resource that gets updated
 that changes infrequently, and another that never changes. Example:
 ```python
 >>> urls_expire_after = {
-...     '\*.site_1.com': 30,
+...     '*.site_1.com': 30,
 ...     'site_2.com/resource_1': 60 * 2,
 ...     'site_2.com/resource_2': 60 * 60 * 24,
 ...     'site_2.com/static': -1,
@@ -250,9 +250,9 @@ that changes infrequently, and another that never changes. Example:
 You can also use this to define a cache whitelist, so only the patterns you define will be cached:
 ```python
 >>> urls_expire_after = {
-...     '\*.site_1.com': 30,
+...     '*.site_1.com': 30,
 ...     'site_2.com/static': -1,
-...     '\*': 0,  # Every other non-matching URL: do not cache
+...     '*': 0,  # Every other non-matching URL: do not cache
 ... }
 ```
 
