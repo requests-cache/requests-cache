@@ -21,14 +21,14 @@ from .. import get_placeholder_class
 from .cattrs import CattrStage
 from .pipeline import SerializerPipeline, Stage
 
-base_stage = CattrStage()
-bson_preconf_stage = CattrStage(bson_preconf.make_converter)
-json_preconf_stage = CattrStage(json_preconf.make_converter)
-msgpack_preconf_stage = CattrStage(msgpack.make_converter)
-orjson_preconf_stage = CattrStage(orjson.make_converter)
-yaml_preconf_stage = CattrStage(pyyaml.make_converter)
-toml_preconf_stage = CattrStage(tomlkit.make_converter)
-ujson_preconf_stage = CattrStage(ujson.make_converter)
+base_stage = CattrStage()  #: Base stage for all serializer pipelines
+bson_preconf_stage = CattrStage(bson_preconf.make_converter)  #: Pre-configured stage for BSON
+json_preconf_stage = CattrStage(json_preconf.make_converter)  #: Pre-configured stage for JSON
+msgpack_preconf_stage = CattrStage(msgpack.make_converter)  #: Pre-configured stage for msgpack
+orjson_preconf_stage = CattrStage(orjson.make_converter)  #: Pre-configured stage for orjson
+yaml_preconf_stage = CattrStage(pyyaml.make_converter)  #: Pre-configured stage for YAML
+toml_preconf_stage = CattrStage(tomlkit.make_converter)  #: Pre-configured stage for TOML
+ujson_preconf_stage = CattrStage(ujson.make_converter)  #: Pre-configured stage for ujson
 
 
 # Pickle serializer that uses the cattrs base converter
