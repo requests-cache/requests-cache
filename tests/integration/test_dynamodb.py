@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from requests_cache.backends import DynamoDbCache, DynamoDbDict
 from tests.conftest import AWS_OPTIONS, fail_if_no_connection

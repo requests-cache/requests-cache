@@ -8,4 +8,3 @@ $(document).ready(function() {
         $(this).parent().children(".admonition-title").toggleClass("open");
     })
 });
-

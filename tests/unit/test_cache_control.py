@@ -1,7 +1,7 @@
-import pytest
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
 
+import pytest
 from requests import PreparedRequest
 
 from requests_cache.cache_control import (

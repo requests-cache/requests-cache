@@ -4,8 +4,9 @@ Example of converting data cached in older versions of requests-cache (<=0.5.2)
 into the current format
 """
 from requests import Response
-from requests_cache import CachedResponse, CachedSession
+
 import requests_cache.backends.base
+from requests_cache import CachedResponse, CachedSession
 
 
 class _Store:

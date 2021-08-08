@@ -1,8 +1,9 @@
 import pickle
-import pytest
 from os.path import isfile
 from shutil import rmtree
 from tempfile import gettempdir
+
+import pytest
 
 from requests_cache.backends import FileCache, FileDict
 from requests_cache.serializers import SERIALIZERS, SerializerPipeline

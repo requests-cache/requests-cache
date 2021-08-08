@@ -1,6 +1,6 @@
-import pytest
 from unittest.mock import patch
 
+import pytest
 from pymongo import MongoClient
 
 from requests_cache.backends import MongoCache, MongoDict, MongoPickleDict, get_valid_kwargs

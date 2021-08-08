@@ -12,10 +12,9 @@ from time import perf_counter as time
 import requests
 from rich.progress import Progress
 
-from requests_cache import ALL_METHODS, CachedSession, CachedResponse
+from requests_cache import ALL_METHODS, CachedResponse, CachedSession
 from requests_cache.models.response import format_file_size
 from tests.conftest import HTTPBIN_FORMATS, HTTPBIN_METHODS
-
 
 BASE_RESPONSE = requests.get('https://httpbin.org/get')
 CACHE_NAME = 'rubbish_bin.sqlite'

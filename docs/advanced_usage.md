@@ -381,6 +381,7 @@ import unittest
 import pytest
 import requests
 
+
 @pytest.fixure(scope='function', autouse=True)
 def disable_requests_cache():
     """Replace CachedSession with a regular Session for all test functions"""

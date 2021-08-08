@@ -1,5 +1,6 @@
-import pytest
 from shutil import copyfile
+
+import pytest
 
 from requests_cache import CachedSession
 from tests.conftest import HTTPBIN_FORMATS, SAMPLE_CACHE_FILES

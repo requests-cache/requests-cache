@@ -3,11 +3,11 @@ from os.path import dirname, join
 from unittest.mock import patch
 
 import pytest
-
 import requests
 from requests import Session
-from requests_cache import CachedSession
 from requests_mock import Adapter, NoMockAddress
+
+from requests_cache import CachedSession
 
 TEST_DB = join(dirname(__file__), 'httpbin_sample.test-db')
 TEST_URLS = [

@@ -6,6 +6,7 @@ The same as ``basic_usage.py``, but using global session patching
 import time
 
 import requests
+
 import requests_cache
 
 # After installation, all requests functions and Session methods will be cached
