@@ -33,7 +33,8 @@ cattrs = {version = "^1.7", python = "^3.7", optional = true}
 ujson = {version = ">=4.0", optional = true}
 
 # Optional backend dependencies
-boto3 = { version = "^1.17", optional = true }
+boto3 = { version = "<1.16", optional = true }
+botocore = { version = "<1.19", optional  = true }
 pymongo = { version = "^3.0", optional = true }
 pyyaml = {version = ">=5.4", optional = true}
 redis = { version = "^3.0", optional = true }
@@ -53,7 +54,7 @@ all = ["boto3", "cattrs", "pymongo", "redis", "ujson"]
 bson = ["cattrs", "bson"]  # BSON comes with pymongo, and can also be used as a standalone codec
 json = ["cattrs", "ujson"]
 yaml = ["cattrs", "yaml"]
-dynamodb = ["boto3"]
+dynamodb = ["boto3", "botocore"]
 mongodb = ["cattrs", "pymongo"]
 redis = ["redis"]
 docs = ["furo", "linkify-it-py", "myst-parser", "sphinx", "sphinx-autodoc-typehints",
@@ -74,6 +75,7 @@ pytest-order = "1.0"
 pytest-xdist = ">=2.2"
 radon = "^5.0"
 requests-mock = "^1.8"
+responses = "0.10.15"
 rich = ">=10.0"
 timeout-decorator = "^0.5"
 types-pyyaml = ">=5.4.3"
@@ -107,7 +109,11 @@ omit = [
 profile = 'black'
 line_length = 105
 skip_gitignore = true
-skip = ['examples/', 'requests_cache/__init__.py']
+skip = [
+    'examples/',
+    'requests_cache/__init__.py',
+    'tests/compat/',
+]
 known_first_party = ['tests']
 # Things that are common enough they may as well be grouped with stdlib imports
 extra_standard_library = ['pytest', 'setuptools']

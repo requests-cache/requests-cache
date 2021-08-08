@@ -1,3 +1,4 @@
+(user-guide)=
 # User Guide
 This section covers the main features of requests-cache.
 
