@@ -61,12 +61,6 @@ docs = ["furo", "linkify-it-py", "myst-parser", "sphinx", "sphinx-autodoc-typehi
         "sphinx-copybutton", "sphinx-inline-tabs", "sphinxcontrib-apidoc"]
 
 [tool.poetry.dev-dependencies]
-black = {version = "21.7b0", python = ">=3.6.2, <3.10"}
-isort = "^5.8"
-flake8 = "^3.9"
-flake8-comprehensions = "*"
-flake8-polyfill = "*"
-mypy = "^0.910"
 nox = {version = "^2021.6.12", python = "^3.6.2"}
 nox-poetry = {version = "^0.8.6", python = "^3.6.2"}
 pre-commit = {version = "^2.12", python = "^3.6.2"}
@@ -76,16 +70,11 @@ pytest-clarity = "^1.0.1"
 pytest-cov = ">=2.11"
 pytest-order = "1.0"
 pytest-xdist = ">=2.2"
-radon = "^5.0"
 requests-mock = "^1.8"
 responses = "0.10.15"
 rich = ">=10.0"
 sphinx-autobuild = "^2021.3.14"
 timeout-decorator = "^0.5"
-types-pyyaml = ">=5.4.3"
-types-redis = ">=3.5.4"
-types-requests = ">=0.1.8"
-types-ujson = ">=0.1.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
