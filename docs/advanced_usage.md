@@ -417,3 +417,13 @@ To turn that into a complete example:
 ```{literalinclude} ../tests/compat/test_requests_mock_load_cache.py
 ```
 :::
+
+### Responses
+Usage with the [responses](https://github.com/getsentry/responses) library is similar to the
+requests-mock examples above.
+
+:::{admonition} Example code
+:class: toggle
+```{literalinclude} ../tests/compat/test_responses_load_cache.py
+```
+:::
