@@ -61,17 +61,6 @@ def test_init_backend_class():
     assert isinstance(session.cache, MyCache)
 
 
-def test_import_compat():
-    """Just make sure that we can still import from requests_cache.core"""
-    with pytest.deprecated_call():
-        from requests_cache.core import CachedSession, install_cache  # noqa: F401
-
-
-def test_method_compat(mock_session):
-    with pytest.deprecated_call():
-        mock_session.cache.remove_old_entries()
-
-
 @pytest.mark.parametrize('method', ALL_METHODS)
 @pytest.mark.parametrize('field', ['params', 'data', 'json'])
 def test_all_methods(field, method, mock_session):
