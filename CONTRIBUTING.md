@@ -29,21 +29,31 @@ Pre-release documentation can be found here: https://requests-cache.readthedocs.
 To set up for local development (requires [poetry](https://python-poetry.org/docs/#installation)):
 
 ```bash
-$ git clone https://github.com/reclosedev/requests-cache.git
-$ cd requests-cache
-$ poetry install -v -E all
+git clone https://github.com/reclosedev/requests-cache.git
+cd requests-cache
+poetry install -v -E all
 ```
 
 ## Pre-commit Hooks
-[Pre-commit](https://github.com/pre-commit/pre-commit) config is included to run the same checks
-locally that are run in CI jobs by GitHub Actions. This is optional but recommended.
+CI jobs will run code style checks, type checks, linting, etc. If you would like to run these same
+checks locally, you can use [pre-commit](https://github.com/pre-commit/pre-commit).
+This is optional but recommended.
+
+To install pre-commit hooks:
 ```bash
-$ pre-commit install --config .github/pre-commit.yml
+pre-commit install
 ```
 
-To uninstall:
+To manually run checks on all files:
 ```bash
-$ pre-commit uninstall
+pre-commit run --all-files
+# Alternative alias with nox:
+nox -e lint
+```
+
+To disable pre-commit hooks:
+```bash
+pre-commit uninstall
 ```
 
 ## Testing
@@ -61,8 +71,24 @@ $ pre-commit uninstall
 * Run `pytest` to run all tests
 * Run `pytest tests/unit` to run only unit tests
 * Run `pytest tests/integration` to run only integration tests
-* Run `./runtests.sh` to run all tests with some useful options for test coverage reports,
-  multiprocessing, and debugging.
+
+For CI jobs (including PRs), these tests will be run for each supported python version.
+You can use [nox](https://nox.thea.codes) to do this locally, if needed:
+```bash
+nox -e test
+```
+
+Or to run tests for a specific python version:
+```bash
+nox -e test-3.10
+```
+
+To generate a coverage report:
+```bash
+nox -e cov
+```
+
+See `nox --list` for a ful list of available commands.
 
 ### Integration Test Containers
 A live web server and backend databases are required to run integration tests, and docker-compose
@@ -71,7 +97,7 @@ and [install docker-compose](https://docs.docker.com/compose/install/).
 
 Then, run:
 ```bash
-$ docker-compose up -d
+docker-compose up -d
 pytest tests/integration
 ```
 
@@ -94,15 +120,20 @@ as they are running on the default port.
 
 To build the docs locally:
 ```bash
-$ make -C docs all
+nox -e docs
 ```
 
 To preview:
 ```bash
 # MacOS:
-$ open docs/_build/index.html
+open docs/_build/html/index.html
 # Linux:
-$ xdg-open docs/_build/index.html
+xdg-open docs/_build/html/index.html
+```
+
+You can also use [sphinx-autobuild](https://github.com/executablebooks/sphinx-autobuild) to rebuild the docs and live reload in the browser whenver doc contents change:
+```bash
+nox -e livedocs
 ```
 
 ### Readthedocs

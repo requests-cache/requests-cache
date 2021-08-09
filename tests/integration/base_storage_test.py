@@ -1,7 +1,8 @@
 """Common tests to run for all backends (BaseStorage subclasses)"""
 import pickle
-import pytest
 from typing import Dict, Type
+
+import pytest
 
 from requests_cache.backends import BaseStorage
 from tests.conftest import CACHE_NAME

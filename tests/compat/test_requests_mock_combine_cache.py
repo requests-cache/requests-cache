@@ -1,6 +1,7 @@
 """Example of using requests-cache with the requests-mock library"""
 import pytest
 from requests_mock import Adapter
+
 from requests_cache import CachedSession
 
 URL = 'https://some_test_url'

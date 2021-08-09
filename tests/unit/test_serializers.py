@@ -1,10 +1,11 @@
 # Note: Almost all serializer logic is covered by parametrized integration tests.
 # Any additional serializer-specific tests can go here.
 import json
-import pytest
 import sys
 from importlib import reload
 from unittest.mock import patch
+
+import pytest
 
 pytestmark = pytest.mark.skipif(
     sys.version_info < (3, 7), reason='Requires python 3.7+ version of cattrs'

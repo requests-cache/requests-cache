@@ -12,6 +12,6 @@ appreciate being consulted before making any drastic changes, but other than
 that, you have free reign.
 
 I have already added Code Shelter to the project's PyPI page, so feel free to
-make any releases necessary. 
+make any releases necessary.
 
 Thank you!

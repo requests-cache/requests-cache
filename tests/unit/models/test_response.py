@@ -1,8 +1,8 @@
-import pytest
 from datetime import datetime, timedelta
 from io import BytesIO
 from time import sleep
 
+import pytest
 from urllib3.response import HTTPResponse
 
 from requests_cache.models.response import CachedResponse, format_file_size

@@ -277,8 +277,6 @@ class CachedSession(CacheMixin, OriginalSession):
             applied to both new and previously cached responses.
         old_data_on_error: Return stale cache data if a new request raises an exception
         cache_control: Use Cache-Control request and response headers
-        secret_key: Optional secret key used to sign cache items for added security
-
     """
 
 

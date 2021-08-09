@@ -87,7 +87,7 @@ jobs:
           coveralls --service=github
 
 
-  # Run code analysis checks
+  # Run code analysis checks via pre-commit hooks
   analyze:
     runs-on: ubuntu-18.04
     steps:
@@ -95,28 +95,5 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ env.LATEST_PY_VERSION }}
-      - uses: snok/install-poetry@v1.1.7
-        with:
-          version: 1.2.0a2
-          virtualenvs-in-project: true
-
-      # Cache packages and reuse until lockfile changes
-      - name: Cache python packages
-        id: cache
-        uses: actions/cache@v2
-        with:
-          path: .venv
-          key: venv-${{ env.LATEST_PY_VERSION }}-latest-${{ hashFiles('poetry.lock') }}
-      - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: poetry install -v -E all
-
       - name: Run style checks & linting
-        run: |
-          source $VENV
-          black --check --diff .
-          isort --check --diff .
-          flake8 .
-          mypy requests_cache
-      - name: Run cyclomatic complexity check
-        run: poetry run radon cc ${{ env.COMPLEXITY_ARGS }} requests_cache
+        uses: pre-commit/action@v2.0.3

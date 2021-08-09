@@ -1,6 +1,5 @@
 """Common tests to run for all backends (BaseCache subclasses)"""
 import json
-import pytest
 from datetime import datetime
 from io import BytesIO
 from threading import Thread
@@ -8,6 +7,7 @@ from time import sleep, time
 from typing import Dict, Type
 from urllib.parse import parse_qs, urlparse
 
+import pytest
 import requests
 from requests.models import PreparedRequest
 

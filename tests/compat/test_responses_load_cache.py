@@ -5,8 +5,9 @@ from unittest.mock import patch
 
 import pytest
 import requests
-from responses import RequestsMock, Response
 from requests.exceptions import ConnectionError
+from responses import RequestsMock, Response
+
 from requests_cache import CachedSession
 
 TEST_DB = join(dirname(__file__), 'httpbin_sample.test-db')

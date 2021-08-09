@@ -1,7 +1,6 @@
 """CachedSession + BaseCache tests that use mocked responses only"""
 # TODO: This could be split up into some smaller test modules
 import json
-import pytest
 import sys
 import time
 from collections import UserDict, defaultdict
@@ -10,6 +9,7 @@ from pickle import PickleError
 from unittest.mock import patch
 from uuid import uuid4
 
+import pytest
 import requests
 from itsdangerous import Signer
 from itsdangerous.exc import BadSignature

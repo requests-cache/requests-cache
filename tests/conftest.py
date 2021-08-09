@@ -9,13 +9,13 @@ Note: The protocol ``http(s)+mock://`` helps :py:class:`requests_mock.Adapter` p
 https://requests-mock.readthedocs.io/en/latest/adapter.html
 """
 import os
-import pytest
 from datetime import datetime, timezone
 from functools import wraps
 from logging import basicConfig, getLogger
 from os.path import abspath, dirname, join
 from tempfile import NamedTemporaryFile
 
+import pytest
 import requests
 from requests_mock import ANY as ANY_METHOD
 from requests_mock import Adapter

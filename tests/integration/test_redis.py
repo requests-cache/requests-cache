@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from requests_cache.backends.redis import RedisCache, RedisDict
 from tests.conftest import fail_if_no_connection
