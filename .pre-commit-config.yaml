@@ -35,5 +35,5 @@ repos:
   - repo: https://github.com/yunojuno/pre-commit-xenon
     rev: v0.1
     hooks:
-    - id: xenon
-      args: [--max-average=A, --max-modules=B, --max-absolute=C]
+      - id: xenon
+        args: [--max-average=A, --max-modules=B, --max-absolute=C]

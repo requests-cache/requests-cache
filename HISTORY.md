@@ -1,5 +1,12 @@
 # History
 
+### 0.8.0 (TBD)
+* Use `cattrs` for serialization by default
+* Drop support for python 3.6
+    * Note: Any bugfixes for 0.8.x that also apply to 0.7.x will be backported
+* Remove deprecated `core` module
+* Remove deprecated `BaseCache.remove_old_entries()` method
+
 ### 0.7.4 (2021-08-16)
 * Fix an issue with httpdate strings from `Expires` headers not getting converted to UTC
 * Fix a packaging issue with extra files added to top-level wheel directory
@@ -161,6 +168,8 @@ next time they are requested. They can also be manually converted or removed, if
 
 ### General
 * Drop support for python <= 3.5
+* Deprecate `core` module; all imports should be made from top-level package instead
+    * e.g.: `from requests_cache import CachedSession`
 * Add `CacheMixin` class to make the features of `CachedSession` usable as a mixin class,
   for [compatibility with other requests-based libraries](https://requests-cache.readthedocs.io/en/stable/advanced_usage.html#library-compatibility).
 * Add `HEAD` to default `allowable_methods`

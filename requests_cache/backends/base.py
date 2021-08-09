@@ -1,5 +1,4 @@
 import pickle
-import warnings
 from abc import ABC
 from collections import UserDict
 from collections.abc import MutableMapping
@@ -151,11 +150,6 @@ class BaseCache:
             logger.debug(f'Updating {len(keys_to_update)} revalidated responses')
             for key, response in keys_to_update.items():
                 self.responses[key] = response
-
-    def remove_old_entries(self, *args, **kwargs):
-        msg = 'BaseCache.remove_old_entries() is deprecated; please use CachedSession.remove_expired_responses()'
-        warnings.warn(DeprecationWarning(msg))
-        self.remove_expired_responses(*args, **kwargs)
 
     def create_key(self, request: AnyRequest, **kwargs) -> str:
         """Create a normalized cache key from a request object"""

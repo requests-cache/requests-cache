@@ -8,7 +8,7 @@
 [![Code Shelter](https://www.codeshelter.co/static/badges/badge-flat.svg)](https://www.codeshelter.co/)
 
 ## Summary
-**requests-cache** is a transparent, persistent HTTP cache for the python [requests](http://python-requests.org)
+**requests-cache** is a transparent, persistent cache for the python [requests](http://python-requests.org)
 library. It's a convenient tool to use with web scraping, consuming REST APIs, slow or rate-limited
 sites, or any other scenario in which you're making lots of requests that are expensive and/or
 likely to be sent more than once.

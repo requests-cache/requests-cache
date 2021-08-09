@@ -10,7 +10,7 @@ import pytest
 from itsdangerous import Signer
 from itsdangerous.exc import BadSignature
 
-from requests_cache import CachedResponse, CachedSession, pickle_serializer
+from requests_cache import CachedResponse, CachedSession, safe_pickle_serializer
 
 
 def test_stdlib_json():
@@ -55,15 +55,9 @@ def test_optional_dependencies():
     reload(requests_cache.serializers.preconf)
 
 
-# TODO: This usage is deprecated. Keep this test for backwards-compatibility until removed in a future release.
-@pytest.mark.skipif(sys.version_info < (3, 7), reason='Requires python 3.7+')
 def test_cache_signing(tempfile_path):
-    session = CachedSession(tempfile_path)
-    assert session.cache.responses.serializer == pickle_serializer
-
-    # With a secret key, itsdangerous should be used
-    secret_key = str(uuid4())
-    session = CachedSession(tempfile_path, secret_key=secret_key)
+    serializer = safe_pickle_serializer(secret_key=str(uuid4()))
+    session = CachedSession(tempfile_path, serializer=serializer)
     assert isinstance(session.cache.responses.serializer.steps[-1].obj, Signer)
 
     # Simple serialize/deserialize round trip
@@ -72,6 +66,7 @@ def test_cache_signing(tempfile_path):
     assert session.cache.responses['key'] == response
 
     # Without the same signing key, the item shouldn't be considered safe to deserialize
-    session = CachedSession(tempfile_path, secret_key='a different key')
+    serializer = safe_pickle_serializer(secret_key='a different key')
+    session = CachedSession(tempfile_path, serializer=serializer)
     with pytest.raises(BadSignature):
         session.cache.responses['key']
