@@ -21,6 +21,19 @@ conda install -c conda-forge requests-cache
   pip install requests-cache[backends]
   ```
 
+:::{admonition} Python version compatibility
+:class: toggle, tip
+
+requests-cache currently requires **python 3.7+**. If you need to use an older version
+of python, here are the latest compatible versions:
+
+* **python 2.6:** requests-cache 0.4.13
+* **python 2.7:** requests-cache 0.5.2
+* **python 3.4:** requests-cache 0.5.2
+* **python 3.5:** requests-cache 0.5.2
+* **python 3.6:** requests-cache 0.7.3
+:::
+
 ### Optional Setup Steps
 - See {ref}`security` for recommended setup steps for more secure cache serialization.
 - See {ref}`Contributing Guide <contributing:dev installation>` for setup steps for local development.
