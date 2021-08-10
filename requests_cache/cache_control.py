@@ -1,28 +1,23 @@
 """Utilities for determining cache expiration and other cache actions"""
+from __future__ import annotations
+
 from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from fnmatch import fnmatch
 from logging import getLogger
-from typing import Any, Dict, Mapping, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Mapping, Optional, Tuple, Union
 
 from attr import define, field
 from requests import PreparedRequest, Response
 
+if TYPE_CHECKING:
+    from .models import CachedResponse
+
 # Value that may be set by either Cache-Control headers or CachedSession params to disable caching
 DO_NOT_CACHE = 0
 
-# Currently supported Cache-Control directives
+# Supported Cache-Control directives
 CACHE_DIRECTIVES = ['max-age', 'no-cache', 'no-store']
-
-# All cache headers, for logging/reference; not all are supported
-REQUEST_CACHE_HEADERS = [
-    'Cache-Control',
-    'If-Unmodified-Since',
-    'If-Modified-Since',
-    'If-Match',
-    'If-None-Match',
-]
-RESPONSE_CACHE_HEADERS = ['Cache-Control', 'ETag', 'Expires', 'Age']
 
 CacheDirective = Tuple[str, Union[None, int, bool]]
 ExpirationTime = Union[None, int, float, str, datetime, timedelta]
@@ -45,7 +40,7 @@ class CacheActions:
 
     cache_control: bool = field(default=False)
     cache_key: str = field(default=None)
-    check_etag: bool = field(default=False)
+    etag: str = field(default=None)
     expire_after: ExpirationTime = field(default=None)
     skip_read: bool = field(default=False)
     skip_write: bool = field(default=False)
@@ -119,6 +114,12 @@ class CacheActions:
         do_not_cache = directives.get('max-age') == DO_NOT_CACHE
         self.expire_after = coalesce(self.expires, directives.get('max-age'), directives.get('expires'))
         self.skip_write = self.skip_write or do_not_cache or 'no-store' in directives
+
+    # TODO: Behavior if no other expiration method was specified (expire_after=-1)?
+    def update_from_cached_response(self, response: CachedResponse):
+        """Check for ETags on cached response"""
+        if self.cache_control and response and response.is_expired and response.etag:
+            self.etag = response.etag
 
     def __str__(self):
         return (
