@@ -56,7 +56,7 @@ class CacheMixin(MIXIN_BASE):
         self._disabled = False
         self._lock = RLock()
 
-        # If the superclass is custom Session, pass along valid kwargs (if any)
+        # If the superclass is custom Session, pass along any valid kwargs
         session_kwargs = get_valid_kwargs(super().__init__, kwargs)
         super().__init__(**session_kwargs)  # type: ignore
 

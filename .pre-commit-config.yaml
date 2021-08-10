@@ -17,7 +17,7 @@ repos:
       - id: blacken-docs
         args: [--skip-errors, --skip-string-normalization]
   - repo: https://github.com/timothycrosley/isort
-    rev: 5.8.0
+    rev: 5.9.3
     hooks:
       - id: isort
   - repo: https://gitlab.com/pycqa/flake8
@@ -29,7 +29,7 @@ repos:
     rev: v0.910
     hooks:
       - id: mypy
-        files: pyinaturalist
+        files: requests_cache
         additional_dependencies: [types-requests, types-pyyaml, types-redis, types-ujson]
   - repo: https://github.com/yunojuno/pre-commit-xenon
     rev: v0.1

@@ -159,7 +159,7 @@ class BaseCache:
 
     def create_key(self, request: AnyRequest, **kwargs) -> str:
         """Create a normalized cache key from a request object"""
-        return create_key(request, self.ignored_parameters, self.include_get_headers, **kwargs)  # type: ignore
+        return create_key(request, self.ignored_parameters, self.include_get_headers, **kwargs)
 
     def has_key(self, key: str) -> bool:
         """Returns `True` if cache has `key`, `False` otherwise"""
