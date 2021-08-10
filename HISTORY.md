@@ -1,7 +1,12 @@
 # History
 
 ### 0.8.0 (TBD)
-* Use `cattrs` for serialization by default
+* Add support for `ETag` + `If-None-Match` headers
+* Add support for `Last-Modified` + `If-Modified-Since` headers
+* Add handling for `304 Not Modified` responses if returned for any other reason
+  (e.g., request headers manually set by the client)
+* Use `cattrs` for serialization by default, which enables a more forwards-compatible serialization format
+  (e.g., less prone to invalidation due to future updates)
 * Drop support for python 3.6
     * Note: Any bugfixes for 0.8.x that also apply to 0.7.x will be backported
 * Remove deprecated `core` module
