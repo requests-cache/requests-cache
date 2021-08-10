@@ -17,7 +17,6 @@ from .models import AnyResponse, set_response_defaults
 ALL_METHODS = ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
 
 logger = getLogger(__name__)
-# MIXIN_BASE: Type = OriginalSession if TYPE_CHECKING else object
 if TYPE_CHECKING:
     MIXIN_BASE = OriginalSession
 else:
@@ -125,13 +124,16 @@ class CacheMixin(MIXIN_BASE):
         response: Optional[AnyResponse] = None
         if not (self._disabled or actions.skip_read):
             response = self.cache.get_response(cache_key)
+        actions.update_from_cached_response(response)
         is_expired = getattr(response, 'is_expired', False)
 
-        # If the cache is disabled, doesn't have the response, or it's expired, then fetch a new one
+        # If the response is expired, missing, or the cache is disabled then fetch a new response
         if response is None:
             response = self._send_and_cache(request, actions, **kwargs)
         elif is_expired and self.old_data_on_error:
             response = self._resend_and_ignore(request, actions, **kwargs) or response
+        elif is_expired and actions.etag:
+            response = self._send_and_check_etag(request, actions, **kwargs) or response
         elif is_expired:
             response = self._resend(request, actions, **kwargs)
 
@@ -160,6 +162,16 @@ class CacheMixin(MIXIN_BASE):
             logger.debug(f'Skipping cache write for URL: {request.url}')
             self.cache.save_response(response, actions.cache_key, actions.expires)
         return set_response_defaults(response, actions.cache_key)
+
+    def _send_and_check_etag(self, request: PreparedRequest, actions: CacheActions, **kwargs):
+        """Send a request with an ETag to check if the content has changed"""
+        request.headers['If-None-Match'] = actions.etag
+        response = self._send_and_cache(request, actions, **kwargs)
+
+        if response.status_code == 304:
+            logger.debug(f'Response with ETag {actions.etag} has not been modified')
+            return None
+        return response
 
     def _resend(self, request: PreparedRequest, actions: CacheActions, **kwargs) -> AnyResponse:
         """Attempt to resend the request and cache the new response. If the request fails, delete
