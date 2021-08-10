@@ -6,8 +6,6 @@ on:
     tags: ['v*']
   pull_request:
     branches: [master]
-  schedule:
-    - cron: '0 5 * * *'
   workflow_dispatch:
 env:
   LATEST_PY_VERSION: 3.9
@@ -58,11 +56,6 @@ jobs:
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: poetry install -v -E all
-      - name: Install latest available requests + urllib3 (scheduled tests only)
-        if: ${{ github.event.schedule }}
-        run: |
-          poetry add requests@latest
-          poetry add urllib3@latest
       - name: Workaround for issue with poetry package extras (python 3.10 only)
         if: ${{ startsWith(matrix.python-version, '3.10') }}
         run: |
