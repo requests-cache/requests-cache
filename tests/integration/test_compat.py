@@ -1,3 +1,4 @@
+import sys
 from shutil import copyfile
 
 import pytest
@@ -6,6 +7,9 @@ from requests_cache import CachedSession
 from tests.conftest import HTTPBIN_FORMATS, SAMPLE_CACHE_FILES
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 7), reason='Cache files saved under python 3.7+ are incompatible with 3.6'
+)
 @pytest.mark.parametrize('db_path', SAMPLE_CACHE_FILES)
 def test_version_upgrade(db_path, tempfile_path):
     """Load SQLite cache files created with older versions of requests-cache.

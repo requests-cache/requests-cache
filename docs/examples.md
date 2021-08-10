@@ -56,6 +56,19 @@ These can also be found in the
 ```
 :::
 
+## Cache speed test
+```{include} ../examples/benchmark.py
+:start-line: 2
+:end-line: 3
+```
+
+:::{admonition} Example code
+:class: toggle
+```{literalinclude} ../examples/benchmark.py
+:lines: 1,5-
+```
+:::
+
 ## Converting an old cache
 ```{include} ../examples/convert_cache.py
 :start-line: 2

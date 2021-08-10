@@ -49,13 +49,17 @@ class DbCache(BaseCache):
         self.redirects.vacuum()
 
     def clear(self):
-        """Clear the cache by deleting the cache file and re-initializing. This is done to allow
-        clear() to succeed even if the file is corrupted.
+        """Clear the cache. If this fails due to a corrupted cache or other I/O error, this will
+        attempt to delete the cache file and re-initialize.
         """
-        if isfile(self.responses.db_path):
-            unlink(self.responses.db_path)
-        self.responses.init_db()
-        self.redirects.init_db()
+        try:
+            super().clear()
+        except Exception:
+            logger.exception('Failed to clear cache')
+            if isfile(self.responses.db_path):
+                unlink(self.responses.db_path)
+            self.responses.init_db()
+            self.redirects.init_db()
 
 
 class DbDict(BaseStorage):
