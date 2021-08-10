@@ -51,7 +51,7 @@ def test_init(
     request.headers = {'Cache-Control': f'max-age={header_expire_after}'} if header_expire_after else {}
     get_url_expiration.return_value = url_expire_after
 
-    actions = CacheActions(
+    actions = CacheActions.from_request(
         cache_key='key',
         request=request,
         request_expire_after=request_expire_after,
@@ -74,7 +74,9 @@ def test_init(
 )
 def test_init_from_headers(headers, expected_expiration):
     """Test with Cache-Control request headers"""
-    actions = CacheActions(cache_key='key', cache_control=True, request=MagicMock(headers=headers))
+    actions = CacheActions.from_request(
+        cache_key='key', cache_control=True, request=MagicMock(headers=headers)
+    )
 
     assert actions.cache_key == 'key'
     if expected_expiration == DO_NOT_CACHE:
@@ -112,7 +114,7 @@ def test_init_from_settings(url, request_expire_after, expected_expiration):
         'site_2.com/resource_2': timedelta(days=7),
         'site_2.com/static': -1,
     }
-    actions = CacheActions(
+    actions = CacheActions.from_request(
         cache_key='key',
         request=MagicMock(url=url),
         request_expire_after=request_expire_after,
@@ -138,7 +140,11 @@ def test_init_from_settings(url, request_expire_after, expected_expiration):
 def test_update_from_response(headers, expected_expiration):
     """Test with Cache-Control response headers"""
     url = 'https://img.site.com/base/img.jpg'
-    actions = CacheActions(cache_key='key', request=MagicMock(url=url), cache_control=True)
+    actions = CacheActions.from_request(
+        cache_key='key',
+        request=MagicMock(url=url),
+        cache_control=True,
+    )
     actions.update_from_response(MagicMock(url=url, headers=headers))
 
     if expected_expiration == DO_NOT_CACHE:
@@ -150,7 +156,11 @@ def test_update_from_response(headers, expected_expiration):
 
 def test_update_from_response__ignored():
     url = 'https://img.site.com/base/img.jpg'
-    actions = CacheActions(cache_key='key', request=MagicMock(url=url), cache_control=False)
+    actions = CacheActions.from_request(
+        cache_key='key',
+        request=MagicMock(url=url),
+        cache_control=False,
+    )
     actions.update_from_response(MagicMock(url=url, headers={'Cache-Control': 'max-age=5'}))
     assert actions.expire_after is None
 
@@ -161,7 +171,7 @@ def test_ignored_headers(directive):
     request = PreparedRequest()
     request.url = 'https://img.site.com/base/img.jpg'
     request.headers = {'Cache-Control': directive}
-    actions = CacheActions(
+    actions = CacheActions.from_request(
         cache_key='key',
         request=request,
         session_expire_after=1,
@@ -171,7 +181,7 @@ def test_ignored_headers(directive):
 
 
 def test_str():
-    actions = CacheActions(cache_key='key', request=PreparedRequest(), expire_after=-1)
+    actions = CacheActions.from_request(cache_key='key', request=PreparedRequest(), expire_after=-1)
     assert str(actions) == 'Expire after: None | Skip read: False | Skip write: False'
 
 

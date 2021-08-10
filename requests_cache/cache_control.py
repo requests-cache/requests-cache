@@ -5,6 +5,7 @@ from fnmatch import fnmatch
 from logging import getLogger
 from typing import Any, Dict, Mapping, Optional, Tuple, Union
 
+from attr import define, field
 from requests import PreparedRequest, Response
 
 # Value that may be set by either Cache-Control headers or CachedSession params to disable caching
@@ -13,7 +14,7 @@ DO_NOT_CACHE = 0
 # Currently supported Cache-Control directives
 CACHE_DIRECTIVES = ['max-age', 'no-cache', 'no-store']
 
-# All cache-related headers, for logging/reference; not all are supported
+# All cache headers, for logging/reference; not all are supported
 REQUEST_CACHE_HEADERS = [
     'Cache-Control',
     'If-Unmodified-Since',
@@ -29,6 +30,7 @@ ExpirationPatterns = Dict[str, ExpirationTime]
 logger = getLogger(__name__)
 
 
+@define
 class CacheActions:
     """A dataclass that contains info on specific actions to take for a given cache item.
     This is determined by a combination of cache settings and request + response headers.
@@ -41,32 +43,46 @@ class CacheActions:
     5. Per-session expiration
     """
 
-    def __init__(
-        self,
+    cache_control: bool = field(default=False)
+    cache_key: str = field(default=None)
+    check_etag: bool = field(default=False)
+    expire_after: ExpirationTime = field(default=None)
+    skip_read: bool = field(default=False)
+    skip_write: bool = field(default=False)
+
+    @classmethod
+    def from_request(
+        cls,
         cache_key: str,
         request: PreparedRequest,
         cache_control: bool = False,
         **kwargs,
     ):
         """Initialize from request info and cache settings"""
-        self.cache_key = cache_key
-        self.cache_control = cache_control
         if cache_control and has_cache_headers(request.headers):
-            self._init_from_headers(request.headers)
+            return cls.from_headers(cache_key, request.headers)
         else:
-            self._init_from_settings(url=request.url, **kwargs)
+            return cls.from_settings(cache_key, request.url, cache_control=cache_control, **kwargs)
 
-    def _init_from_headers(self, headers: Mapping):
+    @classmethod
+    def from_headers(cls, cache_key: str, headers: Mapping):
         """Initialize from request headers"""
         directives = get_cache_directives(headers)
         do_not_cache = directives.get('max-age') == DO_NOT_CACHE
-        self.expire_after = directives.get('max-age')
-        self.skip_read = do_not_cache or 'no-store' in directives or 'no-cache' in directives
-        self.skip_write = do_not_cache or 'no-store' in directives
+        return cls(
+            cache_control=True,
+            cache_key=cache_key,
+            expire_after=directives.get('max-age'),
+            skip_read=do_not_cache or 'no-store' in directives or 'no-cache' in directives,
+            skip_write=do_not_cache or 'no-store' in directives,
+        )
 
-    def _init_from_settings(
-        self,
+    @classmethod
+    def from_settings(
+        cls,
+        cache_key: str,
         url: str = None,
+        cache_control: bool = True,
         request_expire_after: ExpirationTime = None,
         session_expire_after: ExpirationTime = None,
         urls_expire_after: ExpirationPatterns = None,
@@ -81,9 +97,13 @@ class CacheActions:
         )
 
         do_not_cache = expire_after == DO_NOT_CACHE
-        self.expire_after = expire_after
-        self.skip_read = do_not_cache
-        self.skip_write = do_not_cache
+        return cls(
+            cache_control=cache_control,
+            cache_key=cache_key,
+            expire_after=expire_after,
+            skip_read=do_not_cache,
+            skip_write=do_not_cache,
+        )
 
     @property
     def expires(self) -> Optional[datetime]:
@@ -94,6 +114,7 @@ class CacheActions:
         """Update expiration + actions based on response headers, if not previously set by request"""
         if not self.cache_control:
             return
+
         directives = get_cache_directives(response.headers)
         do_not_cache = directives.get('max-age') == DO_NOT_CACHE
         self.expire_after = coalesce(self.expires, directives.get('max-age'), directives.get('expires'))

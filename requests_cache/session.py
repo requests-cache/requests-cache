@@ -111,7 +111,7 @@ class CacheMixin(MIXIN_BASE):
         """Send a prepared request, with caching. See :py:meth:`.request` for notes on behavior."""
         # Determine which actions to take based on request info, headers, and cache settings
         cache_key = self.cache.create_key(request, **kwargs)
-        actions = CacheActions(
+        actions = CacheActions.from_request(
             cache_key=cache_key,
             request=request,
             request_expire_after=self._request_expire_after,
@@ -175,7 +175,7 @@ class CacheMixin(MIXIN_BASE):
     def _resend_and_ignore(
         self, request: PreparedRequest, actions: CacheActions, **kwargs
     ) -> Optional[AnyResponse]:
-        """Attempt to send the request and cache the new response. If there are any errors, ignore
+        """Attempt to resend the request and cache the new response. If there are any errors, ignore
         them and and return ``None``.
         """
         # Attempt to send the request and cache the new response
