@@ -1,18 +1,14 @@
 """CachedSession + BaseCache tests that use mocked responses only"""
 # TODO: This could be split up into some smaller test modules
 import json
-import sys
 import time
 from collections import UserDict, defaultdict
 from datetime import datetime, timedelta
 from pickle import PickleError
 from unittest.mock import patch
-from uuid import uuid4
 
 import pytest
 import requests
-from itsdangerous import Signer
-from itsdangerous.exc import BadSignature
 from requests.structures import CaseInsensitiveDict
 
 from requests_cache import ALL_METHODS, CachedSession
@@ -26,7 +22,6 @@ from requests_cache.backends import (
 from requests_cache.backends.base import DESERIALIZE_ERRORS
 from requests_cache.cache_keys import url_to_key
 from requests_cache.models import CachedResponse
-from requests_cache.serializers import pickle_serializer
 from tests.conftest import (
     MOCKED_URL,
     MOCKED_URL_404,
@@ -604,25 +599,3 @@ def test_unpickle_errors(mock_session):
     resp = mock_session.get(MOCKED_URL_JSON)
     assert resp.from_cache is True
     assert resp.json()['message'] == 'mock json response'
-
-
-# TODO: This usage is deprecated. Keep this test for backwards-compatibility until removed in a future release.
-@pytest.mark.skipif(sys.version_info < (3, 7), reason='Requires python 3.7+')
-def test_cache_signing(tempfile_path):
-    session = CachedSession(tempfile_path)
-    assert session.cache.responses.serializer == pickle_serializer
-
-    # With a secret key, itsdangerous should be used
-    secret_key = str(uuid4())
-    session = CachedSession(tempfile_path, secret_key=secret_key)
-    assert isinstance(session.cache.responses.serializer.steps[-1].obj, Signer)
-
-    # Simple serialize/deserialize round trip
-    response = CachedResponse()
-    session.cache.responses['key'] = response
-    assert session.cache.responses['key'] == response
-
-    # Without the same signing key, the item shouldn't be considered safe to deserialize
-    session = CachedSession(tempfile_path, secret_key='a different key')
-    with pytest.raises(BadSignature):
-        session.cache.responses['key']
