@@ -3,6 +3,7 @@ from tempfile import gettempdir
 from threading import Thread
 from unittest.mock import patch
 
+from requests_cache.backends.base import BaseCache
 from requests_cache.backends.sqlite import DbCache, DbDict, DbPickleDict
 from tests.integration.base_cache_test import BaseCacheTest
 from tests.integration.base_storage_test import CACHE_NAME, BaseStorageTest
@@ -125,3 +126,23 @@ class TestDbCache(BaseCacheTest):
             os.unlink(CACHE_NAME)
         except Exception:
             pass
+
+    @patch.object(BaseCache, 'clear', side_effect=IOError)
+    @patch('requests_cache.backends.sqlite.unlink', side_effect=os.unlink)
+    def test_clear__failure(self, mock_unlink, mock_clear):
+        """When a corrupted cache prevents a normal DROP TABLE, clear() should still succeed"""
+        session = self.init_session(clear=False)
+        session.cache.responses['key_1'] = 'value_1'
+        session.cache.clear()
+
+        assert len(session.cache.responses) == 0
+        assert mock_unlink.call_count == 1
+
+    @patch.object(BaseCache, 'clear', side_effect=IOError)
+    def test_clear__file_already_deleted(self, mock_clear):
+        session = self.init_session(clear=False)
+        session.cache.responses['key_1'] = 'value_1'
+        os.unlink(session.cache.responses.db_path)
+        session.cache.clear()
+
+        assert len(session.cache.responses) == 0
