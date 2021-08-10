@@ -1,14 +1,5 @@
 # Contributing Guide
 
-## Development Status
-While the original author no longer has time to work on requests-cache
-([see note here](https://github.com/reclosedev/requests-cache/blob/master/CODESHELTER.md)),
-one or more maintainers are available via [Code Shelter](https://www.codeshelter.co) to help keep
-this project going.
-
-If there is a new feature you would like to see, the best way to make that happen is to submit a PR
-for it!
-
 ## Bug Reports & Feedback
 If you discover a bug, want to propose a new feature, or have other feedback about requests-cache, please
 [create an issue](https://github.com/reclosedev/requests-cache/issues/new/choose)!
@@ -17,6 +8,15 @@ If you discover a bug, want to propose a new feature, or have other feedback abo
 If you want to discuss ideas about the project in general, or if you have an issue or PR that hasn't
 received a response in a timely manner, please reach out on the Code Shelter chat server, under
 [projects/requests-cache](https://codeshelter.zulipchat.com/#narrow/stream/186993-projects/topic/requests-cache).
+
+## Development Status
+While the original author no longer has time to work on requests-cache
+([see note here](https://github.com/reclosedev/requests-cache/blob/master/CODESHELTER.md)),
+one or more maintainers are available via [Code Shelter](https://www.codeshelter.co) to help keep
+this project going.
+
+If there is a new feature you would like to see, the best way to make that happen is to submit a PR
+for it!
 
 ## Pre-release Installation
 If you want to test out the latest in-development changes, you can install pre-release versions:
@@ -157,8 +157,10 @@ Here are some general guidelines for submitting a pull request:
 - Please add unit test coverage and updated docs (if applicable) for your changes.
 - Submit the PR to be merged into the `master` branch.
 
-## Releases
-Notes for maintainers:
+
+## Notes for Maintainers
+
+### Releases
 - Releases are built and published to pypi based on **git tags.**
 - [Milestones](https://github.com/reclosedev/requests-cache/milestones) will be used to track
 progress on major and minor releases.
@@ -168,12 +170,13 @@ on the `master` branch.
 Release steps:
 - Update the version in `requests_cache/__init__.py`
 - Update the release notes in `HISTORY.md`
+- Generate a sample cache for the new version (used by unit tests) with `python tests/generate_test_db.py`
 - Merge changes into the `master` branch
 - Push a new tag, e.g.: `git tag v0.1 && git push origin --tags`
 - This will trigger a deployment. Verify that this completes successfully and that the new version
   can be installed from pypi with `pip install`
 
-## Pre-Releases
+### Pre-Releases
 Pre-release builds are convenient for letting testers try out in-development changes. Versions with
 the suffix `.dev` (among others) can be deployed to PyPI and installed by users with `pip install --pre`,
 and are otherwise ignored by `pip install`:

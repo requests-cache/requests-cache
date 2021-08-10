@@ -1,6 +1,6 @@
 # History
 
-### 0.7.3 (2021-08-TBD)
+### 0.7.3 (2021-08-10)
 * SQLite backend: Update `DbCache.clear()` to succeed even if the database is corrupted
 * SQLite backend: update `DbDict.bulk_delete()` to split the operation into multiple statements to support
   deleting more items than SQLite's variable limit (999)
