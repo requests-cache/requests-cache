@@ -53,6 +53,7 @@ documentation = 'https://requests-cache.readthedocs.io'
 [project.optional-dependencies]
 # Optional backend and serialization dependencies
 dynamodb        = ['boto3>=1.15', 'botocore>=1.18']
+memcached       = ['pymemcache>=3.5']
 mongodb         = ['pymongo>=3']
 redis           = ['redis>=3']
 security        = ['itsdangerous>=2.0']

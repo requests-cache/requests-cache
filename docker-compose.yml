@@ -17,6 +17,12 @@ services:
       AWS_SECRET_ACCESS_KEY: 'placeholder'
     working_dir: '/home/dynamodblocal'
 
+  memcached:
+    image: docker.io/bitnami/memcached
+    container_name: memcached
+    ports:
+      - '11211:11211'
+
   mongo:
     image: mongo
     container_name: mongo-test
