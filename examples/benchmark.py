@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-"""An example of benchmarking cache write speeds with semi-randomized response content"""
+"""
+An example of benchmarking cache write speeds with semi-randomized response content
+"""
 from os import urandom
 from random import random
 from time import perf_counter as time

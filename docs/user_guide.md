@@ -222,15 +222,15 @@ request, the following order of precedence is used:
 
 Examples:
 ```python
-> >>> # To specify a unit of time other than seconds, use a timedelta
-> >>> from datetime import timedelta
-> >>> session = CachedSession(expire_after=timedelta(days=30))
->
-> >>> # Update an existing session to disable expiration (i.e., store indefinitely)
-> >>> session.expire_after = -1
->
-> >>> # Disable caching by default, unless enabled by other settings
-> >>> session = CachedSession(expire_after=0)
+>>> # To specify a unit of time other than seconds, use a timedelta
+>>> from datetime import timedelta
+>>> session = CachedSession(expire_after=timedelta(days=30))
+
+>>> # Update an existing session to disable expiration (i.e., store indefinitely)
+>>> session.expire_after = -1
+
+>>> # Disable caching by default, unless enabled by other settings
+>>> session = CachedSession(expire_after=0)
 ```
 
 ### URL Patterns
