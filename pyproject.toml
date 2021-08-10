@@ -64,6 +64,7 @@ docs = ["furo", "linkify-it-py", "myst-parser", "sphinx", "sphinx-autodoc-typehi
 nox = {version = "^2021.6.12", python = "^3.6.2"}
 nox-poetry = {version = "^0.8.6", python = "^3.6.2"}
 pre-commit = {version = "^2.12", python = "^3.6.2"}
+mypy = "^0.910"
 psutil = "^5.0"
 pytest = "^6.2"
 pytest-clarity = "^1.0.1"
