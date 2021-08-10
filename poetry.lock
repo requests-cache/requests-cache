@@ -1167,7 +1167,7 @@ yaml = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "592264f6e0d84c2e283ee128bf9cc4747752860f72f864baed460a31373ce143"
+content-hash = "593710adc654f4fbe2fa8763e9cad2697896dcc33a99ced3824b26b2f6048e74"
 
 [metadata.files]
 alabaster = [
