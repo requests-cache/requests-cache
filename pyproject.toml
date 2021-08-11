@@ -9,8 +9,8 @@ homepage = "https://github.com/reclosedev/requests-cache"
 repository = "https://github.com/reclosedev/requests-cache"
 keywords = ["requests", "cache", "http", "persistence", "sqlite", "redis", "mongodb", "gridfs", "dynamodb"]
 include = [
-    { path = "*.md" },
-    { path = "*.yml" },
+    { path = "*.md", format = "sdist" },
+    { path = "*.yml", format = "sdist" },
     { path = "docs", format = "sdist" },
     { path = "examples", format = "sdist" },
     { path = "tests", format = "sdist" }
