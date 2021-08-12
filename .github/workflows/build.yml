@@ -10,7 +10,7 @@ on:
 env:
   LATEST_PY_VERSION: 3.9
   COVERAGE_ARGS: '--cov --cov-report=term --cov-report=html'
-  COMPLEXITY_ARGS: '--show-complexity --average --order SCORE'
+  XDIST_ARGS: '--numprocesses=auto --dist=loadfile'
 
 jobs:
   # Run tests for each supported python version
@@ -66,8 +66,8 @@ jobs:
       - name: Run tests
         run: |
           source $VENV
-          pytest -rs -x tests/unit --numprocesses=auto ${{ env.COVERAGE_ARGS }}
-          pytest -rs -x tests/integration --cov-append ${{ env.COVERAGE_ARGS }}
+          pytest -rs -x tests/unit ${{ env.XDIST_ARGS }} ${{ env.COVERAGE_ARGS }}
+          pytest -rs -x tests/integration --cov-append ${{ env.XDIST_ARGS }} ${{ env.COVERAGE_ARGS }}
 
       # Latest python version: send coverage report to coveralls
       - name: Run coveralls
@@ -78,7 +78,6 @@ jobs:
           source $VENV
           pip install coveralls
           coveralls --service=github
-
 
   # Run code analysis checks via pre-commit hooks
   analyze:

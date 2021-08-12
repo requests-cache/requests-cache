@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -170,9 +170,16 @@ def test_ignored_headers(directive):
     assert actions.expire_after == 1
 
 
-def test_get_expiration_datetime__no_expiration():
+def test_str():
+    actions = CacheActions(cache_key='key', request=PreparedRequest(), expire_after=-1)
+    assert str(actions) == 'Expire after: None | Skip read: False | Skip write: False'
+
+
+@patch('requests_cache.cache_control.datetime')
+def test_get_expiration_datetime__no_expiration(mock_datetime):
     assert get_expiration_datetime(None) is None
     assert get_expiration_datetime(-1) is None
+    assert get_expiration_datetime(DO_NOT_CACHE) == mock_datetime.utcnow()
 
 
 @pytest.mark.parametrize(
@@ -188,6 +195,12 @@ def test_get_expiration_datetime__relative(expire_after, expected_expiration_del
     expected_expiration = datetime.utcnow() + expected_expiration_delta
     # Instead of mocking datetime (which adds some complications), check for approximate value
     assert abs((expires - expected_expiration).total_seconds()) <= 1
+
+
+def test_get_expiration_datetime__tzinfo():
+    tz = timezone(-timedelta(hours=5))
+    dt = datetime(2021, 2, 1, 7, 0, tzinfo=tz)
+    assert get_expiration_datetime(dt) == datetime(2021, 2, 1, 12, 0)
 
 
 def test_get_expiration_datetime__httpdate():
@@ -208,6 +221,7 @@ def test_get_expiration_datetime__httpdate():
         ('http://site_2.com/static/img.jpg', -1),
         ('site_2.com', None),
         ('some_other_site.com', None),
+        (None, None),
     ],
 )
 def test_get_url_expiration(url, expected_expire_after, mock_session):

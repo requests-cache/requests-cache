@@ -120,10 +120,11 @@ def get_expiration_datetime(expire_after: ExpirationTime) -> Optional[datetime]:
     elif expire_after == DO_NOT_CACHE:
         return datetime.utcnow()
     # Already a datetime or datetime str
+    if isinstance(expire_after, str):
+        expire_after = parse_http_date(expire_after)
+        return to_utc(expire_after) if expire_after else None
     elif isinstance(expire_after, datetime):
         return to_utc(expire_after)
-    elif isinstance(expire_after, str):
-        return parse_http_date(expire_after)
 
     # Otherwise, it must be a timedelta or time in seconds
     if not isinstance(expire_after, timedelta):
@@ -190,7 +191,7 @@ def to_utc(dt: datetime):
     datetimes to the same format.
     """
     if dt.tzinfo:
-        dt.astimezone(timezone.utc)
+        dt = dt.astimezone(timezone.utc)
         dt = dt.replace(tzinfo=None)
     return dt
 
@@ -215,8 +216,6 @@ def url_match(url: str, pattern: str) -> bool:
         >>> url_match('https://httpbin.org/stream/2', 'httpbin.org/*/1')
         False
     """
-    if not url:
-        return False
     url = url.split('://')[-1]
     pattern = pattern.split('://')[-1].rstrip('*') + '**'
     return fnmatch(url, pattern)

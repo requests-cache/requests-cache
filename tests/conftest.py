@@ -9,7 +9,7 @@ Note: The protocol ``http(s)+mock://`` helps :py:class:`requests_mock.Adapter` p
 https://requests-mock.readthedocs.io/en/latest/adapter.html
 """
 import os
-from datetime import datetime, timezone
+from datetime import datetime
 from functools import wraps
 from logging import basicConfig, getLogger
 from os.path import abspath, dirname, join
@@ -49,7 +49,7 @@ HTTPBIN_FORMATS = [
 ]
 
 HTTPDATE_STR = 'Fri, 16 APR 2021 21:13:00 GMT'
-HTTPDATE_DATETIME = datetime(2021, 4, 16, 21, 13, tzinfo=timezone.utc)
+HTTPDATE_DATETIME = datetime(2021, 4, 16, 21, 13)
 
 MOCKED_URL = 'http+mock://requests-cache.com/text'
 MOCKED_URL_HTTPS = 'https+mock://requests-cache.com/text'

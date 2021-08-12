@@ -32,7 +32,7 @@ class BaseCache:
         ignored_parameters: Iterable[str] = None,
         **kwargs,
     ):
-        self.name: str = ''
+        self.name: str = kwargs.get('cache_name', '')
         self.redirects: BaseStorage = DictStorage()
         self.responses: BaseStorage = DictStorage()
         self.include_get_headers = include_get_headers

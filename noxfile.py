@@ -18,7 +18,9 @@ LIVE_DOCS_WATCH = ['requests_cache', 'examples']
 CLEAN_DIRS = ['dist', 'build', join('docs', '_build'), join('docs', 'modules')]
 
 UNIT_TESTS = join('tests', 'unit')
-INT_TESTS = join('tests', 'integration')
+INTEGRATION_TESTS = join('tests', 'integration')
+COVERAGE_ARGS = '--cov --cov-report=term --cov-report=html'  # Generate HTML + stdout coverage report
+XDIST_ARGS = '--numprocesses=auto --dist=loadfile'  # Run tests in parallel, grouped by test module
 
 
 @session(python=['3.6', '3.7', '3.8', '3.9', '3.10'])
@@ -26,7 +28,9 @@ def test(session):
     """Run tests for a specific python version"""
     test_paths = session.posargs or [UNIT_TESTS]
     session.install('.', 'pytest', 'pytest-order', 'pytest-xdist', 'requests-mock', 'timeout-decorator')
-    session.run('pytest', '-vv', '-n', 'auto', *test_paths)
+
+    cmd = f'pytest -rs {XDIST_ARGS}'
+    session.run(*cmd.split(' '), *test_paths)
 
 
 @session(python=False)
@@ -37,13 +41,11 @@ def clean(session):
         rmtree(dir, ignore_errors=True)
 
 
-@session(python=False)
 @session(python=False, name='cov')
 def coverage(session):
     """Run tests and generate coverage report"""
-    coverage_args = '--cov --cov-report=term --cov-report=html'
-    cmd_1 = f'pytest {UNIT_TESTS} --numprocesses=auto {coverage_args}'
-    cmd_2 = f'pytest {INT_TESTS} --cov-append {coverage_args}'
+    cmd_1 = f'pytest {UNIT_TESTS} -rs {XDIST_ARGS} {COVERAGE_ARGS}'
+    cmd_2 = f'pytest {INTEGRATION_TESTS} -rs {XDIST_ARGS} {COVERAGE_ARGS} --cov-append'
     session.run(*cmd_1.split(' '))
     session.run(*cmd_2.split(' '))
 
@@ -58,7 +60,7 @@ def docs(session):
 @session(python=False)
 def livedocs(session):
     """Auto-build docs with live reload in browser.
-    Add `-- open` to also open the browser after starting.
+    Add `--open` to also open the browser after starting.
     """
     args = ['-a']
     args += [f'--watch {pattern}' for pattern in LIVE_DOCS_WATCH]

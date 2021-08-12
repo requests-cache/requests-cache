@@ -1,5 +1,4 @@
 """Common tests to run for all backends (BaseStorage subclasses)"""
-import pickle
 from typing import Dict, Type
 
 import pytest
@@ -18,9 +17,8 @@ class BaseStorageTest:
     num_instances: int = 10  # Max number of cache instances to test
 
     def init_cache(self, index=0, clear=True, **kwargs):
-        cache = self.storage_class(
-            CACHE_NAME, f'table_{index}', serializer=pickle, **self.init_kwargs, **kwargs
-        )
+        kwargs.setdefault('serializer', 'pickle')
+        cache = self.storage_class(CACHE_NAME, f'table_{index}', **self.init_kwargs, **kwargs)
         if clear:
             cache.clear()
         return cache

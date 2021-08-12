@@ -1,5 +1,10 @@
 # History
 
+### 0.7.4 (2021-08-TBD)
+* Fix an issue with httpdate strings from `Expires` headers not getting converted to UTC
+* Fix a packaging issue with extra files added to top-level wheel directory
+* Fix some issues with parallelizing tests using pytest-xdist
+
 ### 0.7.3 (2021-08-10)
 * SQLite backend: Update `DbCache.clear()` to succeed even if the database is corrupted
 * SQLite backend: update `DbDict.bulk_delete()` to split the operation into multiple statements to support
