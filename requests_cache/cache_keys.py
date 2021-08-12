@@ -1,3 +1,4 @@
+# TODO: Ignore If-None-Match and If-Modified-Since headers by default
 from __future__ import annotations
 
 import hashlib

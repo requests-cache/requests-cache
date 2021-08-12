@@ -27,9 +27,16 @@ logger = getLogger(__name__)
 
 @define
 class CacheActions:
-    """A dataclass that contains info on specific actions to take for a given cache item.
-    This is determined by a combination of cache settings and request + response headers.
-    If multiple sources are provided, they will be used in the following order of precedence:
+    """A class that translates cache settings and headers into specific actions to take for a
+    given cache item. Actions include:
+
+    * Reading from the cache
+    * Writing to the cache
+    * Setting cache expiration
+    * Adding request headers
+
+    If multiple sources provide an expiration time, they will be used in the following order of
+    precedence:
 
     1. Cache-Control request headers (if enabled)
     2. Cache-Control response headers (if enabled)
@@ -38,9 +45,9 @@ class CacheActions:
     5. Per-session expiration
     """
 
+    add_request_headers: Dict = field(factory=dict)
     cache_control: bool = field(default=False)
     cache_key: str = field(default=None)
-    etag: str = field(default=None)
     expire_after: ExpirationTime = field(default=None)
     skip_read: bool = field(default=False)
     skip_write: bool = field(default=False)
@@ -105,27 +112,29 @@ class CacheActions:
         """Convert the user/header-provided expiration value to a datetime"""
         return get_expiration_datetime(self.expire_after)
 
+    # TODO: Behavior if no other expiration method was specified (expire_after=-1)?
+    def update_from_cached_response(self, response: CachedResponse):
+        """Used after fetching a cached response, but before potentially sending a new request.
+        Check for relevant cache headers on a cached response, and set corresponding request headers.
+        """
+        if not self.cache_control or not response or not response.is_expired:
+            return
+
+        self.add_request_headers['If-None-Match'] = response.headers.get('ETag')
+        self.add_request_headers['If-Modified-Since'] = response.headers.get('Last-Modified')
+        self.add_request_headers = {k: v for k, v in self.add_request_headers.items() if v}
+
     def update_from_response(self, response: Response):
-        """Update expiration + actions based on response headers, if not previously set by request"""
-        if not self.cache_control:
+        """Used after receiving a new response but before saving it to the cache.
+        Update expiration + actions based on response headers, if not previously set.
+        """
+        if not self.cache_control or not response:
             return
 
         directives = get_cache_directives(response.headers)
         do_not_cache = directives.get('max-age') == DO_NOT_CACHE
         self.expire_after = coalesce(self.expires, directives.get('max-age'), directives.get('expires'))
         self.skip_write = self.skip_write or do_not_cache or 'no-store' in directives
-
-    # TODO: Behavior if no other expiration method was specified (expire_after=-1)?
-    def update_from_cached_response(self, response: CachedResponse):
-        """Check for ETags on cached response"""
-        if self.cache_control and response and response.is_expired and response.etag:
-            self.etag = response.etag
-
-    def __str__(self):
-        return (
-            f'Expire after: {self.expire_after} | Skip read: {self.skip_read} | '
-            f'Skip write: {self.skip_write}'
-        )
 
 
 def coalesce(*values: Any, default=None) -> Any:
@@ -182,7 +191,7 @@ def get_url_expiration(
 
 
 def has_cache_headers(headers: Mapping) -> bool:
-    """Determine if headers contain cache directives **that we currently support**"""
+    """Determine if headers contain supported cache directives"""
     has_cache_control = any([d in headers.get('Cache-Control', '') for d in CACHE_DIRECTIVES])
     return has_cache_control or bool(headers.get('Expires'))
 
