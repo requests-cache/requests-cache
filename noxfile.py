@@ -45,7 +45,7 @@ def clean(session):
 def coverage(session):
     """Run tests and generate coverage report"""
     cmd_1 = f'pytest {UNIT_TESTS} -rs {XDIST_ARGS} {COVERAGE_ARGS}'
-    cmd_2 = f'pytest {INTEGRATION_TESTS} -rs {COVERAGE_ARGS} --cov-append'
+    cmd_2 = f'pytest {INTEGRATION_TESTS} -rs {XDIST_ARGS} {COVERAGE_ARGS} --cov-append'
     session.run(*cmd_1.split(' '))
     session.run(*cmd_2.split(' '))
 

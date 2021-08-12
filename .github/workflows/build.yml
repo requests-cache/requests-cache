@@ -67,7 +67,7 @@ jobs:
         run: |
           source $VENV
           pytest -rs -x tests/unit ${{ env.XDIST_ARGS }} ${{ env.COVERAGE_ARGS }}
-          pytest -rs -x tests/integration --cov-append ${{ env.COVERAGE_ARGS }}
+          pytest -rs -x tests/integration --cov-append ${{ env.XDIST_ARGS }} ${{ env.COVERAGE_ARGS }}
 
       # Latest python version: send coverage report to coveralls
       - name: Run coveralls
