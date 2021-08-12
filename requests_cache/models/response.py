@@ -85,10 +85,6 @@ class CachedResponse(Response):
         pass
 
     @property
-    def etag(self) -> Optional[str]:
-        return self.headers.get('ETag')
-
-    @property
     def from_cache(self) -> bool:
         return True
 

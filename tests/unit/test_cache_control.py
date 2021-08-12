@@ -180,11 +180,6 @@ def test_ignored_headers(directive):
     assert actions.expire_after == 1
 
 
-def test_str():
-    actions = CacheActions.from_request(cache_key='key', request=PreparedRequest(), expire_after=-1)
-    assert str(actions) == 'Expire after: None | Skip read: False | Skip write: False'
-
-
 @patch('requests_cache.cache_control.datetime')
 def test_get_expiration_datetime__no_expiration(mock_datetime):
     assert get_expiration_datetime(None) is None

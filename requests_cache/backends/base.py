@@ -44,7 +44,7 @@ class BaseCache:
             yield response.url
 
     def save_response(self, response: AnyResponse, cache_key: str = None, expires: datetime = None):
-        """Save response to cache
+        """Save a response to the cache
 
         Args:
             cache_key: Cache key for this response; will otherwise be generated based on request
@@ -55,24 +55,15 @@ class BaseCache:
         cached_response = CachedResponse.from_response(response, cache_key=cache_key, expires=expires)
         cached_response.request = remove_ignored_params(cached_response.request, self.ignored_parameters)
         self.responses[cache_key] = cached_response
-
-    def save_redirect(self, request: AnyRequest, response_key: str):
-        """
-        Map a redirect request to a response. This makes it possible to associate many keys with a
-        single response.
-
-        Args:
-            request: Request object for redirect URL
-            response_key: Cache key which can be found in ``responses``
-        """
-        self.redirects[self.create_key(request)] = response_key
+        for r in response.history:
+            self.redirects[self.create_key(r.request)] = cache_key
 
     def get_response(self, key: str, default=None) -> CachedResponse:
-        """Retrieves response for `key` if it's stored in cache, otherwise returns `default`
+        """Retrieve a response from the cache, if it exists
 
         Args:
-            key: Key of resource
-            default: Value to return if `key` is not in cache
+            key: Cache key for the response
+            default: Value to return if `key` is not in the cache
         """
         try:
             if key not in self.responses:

@@ -12,7 +12,7 @@ from urllib3 import filepost
 from .backends import BackendSpecifier, get_valid_kwargs, init_backend
 from .cache_control import CacheActions, ExpirationTime
 from .cache_keys import normalize_dict
-from .models import AnyResponse, set_response_defaults
+from .models import AnyResponse, CachedResponse, set_response_defaults
 
 ALL_METHODS = ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
 
@@ -121,84 +121,83 @@ class CacheMixin(MIXIN_BASE):
         )
 
         # Attempt to fetch a cached response
-        response: Optional[AnyResponse] = None
+        cached_response: Optional[CachedResponse] = None
         if not (self._disabled or actions.skip_read):
-            response = self.cache.get_response(cache_key)
-        actions.update_from_cached_response(response)
-        is_expired = getattr(response, 'is_expired', False)
+            cached_response = self.cache.get_response(cache_key)
+            actions.update_from_cached_response(cached_response)
+        is_expired = getattr(cached_response, 'is_expired', False)
 
-        # If the response is expired, missing, or the cache is disabled then fetch a new response
-        if response is None:
+        # If the response is expired, missing, or the cache is disabled, then fetch a new response
+        if cached_response is None:
             response = self._send_and_cache(request, actions, **kwargs)
         elif is_expired and self.old_data_on_error:
-            response = self._resend_and_ignore(request, actions, **kwargs) or response
-        elif is_expired and actions.etag:
-            response = self._send_and_check_etag(request, actions, **kwargs) or response
+            response = self._resend_and_ignore(request, actions, cached_response, **kwargs)
         elif is_expired:
-            response = self._resend(request, actions, **kwargs)
+            response = self._resend(request, actions, cached_response, **kwargs)
+        else:
+            response = cached_response
 
-        # Dispatch any hooks here, because they are removed before pickling
-        response = dispatch_hook('response', request.hooks, response, **kwargs)
-        if TYPE_CHECKING:
-            assert response is not None
-
-        # If the request has been filtered out, delete previously cached response if it exists
+        # If the request has been filtered out, delete the previously cached response if it exists
         if not self.filter_fn(response):
             logger.debug(f'Deleting filtered response for URL: {response.url}')
             self.cache.delete(cache_key)
             return response
 
-        # Cache redirect history
-        for r in response.history:
-            self.cache.save_redirect(r.request, cache_key)
-        return response
+        # Dispatch any hooks here, because they are removed before pickling
+        return dispatch_hook('response', request.hooks, response, **kwargs)
 
-    def _send_and_cache(self, request: PreparedRequest, actions: CacheActions, **kwargs):
-        """Send the request and cache the response, unless disabled by settings or headers"""
+    def _send_and_cache(
+        self,
+        request: PreparedRequest,
+        actions: CacheActions,
+        cached_response: CachedResponse = None,
+        **kwargs,
+    ) -> AnyResponse:
+        """Send the request and cache the response, unless disabled by settings or headers.
+
+        If applicable, also add request headers to check if the remote resource has been modified.
+        If we get a 304 Not Modified response, return the expired cache item.
+        """
+        request.headers.update(actions.add_request_headers)
         response = super().send(request, **kwargs)
         actions.update_from_response(response)
 
         if self._is_cacheable(response, actions):
             logger.debug(f'Skipping cache write for URL: {request.url}')
             self.cache.save_response(response, actions.cache_key, actions.expires)
+        elif cached_response and response.status_code == 304:
+            logger.debug(f'Response for URL {request.url} has not been modified; using cached response')
+            return cached_response
         return set_response_defaults(response, actions.cache_key)
 
-    def _send_and_check_etag(self, request: PreparedRequest, actions: CacheActions, **kwargs):
-        """Send a request with an ETag to check if the content has changed"""
-        request.headers['If-None-Match'] = actions.etag
-        response = self._send_and_cache(request, actions, **kwargs)
-
-        if response.status_code == 304:
-            logger.debug(f'Response with ETag {actions.etag} has not been modified')
-            return None
-        return response
-
-    def _resend(self, request: PreparedRequest, actions: CacheActions, **kwargs) -> AnyResponse:
+    def _resend(
+        self, request: PreparedRequest, actions: CacheActions, cached_response: CachedResponse, **kwargs
+    ) -> AnyResponse:
         """Attempt to resend the request and cache the new response. If the request fails, delete
         the expired cache item.
         """
         logger.debug('Expired response; attempting to re-send request')
         try:
-            return self._send_and_cache(request, actions, **kwargs)
+            return self._send_and_cache(request, actions, cached_response, **kwargs)
         except Exception:
             self.cache.delete(actions.cache_key)
             raise
 
     def _resend_and_ignore(
-        self, request: PreparedRequest, actions: CacheActions, **kwargs
-    ) -> Optional[AnyResponse]:
+        self, request: PreparedRequest, actions: CacheActions, cached_response: CachedResponse, **kwargs
+    ) -> AnyResponse:
         """Attempt to resend the request and cache the new response. If there are any errors, ignore
-        them and and return ``None``.
+        them and and return the expired cache item.
         """
         # Attempt to send the request and cache the new response
         logger.debug('Expired response; attempting to re-send request')
         try:
-            response = self._send_and_cache(request, actions, **kwargs)
+            response = self._send_and_cache(request, actions, cached_response, **kwargs)
             response.raise_for_status()
             return response
-        except Exception as e:
-            logger.warning('Request failed; using stale cache data: %s', e)
-            return None
+        except Exception:
+            logger.warning(f'Request for URL {request.url} failed; using cached response', exc_info=True)
+            return cached_response
 
     def _is_cacheable(self, response: Response, actions: CacheActions) -> bool:
         """Perform all checks needed to determine if the given response should be saved to the cache"""
