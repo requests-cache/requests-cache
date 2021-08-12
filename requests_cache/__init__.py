@@ -5,7 +5,7 @@ logger = getLogger(__name__)
 
 # Version is defined in pyproject.toml.
 # It's copied here to make it easier for client code to check the installed version.
-__version__ = '0.7.3'
+__version__ = '0.7.4'
 
 
 def get_placeholder_class(original_exception: Exception = None):
