@@ -37,24 +37,26 @@ def test_ujson():
     assert module_json is ujson
 
 
-@patch.dict(sys.modules, {'bson': None, 'itsdangerous': None, 'yaml': None})
 def test_optional_dependencies():
     import requests_cache.serializers.preconf
 
-    reload(requests_cache.serializers.preconf)
+    with patch.dict(sys.modules, {'bson': None, 'itsdangerous': None, 'yaml': None}):
+        reload(requests_cache.serializers.preconf)
 
-    from requests_cache.serializers.preconf import (
-        bson_serializer,
-        safe_pickle_serializer,
-        yaml_serializer,
-    )
+        from requests_cache.serializers.preconf import (
+            bson_serializer,
+            safe_pickle_serializer,
+            yaml_serializer,
+        )
 
-    for obj in [bson_serializer, yaml_serializer]:
+        for obj in [bson_serializer, yaml_serializer]:
+            with pytest.raises(ImportError):
+                obj.dumps('')
+
         with pytest.raises(ImportError):
-            obj.dumps('')
+            safe_pickle_serializer('')
 
-    with pytest.raises(ImportError):
-        safe_pickle_serializer('')
+    reload(requests_cache.serializers.preconf)
 
 
 # TODO: This usage is deprecated. Keep this test for backwards-compatibility until removed in a future release.
