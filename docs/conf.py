@@ -84,9 +84,8 @@ apidoc_excluded_paths = []
 apidoc_module_first = True
 apidoc_toc_file = False
 
-
 # HTML general settings
-# html_favicon = join('images', 'favicon.ico')
+html_favicon = join('_static', 'favicon.ico')
 html_js_files = ['collapsible_container.js']
 html_css_files = ['collapsible_container.css', 'table.css']
 html_show_sphinx = False
@@ -96,15 +95,17 @@ pygments_dark_style = 'material'
 # HTML theme settings
 html_theme = 'furo'
 html_theme_options = {
-    # 'light_css_variables': {
-    #     'color-brand-primary': '#00766c',  # MD light-blue-600; light #64d8cb | med #26a69a
-    #     'color-brand-content': '#006db3',  # MD teal-400;       light #63ccff | med #039be5
-    # },
-    # 'dark_css_variables': {
-    #     'color-brand-primary': '#64d8cb',
-    #     'color-brand-content': '#63ccff',
-    # },
-    # 'sidebar_hide_name': True,
+    'light_logo': 'requests-cache-logo.png',
+    'dark_logo': 'requests-cache-logo-white.png',
+    'sidebar_hide_name': True,
+    'light_css_variables': {
+        'color-brand-primary': '#2962ff',
+        'color-brand-content': '#2a5adf',
+    },
+    'dark_css_variables': {
+        'color-brand-primary': '#2b8cee',
+        'color-brand-content': '#368ce2',
+    },
 }
 
 
