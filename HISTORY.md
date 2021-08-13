@@ -1,6 +1,6 @@
 # History
 
-### 0.7.4 (2021-08-TBD)
+### 0.7.4 (2021-08-16)
 * Fix an issue with httpdate strings from `Expires` headers not getting converted to UTC
 * Fix a packaging issue with extra files added to top-level wheel directory
 * Fix some issues with parallelizing tests using pytest-xdist
