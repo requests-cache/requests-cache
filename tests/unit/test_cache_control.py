@@ -10,7 +10,8 @@ from requests_cache.cache_control import (
     get_expiration_datetime,
     get_url_expiration,
 )
-from tests.conftest import HTTPDATE_DATETIME, HTTPDATE_STR
+from requests_cache.models.response import CachedResponse
+from tests.conftest import ETAG, HTTPDATE_DATETIME, HTTPDATE_STR, LAST_MODIFIED
 
 IGNORED_DIRECTIVES = [
     'must-revalidate',
@@ -122,6 +123,52 @@ def test_init_from_settings(url, request_expire_after, expected_expiration):
         urls_expire_after=urls_expire_after,
     )
     assert actions.expire_after == expected_expiration
+
+
+@pytest.mark.parametrize(
+    'response_headers, expected_request_headers',
+    [
+        ({}, {}),
+        ({'ETag': ETAG}, {'If-None-Match': ETAG}),
+        ({'Last-Modified': LAST_MODIFIED}, {'If-Modified-Since': LAST_MODIFIED}),
+        (
+            {'ETag': ETAG, 'Last-Modified': LAST_MODIFIED},
+            {'If-None-Match': ETAG, 'If-Modified-Since': LAST_MODIFIED},
+        ),
+    ],
+)
+def test_update_from_cached_response(response_headers, expected_request_headers):
+    """Test with Cache-Control response headers"""
+    actions = CacheActions.from_request(
+        cache_key='key',
+        request=MagicMock(url='https://img.site.com/base/img.jpg'),
+        cache_control=True,
+    )
+    cached_response = CachedResponse(headers=response_headers, expires=datetime.now() - timedelta(1))
+    actions.update_from_cached_response(cached_response)
+    assert actions.add_request_headers == expected_request_headers
+
+
+def test_update_from_cached_response__ignored():
+    """Test with Cache-Control response headers"""
+    # Do nothing if cache-control=Fase
+    actions = CacheActions.from_request(
+        cache_key='key',
+        request=MagicMock(url='https://img.site.com/base/img.jpg'),
+        cache_control=False,
+    )
+    cached_response = CachedResponse(
+        headers={'ETag': ETAG, 'Last-Modified': LAST_MODIFIED},
+        expires=datetime.now() - timedelta(1),
+    )
+    actions.update_from_cached_response(cached_response)
+    assert actions.add_request_headers == {}
+
+    # Do nothing if the response is not expired
+    actions.cache_control = True
+    cached_response.expires = None
+    actions.update_from_cached_response(cached_response)
+    assert actions.add_request_headers == {}
 
 
 @pytest.mark.parametrize(

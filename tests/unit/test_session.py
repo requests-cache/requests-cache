@@ -11,7 +11,7 @@ import pytest
 import requests
 from requests.structures import CaseInsensitiveDict
 
-from requests_cache import ALL_METHODS, CachedSession
+from requests_cache import ALL_METHODS, CachedResponse, CachedSession
 from requests_cache.backends import (
     BACKEND_CLASSES,
     BaseCache,
@@ -21,7 +21,6 @@ from requests_cache.backends import (
 )
 from requests_cache.backends.base import DESERIALIZE_ERRORS
 from requests_cache.cache_keys import url_to_key
-from requests_cache.models import CachedResponse
 from tests.conftest import (
     MOCKED_URL,
     MOCKED_URL_404,
@@ -456,6 +455,32 @@ def test_do_not_cache(mock_session):
     mock_session.expire_after = 0
     mock_session.get(MOCKED_URL_JSON)
     assert not mock_session.cache.has_url(MOCKED_URL_JSON)
+
+
+@pytest.mark.parametrize(
+    'response_code, cache_hit, cache_expired, expected_from_cache',
+    [
+        # For 200 responses, never return stale cache data
+        (200, False, False, False),
+        (200, True, False, True),
+        (200, True, True, False),
+        # For 304 responses, return stale cache data
+        (304, False, False, False),
+        (304, True, False, True),
+        (304, True, True, True),
+    ],
+)
+def test_304_not_modified(response_code, cache_hit, cache_expired, expected_from_cache, mock_session):
+    url = f'{MOCKED_URL}/endpoint_2'
+    if cache_expired:
+        mock_session.expire_after = datetime.now() - timedelta(1)
+    if cache_hit:
+        mock_session.mock_adapter.register_uri('GET', url, status_code=200)
+        mock_session.get(url)
+    mock_session.mock_adapter.register_uri('GET', url, status_code=response_code)
+
+    response = mock_session.get(url)
+    assert response.from_cache is expected_from_cache
 
 
 def test_url_whitelist(mock_session):
