@@ -8,6 +8,7 @@ from typing import Dict, Type
 from urllib.parse import parse_qs, urlparse
 
 import pytest
+import requests
 from requests.models import PreparedRequest
 
 from requests_cache import ALL_METHODS, CachedResponse, CachedSession
@@ -15,9 +16,12 @@ from requests_cache.backends.base import BaseCache
 from requests_cache.serializers import SERIALIZERS, SerializerPipeline, safe_pickle_serializer
 from tests.conftest import (
     CACHE_NAME,
+    ETAG,
+    EXPIRED_DT,
     HTTPBIN_FORMATS,
     HTTPBIN_METHODS,
     HTTPDATE_STR,
+    LAST_MODIFIED,
     N_ITERATIONS,
     N_THREADS,
     USE_PYTEST_HTTPBIN,
@@ -124,19 +128,17 @@ class BaseCacheTest:
             response_3 = get_json(httpbin('cookies/set/test3/test4'))
             assert response_3 == get_json(httpbin('cookies'))
 
+    @pytest.mark.parametrize('cache_control', [True, False])
     @pytest.mark.parametrize(
-        'cache_control, request_headers, expected_expiration',
+        'request_headers, expected_expiration',
         [
-            (True, {}, 60),
-            (True, {'Cache-Control': 'max-age=360'}, 360),
-            (True, {'Cache-Control': 'no-store'}, None),
-            (True, {'Expires': HTTPDATE_STR, 'Cache-Control': 'max-age=360'}, 360),
-            (False, {}, None),
-            (False, {'Cache-Control': 'max-age=360'}, None),
-            (False, {'Expires': HTTPDATE_STR, 'Cache-Control': 'max-age=360'}, None),
+            ({}, 60),
+            ({'Cache-Control': 'max-age=360'}, 360),
+            ({'Cache-Control': 'no-store'}, None),
+            ({'Expires': HTTPDATE_STR, 'Cache-Control': 'max-age=360'}, 360),
         ],
     )
-    def test_cache_control_expiration(self, cache_control, request_headers, expected_expiration):
+    def test_cache_control_expiration(self, request_headers, expected_expiration, cache_control):
         """Test cache headers for both requests and responses. The `/cache/{seconds}` endpoint returns
         Cache-Control headers, which should be used unless request headers are sent.
         No headers should be used if `cache_control=False`.
@@ -146,10 +148,35 @@ class BaseCacheTest:
         session.get(httpbin('cache/60'), headers=request_headers)
         response = session.get(httpbin('cache/60'), headers=request_headers)
 
-        if expected_expiration is None:
+        if expected_expiration is None or cache_control is False:
             assert response.expires is None
         else:
             assert_delta_approx_equal(now, response.expires, expected_expiration)
+
+    @pytest.mark.parametrize(
+        'cached_response_headers, expected_from_cache',
+        [
+            ({}, False),
+            ({'ETag': ETAG}, True),
+            ({'Last-Modified': LAST_MODIFIED}, True),
+            ({'ETag': ETAG, 'Last-Modified': LAST_MODIFIED}, True),
+        ],
+    )
+    def test_304_not_modified(self, cached_response_headers, expected_from_cache):
+        """Test behavior of ETag and Last-Modified headers and 304 responses.
+
+        When a cached response contains one of these headers, corresponding request headers should
+        be added. The `/cache` endpoint returns a 304 if one of these request headers is present.
+        When this happens, the previously cached response should be returned.
+        """
+        response = requests.get(httpbin('cache'))
+        response.headers = cached_response_headers
+
+        session = self.init_session(cache_control=True)
+        session.cache.save_response(response, expires=EXPIRED_DT)
+
+        response = session.get(httpbin('cache'))
+        assert response.from_cache == expected_from_cache
 
     @pytest.mark.parametrize('stream', [True, False])
     def test_response_decode(self, stream):

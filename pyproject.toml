@@ -99,6 +99,12 @@ omit = [
     'requests_cache/serializers/__init__.py',
 ]
 
+[tool.coverage.report]
+exclude_lines = [
+    'pragma: no cover',
+    'if TYPE_CHECKING:',
+]
+
 [tool.isort]
 profile = 'black'
 line_length = 105
