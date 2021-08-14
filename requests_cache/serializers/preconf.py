@@ -7,8 +7,6 @@ format's ``dumps()`` (or equivalent) method.
 
 For any optional libraries that aren't installed, the corresponding serializer will be a placeholder
 class that raises an ``ImportError`` at initialization time instead of at import time.
-
-Requires python 3.7+.
 """
 import pickle
 from functools import partial

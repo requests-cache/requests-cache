@@ -15,7 +15,7 @@ class CattrStage(Stage):
     ``cattrs``. This does the majority of the work needed for any other serialization format,
     breaking down objects into python builtin types.
 
-    This can be used as a stage within a :py:class:`.SerializerPipeline`. Requires python 3.7+.
+    This can be used as a stage within a :py:class:`.SerializerPipeline`.
     """
 
     def __init__(self, factory: Callable[..., GenConverter] = None):
