@@ -262,10 +262,6 @@ It can be used, for example, for request throttling:
 :::
 
 ### Streaming Requests
-:::{note}
-This feature requires `requests >= 2.19`
-:::
-
 If you use [streaming requests](https://2.python-requests.org/en/master/user/advanced/#id9), you
 can use the same code to iterate over both cached and non-cached requests. A cached request will,
 of course, have already been read, but will use a file-like object containing the content:

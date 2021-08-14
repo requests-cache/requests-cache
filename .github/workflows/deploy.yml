@@ -27,7 +27,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.7]
-        requests-version: [2.17, 2.18, 2.19, 2.20.1, 2.21, 2.22, 2.23, 2.24, latest]
+        requests-version: [2.22, 2.23, 2.24, 2.25, latest]
       fail-fast: false
     services:
       nginx:
@@ -69,12 +69,11 @@ jobs:
           poetry install -v -E all
 
       # Run unit + integration tests, with additional stress tests
-      # Skip test for streaming responses; requires requests >= 2.19 (tested on latest version in build.yml)
       - name: Run tests
         run: |
           source $VENV
           pytest --numprocesses=auto tests/unit
-          pytest tests/integration -k 'not test_response_decode'
+          pytest tests/integration
           STRESS_TEST_MULTIPLIER=5 pytest tests/integration/ -k 'multithreaded'
 
   # Deploy stable builds on tags only, and pre-release builds from manual trigger ("workflow_dispatch")
