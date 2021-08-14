@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-18.04
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9, 3.10.0-beta.2]
+        python-version: [3.7, 3.8, 3.9, 3.10.0-beta.4]
       fail-fast: false
     services:
       nginx:
@@ -89,3 +89,24 @@ jobs:
           python-version: ${{ env.LATEST_PY_VERSION }}
       - name: Run style checks & linting
         uses: pre-commit/action@v2.0.3
+
+      # TODO: This section could be removed if the issues with the mypy pre-commit hook were resolved
+      - uses: snok/install-poetry@v1.1.7
+        with:
+          version: 1.2.0a2
+          virtualenvs-in-project: true
+      - name: Cache python packages
+        id: cache
+        uses: actions/cache@v2
+        with:
+          path: .venv
+          key: venv-${{ matrix.python-version }}-latest-${{ hashFiles('poetry.lock') }}
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: poetry install -v -E all
+      - name: Run type checking
+        run: >
+          poetry run mypy
+          --install-types --non-interactive
+          --ignore-missing-imports
+          requests_cache

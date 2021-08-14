@@ -125,8 +125,9 @@ def remove_expired_responses(expire_after: ExpirationTime = None):
     Args:
         expire_after: A new expiration time used to revalidate the cache
     """
-    if is_installed():
-        return requests.Session().remove_expired_responses(expire_after)  # type: ignore
+    session = requests.Session()
+    if isinstance(session, CachedSession):
+        session.remove_expired_responses(expire_after)
 
 
 def _patch_session_factory(session_factory: Type[OriginalSession] = CachedSession):

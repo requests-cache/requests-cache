@@ -14,12 +14,25 @@ conda install -c conda-forge requests-cache
 ```
 
 ### Requirements
-- Requires python 3.6+.
+- Requires python 3.7+.
 - You may need additional dependencies depending on which backend you want to use. To install with
   extra dependencies for all supported {ref}`user_guide:cache backends`:
   ```
   pip install requests-cache[backends]
   ```
+
+:::{admonition} Python version compatibility
+:class: toggle, tip
+
+requests-cache currently requires **python 3.7+**. If you need to use an older version
+of python, here are the latest compatible versions:
+
+* **python 2.6:** requests-cache 0.4.13
+* **python 2.7:** requests-cache 0.5.2
+* **python 3.4:** requests-cache 0.5.2
+* **python 3.5:** requests-cache 0.5.2
+* **python 3.6:** requests-cache 0.7.3
+:::
 
 ### Optional Setup Steps
 - See {ref}`security` for recommended setup steps for more secure cache serialization.
@@ -318,7 +331,7 @@ revalidate the cache with the new expiration time:
 By default, responses are serialized using {py:mod}`pickle`. Some other options are also available:
 
 :::{note}
-These features require python 3.7+ and additional dependencies
+These features require additional dependencies
 :::
 
 ### JSON Serializer
