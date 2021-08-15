@@ -216,7 +216,7 @@ def get_mock_adapter() -> Adapter:
     return adapter
 
 
-def fail_if_no_connection(func) -> bool:
+def fail_if_no_connection(connect_timeout: float = 1.0) -> bool:
     """Decorator for testing a backend connection. This will intentionally cause a test failure if
     the wrapped function doesn't have dependencies installed, doesn't connect after a short timeout,
     or raises any exceptions.
@@ -225,15 +225,18 @@ def fail_if_no_connection(func) -> bool:
     extended period of time.
     """
 
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        try:
-            timeout(1.0, use_signals=False)(func)(*args, **kwargs)
-        except Exception as e:
-            logger.error(e)
-            pytest.fail('Could not connect to backend')
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                timeout(connect_timeout, use_signals=False)(func)(*args, **kwargs)
+            except Exception as e:
+                logger.error(e)
+                pytest.fail('Could not connect to backend')
 
-    return wrapper
+        return wrapper
+
+    return decorator
 
 
 def assert_delta_approx_equal(dt1: datetime, dt2: datetime, target_delta, threshold_seconds=2):

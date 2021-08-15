@@ -7,12 +7,9 @@ from tests.conftest import AWS_OPTIONS, fail_if_no_connection
 from tests.integration.base_cache_test import BaseCacheTest
 from tests.integration.base_storage_test import BaseStorageTest
 
-# Run this test module last, since the DynamoDB container takes the longest to initialize
-pytestmark = pytest.mark.order(-1)
-
 
 @pytest.fixture(scope='module', autouse=True)
-@fail_if_no_connection
+@fail_if_no_connection(connect_timeout=5)
 def ensure_connection():
     """Fail all tests in this module if DynamoDB is not running"""
     import boto3

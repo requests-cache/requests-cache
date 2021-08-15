@@ -687,17 +687,6 @@ py = "*"
 pytest = ">=3.10"
 
 [[package]]
-name = "pytest-order"
-version = "1.0.0"
-description = "pytest plugin to run your tests in a specific order"
-category = "dev"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-pytest = ">=5.0"
-
-[[package]]
 name = "pytest-xdist"
 version = "2.3.0"
 description = "pytest xdist plugin for distributed testing and loop-on-failing modes"
@@ -1167,7 +1156,7 @@ yaml = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "593710adc654f4fbe2fa8763e9cad2697896dcc33a99ced3824b26b2f6048e74"
+content-hash = "6f437b055042a70c9ec0910adf49c8bee6d3bda8cda2b0d28cee96312d74aa38"
 
 [metadata.files]
 alabaster = [
@@ -1620,10 +1609,6 @@ pytest-cov = [
 pytest-forked = [
     {file = "pytest-forked-1.3.0.tar.gz", hash = "sha256:6aa9ac7e00ad1a539c41bec6d21011332de671e938c7637378ec9710204e37ca"},
     {file = "pytest_forked-1.3.0-py2.py3-none-any.whl", hash = "sha256:dc4147784048e70ef5d437951728825a131b81714b398d5d52f17c7c144d8815"},
-]
-pytest-order = [
-    {file = "pytest-order-1.0.0.tar.gz", hash = "sha256:5997a262b31234eebb461f9a9ef24687bf732029b499845a4398b69edb5ac321"},
-    {file = "pytest_order-1.0.0-py3-none-any.whl", hash = "sha256:a4cdf12f4c83c76bdfd6e6088e2e157df7fdf91a9c3e3ca7d8809e8dabce0f4b"},
 ]
 pytest-xdist = [
     {file = "pytest-xdist-2.3.0.tar.gz", hash = "sha256:e8ecde2f85d88fbcadb7d28cb33da0fa29bca5cf7d5967fa89fc0e97e5299ea5"},
