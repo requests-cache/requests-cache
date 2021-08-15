@@ -1,18 +1,27 @@
 # History
 
-### 0.8.0 (TBD)
+## 0.8.0 (TBD)
+
+**Cache headers:**
 * Add support for `ETag` + `If-None-Match` headers
 * Add support for `Last-Modified` + `If-Modified-Since` headers
 * Add handling for `304 Not Modified` responses if returned for any other reason
   (e.g., request headers manually set by the client)
+
+**Serialization:**
 * Use `cattrs` for serialization by default, which enables a more forwards-compatible serialization format
   (e.g., less prone to invalidation due to future updates)
+
+**Other features:**
 * Add support for custom cache key callbacks
+
+**Breaking changes:**
 * Drop support for python 3.6
     * Note: Any bugfixes for 0.8.x that also apply to 0.7.x will be backported
 * Remove deprecated `core` module
 * Remove deprecated `BaseCache.remove_old_entries()` method
 
+-----
 ### 0.7.4 (2021-08-16)
 * Fix an issue with httpdate strings from `Expires` headers not getting converted to UTC
 * Fix a packaging issue with extra files added to top-level wheel directory
@@ -38,7 +47,7 @@
 ## 0.7.0 (2021-07-07)
 [See all issues and PRs for 0.7](https://github.com/reclosedev/requests-cache/milestone/2?closed=1)
 
-### Backends
+**Backends:**
 * Add a filesystem backend that stores responses as local files
 * SQLite and filesystem: Add `use_temp` option to store files in a temp directory
 * SQLite: Use persistent thread-local connections, and improve performance for bulk operations
@@ -50,7 +59,7 @@
     * Redis: `redis.Redis`
     * MongoDB and GridFS: `pymongo.MongoClient`
 
-### Expiration
+**Expiration:**
 * Add optional support for the following **request** headers:
     * `Cache-Control: max-age`
     * `Cache-Control: no-cache`
@@ -64,14 +73,14 @@
 * Add support for bypassing the cache if `expire_after=0`
 * Add support for making a cache whitelist using URL patterns
 
-### Serialization
+**Serialization:**
 * Add data models for all serialized objects
 * Add a BSON serializer
 * Add a JSON serializer
 * Add optional support for `cattrs`
 * Add optional support for `ultrajson`
 
-### General
+**General:**
 * Add option to manually cache response objects with `BaseCache.save_response()`
 * Add `BaseCache.keys()` and `values()` methods
 * Add `BaseCache.response_count()` method to get an accurate count of responses (excluding invalid and expired)
@@ -83,7 +92,7 @@
 * Update `ignored_parameters` to also exclude ignored request params, body params, or headers from cached response data (to avoid storing API keys or other credentials)
 * Only log request exceptions if `old_data_on_error` is set
 
-### Compatibility, packaging, and tests
+**Compatibility, packaging, and tests:**
 * Fix some compatibility issues with `requests 2.17` and `2.18`
 * Add minimum `requests` version of `2.17`
 * Run tests for each supported version of `requests`
@@ -126,12 +135,12 @@ Thanks to [Code Shelter](https://www.codeshelter.co) and
 [contributors](https://requests-cache.readthedocs.io/en/stable/contributors.html)
 for making this release possible!
 
-### Backends
+**Backends:**
 * SQLite: Allow passing user paths (`~/path-to-cache`) to database file with `db_path` param
 * SQLite: Add `timeout` parameter
 * Make default table names consistent across backends (`'http_cache'`)
 
-### Expiration
+**Expiration:**
 * Cached responses are now stored with an absolute expiration time, so `CachedSession.expire_after`
   no longer applies retroactively. To revalidate previously cached items with a new expiration time,
   see below:
@@ -141,11 +150,10 @@ for making this release possible!
 * Add support for setting expiration as a `datetime`
 * Add support for explicitly disabling expiration with `-1` (Since `None` may be ambiguous in some cases)
 
-### Serialization
-**Note:** Due to the following changes, responses cached with previous versions of requests-cache
-will be invalid. These **old responses will be treated as expired**, and will be refreshed the
-next time they are requested. They can also be manually converted or removed, if needed (see notes below).
-
+**Serialization:**
+* **Note:** Due to the following changes, responses cached with previous versions of requests-cache
+  will be invalid. These **old responses will be treated as expired**, and will be refreshed the
+  next time they are requested. They can also be manually converted or removed, if needed (see notes below).
 * Add [example script](https://github.com/reclosedev/requests-cache/blob/master/examples/convert_cache.py)
   to convert an existing cache from previous serialization format to new one
 * When running `remove_expired_responses()`, also remove responses that are invalid due to updated
@@ -158,7 +166,7 @@ next time they are requested. They can also be manually converted or removed, if
 * Add `BaseCache.urls` property to get all URLs persisted in the cache
 * Add optional support for `itsdangerous` for more secure serialization
 
-### Bugfixes
+**Bugfixes:**
 * Fix caching requests with data specified in `json` parameter
 * Fix caching requests with `verify` parameter
 * Fix duplicate cached responses due to some unhandled variations in URL format
@@ -172,7 +180,7 @@ next time they are requested. They can also be manually converted or removed, if
 * Update usage of deprecated MongoClient `save()` method
 * Replace some old bugs with new and different bugs, just to keep life interesting
 
-### General
+**General:**
 * Drop support for python <= 3.5
 * Deprecate `core` module; all imports should be made from top-level package instead
     * e.g.: `from requests_cache import CachedSession`
@@ -180,7 +188,7 @@ next time they are requested. They can also be manually converted or removed, if
   for [compatibility with other requests-based libraries](https://requests-cache.readthedocs.io/en/stable/advanced_usage.html#library-compatibility).
 * Add `HEAD` to default `allowable_methods`
 
-### Docs & Tests
+**Docs & Tests:**
 * Add type annotations to main functions/methods in public API, and include in documentation on
   [readthedocs](https://requests-cache.readthedocs.io/en/stable/)
 * Add [Contributing Guide](https://requests-cache.readthedocs.io/en/stable/contributing.html),

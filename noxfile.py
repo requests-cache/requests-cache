@@ -27,7 +27,7 @@ XDIST_ARGS = '--numprocesses=auto --dist=loadfile'  # Run tests in parallel, gro
 def test(session):
     """Run tests for a specific python version"""
     test_paths = session.posargs or [UNIT_TESTS]
-    session.install('.', 'pytest', 'pytest-order', 'pytest-xdist', 'requests-mock', 'timeout-decorator')
+    session.install('.', 'pytest', 'pytest-xdist', 'requests-mock', 'timeout-decorator')
 
     cmd = f'pytest -rs {XDIST_ARGS}'
     session.run(*cmd.split(' '), *test_paths)
