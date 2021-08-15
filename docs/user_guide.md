@@ -208,8 +208,11 @@ them separately. To enable this, use `include_get_headers`:
 
 ## Cache Expiration
 By default, cached responses will be stored indefinitely. There are a number of options for
-specifying how long to store responses. The simplest option is to initialize the cache with an
-`expire_after` value:
+specifying how long to store responses, either with a single expiration value, glob patterns,
+or cache headers.
+
+The simplest option is to initialize the cache with an `expire_after` value, which will apply to all
+reponses:
 ```python
 >>> # Set expiration for the session using a value in seconds
 >>> session = CachedSession(expire_after=360)
@@ -247,10 +250,10 @@ Examples:
 ```
 
 ### URL Patterns
-You can use `urls_expire_after` to set different expiration values for different requests, based on
-URL glob patterns. This allows you to customize caching based on what you know about the resources
-you're requesting. For example, you might request one resource that gets updated frequently, another
-that changes infrequently, and another that never changes. Example:
+You can use `urls_expire_after` to set different expiration values based on URL glob patterns.
+This allows you to customize caching based on what you know about the resources you're requesting
+or how you intend to use them. For example, you might request one resource that gets updated
+frequently, another that changes infrequently, and another that never changes. Example:
 ```python
 >>> urls_expire_after = {
 ...     '*.site_1.com': 30,
@@ -273,43 +276,54 @@ You can also use this to define a cache whitelist, so only the patterns you defi
 **Notes:**
 - `urls_expire_after` should be a dict in the format `{'pattern': expire_after}`
 - `expire_after` accepts the same types as `CachedSession.expire_after`
-- Patterns will match request **base URLs**, so the pattern `site.com/resource/` is equivalent to
-  `http*://site.com/resource/**`
+- Patterns will match request **base URLs without the protocol**, so the pattern `site.com/resource/`
+  is equivalent to `http*://site.com/resource/**`
 - If there is more than one match, the first match will be used in the order they are defined
-- If no patterns match a request, `CachedSession.expire_after` will be used as a default.
+- If no patterns match a request, `CachedSession.expire_after` will be used as a default
 
-### Cache-Control
-:::{warning}
-This is **not** intended to be a thorough or strict implementation of header-based HTTP caching,
-e.g. according to RFC 2616.
-:::
-
-Optional support is included for a simplified subset of
+(cache-control)=
+### Cache Headers
+Most common request and response cache headers are supported, including
 [Cache-Control](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control)
-and other cache headers in both requests and responses. To enable this behavior, use the
-`cache_control` option:
+and [ETags](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag).
+To enable this behavior, use the `cache_control` option:
 ```python
 >>> session = CachedSession(cache_control=True)
+```
+
+```{warning}
+This is **not** intended to be strict implementation of HTTP caching, e.g. according to
+[RFC 2616](https://datatracker.ietf.org/doc/html/rfc2616)
 ```
 
 **Supported request headers:**
 - `Cache-Control: max-age`: Used as the expiration time in seconds
 - `Cache-Control: no-cache`: Skips reading response data from the cache
 - `Cache-Control: no-store`: Skips reading and writing response data from/to the cache
+- `If-None-Match`: Automatically added if an `ETag` is available
+- `If-Modified-Since`: Automatically added if `Last-Modified` is available
 
 **Supported response headers:**
 - `Cache-Control: max-age`: Used as the expiration time in seconds
 - `Cache-Control: no-store` Skips writing response data to the cache
 - `Expires`: Used as an absolute expiration time
+- `ETag`: Returns expired cache data if the remote content has not changed (`304 Not Modified` response)
+- `Last-Modified`: Returns expired cache data if the remote content has not changed (`304 Not Modified` response)
 
 **Notes:**
-- Unlike a browser or proxy cache, `max-age=0` does not currently clear previously cached responses.
+- Unlike a browser or proxy cache, `max-age=0` does not clear previously cached responses.
 - If enabled, Cache-Control directives will take priority over any other `expire_after` value.
   See {ref}`user_guide:expiration precedence` for the full order of precedence.
 
 ### Removing Expired Responses
 For better performance, expired responses won't be removed immediately, but will be removed
-(or replaced) the next time they are requested. To manually clear all expired responses, use
+(or replaced) the next time they are requested.
+:::{tip}
+Implementing one or more cache eviction algorithms is being considered. If this is something you are
+interested in, please provide feedback via [issues](https://github.com/reclosedev/requests-cache/issues/new/choose)!
+:::
+
+To manually clear all expired responses, use
 {py:meth}`.CachedSession.remove_expired_responses`:
 ```python
 >>> session.remove_expired_responses()
@@ -384,7 +398,6 @@ MongoDB dependencies:
 pip install requests-cache[bson]
 ```
 
-
 ## Error Handling
 In some cases, you might cache a response, have it expire, but then encounter an error when
 retrieving a new response. If you would like to use expired response data in these cases, use the
@@ -412,6 +425,6 @@ for more details on request errors in general.
 ## Potential Issues
 - Version updates of `requests`, `urllib3` or `requests-cache` itself may not be compatible with
   previously cached data (see issues [#56](https://github.com/reclosedev/requests-cache/issues/56)
-  and [#102](https://github.com/reclosedev/requests-cache/issues/102)).
-  The best way to prevent this is to use a virtualenv and pin your dependency versions.
+  and [#102](https://github.com/reclosedev/requests-cache/issues/102)). In these cases, the cached
+  data will simply be invalidated and a new response will be fetched.
 - See {ref}`security` for notes on serialization security
