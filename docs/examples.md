@@ -82,6 +82,7 @@ These can also be found in the
 ```
 :::
 
+(custom_keys)=
 ## Custom cache key function
 ```{include} ../examples/custom_cache_keys.py
 :start-line: 2

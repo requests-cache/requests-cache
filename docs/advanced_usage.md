@@ -132,6 +132,9 @@ session = CachedSession(key_fn=create_key)
 ```
 
 ```{tip}
+See {ref}`Examples<custom_keys>` page for a complete example.
+```
+```{tip}
 Generally, if you include less info in your cache keys, you will have more cache hits and use less
 storage space, but risk getting incorrect response data back. For example, if you exclude all request
 parameters, you will get the same cached response back for any combination of request parameters.

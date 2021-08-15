@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from .models import AnyRequest
 
 DEFAULT_HEADERS = default_headers()
+DEFAULT_EXCLUDE_HEADERS = ['Cache-Control', 'If-None-Match', 'If-Modified-Since']
 RequestContent = Union[Mapping, str, bytes]
 
 
@@ -37,7 +38,8 @@ def create_key(
     if body:
         key.update(body)
     if include_get_headers and request.headers != DEFAULT_HEADERS:
-        headers = normalize_dict(request.headers)
+        exclude_headers = list(ignored_parameters or []) + DEFAULT_EXCLUDE_HEADERS
+        headers = normalize_dict(remove_ignored_headers(request, exclude_headers))
         if TYPE_CHECKING:
             assert isinstance(headers, dict)
         for name, value in headers.items():
