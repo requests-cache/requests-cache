@@ -7,6 +7,7 @@
   (e.g., request headers manually set by the client)
 * Use `cattrs` for serialization by default, which enables a more forwards-compatible serialization format
   (e.g., less prone to invalidation due to future updates)
+* Add support for custom cache key callbacks
 * Drop support for python 3.6
     * Note: Any bugfixes for 0.8.x that also apply to 0.7.x will be backported
 * Remove deprecated `core` module
