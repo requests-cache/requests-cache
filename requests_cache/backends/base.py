@@ -4,7 +4,7 @@ from collections import UserDict
 from collections.abc import MutableMapping
 from datetime import datetime
 from logging import getLogger
-from typing import Iterable, Iterator, Tuple, Union
+from typing import Callable, Iterable, Iterator, Tuple, Union
 
 from ..cache_control import ExpirationTime
 from ..cache_keys import create_key, remove_ignored_params, url_to_key
@@ -13,6 +13,9 @@ from ..serializers import init_serializer
 
 # Specific exceptions that may be raised during deserialization
 DESERIALIZE_ERRORS = (AttributeError, ImportError, TypeError, ValueError, pickle.PickleError)
+
+# Signature for user-provided callback
+KEY_FN = Callable[..., str]
 
 ResponseOrKey = Union[CachedResponse, str]
 logger = getLogger(__name__)
@@ -29,6 +32,7 @@ class BaseCache:
         *args,
         include_get_headers: bool = False,
         ignored_parameters: Iterable[str] = None,
+        key_fn: KEY_FN = None,
         **kwargs,
     ):
         self.name: str = kwargs.get('cache_name', '')
@@ -36,6 +40,7 @@ class BaseCache:
         self.responses: BaseStorage = DictStorage()
         self.include_get_headers = include_get_headers
         self.ignored_parameters = ignored_parameters
+        self.key_fn = key_fn or create_key
 
     @property
     def urls(self) -> Iterator[str]:
@@ -144,7 +149,12 @@ class BaseCache:
 
     def create_key(self, request: AnyRequest, **kwargs) -> str:
         """Create a normalized cache key from a request object"""
-        return create_key(request, self.ignored_parameters, self.include_get_headers, **kwargs)
+        return self.key_fn(
+            request,
+            ignored_parameters=self.ignored_parameters,
+            include_get_headers=self.include_get_headers,
+            **kwargs,
+        )
 
     def has_key(self, key: str) -> bool:
         """Returns `True` if cache has `key`, `False` otherwise"""

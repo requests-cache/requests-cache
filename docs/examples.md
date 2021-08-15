@@ -81,3 +81,16 @@ These can also be found in the
 :lines: 1,6-
 ```
 :::
+
+## Custom cache key function
+```{include} ../examples/custom_cache_keys.py
+:start-line: 2
+:end-line: 15
+```
+
+:::{admonition} Example code
+:class: toggle
+```{literalinclude} ../examples/custom_cache_keys.py
+:lines: 1,17-
+```
+:::

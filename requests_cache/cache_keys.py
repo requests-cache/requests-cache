@@ -1,8 +1,8 @@
 # TODO: Ignore If-None-Match and If-Modified-Since headers by default
 from __future__ import annotations
 
-import hashlib
 import json
+from hashlib import sha256
 from operator import itemgetter
 from typing import TYPE_CHECKING, Iterable, List, Mapping, Optional, Tuple, Union
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
@@ -21,19 +21,19 @@ RequestContent = Union[Mapping, str, bytes]
 
 def create_key(
     request: AnyRequest,
-    ignored_params: Iterable[str] = None,
+    ignored_parameters: Iterable[str] = None,
     include_get_headers: bool = False,
     **kwargs,
 ) -> str:
     """Create a normalized cache key from a request object"""
-    key = hashlib.sha256()
+    key = sha256()
     key.update(encode((request.method or '').upper()))
-    url = remove_ignored_url_params(request, ignored_params)
+    url = remove_ignored_url_params(request, ignored_parameters)
     url = url_normalize(url)
     key.update(encode(url))
     key.update(encode(kwargs.get('verify', True)))
 
-    body = remove_ignored_body_params(request, ignored_params)
+    body = remove_ignored_body_params(request, ignored_parameters)
     if body:
         key.update(body)
     if include_get_headers and request.headers != DEFAULT_HEADERS:
@@ -46,49 +46,56 @@ def create_key(
     return key.hexdigest()
 
 
-def remove_ignored_params(request: AnyRequest, ignored_params: Optional[Iterable[str]]) -> AnyRequest:
-    if not ignored_params:
+def remove_ignored_params(
+    request: AnyRequest, ignored_parameters: Optional[Iterable[str]]
+) -> AnyRequest:
+    """Remove ignored parameters from reuqest URL, body, and headers"""
+    if not ignored_parameters:
         return request
-    request.headers = remove_ignored_headers(request, ignored_params)
-    request.url = remove_ignored_url_params(request, ignored_params)
-    request.body = remove_ignored_body_params(request, ignored_params)
+    request.headers = remove_ignored_headers(request, ignored_parameters)
+    request.url = remove_ignored_url_params(request, ignored_parameters)
+    request.body = remove_ignored_body_params(request, ignored_parameters)
     return request
 
 
 def remove_ignored_headers(
-    request: AnyRequest, ignored_params: Optional[Iterable[str]]
+    request: AnyRequest, ignored_parameters: Optional[Iterable[str]]
 ) -> CaseInsensitiveDict:
-    if not ignored_params:
+    if not ignored_parameters:
         return request.headers
     headers = CaseInsensitiveDict(request.headers.copy())
-    for k in ignored_params:
+    for k in ignored_parameters:
         headers.pop(k, None)
     return headers
 
 
-def remove_ignored_url_params(request: AnyRequest, ignored_params: Optional[Iterable[str]]) -> str:
+def remove_ignored_url_params(request: AnyRequest, ignored_parameters: Optional[Iterable[str]]) -> str:
+    """Remove any ignored request parameters from the URL"""
     url_str = str(request.url)
-    if not ignored_params:
+    if not ignored_parameters:
         return url_str
 
     url = urlparse(url_str)
-    query = filter_params(parse_qsl(url.query), ignored_params)
+    query = filter_params(parse_qsl(url.query), ignored_parameters)
     return urlunparse((url.scheme, url.netloc, url.path, url.params, urlencode(query), url.fragment))
 
 
-def remove_ignored_body_params(request: AnyRequest, ignored_params: Optional[Iterable[str]]) -> bytes:
+def remove_ignored_body_params(
+    request: AnyRequest, ignored_parameters: Optional[Iterable[str]]
+) -> bytes:
+    """Remove any ignored parameters from the request body"""
     original_body = request.body
     filtered_body: Union[str, bytes] = b''
     content_type = request.headers.get('content-type')
-    if not ignored_params or not original_body or not content_type:
+    if not ignored_parameters or not original_body or not content_type:
         return encode(original_body)
 
     if content_type == 'application/x-www-form-urlencoded':
-        body = filter_params(parse_qsl(decode(original_body)), ignored_params)
+        body = filter_params(parse_qsl(decode(original_body)), ignored_parameters)
         filtered_body = urlencode(body)
     elif content_type == 'application/json':
         body = json.loads(decode(original_body)).items()
-        body = filter_params(sorted(body), ignored_params)
+        body = filter_params(sorted(body), ignored_parameters)
         filtered_body = json.dumps(body)
     else:
         filtered_body = original_body
@@ -96,8 +103,10 @@ def remove_ignored_body_params(request: AnyRequest, ignored_params: Optional[Ite
     return encode(filtered_body)
 
 
-def filter_params(data: List[Tuple[str, str]], ignored_params: Iterable[str]) -> List[Tuple[str, str]]:
-    return [(k, v) for k, v in data if k not in set(ignored_params)]
+def filter_params(
+    data: List[Tuple[str, str]], ignored_parameters: Iterable[str]
+) -> List[Tuple[str, str]]:
+    return [(k, v) for k, v in data if k not in set(ignored_parameters)]
 
 
 def normalize_dict(
