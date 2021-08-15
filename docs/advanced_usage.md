@@ -263,8 +263,9 @@ It can be used, for example, for request throttling:
 
 ### Streaming Requests
 If you use [streaming requests](https://2.python-requests.org/en/master/user/advanced/#id9), you
-can use the same code to iterate over both cached and non-cached requests. A cached request will,
-of course, have already been read, but will use a file-like object containing the content:
+can use the same code to iterate over both cached and non-cached requests. Cached response content
+will have already been read (i.e., consumed), but will be available for re-reading so it behaves like
+the original streamed response:
 
 :::{admonition} Example code
 :class: toggle
@@ -281,11 +282,11 @@ of course, have already been read, but will use a file-like object containing th
 
 (library-compatibility)=
 ## Usage with other requests-based libraries
-This library works by patching and/or extending {py:class}`requests.Session`. Many other libraries out there
-do the same thing, making it potentially difficult to combine them.
+This library works by patching and/or extending {py:class}`requests.Session`. Many other libraries
+out there do the same thing, making it potentially difficult to combine them.
 
-For that scenario, a mixin class is provided, so you can create a custom class with behavior from multiple
-Session-modifying libraries:
+For that scenario, a mixin class is provided, so you can create a custom class with behavior from
+multiple Session-modifying libraries:
 ```python
 >>> from requests import Session
 >>> from requests_cache import CacheMixin

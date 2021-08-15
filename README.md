@@ -13,19 +13,21 @@ library. It's a convenient tool to use with web scraping, consuming REST APIs, s
 sites, or any other scenario in which you're making lots of requests that are expensive and/or
 likely to be sent more than once.
 
-See full project documentation at: https://requests-cache.readthedocs.io
+Complete project documentation can be found at [requests-cache.readthedocs.io](https://requests-cache.readthedocs.io).
 
 ## Features
 * **Ease of use:** Use as a [drop-in replacement](https://requests-cache.readthedocs.io/en/stable/api.html#sessions)
   for `requests.Session`, or [install globally](https://requests-cache.readthedocs.io/en/stable/user_guide.html#patching)
   to add caching to all `requests` functions
-* **Customization:** Works out of the box with zero config, but with plenty of options available
-  for customizing cache
-  [expiration](https://requests-cache.readthedocs.io/en/stable/user_guide.html#cache-expiration)
-  and other [behavior](https://requests-cache.readthedocs.io/en/stable/user_guide.html#cache-options)
+* **Customization:** Works out of the box with zero config, but with plenty of options available for
+  customizing [cache behavior](https://requests-cache.readthedocs.io/en/stable/user_guide.html#cache-options)
 * **Persistence:** Includes several [storage backends](https://requests-cache.readthedocs.io/en/stable/user_guide.html#cache-backends):
-  SQLite, Redis, MongoDB, GridFS, DynamoDB, and filesystem.
-* **Compatibility:** Can be used alongside
+  SQLite, Redis, MongoDB, GridFS, DynamoDB. Also includes a file-based backend and multiple
+  [serializers](https://requests-cache.readthedocs.io/en/stable/user_guide.html#serializers), so you
+  can store responses as plain JSON files, YAML, and more.
+* **Expiration:** Use [cache headers](https://requests-cache.readthedocs.io/en/stable/user_guide.html#cache-headers),
+  aggressively cache everything for long-term use, use [URL patterns](https://requests-cache.readthedocs.io/en/stable/user_guide.html#url-patterns) for selective caching, or anything in between.
+* **Compatibility:** Can be combined with
   [other popular libraries based on requests](https://requests-cache.readthedocs.io/en/stable/advanced_usage.html#library-compatibility)
 
 # Quickstart
@@ -34,8 +36,13 @@ First, install with pip:
 pip install requests-cache
 ```
 
-Next, use [requests_cache.CachedSession](https://requests-cache.readthedocs.io/en/stable/api.html#sessions)
-to send and cache requests. To quickly demonstrate how to use it:
+Then, use [requests_cache.CachedSession](https://requests-cache.readthedocs.io/en/stable/api.html#sessions)
+to make your requests. It behaves like a normal
+[requests.Session](https://docs.python-requests.org/en/master/user/advanced/#session-objects),
+but with caching behavior.
+
+To illustrate, we'll call an endpoint that adds a delay of 1 second, simulating a slow or
+rate-limited website.
 
 **This takes ~1 minute:**
 ```python
@@ -55,11 +62,11 @@ for i in range(60):
     session.get('http://httpbin.org/delay/1')
 ```
 
-The URL in this example adds a delay of 1 second, simulating a slow or rate-limited website.
 With caching, the response will be fetched once, saved to `demo_cache.sqlite`, and subsequent
 requests will return the cached response near-instantly.
 
-If you don't want to manage a session object, requests-cache can also be installed globally:
+If you don't want to manage a session object, or just want to quickly test it out in your application
+without modifying any code, requests-cache can also be installed globally:
 ```python
 requests_cache.install_cache('demo_cache')
 requests.get('http://httpbin.org/delay/1')

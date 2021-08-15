@@ -76,12 +76,12 @@ class CachedResponse(Response):
         return obj
 
     @property
-    def _content_consumed(self):
-        """For compatibility with Response; will always be True for a cached response"""
+    def _content_consumed(self) -> bool:
+        """For compatibility with requests.Response; will always be True for a cached response"""
         return True
 
     @_content_consumed.setter
-    def _content_consumed(self, value):
+    def _content_consumed(self, value: bool):
         pass
 
     @property

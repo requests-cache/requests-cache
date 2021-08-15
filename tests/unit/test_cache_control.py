@@ -10,7 +10,8 @@ from requests_cache.cache_control import (
     get_expiration_datetime,
     get_url_expiration,
 )
-from tests.conftest import HTTPDATE_DATETIME, HTTPDATE_STR
+from requests_cache.models.response import CachedResponse
+from tests.conftest import ETAG, HTTPDATE_DATETIME, HTTPDATE_STR, LAST_MODIFIED
 
 IGNORED_DIRECTIVES = [
     'must-revalidate',
@@ -51,7 +52,7 @@ def test_init(
     request.headers = {'Cache-Control': f'max-age={header_expire_after}'} if header_expire_after else {}
     get_url_expiration.return_value = url_expire_after
 
-    actions = CacheActions(
+    actions = CacheActions.from_request(
         cache_key='key',
         request=request,
         request_expire_after=request_expire_after,
@@ -74,7 +75,9 @@ def test_init(
 )
 def test_init_from_headers(headers, expected_expiration):
     """Test with Cache-Control request headers"""
-    actions = CacheActions(cache_key='key', cache_control=True, request=MagicMock(headers=headers))
+    actions = CacheActions.from_request(
+        cache_key='key', cache_control=True, request=MagicMock(headers=headers)
+    )
 
     assert actions.cache_key == 'key'
     if expected_expiration == DO_NOT_CACHE:
@@ -112,7 +115,7 @@ def test_init_from_settings(url, request_expire_after, expected_expiration):
         'site_2.com/resource_2': timedelta(days=7),
         'site_2.com/static': -1,
     }
-    actions = CacheActions(
+    actions = CacheActions.from_request(
         cache_key='key',
         request=MagicMock(url=url),
         request_expire_after=request_expire_after,
@@ -120,6 +123,52 @@ def test_init_from_settings(url, request_expire_after, expected_expiration):
         urls_expire_after=urls_expire_after,
     )
     assert actions.expire_after == expected_expiration
+
+
+@pytest.mark.parametrize(
+    'response_headers, expected_request_headers',
+    [
+        ({}, {}),
+        ({'ETag': ETAG}, {'If-None-Match': ETAG}),
+        ({'Last-Modified': LAST_MODIFIED}, {'If-Modified-Since': LAST_MODIFIED}),
+        (
+            {'ETag': ETAG, 'Last-Modified': LAST_MODIFIED},
+            {'If-None-Match': ETAG, 'If-Modified-Since': LAST_MODIFIED},
+        ),
+    ],
+)
+def test_update_from_cached_response(response_headers, expected_request_headers):
+    """Test with Cache-Control response headers"""
+    actions = CacheActions.from_request(
+        cache_key='key',
+        request=MagicMock(url='https://img.site.com/base/img.jpg'),
+        cache_control=True,
+    )
+    cached_response = CachedResponse(headers=response_headers, expires=datetime.now() - timedelta(1))
+    actions.update_from_cached_response(cached_response)
+    assert actions.add_request_headers == expected_request_headers
+
+
+def test_update_from_cached_response__ignored():
+    """Test with Cache-Control response headers"""
+    # Do nothing if cache-control=Fase
+    actions = CacheActions.from_request(
+        cache_key='key',
+        request=MagicMock(url='https://img.site.com/base/img.jpg'),
+        cache_control=False,
+    )
+    cached_response = CachedResponse(
+        headers={'ETag': ETAG, 'Last-Modified': LAST_MODIFIED},
+        expires=datetime.now() - timedelta(1),
+    )
+    actions.update_from_cached_response(cached_response)
+    assert actions.add_request_headers == {}
+
+    # Do nothing if the response is not expired
+    actions.cache_control = True
+    cached_response.expires = None
+    actions.update_from_cached_response(cached_response)
+    assert actions.add_request_headers == {}
 
 
 @pytest.mark.parametrize(
@@ -138,7 +187,11 @@ def test_init_from_settings(url, request_expire_after, expected_expiration):
 def test_update_from_response(headers, expected_expiration):
     """Test with Cache-Control response headers"""
     url = 'https://img.site.com/base/img.jpg'
-    actions = CacheActions(cache_key='key', request=MagicMock(url=url), cache_control=True)
+    actions = CacheActions.from_request(
+        cache_key='key',
+        request=MagicMock(url=url),
+        cache_control=True,
+    )
     actions.update_from_response(MagicMock(url=url, headers=headers))
 
     if expected_expiration == DO_NOT_CACHE:
@@ -150,7 +203,11 @@ def test_update_from_response(headers, expected_expiration):
 
 def test_update_from_response__ignored():
     url = 'https://img.site.com/base/img.jpg'
-    actions = CacheActions(cache_key='key', request=MagicMock(url=url), cache_control=False)
+    actions = CacheActions.from_request(
+        cache_key='key',
+        request=MagicMock(url=url),
+        cache_control=False,
+    )
     actions.update_from_response(MagicMock(url=url, headers={'Cache-Control': 'max-age=5'}))
     assert actions.expire_after is None
 
@@ -161,18 +218,13 @@ def test_ignored_headers(directive):
     request = PreparedRequest()
     request.url = 'https://img.site.com/base/img.jpg'
     request.headers = {'Cache-Control': directive}
-    actions = CacheActions(
+    actions = CacheActions.from_request(
         cache_key='key',
         request=request,
         session_expire_after=1,
         cache_control=True,
     )
     assert actions.expire_after == 1
-
-
-def test_str():
-    actions = CacheActions(cache_key='key', request=PreparedRequest(), expire_after=-1)
-    assert str(actions) == 'Expire after: None | Skip read: False | Skip write: False'
 
 
 @patch('requests_cache.cache_control.datetime')
