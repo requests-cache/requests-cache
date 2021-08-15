@@ -95,13 +95,51 @@ to both new responses (on write) and previously cached responses (on read):
 >>> from sys import getsizeof
 >>> from requests_cache import CachedSession
 
->>> def filter_by_size(response):
+>>> def filter_by_size(response: Response) -> bool:
 >>>     """Don't cache responses with a body over 1 MB"""
 >>>     return getsizeof(response.content) <= 1024 * 1024
 
 >>> session = CachedSession(filter_fn=filter_by_size)
 ```
 :::
+
+## Custom Cache Keys
+A cache key is a hash or other value based on request details that identifies a response in the cache.
+This determines a cached response's uniqueness. For example, the option `ignored_parameters=['foo']`
+will exclude the `foo` request parameter from the cache key, meaning these three requests will all
+use the same cached response:
+```python
+>>> session = CachedSession(ignored_parameters=['foo'])
+>>> response = session.get('https://example.com')          # cache miss
+>>> response = session.get('https://example.com?foo=bar')  # cache hit
+>>> response = session.get('https://example.com?foo=qux')  # cache hit
+```
+
+If you want more control over this behavior, you can provide your own function to generate cache keys,
+which will take a {py:class}`~requests.PreparedRequest` plus optional keyword args, and return a string:
+```python
+def create_key(request: requests.PreparedRequest, **kwargs) -> str:
+    """Generate a custom cache key for the given request"""
+```
+`**kwargs` includes key-related {py:class}`.BaseCache` settings, and any other keyword args passed
+to {py:meth}`.CachedSession.send()`.
+See {py:func}`.create_key` for the reference implementation, and see the rest of the {py:mod}`.cache_keys`
+module for some potentially useful helper functions.
+
+You can then pass this function via the `key_fn` param:
+```python
+session = CachedSession(key_fn=create_key)
+```
+
+```{tip}
+Generally, if you include less info in your cache keys, you will have more cache hits and use less
+storage space, but risk getting incorrect response data back. For example, if you exclude all request
+parameters, you will get the same cached response back for any combination of request parameters.
+```
+```{warning}
+If you provide a custom key function for a non-empty cache, any responses previously cached with a
+different key function will likely be unused.
+```
 
 ## Custom Backends
 If the built-in {py:mod}`Cache Backends <requests_cache.backends>` don't suit your needs, you can
