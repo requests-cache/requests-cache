@@ -15,6 +15,7 @@ from .cache_keys import normalize_dict
 from .models import AnyResponse, CachedResponse, set_response_defaults
 
 ALL_METHODS = ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
+FILTER_FN = Callable[[AnyResponse], bool]
 
 logger = getLogger(__name__)
 if TYPE_CHECKING:
@@ -36,7 +37,7 @@ class CacheMixin(MIXIN_BASE):
         urls_expire_after: Dict[str, ExpirationTime] = None,
         allowable_codes: Iterable[int] = (200,),
         allowable_methods: Iterable[str] = ('GET', 'HEAD'),
-        filter_fn: Callable = None,
+        filter_fn: FILTER_FN = None,
         old_data_on_error: bool = False,
         cache_control: bool = False,
         **kwargs,
@@ -283,9 +284,10 @@ class CachedSession(CacheMixin, OriginalSession):
         allowable_methods: Cache only responses for one of these HTTP methods
         include_get_headers: Make request headers part of the cache key
         ignored_parameters: List of request parameters to be excluded from the cache key
-        filter_fn: function that takes a :py:class:`aiohttp.ClientResponse` object and
+        filter_fn: Function that takes a :py:class:`aiohttp.ClientResponse` object and
             returns a boolean indicating whether or not that response should be cached. Will be
             applied to both new and previously cached responses.
+        key_fn: Function for generating cutom cache keys based on request info
         old_data_on_error: Return stale cache data if a new request raises an exception
         cache_control: Use Cache-Control request and response headers
     """

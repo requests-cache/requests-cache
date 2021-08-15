@@ -217,6 +217,17 @@ def test_filter_fn__retroactive(mock_session):
     assert not mock_session.cache.has_url(MOCKED_URL_JSON)
 
 
+# def test_key_fn(mock_session):
+#     def create_key(request, **kwargs):
+#         """Create a key based on only the request URL (without params)"""
+#         return request.url.split('?')[0]
+
+#     mock_session.cache.key_fn = create_key
+#     mock_session.get(MOCKED_URL)
+#     response = mock_session.get(MOCKED_URL, params={'k': 'v'})
+#     assert response.from_cache is True
+
+
 def test_hooks(mock_session):
     state = defaultdict(int)
     mock_session.get(MOCKED_URL)
