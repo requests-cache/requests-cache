@@ -1,4 +1,12 @@
-{{- basename }}
+{{- basename.split('.')[-1]
+   | replace("_", " ")
+   | title
+   | replace("Sql", "SQL")
+   | replace("db", "DB")
+   | replace("fs", "FS")
+   | e | heading
+}}
+``{{ basename }}`` module
 
 Summary
 -------
