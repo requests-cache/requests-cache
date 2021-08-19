@@ -264,7 +264,7 @@ frequently, another that changes infrequently, and another that never changes. E
 >>> session = CachedSession(urls_expire_after=urls_expire_after)
 ```
 
-You can also use this to define a cache whitelist, so only the patterns you define will be cached:
+You can also use this to define an allowlist, so only the patterns you define will be cached:
 ```python
 >>> urls_expire_after = {
 ...     '*.site_1.com': 30,

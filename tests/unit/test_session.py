@@ -494,7 +494,7 @@ def test_304_not_modified(response_code, cache_hit, cache_expired, expected_from
     assert response.from_cache is expected_from_cache
 
 
-def test_url_whitelist(mock_session):
+def test_url_allowlist(mock_session):
     """If the default is 0, only URLs matching patterns in urls_expire_after should be cached"""
     mock_session.urls_expire_after = {
         MOCKED_URL_JSON: 60,

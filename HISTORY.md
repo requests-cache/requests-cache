@@ -71,7 +71,7 @@
 * Add `cache_control` option to `CachedSession` to enable usage of cache headers
 * Add support for HTTP timestamps (RFC 5322) in ``expire_after`` parameters
 * Add support for bypassing the cache if `expire_after=0`
-* Add support for making a cache whitelist using URL patterns
+* Add support for making a cache allowlist using URL patterns
 
 **Serialization:**
 * Add data models for all serialized objects
