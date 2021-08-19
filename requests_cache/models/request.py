@@ -1,4 +1,3 @@
-"""Classes to wrap cached response objects"""
 from logging import getLogger
 
 from attr import define, field, fields_dict

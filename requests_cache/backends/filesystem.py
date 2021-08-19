@@ -9,7 +9,7 @@ from typing import Union
 
 from ..serializers import SERIALIZERS
 from . import BaseCache, BaseStorage
-from .sqlite import DbDict
+from .sqlite import SQLiteDict
 
 
 class FileCache(BaseCache):
@@ -29,7 +29,7 @@ class FileCache(BaseCache):
         super().__init__(**kwargs)
         self.responses = FileDict(cache_name, use_temp=use_temp, **kwargs)
         db_path = join(dirname(self.responses.cache_dir), 'redirects.sqlite')
-        self.redirects = DbDict(db_path, 'redirects', **kwargs)
+        self.redirects = SQLiteDict(db_path, 'redirects', **kwargs)
 
 
 class FileDict(BaseStorage):

@@ -1,0 +1,8 @@
+{{- pkgname.split('.')[-1] | title | e | heading }}
+Modules in ``{{ pkgname }}`` package:
+
+.. toctree::
+   :maxdepth: 1
+{% for docname in submodules %}
+   {{ docname }}
+{%- endfor %}

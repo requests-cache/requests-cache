@@ -1,4 +1,6 @@
-# TODO: Ignore If-None-Match and If-Modified-Since headers by default
+"""Internal utilities for generating cache keys based on request details + :py:class:`.BaseCache`
+settings
+"""
 from __future__ import annotations
 
 import json
@@ -63,6 +65,7 @@ def remove_ignored_params(
 def remove_ignored_headers(
     request: AnyRequest, ignored_parameters: Optional[Iterable[str]]
 ) -> CaseInsensitiveDict:
+    """Remove any ignored parameters from reuqest headers"""
     if not ignored_parameters:
         return request.headers
     headers = CaseInsensitiveDict(request.headers.copy())
@@ -78,7 +81,7 @@ def remove_ignored_url_params(request: AnyRequest, ignored_parameters: Optional[
         return url_str
 
     url = urlparse(url_str)
-    query = filter_params(parse_qsl(url.query), ignored_parameters)
+    query = _filter_params(parse_qsl(url.query), ignored_parameters)
     return urlunparse((url.scheme, url.netloc, url.path, url.params, urlencode(query), url.fragment))
 
 
@@ -93,11 +96,11 @@ def remove_ignored_body_params(
         return encode(original_body)
 
     if content_type == 'application/x-www-form-urlencoded':
-        body = filter_params(parse_qsl(decode(original_body)), ignored_parameters)
+        body = _filter_params(parse_qsl(decode(original_body)), ignored_parameters)
         filtered_body = urlencode(body)
     elif content_type == 'application/json':
         body = json.loads(decode(original_body)).items()
-        body = filter_params(sorted(body), ignored_parameters)
+        body = _filter_params(sorted(body), ignored_parameters)
         filtered_body = json.dumps(body)
     else:
         filtered_body = original_body
@@ -105,7 +108,7 @@ def remove_ignored_body_params(
     return encode(filtered_body)
 
 
-def filter_params(
+def _filter_params(
     data: List[Tuple[str, str]], ignored_parameters: Iterable[str]
 ) -> List[Tuple[str, str]]:
     return [(k, v) for k, v in data if k not in set(ignored_parameters)]
@@ -141,6 +144,7 @@ def normalize_dict(
 
 
 def url_to_key(url: str, *args, **kwargs) -> str:
+    """Create a cache key from a request URL"""
     request = Session().prepare_request(Request('GET', url))
     return create_key(request, *args, **kwargs)
 
@@ -152,6 +156,6 @@ def encode(value, encoding='utf-8') -> bytes:
 
 def decode(value, encoding='utf-8') -> str:
     """Decode a value from bytes, if hasn't already been.
-    Note: PreparedRequest.body is always encoded in utf-8.
+    Note: ``PreparedRequest.body`` is always encoded in utf-8.
     """
     return value.decode(encoding) if isinstance(value, bytes) else value

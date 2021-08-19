@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from functools import wraps
 from logging import basicConfig, getLogger
 from os.path import abspath, dirname, join
-from tempfile import NamedTemporaryFile
+from uuid import uuid4
 
 import pytest
 import requests
@@ -107,7 +107,7 @@ def httpbin_wrapper(httpbin):
 
 
 @pytest.fixture(scope='function')
-def mock_session() -> CachedSession:
+def mock_session(tempfile_session) -> CachedSession:
     """Fixture for combining requests-cache with requests-mock. This will behave the same as a
     CachedSession, except it will make mock requests for ``mock://`` URLs, if it hasn't been cached
     already.
@@ -119,46 +119,36 @@ def mock_session() -> CachedSession:
     This uses a temporary SQLite db stored in ``/tmp``, which will be removed after the fixture has
     exited.
     """
-    with NamedTemporaryFile(suffix='.db') as temp:
-        session = CachedSession(
-            db_path=temp.name,
-            backend='sqlite',
-            allowable_methods=ALL_METHODS,
-        )
-        yield mount_mock_adapter(session)
+    yield mount_mock_adapter(tempfile_session)
 
 
 @pytest.fixture(scope='function')
-def tempfile_session() -> CachedSession:
+def tempfile_session(tempfile_path) -> CachedSession:
     """Get a CachedSession using a temporary SQLite db"""
-    with NamedTemporaryFile(suffix='.db') as temp:
-        session = CachedSession(
-            cache_name=temp.name,
-            backend='sqlite',
-            allowable_methods=ALL_METHODS,
-        )
-        yield session
+    yield CachedSession(
+        cache_name=tempfile_path,
+        backend='sqlite',
+        allowable_methods=ALL_METHODS,
+    )
 
 
 @pytest.fixture(scope='function')
-def tempfile_path() -> CachedSession:
-    """Get a tempfile path that will be deleted after the test finishes"""
-    with NamedTemporaryFile(suffix='.db') as temp:
-        yield temp.name
+def tempfile_path(tmpdir) -> str:
+    """Get a unique tempfile path"""
+    yield str(tmpdir / f'{uuid4()}.db')
 
 
 @pytest.fixture(scope='function')
-def installed_session() -> CachedSession:
+def installed_session(tempfile_path) -> CachedSession:
     """Get a CachedSession using a temporary SQLite db, with global patching.
     Installs cache before test and uninstalls after.
     """
-    with NamedTemporaryFile(suffix='.db') as temp:
-        requests_cache.install_cache(
-            cache_name=temp.name,
-            backend='sqlite',
-            allowable_methods=ALL_METHODS,
-        )
-        yield requests.Session()
+    requests_cache.install_cache(
+        cache_name=tempfile_path,
+        backend='sqlite',
+        allowable_methods=ALL_METHODS,
+    )
+    yield requests.Session()
     requests_cache.uninstall_cache()
 
 

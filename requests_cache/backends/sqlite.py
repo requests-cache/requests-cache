@@ -14,16 +14,17 @@ SQLITE_MAX_VARIABLE_NUMBER = 999
 logger = getLogger(__name__)
 
 
-class DbCache(BaseCache):
+class SQLiteCache(BaseCache):
     """SQLite cache backend.
-
 
     Args:
         db_path: Database file path (expands user paths and creates parent dirs)
         use_temp: Store database in a temp directory (e.g., ``/tmp/http_cache.sqlite``).
-            Note: if ``db_path`` is an absolute path, this option will be ignored.
-        fast_save: Speedup cache saving up to 50 times but with possibility of data loss.
-            See :py:class:`.DbDict` for more info
+            Note: if ``db_path`` is an absolute path, this option will be ignored. If relative,
+            ``db_path`` will be relative to the system temp directory.
+        fast_save: Significantly increases cache write performance, but with the possibility of data
+            loss. See `pragma: synchronous <http://www.sqlite.org/pragma.html#pragma_synchronous>`_
+            for details.
         kwargs: Additional keyword arguments for :py:func:`sqlite3.connect`
     """
 
@@ -35,10 +36,10 @@ class DbCache(BaseCache):
         **kwargs,
     ):
         super().__init__(**kwargs)
-        self.responses = DbPickleDict(
+        self.responses = SQLitePickleDict(
             db_path, table_name='responses', use_temp=use_temp, fast_save=fast_save, **kwargs
         )
-        self.redirects = DbDict(db_path, table_name='redirects', use_temp=use_temp, **kwargs)
+        self.redirects = SQLiteDict(db_path, table_name='redirects', use_temp=use_temp, **kwargs)
 
     def bulk_delete(self, keys):
         """Remove multiple responses and their associated redirects from the cache, with additional cleanup"""
@@ -62,25 +63,8 @@ class DbCache(BaseCache):
             self.redirects.init_db()
 
 
-class DbDict(BaseStorage):
-    """A dictionary-like interface for SQLite.
-
-    It's possible to create multiply DbDict instances, which will be stored as separate
-    tables in one database::
-
-        d1 = DbDict('test', 'table1')
-        d2 = DbDict('test', 'table2')
-        d3 = DbDict('test', 'table3')
-
-    All data will be stored in separate tables in the file ``test.sqlite``.
-
-    Args:
-        db_path: Database file path
-        table_name: Table name
-        fast_save: Use `'PRAGMA synchronous = 0;' <http://www.sqlite.org/pragma.html#pragma_synchronous>`_
-            to speed up cache saving, but with the potential for data loss
-        timeout: Timeout for acquiring a database lock
-    """
+class SQLiteDict(BaseStorage):
+    """A dictionary-like interface for SQLite"""
 
     def __init__(
         self, db_path, table_name='http_cache', fast_save=False, use_temp: bool = False, **kwargs
@@ -128,7 +112,7 @@ class DbDict(BaseStorage):
 
         Example:
 
-            >>> d1 = DbDict('test')
+            >>> d1 = SQLiteDict('test')
             >>> with d1.bulk_commit():
             ...     for i in range(1000):
             ...         d1[i] = i * 2
@@ -201,8 +185,8 @@ class DbDict(BaseStorage):
             con.execute('VACUUM')
 
 
-class DbPickleDict(DbDict):
-    """Same as :class:`DbDict`, but serializes values before saving"""
+class SQLitePickleDict(SQLiteDict):
+    """Same as :class:`SQLiteDict`, but serializes values before saving"""
 
     def __setitem__(self, key, value):
         serialized_value = self.serializer.dumps(value)

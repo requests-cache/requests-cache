@@ -1,0 +1,26 @@
+{{- basename.split('.')[-1]
+   | replace("_", " ")
+   | title
+   | replace("Sql", "SQL")
+   | replace("db", "DB")
+   | replace("fs", "FS")
+   | e | heading
+}}
+``{{ basename }}`` module
+
+Summary
+-------
+.. automodsumm:: {{ qualname }}
+   :classes-only:
+   :nosignatures:
+
+.. automodsumm:: {{ qualname }}
+   :functions-only:
+   :nosignatures:
+
+Details
+-------
+.. automodule:: {{ qualname }}
+{%- for option in automodule_options %}
+   :{{ option }}:
+{%- endfor %}
