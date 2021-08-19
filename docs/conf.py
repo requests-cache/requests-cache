@@ -9,6 +9,8 @@ from requests_cache import __version__  # noqa: E402
 
 PROJECT_DIR = abspath(dirname(dirname(__file__)))
 PACKAGE_DIR = join(PROJECT_DIR, 'requests_cache')
+TEMPLATE_DIR = join(PROJECT_DIR, 'docs', '_templates')
+
 
 # General information about the project.
 project = 'requests-cache'
@@ -31,6 +33,8 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
     'sphinx_autodoc_typehints',
+    'sphinx_automodapi.automodapi',
+    'sphinx_automodapi.smart_resolver',
     'sphinx_copybutton',
     'sphinx_inline_tabs',
     'sphinxcontrib.apidoc',
@@ -80,8 +84,10 @@ autosectionlabel_prefix_document = True
 # Use apidoc to auto-generate rst sources
 apidoc_module_dir = PACKAGE_DIR
 apidoc_output_dir = 'modules'
-apidoc_excluded_paths = []
+apidoc_excluded_paths = ['session.py']
+apidoc_extra_args = [f'--templatedir={TEMPLATE_DIR}']  # Note: Must be an absolute path
 apidoc_module_first = True
+apidoc_separate_modules = True
 apidoc_toc_file = False
 
 # HTML general settings
@@ -112,3 +118,15 @@ html_theme_options = {
 def setup(app):
     """Run some additional steps after the Sphinx builder is initialized"""
     app.add_css_file('collapsible_container.css')
+    app.connect('builder-inited', patch_automodapi)
+
+
+def patch_automodapi(app):
+    """Monkey-patch the automodapi extension to exclude imported members.
+
+    https://github.com/astropy/sphinx-automodapi/blob/master/sphinx_automodapi/automodsumm.py#L135
+    """
+    from sphinx_automodapi import automodsumm
+    from sphinx_automodapi.utils import find_mod_objs
+
+    automodsumm.find_mod_objs = lambda *args: find_mod_objs(args[0], onlylocals=True)
