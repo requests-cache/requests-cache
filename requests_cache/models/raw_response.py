@@ -10,11 +10,11 @@ logger = getLogger(__name__)
 
 @define(auto_attribs=False, slots=False)
 class CachedHTTPResponse(HTTPResponse):
-    """A serializable dataclass that extends/emulates :py:class:`~urllib3.response.HTTPResponse`.
+    """A serializable dataclass that emulates :py:class:`~urllib3.response.HTTPResponse`.
     Supports streaming requests and generator usage.
 
     The only action this doesn't support is explicitly calling :py:meth:`.read` with
-    ``decode_content=False``, but a use case for this has not come up yet.
+    ``decode_content=False``.
     """
 
     decode_content: bool = field(default=None)

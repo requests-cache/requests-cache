@@ -1,4 +1,4 @@
-"""Utilities for determining cache expiration and other cache actions"""
+"""Internal utilities for determining cache expiration and other cache actions"""
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone

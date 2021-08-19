@@ -26,7 +26,7 @@ else:
 
 class CacheMixin(MIXIN_BASE):
     """Mixin class that extends :py:class:`requests.Session` with caching features.
-    See :py:class:`.CachedSession` for usage information.
+    See :py:class:`.CachedSession` for usage details.
     """
 
     def __init__(
@@ -268,7 +268,7 @@ class CacheMixin(MIXIN_BASE):
 
 
 class CachedSession(CacheMixin, OriginalSession):
-    """Class that extends :py:class:`requests.Session` with caching features.
+    """Session class that extends :py:class:`requests.Session` with caching features.
 
     See individual :py:mod:`backend classes <requests_cache.backends>` for additional backend-specific arguments.
     Also see :ref:`user-guide` for more details and examples on how the following arguments
@@ -295,8 +295,8 @@ class CachedSession(CacheMixin, OriginalSession):
 
 @contextmanager
 def patch_form_boundary(**request_kwargs):
-    """This patches the form boundary used to separate multipart uploads. Requests does not
-    provide a way to pass a custom boundary to urllib3, so this just monkey-patches it instead.
+    """Patch the form boundary used to separate multipart uploads. ``requests`` does not provide a
+    way to pass a custom boundary to urllib3, so this just monkey-patches it instead.
     """
     if request_kwargs.get('files'):
         original_boundary = filepost.choose_boundary

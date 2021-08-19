@@ -1,4 +1,4 @@
-## Contributors
+# Contributors
 Thanks to the following individuals for providing pull requests, feedback, and other
 contributions that have helped to improve requests-cache:
 

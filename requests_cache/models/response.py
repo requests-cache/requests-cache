@@ -1,4 +1,3 @@
-"""Classes to wrap cached response objects"""
 from datetime import datetime, timedelta, timezone
 from logging import getLogger
 from typing import TYPE_CHECKING, List, Optional, Tuple, Union
@@ -18,13 +17,8 @@ logger = getLogger(__name__)
 
 @define(auto_attribs=False, slots=False)
 class CachedResponse(Response):
-    """A serializable dataclass that emulates :py:class:`requests.Response`. Public attributes and
-    methods on CachedResponse objects will behave the same as those from the original response, but
-    with different internals optimized for serialization.
-
-    This means doing some pre- and post-initialization steps common to all serializers, such as
-    breaking nested objects down into their basic attributes and lazily re-initializing them, which
-    saves a bit of memory and deserialization steps when those objects aren't accessed.
+    """A class that emulates :py:class:`requests.Response`, with some additional optimizations
+    for serialization.
     """
 
     _content: bytes = field(default=None)
