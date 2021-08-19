@@ -1,43 +1,30 @@
-% Note: backend and serializer module docs are auto-generated with apidoc;
-% the remaining modules are manually added here for more custom formatting.
+% Note: The module sources referenced here are auto-generated with apidoc
 (reference)=
+
 # API Reference
 This section covers all the public interfaces of requests-cache.
 
-## Sessions
-% Explicitly show inherited method docs on CachedSession instead of CachedMixin
-```{eval-rst}
-.. autoclass:: requests_cache.session.CachedSession
-    :members: send, request, cache_disabled, remove_expired_responses
-    :show-inheritance:
+:::{tip}
+It's recommended to import from the top-level `requests_cache` package, as internal module paths
+may be subject to change. For example:
+```python
+from requests_cache import CachedSession, RedisCache, json_serializer
 ```
+:::
 
-```{eval-rst}
-.. autoclass:: requests_cache.session.CacheMixin
-```
-
-## Patching
-```{eval-rst}
-.. automodule:: requests_cache.patcher
-    :members:
-```
-
-## Cache Backends
 ```{toctree}
+:maxdepth: 1
+session
+modules/requests_cache.patcher
+```
+```{toctree}
+:maxdepth: 2
 modules/requests_cache.backends
-```
-
-## Models
-```{toctree}
 modules/requests_cache.models
-```
-
-## Serializers
-```{toctree}
 modules/requests_cache.serializers
 ```
-
-## Utilities
 ```{toctree}
-utilities
+:maxdepth: 1
+modules/requests_cache.cache_keys
+modules/requests_cache.cache_control
 ```
