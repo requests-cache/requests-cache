@@ -1,0 +1,8 @@
+{{- pkgname | e | heading }}
+
+.. toctree::
+   :maxdepth: 1
+{% for docname in submodules %}
+   {{ docname }}
+{%- endfor %}
+
