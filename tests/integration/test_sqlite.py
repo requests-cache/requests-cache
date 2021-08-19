@@ -4,7 +4,7 @@ from threading import Thread
 from unittest.mock import patch
 
 from requests_cache.backends.base import BaseCache
-from requests_cache.backends.sqlite import DbCache, DbDict, DbPickleDict
+from requests_cache.backends.sqlite import SQLiteCache, SQLiteDict, SQLitePickleDict
 from tests.integration.base_cache_test import BaseCacheTest
 from tests.integration.base_storage_test import CACHE_NAME, BaseStorageTest
 
@@ -107,17 +107,17 @@ class SQLiteTestCase(BaseStorageTest):
         mock_sqlite.connect.assert_called_with(cache.db_path, timeout=0.5)
 
 
-class TestDbDict(SQLiteTestCase):
-    storage_class = DbDict
+class TestSQLiteDict(SQLiteTestCase):
+    storage_class = SQLiteDict
 
 
-class TestDbPickleDict(SQLiteTestCase):
-    storage_class = DbPickleDict
+class TestSQLitePickleDict(SQLiteTestCase):
+    storage_class = SQLitePickleDict
     picklable = True
 
 
-class TestDbCache(BaseCacheTest):
-    backend_class = DbCache
+class TestSQLiteCache(BaseCacheTest):
+    backend_class = SQLiteCache
     init_kwargs = {'use_temp': True}
 
     @classmethod

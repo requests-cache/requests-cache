@@ -1,6 +1,7 @@
 # History
 
 ## 0.8.0 (TBD)
+[See all issues and PRs for 0.8](https://github.com/reclosedev/requests-cache/milestone/3?closed=1)
 
 **Cache headers:**
 * Add support for `ETag` + `If-None-Match` headers
@@ -12,8 +13,14 @@
 * Use `cattrs` for serialization by default, which enables a more forwards-compatible serialization format
   (e.g., less prone to invalidation due to future updates)
 
-**Other features:**
+**Misc:**
 * Add support for custom cache key callbacks
+* For consistency with other backends, rename:
+  * `DbCache` -> `SQLiteCache`
+  * `DbDict` -> `SQLiteDict`
+  * `DbPickleDict` -> `SQLitePickleDict`
+  * Add aliases for previous names for backwards-compatibility
+
 
 **Breaking changes:**
 * Drop support for python 3.6

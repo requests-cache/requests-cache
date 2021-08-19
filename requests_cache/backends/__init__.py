@@ -55,14 +55,18 @@ except ImportError as e:
     RedisCache = RedisDict = get_placeholder_class(e)  # type: ignore
 try:
     # Note: Heroku doesn't support SQLite due to ephemeral storage
-    from .sqlite import DbCache, DbDict, DbPickleDict
+    from .sqlite import SQLiteCache, SQLiteDict, SQLitePickleDict
 except ImportError as e:
-    DbCache = DbDict = DbPickleDict = get_placeholder_class(e)  # type: ignore
+    SQLiteCache = SQLiteDict = SQLitePickleDict = get_placeholder_class(e)  # type: ignore
 try:
     from .filesystem import FileCache, FileDict
 except ImportError as e:
     FileCache = FileDict = get_placeholder_class(e)  # type: ignore
 
+# Aliases for backwards-compatibility
+DbCache = SQLiteCache
+DbDict = SQLiteDict
+DbPickeDict = SQLitePickleDict
 
 BACKEND_CLASSES = {
     'dynamodb': DynamoDbCache,
@@ -71,7 +75,7 @@ BACKEND_CLASSES = {
     'memory': BaseCache,
     'mongo': MongoCache,
     'redis': RedisCache,
-    'sqlite': DbCache,
+    'sqlite': SQLiteCache,
 }
 
 

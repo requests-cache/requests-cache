@@ -15,8 +15,8 @@ from requests_cache import ALL_METHODS, CachedResponse, CachedSession
 from requests_cache.backends import (
     BACKEND_CLASSES,
     BaseCache,
-    DbDict,
-    DbPickleDict,
+    SQLiteDict,
+    SQLitePickleDict,
     get_placeholder_class,
 )
 from requests_cache.backends.base import DESERIALIZE_ERRORS
@@ -138,7 +138,7 @@ def test_urls(mock_session):
 def test_urls__with_invalid_response(mock_session):
     responses = [mock_session.get(url) for url in [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_HTTPS]]
     responses[2] = AttributeError
-    with patch.object(DbPickleDict, '__getitem__', side_effect=responses):
+    with patch.object(SQLitePickleDict, '__getitem__', side_effect=responses):
         expected_urls = [MOCKED_URL, MOCKED_URL_JSON]
         assert set(mock_session.cache.urls) == set(expected_urls)
 
@@ -170,7 +170,7 @@ def test_values__with_invalid_responses(check_expiry, expected_count, mock_sessi
     responses[1] = AttributeError
     responses[2] = CachedResponse(expires=YESTERDAY, url='test')
 
-    with patch.object(DbPickleDict, '__getitem__', side_effect=responses):
+    with patch.object(SQLitePickleDict, '__getitem__', side_effect=responses):
         values = mock_session.cache.values(check_expiry=check_expiry)
         assert len(list(values)) == expected_count
 
@@ -393,7 +393,7 @@ def test_include_get_headers_normalize(mock_session):
 def test_cache_error(exception_cls, mock_session):
     """If there is an error while fetching a cached response, a new one should be fetched"""
     mock_session.get(MOCKED_URL)
-    with patch.object(DbDict, '__getitem__', side_effect=exception_cls):
+    with patch.object(SQLiteDict, '__getitem__', side_effect=exception_cls):
         assert mock_session.get(MOCKED_URL).from_cache is False
 
 
@@ -538,7 +538,7 @@ def test_remove_expired_responses__error(mock_session):
             raise PickleError
         return mock_session.get(MOCKED_URL_JSON)
 
-    with patch.object(DbPickleDict, '__getitem__', side_effect=error_on_key):
+    with patch.object(SQLitePickleDict, '__getitem__', side_effect=error_on_key):
         mock_session.remove_expired_responses()
     assert len(mock_session.cache.responses) == 1
     assert mock_session.get(MOCKED_URL).from_cache is True
@@ -616,7 +616,7 @@ def test_unpickle_errors(mock_session):
     """If there is an error during deserialization, the request should be made again"""
     assert mock_session.get(MOCKED_URL_JSON).from_cache is False
 
-    with patch.object(DbPickleDict, '__getitem__', side_effect=PickleError):
+    with patch.object(SQLitePickleDict, '__getitem__', side_effect=PickleError):
         resp = mock_session.get(MOCKED_URL_JSON)
         assert resp.from_cache is False
         assert resp.json()['message'] == 'mock json response'
