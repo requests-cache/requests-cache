@@ -1,6 +1,7 @@
 /* Slightly modified table styles from Furo theme*/
 
 table.docutils {
+  margin-left: 0.5em;
   border-radius: 0.2rem;
   border-spacing: 0;
   border-collapse: collapse;
