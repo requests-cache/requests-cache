@@ -353,13 +353,21 @@ revalidate the cache with the new expiration time:
 By default, responses are serialized using {py:mod}`pickle`. Some other options are also available:
 
 :::{note}
-These features require additional dependencies
+Some serializers require additional dependencies
 :::
+
+### Specifying a Serializer
+Similar to {ref}`backends`, you can specify which serializer to use with the `serializer` parameter
+for either {py:class}`.CachedSession` or {py:func}`.install_cache`.
 
 ### JSON Serializer
 Storing responses as JSON gives you the benefit of making them human-readable and editable, in
-exchange for a slight reduction in performance. This can be especially useful in combination with
-the filesystem backend.
+exchange for a minor reduction in read and write speeds.
+
+Usage:
+```python
+>>> session = CachedSession('my_cache', serializer='json')
+```
 
 :::{admonition} Example JSON-serialized Response
 :class: toggle
@@ -375,6 +383,11 @@ pip install requests-cache[json]
 
 ### YAML Serializer
 YAML is another option if you need a human-readable/editable format, with the same tradeoffs as JSON.
+
+Usage:
+```python
+>>> session = CachedSession('my_cache', serializer='yaml')
+```
 
 :::{admonition} Example YAML-serialized Response
 :class: toggle
@@ -394,6 +407,11 @@ MongoDB, but it can also be used independently. Compared to JSON, it has better 
 (although still not as fast as `pickle`), and adds support for additional data types. It is not
 human-readable, but some tools support reading and editing it directly
 (for example, [bson-converter](https://atom.io/packages/bson-converter) for Atom).
+
+Usage:
+```python
+>>> session = CachedSession('my_cache', serializer='bson')
+```
 
 You can install the extra dependencies for this serializer with:
 ```bash
