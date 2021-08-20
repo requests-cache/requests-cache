@@ -1,3 +1,9 @@
+"""Base classes for all cache backends.
+
+.. automodsumm:: requests_cache.backends.base
+   :classes-only:
+   :nosignatures:
+"""
 import pickle
 from abc import ABC
 from collections import UserDict

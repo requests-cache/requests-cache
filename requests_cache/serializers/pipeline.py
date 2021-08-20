@@ -1,3 +1,8 @@
+"""
+.. automodsumm:: requests_cache.serializers.pipeline
+   :classes-only:
+   :nosignatures:
+"""
 from typing import Any, List, Union
 
 from ..models import CachedResponse

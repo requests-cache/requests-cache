@@ -1,7 +1,11 @@
 """Utilities for patching ``requests``.
 
-.. warning:: These functions are not thread-safe. Use :py:class:`.CachedSession` directly if you
-    want to use caching in a multi-threaded environment.
+.. warning:: These functions are not thread-safe. Use :py:class:`.CachedSession` if you want to use
+    caching in a multi-threaded environment.
+
+.. automodsumm:: requests_cache.patcher
+   :functions-only:
+   :nosignatures:
 """
 from contextlib import contextmanager
 from logging import getLogger

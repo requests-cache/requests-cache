@@ -1,3 +1,16 @@
+"""
+Utilities to break down :py:class:`.CachedResponse` objects into python builtin types using
+`cattrs <https://cattrs.readthedocs.io>`_. This does the majority of the work needed for any
+serialization format.
+
+.. automodsumm:: requests_cache.serializers.cattrs
+   :classes-only:
+   :nosignatures:
+
+.. automodsumm:: requests_cache.serializers.cattrs
+   :functions-only:
+   :nosignatures:
+"""
 from datetime import datetime, timedelta
 from typing import Callable, Dict, ForwardRef, MutableMapping
 
@@ -11,11 +24,8 @@ from .pipeline import Stage
 
 
 class CattrStage(Stage):
-    """Base serializer class for :py:class:`.CachedResponse` that does pre/post-processing with
-    ``cattrs``. This does the majority of the work needed for any other serialization format,
-    breaking down objects into python builtin types.
-
-    This can be used as a stage within a :py:class:`.SerializerPipeline`.
+    """Base serializer class that does pre/post-processing with  ``cattrs``. This can be used either
+    on its own, or as a stage within a :py:class:`.SerializerPipeline`.
     """
 
     def __init__(self, factory: Callable[..., GenConverter] = None):

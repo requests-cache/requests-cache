@@ -1,5 +1,9 @@
 """Internal utilities for generating cache keys based on request details + :py:class:`.BaseCache`
 settings
+
+.. automodsumm:: requests_cache.cache_keys
+   :functions-only:
+   :nosignatures:
 """
 from __future__ import annotations
 
