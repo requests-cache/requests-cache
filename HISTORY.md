@@ -21,7 +21,6 @@
   * `DbPickleDict` -> `SQLitePickleDict`
   * Add aliases for previous names for backwards-compatibility
 
-
 **Breaking changes:**
 * Drop support for python 3.6
     * Note: Any bugfixes for 0.8.x that also apply to 0.7.x will be backported

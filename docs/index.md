@@ -1,10 +1,13 @@
 (index-page)=
-<!-- Include Readme contents, except for the (redundant) link to readthedocs -->
+<!-- Include Readme contents, except for the links to readthedocs, which would be redundant here -->
 ```{include} ../README.md
-:end-before: Complete project documentation can be found at
+:end-before: <!-- RTD-IGNORE -->
 ```
 ```{include} ../README.md
-:start-after: readthedocs.io).
+:start-after: <!-- END-RTD-IGNORE -->
+:end-before: <!-- RTD-IGNORE -->
+:relative-docs: docs/
+:relative-images:
 ```
 
 # Contents
@@ -13,8 +16,8 @@
 
 user_guide
 advanced_usage
-security
 examples
+security
 reference
 contributing
 contributors
