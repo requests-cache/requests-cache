@@ -1,3 +1,16 @@
+"""
+.. image::
+    ../_static/mongodb.png
+
+`GridFS <https://docs.mongodb.com/manual/core/gridfs/>`_ is a specification for storing large files
+(>16 MB) in MongoDB. See :py:mod:`~requests_cache.backends.mongo` for more general info on MongoDB.
+
+API Reference
+^^^^^^^^^^^^^
+.. automodsumm:: requests_cache.backends.gridfs
+   :classes-only:
+   :nosignatures:
+"""
 from gridfs import GridFS
 from pymongo import MongoClient
 
@@ -8,15 +21,10 @@ from .mongo import MongoDict
 
 class GridFSCache(BaseCache):
     """GridFS cache backend.
-    Use this backend to store documents greater than 16MB.
 
     Example:
 
-        >>> requests_cache.install_cache(backend='gridfs')
-        >>>
-        >>> # Or, to provide custom connection settings:
-        >>> from pymongo import MongoClient
-        >>> requests_cache.install_cache(backend='gridfs', connection=MongoClient('alternate-host'))
+        >>> session = CachedSession('http_cache', backend='gridfs')
 
     Args:
         db_name: Database name

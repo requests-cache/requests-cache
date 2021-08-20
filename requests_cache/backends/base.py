@@ -28,9 +28,18 @@ logger = getLogger(__name__)
 
 
 class BaseCache:
-    """Base class for cache implementations, which can also be used as in-memory cache.
+    """Base class for cache backends. Can be used as a non-persistent, in-memory cache.
 
-    See :ref:`advanced_usage:custom backends` for details on creating your own implementation.
+    This manages higher-level cache operations, including:
+
+    * Cache expiration
+    * Generating cache keys
+    * Managing redirect history
+    * Convenience methods for general cache info
+
+    Lower-level storage operations are handled by :py:class:`.BaseStorage`.
+
+    To extend this with your own custom backend, see :ref:`advanced_usage:custom backends`.
     """
 
     def __init__(
@@ -41,12 +50,12 @@ class BaseCache:
         key_fn: KEY_FN = None,
         **kwargs,
     ):
-        self.name: str = kwargs.get('cache_name', '')
-        self.redirects: BaseStorage = DictStorage()
         self.responses: BaseStorage = DictStorage()
+        self.redirects: BaseStorage = DictStorage()
         self.include_get_headers = include_get_headers
         self.ignored_parameters = ignored_parameters
         self.key_fn = key_fn or create_key
+        self.name: str = kwargs.get('cache_name', '')
 
     @property
     def urls(self) -> Iterator[str]:
@@ -221,12 +230,21 @@ class BaseCache:
 
 
 class BaseStorage(MutableMapping, ABC):
-    """Base class for backend storage implementations
+    """Base class for backend storage implementations. This provides a common dictionary-like
+    interface for the underlying storage operations (create, read, update, delete). One
+    ``BaseStorage`` instance corresponds to a single table/hash/collection, or whatever the
+    backend-specific equivalent may be.
+
+    ``BaseStorage`` subclasses contain no behavior specific to ``requests`` or caching, which are
+    handled by :py:class:`.BaseCache`.
+
+    ``BaseStorage`` also contains a serializer module or instance (defaulting to :py:mod:`pickle`),
+    which determines how :py:class:`.CachedResponse` objects are saved internally. See
+    :ref:`user_guide:serializers` for details.
 
     Args:
-        secret_key: Optional secret key used to sign cache items for added security
-        salt: Optional salt used to sign cache items
         serializer: Custom serializer that provides ``loads`` and ``dumps`` methods
+        kwargs: Additional serializer or backend-specific keyword arguments
     """
 
     def __init__(
@@ -238,9 +256,9 @@ class BaseStorage(MutableMapping, ABC):
         logger.debug(f'Initializing {type(self).__name__} with serializer: {self.serializer}')
 
     def bulk_delete(self, keys: Iterable[str]):
-        """Delete multiple keys from the cache. Does not raise errors for missing keys. This is a
-        basic version that subclasses should override with a more efficient backend-specific
-        version, if possible.
+        """Delete multiple keys from the cache, without raising errors for missing keys. This is a
+        naive implementation that subclasses should override with a more efficient backend-specific
+        implementation, if possible.
         """
         for k in keys:
             try:
@@ -253,4 +271,4 @@ class BaseStorage(MutableMapping, ABC):
 
 
 class DictStorage(UserDict, BaseStorage):
-    """A basic dict wrapper class for non-persistent storage"""
+    """A basic dict wrapper class for non-persistent, in-memory storage"""

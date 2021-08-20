@@ -260,7 +260,7 @@ from {py:mod}`.codecs` (typically `codecs.utf_8`)
 ### Additional Serialization Steps
 Some other tools that could be used as a stage in a {py:class}`.SerializerPipeline` include:
 
-class                                             | loads     | dumps
+Class                                             | loads     | dumps
 -----                                             | -----     | -----
 {py:mod}`codecs.* <.codecs>`                      | encode    | decode
 {py:mod}`.bz2`                                    | compress  | decompress
@@ -271,6 +271,7 @@ class                                             | loads     | dumps
 {py:class}`itsdangerous.signer.Signer`            | sign      | unsign
 {py:class}`itsdangerous.serializer.Serializer`    | loads     | dumps
 {py:class}`cryptography.fernet.Fernet`            | encrypt   | decrypt
+
 ## Usage with other requests features
 
 ### Request Hooks
