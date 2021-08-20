@@ -3,40 +3,48 @@
 This section covers the main features of requests-cache.
 
 ## Installation
-Install with pip:
+Installation instructions:
+
+:::{tab} Pip
+Install the latest stable version from [PyPI](https://pypi.org/project/requests-cache/):
 ```
 pip install requests-cache
 ```
-
-Or with Conda, if you prefer:
+:::
+:::{tab} Conda
+Or install from [conda-forge](https://anaconda.org/conda-forge/requests-cache), if you prefer:
 ```
 conda install -c conda-forge requests-cache
 ```
+:::
+:::{tab} Pre-release
+If you would like to use the latest development (pre-release) version:
+```
+pip install --pre requests-cache
+```
+:::
+:::{tab} Local development
+See {ref}`Contributing Guide <contributing:dev installation>` for setup steps for local development
+:::
 
 ### Requirements
-- Requires python 3.7+.
-- You may need additional dependencies depending on which backend you want to use. To install with
-  extra dependencies for all supported {ref}`user_guide:cache backends`:
-  ```
-  pip install requests-cache[backends]
-  ```
+The latest version of requests-cache requires **python 3.7+**. If you need to use an older version
+of python, here are the latest compatible versions and their documentation pages:
 
 :::{admonition} Python version compatibility
 :class: toggle, tip
-
-requests-cache currently requires **python 3.7+**. If you need to use an older version
-of python, here are the latest compatible versions:
-
-* **python 2.6:** requests-cache 0.4.13
-* **python 2.7:** requests-cache 0.5.2
-* **python 3.4:** requests-cache 0.5.2
-* **python 3.5:** requests-cache 0.5.2
-* **python 3.6:** requests-cache 0.7.3
+* **python 2.6:** [requests-cache 0.4.13](https://requests-cache.readthedocs.io/en/v0.4.13)
+* **python 2.7:** [requests-cache 0.5.2](https://requests-cache.readthedocs.io/en/v0.5.0)
+* **python 3.4:** [requests-cache 0.5.2](https://requests-cache.readthedocs.io/en/v0.5.0)
+* **python 3.5:** [requests-cache 0.5.2](https://requests-cache.readthedocs.io/en/v0.5.0)
+* **python 3.6:** [requests-cache 0.7.4](https://requests-cache.readthedocs.io/en/v0.7.4)
 :::
 
-### Optional Setup Steps
-- See {ref}`security` for recommended setup steps for more secure cache serialization.
-- See {ref}`Contributing Guide <contributing:dev installation>` for setup steps for local development.
+You may need additional dependencies depending on which backend you want to use. To install with
+extra dependencies for all supported {ref}`user_guide:cache backends`:
+```
+pip install requests-cache[all]
+```
 
 ## General Usage
 There are two main ways of using requests-cache:
