@@ -1,3 +1,14 @@
+
+<!--
+Pre-release warning to reduce confusion on what '/latest' means;
+TODO: remove prior to next minor release
+-->
+```{admonition} Note
+:class: warning
+You are viewing the pre-release documentation, which may describe features that are still in development.
+Documentation for the latest stable release can be found at [requests-cache.readthedocs.io](https://requests-cache.readthedocs.io)
+```
+
 (index-page)=
 <!-- Include Readme contents, except for the links to readthedocs, which would be redundant here -->
 ```{include} ../README.md
