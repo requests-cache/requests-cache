@@ -9,17 +9,22 @@
 * Add handling for `304 Not Modified` responses if returned for any other reason
   (e.g., request headers manually set by the client)
 
-**Serialization:**
-* Use `cattrs` for serialization by default, which enables a more forwards-compatible serialization format
-  (e.g., less prone to invalidation due to future updates)
-
-**Misc:**
-* Add support for custom cache key callbacks
+**Backends:**:
+* Filesystem: Add `FileCache.paths()` method
+* Filesystem: Fix issue in which `redirects.sqlite` would get included in response paths
+* SQLite: Add `SQLiteCache.db_path` property
 * For consistency with other backends, rename:
   * `DbCache` -> `SQLiteCache`
   * `DbDict` -> `SQLiteDict`
   * `DbPickleDict` -> `SQLitePickleDict`
   * Add aliases for previous names for backwards-compatibility
+
+**Serialization:**
+* Use `cattrs` for serialization by default, which enables a more forwards-compatible serialization format
+  (e.g., less prone to invalidation due to future updates)
+
+**Other Features:**
+* Add support for custom cache key callbacks
 
 **Breaking changes:**
 * Drop support for python 3.6
