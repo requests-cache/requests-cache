@@ -34,9 +34,9 @@ class TestMongoPickleDict(BaseStorageTest):
     storage_class = MongoPickleDict
     picklable = True
 
-    @patch('requests_cache.backends.mongo.MongoClient')
+    @patch('requests_cache.backends.mongodb.MongoClient')
     @patch(
-        'requests_cache.backends.mongo.get_valid_kwargs',
+        'requests_cache.backends.mongodb.get_valid_kwargs',
         side_effect=lambda cls, kwargs: get_valid_kwargs(MongoClient, kwargs),
     )
     def test_connection_kwargs(self, mock_get_valid_kwargs, mock_client):

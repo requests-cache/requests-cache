@@ -17,6 +17,8 @@
   * `DbCache` -> `SQLiteCache`
   * `DbDict` -> `SQLiteDict`
   * `DbPickleDict` -> `SQLitePickleDict`
+  * `DynamoDbCache` -> `DynamoCache`
+  * `DynamoDbDict` -> `DynamoDict`
   * Add aliases for previous names for backwards-compatibility
 
 **Serialization:**
