@@ -1186,7 +1186,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [extras]
 all = ["boto3", "botocore", "itsdangerous", "pymongo", "redis", "ujson"]
 bson = ["bson"]
-docs = ["furo", "linkify-it-py", "myst-parser", "Sphinx", "sphinx-autodoc-typehints", "sphinx-automodapi", "sphinx-copybutton", "sphinx-inline-tabs", "sphinxcontrib-apidoc"]
+docs = ["furo", "linkify-it-py", "myst-parser", "sphinx", "sphinx-autodoc-typehints", "sphinx-automodapi", "sphinx-copybutton", "sphinx-inline-tabs", "sphinxcontrib-apidoc"]
 dynamodb = ["boto3", "botocore"]
 json = ["ujson"]
 mongodb = ["pymongo"]
@@ -1197,7 +1197,7 @@ yaml = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "afbbf4b6ac6452cfffde5c153cac6596f6e4a2b6d883390cf634b6253eab0782"
+content-hash = "cbefc1a12aa9008ac7b344c9cd9d111fc6a9118befa10b2ddb53c4e288eeb60b"
 
 [metadata.files]
 alabaster = [
