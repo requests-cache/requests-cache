@@ -147,7 +147,9 @@ class SQLiteCache(BaseCache):
             db_path, table_name='responses', use_temp=use_temp, fast_save=fast_save, **kwargs
         )
         self.redirects = SQLiteDict(db_path, table_name='redirects', use_temp=use_temp, **kwargs)
-        self.db_path = self.responses.db_path
+
+    def db_path(self) -> str:
+        return self.responses.db_path
 
     def bulk_delete(self, keys):
         """Remove multiple responses and their associated redirects from the cache, with additional cleanup"""

@@ -11,14 +11,21 @@ want to save responses in a human-readable format, you can use one of the other 
 :ref:`serializers`. For example, to save responses as JSON files:
 
     >>> session = CachedSession('~/http_cache', backend='filesystem', serializer='json')
+    >>> session.get('https://httpbin.org/get')
+    >>> print(session.cache.paths())
+    ['/home/user/http_cache/4dc151d95200ec.json']
 
 Or as YAML (requires ``pyyaml``):
 
     >>> session = CachedSession('~/http_cache', backend='filesystem', serializer='yaml')
+    >>> session.get('https://httpbin.org/get')
+    >>> print(session.cache.paths())
+    ['/home/user/http_cache/4dc151d95200ec.yaml']
 
 Cache Files
 ^^^^^^^^^^^
 * The path for a given response will be in the format ``<cache_name>/<cache_key>``
+* Use :py:meth:`.FileCache.paths` to get a list of all cached response paths
 * Redirects are stored in a separate SQLite database, located at ``<cache_name>/redirects.sqlite``
 * See :py:mod:`~requests_cache.backends.sqlite` for more details on specifying paths
 
@@ -29,13 +36,14 @@ API Reference
    :nosignatures:
 """
 from contextlib import contextmanager
+from glob import glob
 from os import listdir, makedirs, unlink
-from os.path import abspath, dirname, expanduser, isabs, join, splitext
+from os.path import abspath, basename, dirname, expanduser, isabs, join, splitext
 from pathlib import Path
 from pickle import PickleError
 from shutil import rmtree
 from tempfile import gettempdir
-from typing import Union
+from typing import List, Union
 
 from ..serializers import SERIALIZERS
 from . import BaseCache, BaseStorage
@@ -58,6 +66,10 @@ class FileCache(BaseCache):
         self.responses = FileDict(cache_name, use_temp=use_temp, **kwargs)
         db_path = join(dirname(self.responses.cache_dir), 'redirects.sqlite')
         self.redirects = SQLiteDict(db_path, 'redirects', **kwargs)
+
+    def paths(self) -> List[str]:
+        """Get absolute file paths to all cached responses"""
+        return self.responses.paths()
 
 
 class FileDict(BaseStorage):
@@ -107,8 +119,8 @@ class FileDict(BaseStorage):
                 f.write(self.serializer.dumps(value))
 
     def __iter__(self):
-        for filename in listdir(self.cache_dir):
-            yield splitext(filename)[0]
+        for path in self.paths():
+            yield splitext(basename(path))[0]
 
     def __len__(self):
         return len(listdir(self.cache_dir))
@@ -118,10 +130,9 @@ class FileDict(BaseStorage):
             rmtree(self.cache_dir, ignore_errors=True)
             makedirs(self.cache_dir)
 
-    def paths(self):
-        """Get file paths to all cached responses"""
-        for key in self:
-            yield self._path(key)
+    def paths(self) -> List[str]:
+        """Get absolute file paths to all cached responses"""
+        return glob(self._path('*'))
 
 
 def _get_cache_dir(cache_dir: Union[Path, str], use_temp: bool) -> str:

@@ -85,14 +85,14 @@ lxml = ["lxml"]
 
 [[package]]
 name = "boto3"
-version = "1.18.24"
+version = "1.18.26"
 description = "The AWS SDK for Python"
 category = "main"
 optional = true
 python-versions = ">= 3.6"
 
 [package.dependencies]
-botocore = ">=1.21.24,<1.22.0"
+botocore = ">=1.21.26,<1.22.0"
 jmespath = ">=0.7.1,<1.0.0"
 s3transfer = ">=0.5.0,<0.6.0"
 
@@ -101,7 +101,7 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.21.24"
+version = "1.21.26"
 description = "Low-level, data-driven core of boto 3."
 category = "main"
 optional = true
@@ -687,6 +687,17 @@ py = "*"
 pytest = ">=3.10"
 
 [[package]]
+name = "pytest-rerunfailures"
+version = "10.1"
+description = "pytest plugin to re-run tests to eliminate flaky failures"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+pytest = ">=5.3"
+
+[[package]]
 name = "pytest-xdist"
 version = "2.3.0"
 description = "pytest xdist plugin for distributed testing and loop-on-failing modes"
@@ -1170,7 +1181,7 @@ yaml = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "a94223f205418f604d986f354349cecb0ac6e040aac9ad9551945f32f4d5e90e"
+content-hash = "d73d313f19bec94728639a91b739ae34bd04d1f975716df3ae938db343328562"
 
 [metadata.files]
 alabaster = [
@@ -1203,12 +1214,12 @@ beautifulsoup4 = [
     {file = "beautifulsoup4-4.9.3.tar.gz", hash = "sha256:84729e322ad1d5b4d25f805bfa05b902dd96450f43842c4e99067d5e1369eb25"},
 ]
 boto3 = [
-    {file = "boto3-1.18.24-py3-none-any.whl", hash = "sha256:ca0d576138b7c38d7fc214716a47e6394c4e9a10fdf337d8a125961eefdc25cc"},
-    {file = "boto3-1.18.24.tar.gz", hash = "sha256:d6c030dbc08f2c0b6daff9fd26b87f4c029d984781b9b48b21c112d4a76ee081"},
+    {file = "boto3-1.18.26-py3-none-any.whl", hash = "sha256:3eedef0719639892dc263bed7adfc00821544388e3d86a6fa31d82f936a6b613"},
+    {file = "boto3-1.18.26.tar.gz", hash = "sha256:39ed0f5004b671e4a4241ae23023ad63674cd25f766bfe1617cfc809728bc3e0"},
 ]
 botocore = [
-    {file = "botocore-1.21.24-py3-none-any.whl", hash = "sha256:9f896207e46580a1a720a85261f516fe60c2209f7b8b918bc330b1cb8b4a2afb"},
-    {file = "botocore-1.21.24.tar.gz", hash = "sha256:ec1c0a3f18ae6062285cc8dac747826baebe9b238bc2720ad6ce4d03bb645ec3"},
+    {file = "botocore-1.21.26-py3-none-any.whl", hash = "sha256:37f77bf5f72c86d9b5f38e107c3822da66dbf0ef123768a6e80a58590c2796bf"},
+    {file = "botocore-1.21.26.tar.gz", hash = "sha256:911246faac450e13a3ef0e81993dd9bd9c282a7c0f4546bfe8cccf9649364cef"},
 ]
 bson = [
     {file = "bson-0.5.10.tar.gz", hash = "sha256:d6511b2ab051139a9123c184de1a04227262173ad593429d21e443d6462d6590"},
@@ -1623,6 +1634,10 @@ pytest-cov = [
 pytest-forked = [
     {file = "pytest-forked-1.3.0.tar.gz", hash = "sha256:6aa9ac7e00ad1a539c41bec6d21011332de671e938c7637378ec9710204e37ca"},
     {file = "pytest_forked-1.3.0-py2.py3-none-any.whl", hash = "sha256:dc4147784048e70ef5d437951728825a131b81714b398d5d52f17c7c144d8815"},
+]
+pytest-rerunfailures = [
+    {file = "pytest-rerunfailures-10.1.tar.gz", hash = "sha256:7617c06de13ee6dd2df9add7e275bfb2bcebbaaf3e450f5937cd0200df824273"},
+    {file = "pytest_rerunfailures-10.1-py3-none-any.whl", hash = "sha256:53db94acf7499c75c5257c79d8a1dc22c3db4bc8d32ec3a713ea91eda3f98359"},
 ]
 pytest-xdist = [
     {file = "pytest-xdist-2.3.0.tar.gz", hash = "sha256:e8ecde2f85d88fbcadb7d28cb33da0fa29bca5cf7d5967fa89fc0e97e5299ea5"},

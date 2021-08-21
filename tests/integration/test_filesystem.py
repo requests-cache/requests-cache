@@ -30,23 +30,23 @@ class TestFileDict(BaseStorageTest):
         assert not relative_path.startswith(gettempdir())
         assert temp_path.startswith(gettempdir())
 
+
+class TestFileCache(BaseCacheTest):
+    backend_class = FileCache
+    init_kwargs = {'use_temp': True}
+
     @pytest.mark.parametrize('serializer_name', SERIALIZERS.keys())
     def test_paths(self, serializer_name):
         if not isinstance(SERIALIZERS[serializer_name], SerializerPipeline):
             pytest.skip(f'Dependencies not installed for {serializer_name}')
 
-        cache = self.storage_class(CACHE_NAME, serializer=serializer_name)
-        cache.clear()
-        for i in range(self.num_instances):
-            cache[f'key_{i}'] = f'value_{i}'
+        session = self.init_session(serializer=serializer_name)
+        num_files = 20
+        for i in range(num_files):
+            session.cache.responses[f'key_{i}'] = f'value_{i}'
 
         expected_extension = serializer_name.replace('pickle', 'pkl')
-        assert len(list(cache.paths())) == self.num_instances
-        for path in cache.paths():
+        assert len(list(session.cache.paths())) == num_files
+        for path in session.cache.paths():
             assert isfile(path)
             assert path.endswith(f'.{expected_extension}')
-
-
-class TestFileCache(BaseCacheTest):
-    backend_class = FileCache
-    init_kwargs = {'use_temp': True}
