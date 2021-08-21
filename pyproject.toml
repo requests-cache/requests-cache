@@ -26,6 +26,7 @@ include = [
 
 [tool.poetry.dependencies]
 python = "^3.7"
+appdirs = "^1.4.4"
 attrs = "^21.2"
 cattrs = "^1.8"
 itsdangerous = "^2.0"

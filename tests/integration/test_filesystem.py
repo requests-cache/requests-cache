@@ -4,6 +4,7 @@ from shutil import rmtree
 from tempfile import gettempdir
 
 import pytest
+from appdirs import user_cache_dir
 
 from requests_cache.backends import FileCache, FileDict
 from requests_cache.serializers import SERIALIZERS, SerializerPipeline
@@ -23,6 +24,12 @@ class TestFileDict(BaseStorageTest):
         cache = self.storage_class(f'{CACHE_NAME}_{index}', serializer=pickle, use_temp=True, **kwargs)
         cache.clear()
         return cache
+
+    def test_use_cache_dir(self):
+        relative_path = self.storage_class(CACHE_NAME).cache_dir
+        cache_dir_path = self.storage_class(CACHE_NAME, use_cache_dir=True).cache_dir
+        assert not relative_path.startswith(user_cache_dir())
+        assert cache_dir_path.startswith(user_cache_dir())
 
     def test_use_temp(self):
         relative_path = self.storage_class(CACHE_NAME).cache_dir
