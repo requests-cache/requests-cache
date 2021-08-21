@@ -31,13 +31,16 @@ API Reference
    :classes-only:
    :nosignatures:
 """
-from typing import Iterable
+from logging import getLogger
+from typing import Any, Iterable, Iterator, List, Tuple
 
 from redis import Redis, StrictRedis
 
 from .._utils import get_valid_kwargs
 from ..cache_keys import decode, encode
 from . import BaseCache, BaseStorage
+
+logger = getLogger(__name__)
 
 
 class RedisCache(BaseCache):
@@ -51,51 +54,68 @@ class RedisCache(BaseCache):
 
     def __init__(self, namespace='http_cache', connection: Redis = None, **kwargs):
         super().__init__(**kwargs)
-        self.responses = RedisDict(namespace, 'responses', connection=connection, **kwargs)
-        self.redirects = RedisDict(
+        self.responses = RedisHashDict(namespace, 'responses', connection=connection, **kwargs)
+        self.redirects = RedisHashDict(
             namespace, 'redirects', connection=self.responses.connection, **kwargs
         )
 
 
-class RedisDict(BaseStorage):
-    """A dictionary-like interface for Redis operations
+class RedisHashDict(BaseStorage):
+    """A dictionary-like interface for operations on a single Redis hash
 
     **Notes:**
-        * In order to deal with how Redis stores data, all keys will be encoded and all values will
-          be serialized.
-        * The full hash name will be ``namespace:collection_name``
+        * All keys will be encoded and all values will be serialized
+        * Items will be stored in a hash named ``namespace:collection_name``
     """
 
-    def __init__(self, namespace, collection_name='http_cache', connection=None, **kwargs):
+    def __init__(
+        self, namespace: str = 'http_cache', collection_name: str = None, connection=None, **kwargs
+    ):
         super().__init__(**kwargs)
         connection_kwargs = get_valid_kwargs(Redis, kwargs)
         self.connection = connection or StrictRedis(**connection_kwargs)
-        self._self_key = f'{namespace}:{collection_name}'
+        self._hash_key = f'{namespace}:{collection_name}'
 
-    def __getitem__(self, key):
-        result = self.connection.hget(self._self_key, encode(key))
+    def __contains__(self, key: str) -> bool:
+        return self.connection.hexists(self._hash_key, encode(key))
+
+    def __getitem__(self, key: str):
+        result = self.connection.hget(self._hash_key, encode(key))
         if result is None:
             raise KeyError
         return self.serializer.loads(result)
 
-    def __setitem__(self, key, item):
-        self.connection.hset(self._self_key, encode(key), self.serializer.dumps(item))
+    def __setitem__(self, key: str, item):
+        self.connection.hset(self._hash_key, encode(key), self.serializer.dumps(item))
 
-    def __delitem__(self, key):
-        if not self.connection.hdel(self._self_key, encode(key)):
+    def __delitem__(self, key: str):
+        if not self.connection.hdel(self._hash_key, encode(key)):
             raise KeyError
 
-    def __len__(self):
-        return self.connection.hlen(self._self_key)
+    def __iter__(self) -> Iterator[str]:
+        yield from self.keys()
 
-    def __iter__(self):
-        for key in self.connection.hkeys(self._self_key):
-            yield decode(key)
+    def __len__(self) -> int:
+        return self.connection.hlen(self._hash_key)
 
     def bulk_delete(self, keys: Iterable[str]):
-        """Delete multiple keys from the cache. Does not raise errors for missing keys."""
+        """Delete multiple keys from the cache, without raising errors for missing keys"""
         if keys:
-            self.connection.hdel(self._self_key, *[encode(key) for key in keys])
+            self.connection.hdel(self._hash_key, *[encode(key) for key in keys])
 
     def clear(self):
-        self.connection.delete(self._self_key)
+        self.connection.delete(self._hash_key)
+
+    def keys(self) -> List[str]:
+        return [decode(key) for key in self.connection.hkeys(self._hash_key)]
+
+    def items(self) -> List[Tuple[str, Any]]:
+        """Get all ``(key, value)`` pairs in the hash"""
+        return [
+            (decode(k), self.serializer.loads(v))
+            for k, v in self.connection.hgetall(self._hash_key).items()
+        ]
+
+    def values(self) -> List:
+        """Get all values in the hash"""
+        return [self.serializer.loads(v) for v in self.connection.hvals(self._hash_key)]

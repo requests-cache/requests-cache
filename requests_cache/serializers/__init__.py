@@ -5,6 +5,7 @@ from .cattrs import CattrStage
 from .pipeline import SerializerPipeline, Stage
 from .preconf import (
     bson_serializer,
+    dict_serializer,
     json_serializer,
     pickle_serializer,
     safe_pickle_serializer,

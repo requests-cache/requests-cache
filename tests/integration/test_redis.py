@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-from requests_cache.backends.redis import RedisCache, RedisDict
+from requests_cache.backends.redis import RedisCache, RedisHashDict
 from tests.conftest import fail_if_no_connection
 from tests.integration.base_cache_test import BaseCacheTest
 from tests.integration.base_storage_test import BaseStorageTest
@@ -17,8 +17,8 @@ def ensure_connection():
     Redis().info()
 
 
-class TestRedisDict(BaseStorageTest):
-    storage_class = RedisDict
+class TestRedisHashDict(BaseStorageTest):
+    storage_class = RedisHashDict
     picklable = True
 
     @patch('requests_cache.backends.redis.StrictRedis')

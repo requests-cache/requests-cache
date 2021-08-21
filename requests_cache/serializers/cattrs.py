@@ -1,6 +1,6 @@
 """
-Utilities to break down :py:class:`.CachedResponse` objects into python builtin types using
-`cattrs <https://cattrs.readthedocs.io>`_. This does the majority of the work needed for any
+Utilities to break down :py:class:`.CachedResponse` objects into a dict of python builtin types
+using `cattrs <https://cattrs.readthedocs.io>`_. This does the majority of the work needed for any
 serialization format.
 
 .. automodsumm:: requests_cache.serializers.cattrs
