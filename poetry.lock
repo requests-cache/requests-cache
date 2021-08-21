@@ -322,7 +322,7 @@ name = "itsdangerous"
 version = "2.0.1"
 description = "Safely pass data to untrusted environments and back."
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.6"
 
 [[package]]
@@ -928,17 +928,24 @@ type_comments = ["typed-ast (>=1.4.0)"]
 
 [[package]]
 name = "sphinx-automodapi"
-version = "0.13"
+version = "0.14.dev0"
 description = "Sphinx extension for auto-generating API documentation for entire modules"
 category = "main"
 optional = true
 python-versions = ">=3.6"
+develop = false
 
 [package.dependencies]
 sphinx = ">=1.7"
 
 [package.extras]
 test = ["pytest", "pytest-cov", "cython", "codecov", "coverage (<5.0)"]
+
+[package.source]
+type = "git"
+url = "https://github.com/astropy/sphinx-automodapi.git"
+reference = "main"
+resolved_reference = "39609d0d712447c91ffd1809150ed71ff4ed0099"
 
 [[package]]
 name = "sphinx-copybutton"
@@ -1177,19 +1184,20 @@ docs = ["sphinx", "jaraco.packaging (>=8.2)", "rst.linker (>=1.9)"]
 testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-cov", "pytest-enabler (>=1.0.1)", "jaraco.itertools", "func-timeout", "pytest-black (>=0.3.7)", "pytest-mypy"]
 
 [extras]
-all = ["boto3", "botocore", "pymongo", "redis", "ujson"]
+all = ["boto3", "botocore", "itsdangerous", "pymongo", "redis", "ujson"]
 bson = ["bson"]
 docs = ["furo", "linkify-it-py", "myst-parser", "Sphinx", "sphinx-autodoc-typehints", "sphinx-automodapi", "sphinx-copybutton", "sphinx-inline-tabs", "sphinxcontrib-apidoc"]
 dynamodb = ["boto3", "botocore"]
 json = ["ujson"]
 mongodb = ["pymongo"]
 redis = ["redis"]
+security = ["itsdangerous"]
 yaml = []
 
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "01c4c5d4ac701b6499db508b2334b5d51fbdc773e56193ced940e73c989edc17"
+content-hash = "afbbf4b6ac6452cfffde5c153cac6596f6e4a2b6d883390cf634b6253eab0782"
 
 [metadata.files]
 alabaster = [
@@ -1742,10 +1750,7 @@ sphinx-autodoc-typehints = [
     {file = "sphinx-autodoc-typehints-1.12.0.tar.gz", hash = "sha256:193617d9dbe0847281b1399d369e74e34cd959c82e02c7efde077fca908a9f52"},
     {file = "sphinx_autodoc_typehints-1.12.0-py3-none-any.whl", hash = "sha256:5e81776ec422dd168d688ab60f034fccfafbcd94329e9537712c93003bddc04a"},
 ]
-sphinx-automodapi = [
-    {file = "sphinx-automodapi-0.13.tar.gz", hash = "sha256:e1019336df7f7f0bcbf848eff7b84e7bef71691a57d8b5bda9107a2a046a226a"},
-    {file = "sphinx_automodapi-0.13-py3-none-any.whl", hash = "sha256:f9ebc9c10597f3aab1d93e5a8b1829903eee7c64f5bafb0cf71fd40e5c7d95f0"},
-]
+sphinx-automodapi = []
 sphinx-copybutton = [
     {file = "sphinx-copybutton-0.4.0.tar.gz", hash = "sha256:8daed13a87afd5013c3a9af3575cc4d5bec052075ccd3db243f895c07a689386"},
     {file = "sphinx_copybutton-0.4.0-py3-none-any.whl", hash = "sha256:4340d33c169dac6dd82dce2c83333412aa786a42dd01a81a8decac3b130dc8b0"},
