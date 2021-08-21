@@ -40,15 +40,15 @@ def get_valid_kwargs(func: Callable, kwargs: Dict, extras: Iterable[str] = None)
 
 # Import all backend classes for which dependencies are installed
 try:
-    from .dynamodb import DynamoDbCache, DynamoDbDict
+    from .dynamodb import DynamoCache, DynamoDict
 except ImportError as e:
-    DynamoDbCache = DynamoDbDict = get_placeholder_class(e)  # type: ignore
+    DynamoCache = DynamoDict = get_placeholder_class(e)  # type: ignore
 try:
     from .gridfs import GridFSCache, GridFSPickleDict
 except ImportError as e:
     GridFSCache = GridFSPickleDict = get_placeholder_class(e)  # type: ignore
 try:
-    from .mongo import MongoCache, MongoDict, MongoPickleDict
+    from .mongodb import MongoCache, MongoDict, MongoPickleDict
 except ImportError as e:
     MongoCache = MongoDict = MongoPickleDict = get_placeholder_class(e)  # type: ignore
 try:
@@ -69,13 +69,15 @@ except ImportError as e:
 DbCache = SQLiteCache
 DbDict = SQLiteDict
 DbPickeDict = SQLitePickleDict
+DynamoDbCache = DynamoCache
+DynamoDbDict = DynamoDict
 
 BACKEND_CLASSES = {
-    'dynamodb': DynamoDbCache,
+    'dynamodb': DynamoCache,
     'filesystem': FileCache,
     'gridfs': GridFSCache,
     'memory': BaseCache,
-    'mongo': MongoCache,
+    'mongodb': MongoCache,
     'redis': RedisCache,
     'sqlite': SQLiteCache,
 }
@@ -99,7 +101,7 @@ def init_backend(backend: BackendSpecifier = None, *args, **kwargs) -> BaseCache
     elif not backend:
         backend = 'sqlite' if BACKEND_CLASSES['sqlite'] else 'memory'
 
-    backend = str(backend).lower().replace('mongodb', 'mongo')
+    backend = str(backend).lower()
     if backend not in BACKEND_CLASSES:
         raise ValueError(f'Invalid backend: {backend}. Choose from: {BACKEND_CLASSES.keys()}')
 

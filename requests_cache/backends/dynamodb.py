@@ -35,7 +35,7 @@ from botocore.exceptions import ClientError
 from . import BaseCache, BaseStorage, get_valid_kwargs
 
 
-class DynamoDbCache(BaseCache):
+class DynamoCache(BaseCache):
     """DynamoDB cache backend
 
     Args:
@@ -48,13 +48,13 @@ class DynamoDbCache(BaseCache):
 
     def __init__(self, table_name: str = 'http_cache', connection: ServiceResource = None, **kwargs):
         super().__init__(**kwargs)
-        self.responses = DynamoDbDict(table_name, 'responses', connection=connection, **kwargs)
-        self.redirects = DynamoDbDict(
+        self.responses = DynamoDict(table_name, 'responses', connection=connection, **kwargs)
+        self.redirects = DynamoDict(
             table_name, 'redirects', connection=self.responses.connection, **kwargs
         )
 
 
-class DynamoDbDict(BaseStorage):
+class DynamoDict(BaseStorage):
     """A dictionary-like interface for DynamoDB key-value store
 
     **Notes:**
