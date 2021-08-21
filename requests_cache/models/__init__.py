@@ -1,3 +1,4 @@
+"""Data models used to serialize response data"""
 # flake8: noqa: F401
 from typing import Union
 

@@ -6,21 +6,9 @@
    | replace("fs", "FS")
    | e | heading
 }}
-``{{ basename }}`` module
 
-Summary
--------
-.. automodsumm:: {{ qualname }}
-   :classes-only:
-   :nosignatures:
-
-.. automodsumm:: {{ qualname }}
-   :functions-only:
-   :nosignatures:
-
-Details
--------
 .. automodule:: {{ qualname }}
-{%- for option in automodule_options %}
-   :{{ option }}:
-{%- endfor %}
+   :members:
+   :undoc-members:
+   :inherited-members:
+   :show-inheritance:

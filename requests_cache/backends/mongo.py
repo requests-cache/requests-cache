@@ -1,3 +1,28 @@
+"""
+.. image::
+    ../_static/mongodb.png
+
+`MongoDB <https://www.mongodb.com>`_ is a NoSQL document database. It stores data in collections
+of documents, which are more flexible and less strictly structured than a relational database.
+
+Connection Options
+^^^^^^^^^^^^^^^^^^
+The MongoDB backend accepts any keyword arguments for :py:class:`pymongo.mongo_client.MongoClient`. These can be passed
+via :py:class:`.CachedSession`:
+
+    >>> session = CachedSession('http_cache', backend='mongodb', host='192.168.1.63', port=27017)
+
+Or via :py:class:`.MongoCache`:
+
+    >>> backend = MongoCache(host='192.168.1.63', port=27017)
+    >>> session = CachedSession('http_cache', backend=backend)
+
+API Reference
+^^^^^^^^^^^^^
+.. automodsumm:: requests_cache.backends.mongo
+   :classes-only:
+   :nosignatures:
+"""
 from typing import Iterable
 
 from pymongo import MongoClient
@@ -11,7 +36,7 @@ class MongoCache(BaseCache):
     Args:
         db_name: Database name
         connection: :py:class:`pymongo.MongoClient` object to reuse instead of creating a new one
-        kwargs: Additional keyword arguments for :py:class:`pymongo.MongoClient`
+        kwargs: Additional keyword arguments for :py:class:`pymongo.mongo_client.MongoClient`
     """
 
     def __init__(self, db_name: str = 'http_cache', connection: MongoClient = None, **kwargs):

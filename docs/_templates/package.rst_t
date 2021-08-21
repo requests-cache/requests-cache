@@ -1,4 +1,6 @@
 {{- pkgname.split('.')[-1] | title | e | heading }}
+.. automodule:: {{ pkgname }}
+
 Modules in ``{{ pkgname }}`` package:
 
 .. toctree::

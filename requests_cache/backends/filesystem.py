@@ -1,3 +1,33 @@
+"""
+.. image::
+    ../_static/files-generic.png
+
+This backend stores responses in files on the local filesystem (one file per response).
+
+File Formats
+^^^^^^^^^^^^
+By default, responses are saved as pickle files, since this format is generally the fastest. If you
+want to save responses in a human-readable format, you can use one of the other available
+:ref:`serializers`. For example, to save responses as JSON files:
+
+    >>> session = CachedSession('~/http_cache', backend='filesystem', serializer='json')
+
+Or as YAML (requires ``pyyaml``):
+
+    >>> session = CachedSession('~/http_cache', backend='filesystem', serializer='yaml')
+
+Cache Files
+^^^^^^^^^^^
+* The path for a given response will be in the format ``<cache_name>/<cache_key>``
+* Redirects are stored in a separate SQLite database, located at ``<cache_name>/redirects.sqlite``
+* See :py:mod:`~requests_cache.backends.sqlite` for more details on specifying paths
+
+API Reference
+^^^^^^^^^^^^^
+.. automodsumm:: requests_cache.backends.filesystem
+   :classes-only:
+   :nosignatures:
+"""
 from contextlib import contextmanager
 from os import listdir, makedirs, unlink
 from os.path import abspath, dirname, expanduser, isabs, join, splitext
@@ -13,9 +43,7 @@ from .sqlite import SQLiteDict
 
 
 class FileCache(BaseCache):
-    """Backend that stores cached responses as files on the local filesystem.
-    Response paths will be in the format ``<cache_name>/responses/<cache_key>``.
-    Redirects are stored in a SQLite database, located at ``<cache_name>/redirects.sqlite``.
+    """Filesystem backend.
 
     Args:
         cache_name: Base directory for cache files

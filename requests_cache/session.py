@@ -1,4 +1,18 @@
-"""Main classes to add caching features to ``requests.Session``"""
+"""Main classes to add caching features to ``requests.Session``
+
+.. autosummary::
+   :nosignatures:
+
+   CachedSession
+   CacheMixin
+
+.. Explicitly show inherited method docs on CachedSession instead of CachedMixin
+.. autoclass:: requests_cache.session.CachedSession
+    :show-inheritance:
+    :inherited-members:
+
+.. autoclass:: requests_cache.session.CacheMixin
+"""
 from contextlib import contextmanager
 from logging import getLogger
 from threading import RLock

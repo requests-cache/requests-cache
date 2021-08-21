@@ -1,3 +1,112 @@
+"""
+.. image::
+    ../_static/sqlite.png
+
+`SQLite <https://www.sqlite.org/>`_ is a fast and lightweight SQL database engine that stores data
+either in memory or in a single file on disk.
+
+Despite its simplicity, SQLite is a powerful tool. For example, it's the primary storage system for
+a number of common applications including Dropbox, Firefox, and Chrome. It's well suited for
+caching, and requires no extra configuration or dependencies, which is why it's the default backend
+for requests-cache.
+
+Cache Files
+^^^^^^^^^^^
+The cache name will be used as the cache's filename and (optionally) its path. You can specify a
+just a filename, optionally with a file extension, and it will be created in the current working
+directory.
+
+Relative Paths
+~~~~~~~~~~~~~~
+
+    >>> # Base filename only
+    >>> session = CachedSession('http_cache')
+    >>> print(session.cache.db_path)
+    '<current working dir>/http_cache.sqlite'
+
+    >>> # Filename with extension
+    >>> session = CachedSession('http_cache.db')
+    >>> print(session.cache.db_path)
+    '<current working dir>/http_cache.db'
+
+    >>> # Relative path with subdirectory
+    >>> session = CachedSession('cache_dir/http_cache')
+    >>> print(session.cache.db_path)
+    '<current working dir>/cache_dir/http_cache.sqlite'
+
+Absolute Paths
+~~~~~~~~~~~~~~
+You can also give an absolute path, including user paths (with `~`).
+
+    >>> session = CachedSession('/home/user/.cache/http_cache')
+    >>> print(session.cache.db_path)
+    '/home/user/.cache/http_cache.sqlite'
+
+    >>> session = CachedSession('~/.cache/http_cache')
+    >>> print(session.cache.db_path)
+    '/home/user/.cache/http_cache.sqlite'
+
+.. note::
+    Parent directories will always be created, if they don't already exist.
+
+Special System Paths
+~~~~~~~~~~~~~~~~~~~~
+If you don't know exactly where you want to put your cache file, your **system's default temp
+directory** or **cache directory** is a good choice.
+
+Use a temp directory with the ``use_temp`` option:
+
+    >>> session = CachedSession('http_cache', use_temp=True)
+    >>> print(session.cache.db_path)
+    '/tmp/http_cache.sqlite'
+
+.. note::
+    If the cache name is an absolute path, the ``use_temp`` option will be ignored. If it's a
+    relative path, it will be relative to the temp directory.
+
+If you want an easy cross-platform way to get the system cache directory, use the
+`appdirs <https://github.com/ActiveState/appdirs>`_ library:
+
+    >>> from appdirs import user_cache_dir
+    >>> db_path = join(user_cache_dir('requests_cache'), 'http_cache')
+    >>> session = CachedSession(db_path, use_temp=True)
+
+Performance
+^^^^^^^^^^^
+When working with average-sized HTTP responses (< 1MB) and using a modern SSD for file storage, you
+can expect speeds of around:
+
+* Write: 2-8ms
+* Read: 0.3-0.6ms
+
+Of course, this will vary based on hardware specs, response size, and other factors.
+
+Concurrency
+^^^^^^^^^^^
+SQLite supports concurrent access, so it is safe to use from a multi-threaded and/or multi-process
+application. It supports unlimited concurrent reads. Writes, however, are queued and run in serial,
+so if you have a massively parallel application making large volumes of requests, you may want to
+consider a different backend that's specifically made for that kind of workload, like
+:py:class:`.RedisCache`.
+
+Connection Options
+^^^^^^^^^^^^^^^^^^
+The SQLite backend accepts any keyword arguments for :py:func:`sqlite3.connect`. These can be passed
+via :py:class:`.CachedSession`:
+
+    >>> session = CachedSession('http_cache', timeout=30)
+
+Or via :py:class:`.SQLiteCache`:
+
+    >>> backend = SQLiteCache('http_cache', timeout=30)
+    >>> session = CachedSession(backend=backend)
+
+API Reference
+^^^^^^^^^^^^^
+.. automodsumm:: requests_cache.backends.sqlite
+   :classes-only:
+   :nosignatures:
+"""
 import sqlite3
 import threading
 from contextlib import contextmanager
@@ -20,8 +129,6 @@ class SQLiteCache(BaseCache):
     Args:
         db_path: Database file path (expands user paths and creates parent dirs)
         use_temp: Store database in a temp directory (e.g., ``/tmp/http_cache.sqlite``).
-            Note: if ``db_path`` is an absolute path, this option will be ignored. If relative,
-            ``db_path`` will be relative to the system temp directory.
         fast_save: Significantly increases cache write performance, but with the possibility of data
             loss. See `pragma: synchronous <http://www.sqlite.org/pragma.html#pragma_synchronous>`_
             for details.
@@ -40,6 +147,7 @@ class SQLiteCache(BaseCache):
             db_path, table_name='responses', use_temp=use_temp, fast_save=fast_save, **kwargs
         )
         self.redirects = SQLiteDict(db_path, table_name='redirects', use_temp=use_temp, **kwargs)
+        self.db_path = self.responses.db_path
 
     def bulk_delete(self, keys):
         """Remove multiple responses and their associated redirects from the cache, with additional cleanup"""

@@ -1,3 +1,30 @@
+"""
+.. image::
+    ../_static/dynamodb.png
+
+`DynamoDB <https://aws.amazon.com/dynamodb>`_ is a NoSQL document database hosted on `Amazon Web
+Services <https://aws.amazon.com>`_. In terms of features and use cases, it is roughly comparable to
+MongoDB and other NoSQL databases. It is an especially good fit for serverless applications running
+on `AWS Lambda <https://aws.amazon.com/lambda>`_.
+
+Connection Options
+^^^^^^^^^^^^^^^^^^
+The DynamoDB backend accepts any keyword arguments for :py:meth:`boto3.session.Session.resource`.
+These can be passed via :py:class:`.CachedSession`:
+
+    >>> session = CachedSession('http_cache', backend='dynamodb', region_name='us-west-2')
+
+Or via :py:class:`.DynamoDbCache`:
+
+    >>> backend = DynamoDbCache(region_name='us-west-2')
+    >>> session = CachedSession('http_cache', backend=backend)
+
+API Reference
+^^^^^^^^^^^^^
+.. automodsumm:: requests_cache.backends.dynamodb
+   :classes-only:
+   :nosignatures:
+"""
 from typing import Dict, Iterable
 
 import boto3
@@ -12,9 +39,9 @@ class DynamoDbCache(BaseCache):
     """DynamoDB cache backend
 
     Args:
-        table_name: DynamoDb table name
-        namespace: Name of DynamoDb hash map
-        connection: :boto3:`DynamoDb Resource <services/dynamodb.html#DynamoDB.ServiceResource>`
+        table_name: DynamoDB table name
+        namespace: Name of DynamoDB hash map
+        connection: :boto3:`DynamoDB Resource <services/dynamodb.html#DynamoDB.ServiceResource>`
             object to use instead of creating a new one
         kwargs: Additional keyword arguments for :py:meth:`~boto3.session.Session.resource`
     """
@@ -30,15 +57,14 @@ class DynamoDbCache(BaseCache):
 class DynamoDbDict(BaseStorage):
     """A dictionary-like interface for DynamoDB key-value store
 
-    **Note:** The actual key name on the dynamodb server will be ``namespace``:``table_name``
-
-    In order to deal with how dynamodb stores data/keys,
-    everything, i.e. keys and data, must be pickled.
+    **Notes:**
+        * The actual table name on the Dynamodb server will be ``namespace:table_name``
+        * In order to deal with how DynamoDB stores data, all values are serialized.
 
     Args:
-        table_name: DynamoDb table name
-        namespace: Name of DynamoDb hash map
-        connection: :boto3:`DynamoDb Resource <services/dynamodb.html#DynamoDB.ServiceResource>`
+        table_name: DynamoDB table name
+        namespace: Name of DynamoDB hash map
+        connection: :boto3:`DynamoDB Resource <services/dynamodb.html#DynamoDB.ServiceResource>`
             object to use instead of creating a new one
         kwargs: Additional keyword arguments for :py:meth:`~boto3.session.Session.resource`
     """

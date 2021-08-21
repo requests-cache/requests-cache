@@ -3,40 +3,48 @@
 This section covers the main features of requests-cache.
 
 ## Installation
-Install with pip:
+Installation instructions:
+
+:::{tab} Pip
+Install the latest stable version from [PyPI](https://pypi.org/project/requests-cache/):
 ```
 pip install requests-cache
 ```
-
-Or with Conda, if you prefer:
+:::
+:::{tab} Conda
+Or install from [conda-forge](https://anaconda.org/conda-forge/requests-cache), if you prefer:
 ```
 conda install -c conda-forge requests-cache
 ```
+:::
+:::{tab} Pre-release
+If you would like to use the latest development (pre-release) version:
+```
+pip install --pre requests-cache
+```
+:::
+:::{tab} Local development
+See {ref}`Contributing Guide <contributing:dev installation>` for setup steps for local development
+:::
 
 ### Requirements
-- Requires python 3.7+.
-- You may need additional dependencies depending on which backend you want to use. To install with
-  extra dependencies for all supported {ref}`user_guide:cache backends`:
-  ```
-  pip install requests-cache[backends]
-  ```
+The latest version of requests-cache requires **python 3.7+**. If you need to use an older version
+of python, here are the latest compatible versions and their documentation pages:
 
 :::{admonition} Python version compatibility
 :class: toggle, tip
-
-requests-cache currently requires **python 3.7+**. If you need to use an older version
-of python, here are the latest compatible versions:
-
-* **python 2.6:** requests-cache 0.4.13
-* **python 2.7:** requests-cache 0.5.2
-* **python 3.4:** requests-cache 0.5.2
-* **python 3.5:** requests-cache 0.5.2
-* **python 3.6:** requests-cache 0.7.3
+* **python 2.6:** [requests-cache 0.4.13](https://requests-cache.readthedocs.io/en/v0.4.13)
+* **python 2.7:** [requests-cache 0.5.2](https://requests-cache.readthedocs.io/en/v0.5.0)
+* **python 3.4:** [requests-cache 0.5.2](https://requests-cache.readthedocs.io/en/v0.5.0)
+* **python 3.5:** [requests-cache 0.5.2](https://requests-cache.readthedocs.io/en/v0.5.0)
+* **python 3.6:** [requests-cache 0.7.4](https://requests-cache.readthedocs.io/en/v0.7.4)
 :::
 
-### Optional Setup Steps
-- See {ref}`security` for recommended setup steps for more secure cache serialization.
-- See {ref}`Contributing Guide <contributing:dev installation>` for setup steps for local development.
+You may need additional dependencies depending on which backend you want to use. To install with
+extra dependencies for all supported {ref}`user_guide:cache backends`:
+```
+pip install requests-cache[all]
+```
 
 ## General Usage
 There are two main ways of using requests-cache:
@@ -123,42 +131,78 @@ use {py:func}`.install_cache`:
 - In an application that uses other packages that extend or modify {py:class}`requests.Session`
 - In a package that will be used by other packages or applications
 
+(backends)=
 ## Cache Backends
-Several cache backends are included, which can be selected with
-the `backend` parameter for either {py:class}`.CachedSession` or {py:func}`.install_cache`:
+![](_static/sqlite_32px.png)
+![](_static/redis_32px.png)
+![](_static/mongodb_32px.png)
+![](_static/dynamodb_32px.png)
+![](_static/files-json_32px.png)
 
-- `'sqlite'`: [SQLite](https://www.sqlite.org) database (**default**)
-- `'redis'`: [Redis](https://redis.io) cache (requires `redis`)
-- `'mongodb'`: [MongoDB](https://www.mongodb.com) database (requires `pymongo`)
-- `'gridfs'`: [GridFS](https://docs.mongodb.com/manual/core/gridfs/) collections on a MongoDB database (requires `pymongo`)
-- `'dynamodb'`: [Amazon DynamoDB](https://aws.amazon.com/dynamodb) database (requires `boto3`)
-- `'filesystem'`: Stores responses as files on the local filesystem
-- `'memory'` : A non-persistent cache that just stores responses in memory
+Several cache backends are included. The default is SQLite, since it's generally the simplest to
+use, and requires no extra dependencies or configuration. In the rare case that SQLite is not available
+(for example, on Heroku), a non-persistent, in-memory cache is used.
 
-A backend can be specified either by name, class or instance:
+Most of the other backends require some extra dependencies, listed below.
+
+Backend                                                | Class                      | Alias          | Dependencies
+-------------------------------------------------------|----------------------------|----------------|-------------
+[SQLite](https://www.sqlite.org)                       | {py:class}`.SQLiteCache`   | `'sqlite'`     |
+[Redis](https://redis.io)                              | {py:class}`.RedisCache`    | `'redis'`      | [redis-py](https://github.com/andymccurdy/redis-py)
+[MongoDB](https://www.mongodb.com)                     | {py:class}`.MongoCache`    | `'mongodb'`    | [pymongo](https://github.com/mongodb/mongo-python-driver)
+[GridFS](https://docs.mongodb.com/manual/core/gridfs/) | {py:class}`.GridFSCache`   | `'gridfs'`     | [pymongo](https://github.com/mongodb/mongo-python-driver)
+[DynamoDB](https://aws.amazon.com/dynamodb)            | {py:class}`.DynamoDbCache` | `'dynamodb'`   | [boto3](https://github.com/boto/boto3)
+Filesystem                                             | {py:class}`.FileCache`     | `'filesystem'` |
+Memory                                                 | {py:class}`.BaseCache`     | `'memory'`     |
+
+### Specifying a Backend
+You can specify which backend to use with the `backend` parameter for either {py:class}`.CachedSession`
+or {py:func}`.install_cache`. You can specify one by name, using the aliases listed above:
 ```python
->>> from requests_cache.backends import RedisCache
->>> from requests_cache import CachedSession
-
->>> # Backend name
->>> session = CachedSession(backend='redis', namespace='my-cache')
-
->>> # Backend class
->>> session = CachedSession(backend=RedisCache, namespace='my-cache')
-
->>> # Backend instance
->>> session = CachedSession(backend=RedisCache(namespace='my-cache'))
+>>> session = CachedSession('my_cache', backend='redis')
 ```
-See {py:mod}`requests_cache.backends` for more backend-specific usage details, and see
+
+Or by instance:
+```python
+>>> backend = RedisCache(host='192.168.1.63', port=6379)
+>>> session = CachedSession('my_cache', backend=backend)
+```
+
+### Backend Options
+The `cache_name` parameter has a different use depending on the backend:
+
+Backend         | Cache name used as
+----------------|-------------------
+SQLite          | Database path
+Redis           | Hash namespace
+MongoDB, GridFS | Database name
+DynamoDB        | Table name
+Filesystem      | Cache directory
+
+For file paths (SQLite and Filesystem backends), relative and user paths can be used:
+```python
+>>> session = CachedSession('~/.cache/my_cache.db')
+```
+
+Each backend class also accepts optional parameters for the underlying connection. For example,
+{py:class}`.SQLiteCache` accepts parameters for {py:func}`sqlite3.connect`:
+```python
+>>> session = CachedSession('my_cache', backend='sqlite', timeout=30)
+```
+
+See {py:mod}`.requests_cache.backends` for more backend-specific usage details, and see
 {ref}`advanced_usage:custom backends` for details on creating your own implementation.
 
-### Cache Name
-The `cache_name` parameter will be used as follows depending on the backend:
-- `sqlite`: Database path, e.g `~/.cache/my_cache.sqlite`
-- `dynamodb`: Table name
-- `mongodb` and `gridfs`: Database name
-- `redis`: Namespace, meaning all keys will be prefixed with `'<cache_name>:'`
-- `filesystem`: Cache directory
+### Backend Demos
+If you just want to quickly try out all of the available backends for comparison, docker-compose
+config is included for all supported services. First,
+[install docker](https://docs.docker.com/get-docker/) if you haven't already. Then, run:
+
+```
+pip install -U requests-cache[all] docker-compose
+curl https://raw.githubusercontent.com/reclosedev/requests-cache/master/docker-compose.yml -O docker-compose.yml
+docker-compose up -d
+```
 
 ## Cache Options
 A number of options are available to modify which responses are cached and how they are cached.
@@ -342,16 +386,31 @@ revalidate the cache with the new expiration time:
 
 (serializers)=
 ## Serializers
-By default, responses are serialized using {py:mod}`pickle`. Some other options are also available:
+![](_static/file-pickle_32px.png)
+![](_static/file-json_32px.png)
+![](_static/file-yaml_32px.png)
+![](_static/file-toml_32px.png)
+
+By default, responses are serialized using {py:mod}`pickle`, but some alternative serializers are
+also included. These are mainly intended for use with {py:class}`.FileCache`, but are compatible
+with the other backends as well.
 
 :::{note}
-These features require additional dependencies
+Some serializers require additional dependencies
 :::
+
+### Specifying a Serializer
+Similar to {ref}`backends`, you can specify which serializer to use with the `serializer` parameter
+for either {py:class}`.CachedSession` or {py:func}`.install_cache`.
 
 ### JSON Serializer
 Storing responses as JSON gives you the benefit of making them human-readable and editable, in
-exchange for a slight reduction in performance. This can be especially useful in combination with
-the filesystem backend.
+exchange for a minor reduction in read and write speeds.
+
+Usage:
+```python
+>>> session = CachedSession('my_cache', serializer='json')
+```
 
 :::{admonition} Example JSON-serialized Response
 :class: toggle
@@ -360,13 +419,19 @@ the filesystem backend.
 ```
 :::
 
-You can install the extra dependencies for this serializer with:
+This will use [ultrajson](https://github.com/ultrajson/ultrajson) if installed, otherwise the stdlib
+`json` module will be used. You can install the optional dependencies for this serializer with:
 ```bash
 pip install requests-cache[json]
 ```
 
 ### YAML Serializer
 YAML is another option if you need a human-readable/editable format, with the same tradeoffs as JSON.
+
+Usage:
+```python
+>>> session = CachedSession('my_cache', serializer='yaml')
+```
 
 :::{admonition} Example YAML-serialized Response
 :class: toggle
@@ -387,6 +452,11 @@ MongoDB, but it can also be used independently. Compared to JSON, it has better 
 human-readable, but some tools support reading and editing it directly
 (for example, [bson-converter](https://atom.io/packages/bson-converter) for Atom).
 
+Usage:
+```python
+>>> session = CachedSession('my_cache', serializer='bson')
+```
+
 You can install the extra dependencies for this serializer with:
 ```bash
 pip install requests-cache[mongo]
@@ -397,6 +467,14 @@ MongoDB dependencies:
 ```bash
 pip install requests-cache[bson]
 ```
+
+### Serializer Security
+See {ref}`security` for recommended setup steps for more secure cache serialization, particularly
+when using {py:mod}`pickle`.
+
+### Other Serialization Formats
+See {ref}`advanced_usage:custom serializers` for other possible formats, and options for creating
+your own.
 
 ## Error Handling
 In some cases, you might cache a response, have it expire, but then encounter an error when

@@ -1,4 +1,13 @@
-"""Internal utilities for determining cache expiration and other cache actions"""
+"""Internal utilities for determining cache expiration and other cache actions.
+
+.. automodsumm:: requests_cache.cache_control
+   :classes-only:
+   :nosignatures:
+
+.. automodsumm:: requests_cache.cache_control
+   :functions-only:
+   :nosignatures:
+"""
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
