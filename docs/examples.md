@@ -68,13 +68,13 @@ The following scripts can also be found in the
 ### Cache speed test
 ```{include} ../examples/benchmark.py
 :start-line: 2
-:end-line: 3
+:end-line: 8
 ```
 
 :::{admonition} Example code
 :class: toggle
 ```{literalinclude} ../examples/benchmark.py
-:lines: 1,5-
+:lines: 1,10-
 ```
 :::
 

@@ -4,7 +4,7 @@ from threading import Thread
 from unittest.mock import patch
 
 from requests_cache.backends.base import BaseCache
-from requests_cache.backends.sqlite import SQLiteCache, SQLiteDict, SQLitePickleDict
+from requests_cache.backends.sqlite import MEMORY_URI, SQLiteCache, SQLiteDict, SQLitePickleDict
 from tests.integration.base_cache_test import BaseCacheTest
 from tests.integration.base_storage_test import CACHE_NAME, BaseStorageTest
 
@@ -24,6 +24,21 @@ class SQLiteTestCase(BaseStorageTest):
         temp_path = self.storage_class(CACHE_NAME, use_temp=True).db_path
         assert not relative_path.startswith(gettempdir())
         assert temp_path.startswith(gettempdir())
+
+    def test_use_memory(self):
+        cache = self.init_cache(use_memory=True)
+        assert cache.db_path == MEMORY_URI
+        for i in range(20):
+            cache[f'key_{i}'] = f'value_{i}'
+        for i in range(5):
+            del cache[f'key_{i}']
+
+        assert len(cache) == 15
+        assert set(cache.keys()) == {f'key_{i}' for i in range(5, 20)}
+        assert set(cache.values()) == {f'value_{i}' for i in range(5, 20)}
+
+        cache.clear()
+        assert len(cache) == 0
 
     def test_bulk_commit(self):
         cache = self.init_cache()

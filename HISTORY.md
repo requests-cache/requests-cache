@@ -12,6 +12,7 @@
 **Backends:**:
 * Filesystem: Add `FileCache.paths()` method
 * Filesystem: Fix issue in which `redirects.sqlite` would get included in response paths
+* SQLite: Add `use_memory` option and support for in-memory databases
 * SQLite: Add `SQLiteCache.db_path` property
 * For consistency with other backends, rename:
   * `DbCache` -> `SQLiteCache`
