@@ -71,6 +71,21 @@ If you want an easy cross-platform way to get the system cache directory, use th
     >>> db_path = join(user_cache_dir('requests_cache'), 'http_cache')
     >>> session = CachedSession(db_path, use_temp=True)
 
+In-Memory Caching
+~~~~~~~~~~~~~~~~~
+SQLite also supports `in-memory databases <https://www.sqlite.org/inmemorydb.html>`_.
+You can enable this (in "shared" memory mode) with the ``use_memory`` option:
+
+    >>> session = CachedSession('http_cache', use_memory=True)
+
+Or specify a memory URI with additional options:
+
+    >>> session = CachedSession(':file:memdb1?mode=memory')
+
+Or just `:memory:`, if you are only using the cache from a single thread:
+
+    >>> session = CachedSession(':memory:')
+
 Performance
 ^^^^^^^^^^^
 When working with average-sized HTTP responses (< 1MB) and using a modern SSD for file storage, you
@@ -119,6 +134,7 @@ from typing import Collection, Iterable, Iterator, List, Tuple, Type, Union
 
 from . import BaseCache, BaseStorage, get_valid_kwargs
 
+MEMORY_URI = 'file::memory:?cache=shared'
 SQLITE_MAX_VARIABLE_NUMBER = 999
 logger = getLogger(__name__)
 
@@ -128,25 +144,18 @@ class SQLiteCache(BaseCache):
 
     Args:
         db_path: Database file path (expands user paths and creates parent dirs)
-        use_temp: Store database in a temp directory (e.g., ``/tmp/http_cache.sqlite``).
+        use_temp: Store database in a temp directory (e.g., ``/tmp/http_cache.sqlite``)
+        use_memory: Store database in memory instead of in a file
         fast_save: Significantly increases cache write performance, but with the possibility of data
             loss. See `pragma: synchronous <http://www.sqlite.org/pragma.html#pragma_synchronous>`_
             for details.
         kwargs: Additional keyword arguments for :py:func:`sqlite3.connect`
     """
 
-    def __init__(
-        self,
-        db_path: Union[Path, str] = 'http_cache',
-        use_temp: bool = False,
-        fast_save: bool = False,
-        **kwargs,
-    ):
+    def __init__(self, db_path: Union[Path, str] = 'http_cache', **kwargs):
         super().__init__(**kwargs)
-        self.responses = SQLitePickleDict(
-            db_path, table_name='responses', use_temp=use_temp, fast_save=fast_save, **kwargs
-        )
-        self.redirects = SQLiteDict(db_path, table_name='redirects', use_temp=use_temp, **kwargs)
+        self.responses = SQLitePickleDict(db_path, table_name='responses', **kwargs)
+        self.redirects = SQLiteDict(db_path, table_name='redirects', **kwargs)
 
     def db_path(self) -> str:
         return self.responses.db_path
@@ -155,6 +164,7 @@ class SQLiteCache(BaseCache):
         """Remove multiple responses and their associated redirects from the cache, with additional cleanup"""
         self.responses.bulk_delete(keys=keys)
         self.responses.vacuum()
+
         self.redirects.bulk_delete(keys=keys)
         self.redirects.bulk_delete(values=keys)
         self.redirects.vacuum()
@@ -177,11 +187,17 @@ class SQLiteDict(BaseStorage):
     """A dictionary-like interface for SQLite"""
 
     def __init__(
-        self, db_path, table_name='http_cache', fast_save=False, use_temp: bool = False, **kwargs
+        self,
+        db_path,
+        table_name='http_cache',
+        fast_save=False,
+        use_temp: bool = False,
+        use_memory: bool = False,
+        **kwargs,
     ):
         super().__init__(**kwargs)
         self.connection_kwargs = get_valid_kwargs(sqlite_template, kwargs)
-        self.db_path = _get_db_path(db_path, use_temp)
+        self.db_path = _get_db_path(db_path, use_temp, use_memory)
         self.fast_save = fast_save
         self.table_name = table_name
 
@@ -191,11 +207,9 @@ class SQLiteDict(BaseStorage):
         self.init_db()
 
     def init_db(self):
-        """Initialize the database, if it hasn't already been.
-        This must be done in shared connection, but all subsequent queries can use thread-local connections.
-        """
+        """Initialize the database, if it hasn't already been"""
         self.close()
-        with self._lock, sqlite3.connect(self.db_path, **self.connection_kwargs) as con:
+        with self._lock, self.connection() as con:
             con.execute(f'CREATE TABLE IF NOT EXISTS {self.table_name} (key PRIMARY KEY, value)')
 
     @contextmanager
@@ -322,14 +336,21 @@ def _format_sequence(values: Collection) -> Tuple[str, List]:
     return ','.join(['?'] * len(values)), list(values)
 
 
-def _get_db_path(db_path: Union[Path, str], use_temp: bool) -> str:
+def _get_db_path(db_path: Union[Path, str], use_temp: bool, use_memory: bool) -> str:
     """Get resolved path for database file"""
+    db_path = str(db_path)
+    # Use an in-memory database, if specified
+    if use_memory:
+        return MEMORY_URI
+    elif ':memory:' in db_path or 'mode=memory' in db_path:
+        return db_path
+
     # Save to a temp directory, if specified
     if use_temp and not isabs(db_path):
         db_path = join(gettempdir(), db_path)
 
     # Expand relative and user paths (~/*), and add file extension if not specified
-    db_path = abspath(expanduser(str(db_path)))
+    db_path = abspath(expanduser(db_path))
     if '.' not in basename(db_path):
         db_path += '.sqlite'
 

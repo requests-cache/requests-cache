@@ -271,4 +271,11 @@ class BaseStorage(MutableMapping, ABC):
 
 
 class DictStorage(UserDict, BaseStorage):
-    """A basic dict wrapper class for non-persistent, in-memory storage"""
+    """A basic dict wrapper class for non-persistent, in-memory storage
+
+    .. note::
+        This is mostly a placeholder for when no other backends are available. For in-memory
+        caching, either :py:class:`.SQLiteCache` (with `use_memory=True`) or :py:class:`.RedisCache`
+        is recommended instead.
+
+    """
