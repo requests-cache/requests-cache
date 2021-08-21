@@ -7,6 +7,10 @@ Services <https://aws.amazon.com>`_. In terms of features and use cases, it is r
 MongoDB and other NoSQL databases. It is an especially good fit for serverless applications running
 on `AWS Lambda <https://aws.amazon.com/lambda>`_.
 
+.. warning::
+    DynamoDB binary item sizes are limited to 400KB. If you need to cache larger responses, consider
+    using a different backend.
+
 Connection Options
 ^^^^^^^^^^^^^^^^^^
 The DynamoDB backend accepts any keyword arguments for :py:meth:`boto3.session.Session.resource`.

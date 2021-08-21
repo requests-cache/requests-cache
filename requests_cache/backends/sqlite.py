@@ -92,7 +92,7 @@ When working with average-sized HTTP responses (< 1MB) and using a modern SSD fo
 can expect speeds of around:
 
 * Write: 2-8ms
-* Read: 0.3-0.6ms
+* Read: 0.2-0.6ms
 
 Of course, this will vary based on hardware specs, response size, and other factors.
 
