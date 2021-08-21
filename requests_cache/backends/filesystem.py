@@ -38,16 +38,15 @@ API Reference
 from contextlib import contextmanager
 from glob import glob
 from os import listdir, makedirs, unlink
-from os.path import abspath, basename, dirname, expanduser, isabs, join, splitext
+from os.path import basename, dirname, join, splitext
 from pathlib import Path
 from pickle import PickleError
 from shutil import rmtree
-from tempfile import gettempdir
 from typing import List, Union
 
 from ..serializers import SERIALIZERS
 from . import BaseCache, BaseStorage
-from .sqlite import SQLiteDict
+from .sqlite import SQLiteDict, get_cache_path
 
 
 class FileCache(BaseCache):
@@ -55,6 +54,7 @@ class FileCache(BaseCache):
 
     Args:
         cache_name: Base directory for cache files
+        use_cache_dir: Store datebase in a user cache directory (e.g., `~/.cache/`)
         use_temp: Store cache files in a temp directory (e.g., ``/tmp/http_cache/``).
             Note: if ``cache_name`` is an absolute path, this option will be ignored.
         extension: Extension for cache files. If not specified, the serializer default extension
@@ -75,9 +75,16 @@ class FileCache(BaseCache):
 class FileDict(BaseStorage):
     """A dictionary-like interface to files on the local filesystem"""
 
-    def __init__(self, cache_name, use_temp: bool = False, extension: str = None, **kwargs):
+    def __init__(
+        self,
+        cache_name,
+        use_temp: bool = False,
+        use_cache_dir: bool = False,
+        extension: str = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
-        self.cache_dir = _get_cache_dir(cache_name, use_temp)
+        self.cache_dir = get_cache_path(cache_name, use_cache_dir=use_cache_dir, use_temp=use_temp)
         self.extension = extension if extension is not None else _get_default_ext(self.serializer)
         self.is_binary = False
         makedirs(self.cache_dir, exist_ok=True)
@@ -133,17 +140,6 @@ class FileDict(BaseStorage):
     def paths(self) -> List[str]:
         """Get absolute file paths to all cached responses"""
         return glob(self._path('*'))
-
-
-def _get_cache_dir(cache_dir: Union[Path, str], use_temp: bool) -> str:
-    # Save to a temp directory, if specified
-    if use_temp and not isabs(cache_dir):
-        cache_dir = join(gettempdir(), cache_dir, 'responses')
-
-    # Expand relative and user paths (~/*), and make sure parent dirs exist
-    cache_dir = abspath(expanduser(str(cache_dir)))
-    makedirs(cache_dir, exist_ok=True)
-    return cache_dir
 
 
 def _get_default_ext(serializer) -> str:

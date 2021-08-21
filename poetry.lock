@@ -7,6 +7,14 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "appdirs"
+version = "1.4.4"
+description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "argcomplete"
 version = "1.12.3"
 description = "Bash tab completion for argparse"
@@ -314,7 +322,7 @@ name = "itsdangerous"
 version = "2.0.1"
 description = "Safely pass data to untrusted environments and back."
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.6"
 
 [[package]]
@@ -920,17 +928,24 @@ type_comments = ["typed-ast (>=1.4.0)"]
 
 [[package]]
 name = "sphinx-automodapi"
-version = "0.13"
+version = "0.14.dev0"
 description = "Sphinx extension for auto-generating API documentation for entire modules"
 category = "main"
 optional = true
 python-versions = ">=3.6"
+develop = false
 
 [package.dependencies]
 sphinx = ">=1.7"
 
 [package.extras]
 test = ["pytest", "pytest-cov", "cython", "codecov", "coverage (<5.0)"]
+
+[package.source]
+type = "git"
+url = "https://github.com/astropy/sphinx-automodapi.git"
+reference = "main"
+resolved_reference = "39609d0d712447c91ffd1809150ed71ff4ed0099"
 
 [[package]]
 name = "sphinx-copybutton"
@@ -1169,24 +1184,29 @@ docs = ["sphinx", "jaraco.packaging (>=8.2)", "rst.linker (>=1.9)"]
 testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-cov", "pytest-enabler (>=1.0.1)", "jaraco.itertools", "func-timeout", "pytest-black (>=0.3.7)", "pytest-mypy"]
 
 [extras]
-all = ["boto3", "botocore", "pymongo", "redis", "ujson"]
+all = ["boto3", "botocore", "itsdangerous", "pymongo", "redis", "ujson"]
 bson = ["bson"]
-docs = ["furo", "linkify-it-py", "myst-parser", "Sphinx", "sphinx-autodoc-typehints", "sphinx-automodapi", "sphinx-copybutton", "sphinx-inline-tabs", "sphinxcontrib-apidoc"]
+docs = ["furo", "linkify-it-py", "myst-parser", "sphinx", "sphinx-autodoc-typehints", "sphinx-automodapi", "sphinx-copybutton", "sphinx-inline-tabs", "sphinxcontrib-apidoc"]
 dynamodb = ["boto3", "botocore"]
 json = ["ujson"]
 mongodb = ["pymongo"]
 redis = ["redis"]
+security = ["itsdangerous"]
 yaml = []
 
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "d73d313f19bec94728639a91b739ae34bd04d1f975716df3ae938db343328562"
+content-hash = "cbefc1a12aa9008ac7b344c9cd9d111fc6a9118befa10b2ddb53c4e288eeb60b"
 
 [metadata.files]
 alabaster = [
     {file = "alabaster-0.7.12-py2.py3-none-any.whl", hash = "sha256:446438bdcca0e05bd45ea2de1668c1d9b032e1a9154c2c259092d77031ddd359"},
     {file = "alabaster-0.7.12.tar.gz", hash = "sha256:a661d72d58e6ea8a57f7a86e37d86716863ee5e92788398526d58b26a4e4dc02"},
+]
+appdirs = [
+    {file = "appdirs-1.4.4-py2.py3-none-any.whl", hash = "sha256:a841dacd6b99318a741b166adb07e19ee71a274450e68237b4650ca1055ab128"},
+    {file = "appdirs-1.4.4.tar.gz", hash = "sha256:7d5d0167b2b1ba821647616af46a749d1c653740dd0d2415100fe26e27afdf41"},
 ]
 argcomplete = [
     {file = "argcomplete-1.12.3-py2.py3-none-any.whl", hash = "sha256:291f0beca7fd49ce285d2f10e4c1c77e9460cf823eef2de54df0c0fec88b0d81"},
@@ -1730,10 +1750,7 @@ sphinx-autodoc-typehints = [
     {file = "sphinx-autodoc-typehints-1.12.0.tar.gz", hash = "sha256:193617d9dbe0847281b1399d369e74e34cd959c82e02c7efde077fca908a9f52"},
     {file = "sphinx_autodoc_typehints-1.12.0-py3-none-any.whl", hash = "sha256:5e81776ec422dd168d688ab60f034fccfafbcd94329e9537712c93003bddc04a"},
 ]
-sphinx-automodapi = [
-    {file = "sphinx-automodapi-0.13.tar.gz", hash = "sha256:e1019336df7f7f0bcbf848eff7b84e7bef71691a57d8b5bda9107a2a046a226a"},
-    {file = "sphinx_automodapi-0.13-py3-none-any.whl", hash = "sha256:f9ebc9c10597f3aab1d93e5a8b1829903eee7c64f5bafb0cf71fd40e5c7d95f0"},
-]
+sphinx-automodapi = []
 sphinx-copybutton = [
     {file = "sphinx-copybutton-0.4.0.tar.gz", hash = "sha256:8daed13a87afd5013c3a9af3575cc4d5bec052075ccd3db243f895c07a689386"},
     {file = "sphinx_copybutton-0.4.0-py3-none-any.whl", hash = "sha256:4340d33c169dac6dd82dce2c83333412aa786a42dd01a81a8decac3b130dc8b0"},

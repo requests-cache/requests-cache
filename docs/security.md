@@ -13,6 +13,11 @@ Since this isn't always possible, requests-cache can optionally use
 It works by signing serialized data with a secret key that you control. Then, if the data is tampered
 with, the signature check fails and raises an error.
 
+Optional dependencies can be installed with:
+```bash
+pip install requests-cache[security]
+```
+
 ## Creating and Storing a Secret Key
 To enable this behavior, first create a secret key, which can be any `str` or `bytes` object.
 

@@ -3,17 +3,39 @@
 ## 0.8.0 (TBD)
 [See all issues and PRs for 0.8](https://github.com/reclosedev/requests-cache/milestone/3?closed=1)
 
-**Cache headers:**
-* Add support for `ETag` + `If-None-Match` headers
-* Add support for `Last-Modified` + `If-Modified-Since` headers
-* Add handling for `304 Not Modified` responses if returned for any other reason
-  (e.g., request headers manually set by the client)
+**Conditional requests:**
+* Add support for the following request + response headers to enable conditional requests:
+  * `ETag` + `If-None-Match` headers
+  * `Last-Modified` + `If-Modified-Since` headers
+  * `304 Not Modified` responses
 
-**Backends:**:
+**Backends:**
+* Filesystem: Add `use_cache_dir` option to use platform-specific user cache directory
 * Filesystem: Add `FileCache.paths()` method
 * Filesystem: Fix issue in which `redirects.sqlite` would get included in response paths
+* SQLite: Add `use_cache_dir` option to use platform-specific user cache directory
 * SQLite: Add `use_memory` option and support for in-memory databases
 * SQLite: Add `SQLiteCache.db_path` property
+
+**Serialization:**
+* Use `cattrs` for serialization by default, which enables a more forwards-compatible serialization format
+  (e.g., less prone to invalidation due to future updates)
+
+**Other features:**
+* Add support for custom cache key callbacks with `key_fn` parameter
+
+**Depedencies:**
+* Require python 3.7+
+    * Note: python 3.6 support in 0.7.x will continue to be maintained until it reaches EOL (2021-12-23)
+    * Any bugfixes for 0.8 that also apply to 0.7 will be backported
+* Add new `appdirs` dependency (for user cache directories)
+* Update `cattrs` from optional to a required dependency
+* Update `itsdangerous` required to an optional dependency
+* Require requests 2.22+ and urllib3 1.25.5+
+
+**Deprecations & removals:**
+* Remove deprecated `core` module
+* Remove deprecated `BaseCache.remove_old_entries()` method
 * For consistency with other backends, rename:
   * `DbCache` -> `SQLiteCache`
   * `DbDict` -> `SQLiteDict`
@@ -21,19 +43,6 @@
   * `DynamoDbCache` -> `DynamoCache`
   * `DynamoDbDict` -> `DynamoDict`
   * Add aliases for previous names for backwards-compatibility
-
-**Serialization:**
-* Use `cattrs` for serialization by default, which enables a more forwards-compatible serialization format
-  (e.g., less prone to invalidation due to future updates)
-
-**Other Features:**
-* Add support for custom cache key callbacks
-
-**Breaking changes:**
-* Drop support for python 3.6
-    * Note: Any bugfixes for 0.8.x that also apply to 0.7.x will be backported
-* Remove deprecated `core` module
-* Remove deprecated `BaseCache.remove_old_entries()` method
 
 -----
 ### 0.7.4 (2021-08-16)

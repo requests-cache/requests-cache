@@ -3,6 +3,8 @@ from tempfile import gettempdir
 from threading import Thread
 from unittest.mock import patch
 
+from appdirs import user_cache_dir
+
 from requests_cache.backends.base import BaseCache
 from requests_cache.backends.sqlite import MEMORY_URI, SQLiteCache, SQLiteDict, SQLitePickleDict
 from tests.integration.base_cache_test import BaseCacheTest
@@ -18,6 +20,12 @@ class SQLiteTestCase(BaseStorageTest):
             os.unlink(f'{CACHE_NAME}.sqlite')
         except Exception:
             pass
+
+    def test_use_cache_dir(self):
+        relative_path = self.storage_class(CACHE_NAME).db_path
+        cache_dir_path = self.storage_class(CACHE_NAME, use_cache_dir=True).db_path
+        assert not relative_path.startswith(user_cache_dir())
+        assert cache_dir_path.startswith(user_cache_dir())
 
     def test_use_temp(self):
         relative_path = self.storage_class(CACHE_NAME).db_path
