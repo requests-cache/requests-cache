@@ -1,12 +1,12 @@
 # Requests-Cache
 [![Build](https://github.com/reclosedev/requests-cache/actions/workflows/build.yml/badge.svg)](https://github.com/reclosedev/requests-cache/actions/workflows/build.yml)
-[![Coverage](https://coveralls.io/repos/github/reclosedev/requests-cache/badge.svg?branch=master)](https://coveralls.io/github/reclosedev/requests-cache?branch=master)
-[![Documentation](https://img.shields.io/readthedocs/requests-cache/stable)](https://requests-cache.readthedocs.io/en/stable/)
+[![Documentation](https://img.shields.io/readthedocs/requests-cache/stable)](https://requests-cache.readthedocs.io/en/stable/)[![Coverage](https://coveralls.io/repos/github/reclosedev/requests-cache/badge.svg?branch=master)](https://coveralls.io/github/reclosedev/requests-cache?branch=master)
+[![Code Shelter](https://www.codeshelter.co/static/badges/badge-flat.svg)](https://www.codeshelter.co/)
+
 [![PyPI](https://img.shields.io/pypi/v/requests-cache?color=blue)](https://pypi.org/project/requests-cache)
 [![Conda](https://img.shields.io/conda/vn/conda-forge/requests-cache?color=blue)](https://anaconda.org/conda-forge/requests-cache)
-[![PyPI - Python Versions](https://img.shields.io/pypi/pyversions/requests-cache)](https://pypi.org/project/requests-cache)
 [![PyPI - Format](https://img.shields.io/pypi/format/requests-cache?color=blue)](https://pypi.org/project/requests-cache)
-[![Code Shelter](https://www.codeshelter.co/static/badges/badge-flat.svg)](https://www.codeshelter.co/)
+[![PyPI - Python Versions](https://img.shields.io/pypi/pyversions/requests-cache)](https://pypi.org/project/requests-cache)
 
 ## Summary
 **requests-cache** is a transparent, persistent cache for the python [requests](http://python-requests.org)
@@ -18,20 +18,20 @@ Complete project documentation can be found at [requests-cache.readthedocs.io](h
 <!-- END-RTD-IGNORE -->
 
 ## Features
-* 🍰 **Ease of use:** Use as a [drop-in replacement](https://requests-cache.readthedocs.io/en/stable/api.html#sessions)
+* 🍰 **Ease of use:** Keep using the `requests` library you're already familiar with. Add caching
+  with a [drop-in replacement](https://requests-cache.readthedocs.io/en/stable/api.html#sessions)
   for `requests.Session`, or [install globally](https://requests-cache.readthedocs.io/en/stable/user_guide.html#patching)
-  to add caching to all `requests` functions
-* ⚙️ **Customization:** Works out of the box with zero config, but with robust customization and
-  extensibility so you can tailor it to your needs
-* 🚀 **Performance:** With default settings, get sub-millisecond response times for cached responses
+  to add caching to all `requests` functions.
+* 🚀 **Performance:** Get sub-millisecond response times for cached responses
 * 💾 **Persistence:** Works with several
   [storage backends](https://requests-cache.readthedocs.io/en/stable/user_guide.html#cache-backends),
-  including SQLite, Redis, MongoDB, and DynamoDB; also includes
-  [serializers](https://requests-cache.readthedocs.io/en/stable/user_guide.html#serializers)
-  for storing responses as plain JSON files, YAML, and more
+  including SQLite, Redis, MongoDB, and DynamoDB; or save responses as plain JSON files, YAML,
+  and more
+* ⚙️ **Customization:** Works out of the box with zero config, but with a robust set of features for
+  tweaking and extending the library to suit your needs
 * 🕗 **Expiration:** Keep your cache fresh using
-  [HTTP cache headers](https://requests-cache.readthedocs.io/en/stable/user_guide.html#cache-headers),
-  eagerly cache everything for long-term use, use
+  [Cache-Control](https://requests-cache.readthedocs.io/en/stable/user_guide.html#cache-headers),
+  eagerly cache everything for long-term storage, use
   [URL patterns](https://requests-cache.readthedocs.io/en/stable/user_guide.html#url-patterns)
   for selective caching, or anything in between
 * ✔️ **Compatibility:** Can be combined with
