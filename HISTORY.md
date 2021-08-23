@@ -12,7 +12,6 @@
 **Backends:**
 * Filesystem: Add `use_cache_dir` option to use platform-specific user cache directory
 * Filesystem: Add `FileCache.paths()` method
-* Filesystem: Fix issue in which `redirects.sqlite` would get included in response paths
 * SQLite: Add `use_cache_dir` option to use platform-specific user cache directory
 * SQLite: Add `use_memory` option and support for in-memory databases
 * SQLite: Add `SQLiteCache.db_path` property
@@ -46,7 +45,8 @@
 
 -----
 ### 0.7.5 (2021-TBD)
-* Fix incorrect location of `redirects.sqlite` when using filesystem backend
+* Fix incorrect location of `redirects.sqlite` with filesystem backend
+* Fix issue in which `redirects.sqlite` would get included in response paths with filesystem backend
 
 ### 0.7.4 (2021-08-16)
 * Fix an issue with httpdate strings from `Expires` headers not getting converted to UTC

@@ -7,6 +7,7 @@ Some articles and blog posts that discuss requests-cache:
 * PyBites: [Module of the Week: requests-cache for repeated API calls](https://pybit.es/articles/requests-cache/)
 * Real Python: [Caching External API Requests](https://realpython.com/blog/python/caching-external-api-requests)
 * Thomas Gorham: [Faster Backtesting with requests-cache](https://www.mntn.dev/blog/requests-cache)
+* Tim O'Hearn: [Pragmatic Usage of requests-cache](https://www.tjohearn.com/2018/02/12/pragmatic-usage-of-requests-cache/)
 * Valdir Stumm Jr: [Tips for boosting your Python scripts](https://stummjr.org/post/building-scripts-in-python/)
 
 ## Scripts
