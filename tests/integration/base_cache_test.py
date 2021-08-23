@@ -51,6 +51,10 @@ class BaseCacheTest:
 
         return CachedSession(backend=backend, **self.init_kwargs, **kwargs)
 
+    @classmethod
+    def teardown_class(cls):
+        cls().init_session(clear=True)
+
     @pytest.mark.parametrize('serializer', TEST_SERIALIZERS.values())
     @pytest.mark.parametrize('method', HTTPBIN_METHODS)
     @pytest.mark.parametrize('field', ['params', 'data', 'json'])

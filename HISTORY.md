@@ -1,5 +1,9 @@
 # History
 
+### 0.7.5 (2021-TBD)
+* Fix incorrect location of `redirects.sqlite` when using filesystem backend
+* Fix issue in which `redirects.sqlite` would get included in response paths with filesystem backend
+
 ### 0.7.4 (2021-08-16)
 * Fix an issue with httpdate strings from `Expires` headers not getting converted to UTC
 * Fix a packaging issue with extra files added to top-level wheel directory
