@@ -140,8 +140,12 @@ use {py:func}`.install_cache`:
 ![](_static/files-json_32px.png)
 
 Several cache backends are included. The default is SQLite, since it's generally the simplest to
-use, and requires no extra dependencies or configuration. In the rare case that SQLite is not available
-(for example, on Heroku), a non-persistent, in-memory cache is used.
+use, and requires no extra dependencies or configuration.
+```{note}
+In the rare case that SQLite is not available
+(for example, [on Heroku](https://devcenter.heroku.com/articles/sqlite3)), a non-persistent
+in-memory cache is used by default.
+```
 
 Most of the other backends require some extra dependencies, listed below.
 
@@ -151,7 +155,7 @@ Backend                                                | Class                  
 [Redis](https://redis.io)                              | {py:class}`.RedisCache`    | `'redis'`      | [redis-py](https://github.com/andymccurdy/redis-py)
 [MongoDB](https://www.mongodb.com)                     | {py:class}`.MongoCache`    | `'mongodb'`    | [pymongo](https://github.com/mongodb/mongo-python-driver)
 [GridFS](https://docs.mongodb.com/manual/core/gridfs/) | {py:class}`.GridFSCache`   | `'gridfs'`     | [pymongo](https://github.com/mongodb/mongo-python-driver)
-[DynamoDB](https://aws.amazon.com/dynamodb)            | {py:class}`.DynamoDbCache` | `'dynamodb'`   | [boto3](https://github.com/boto/boto3)
+[DynamoDB](https://aws.amazon.com/dynamodb)            | {py:class}`.DynamoCache`   | `'dynamodb'`   | [boto3](https://github.com/boto/boto3)
 Filesystem                                             | {py:class}`.FileCache`     | `'filesystem'` |
 Memory                                                 | {py:class}`.BaseCache`     | `'memory'`     |
 
@@ -179,11 +183,6 @@ MongoDB, GridFS | Database name
 DynamoDB        | Table name
 Filesystem      | Cache directory
 
-For file paths (SQLite and Filesystem backends), relative and user paths can be used:
-```python
->>> session = CachedSession('~/.cache/my_cache.db')
-```
-
 Each backend class also accepts optional parameters for the underlying connection. For example,
 {py:class}`.SQLiteCache` accepts parameters for {py:func}`sqlite3.connect`:
 ```python
@@ -193,16 +192,119 @@ Each backend class also accepts optional parameters for the underlying connectio
 See {py:mod}`.requests_cache.backends` for more backend-specific usage details, and see
 {ref}`advanced_usage:custom backends` for details on creating your own implementation.
 
-### Backend Demos
-If you just want to quickly try out all of the available backends for comparison, docker-compose
-config is included for all supported services. First,
-[install docker](https://docs.docker.com/get-docker/) if you haven't already. Then, run:
+### Testing Backends
+If you just want to quickly try out all of the available backends for comparison,
+[docker-compose](https://docs.docker.com/compose/) config is included for all supported services.
+First, [install docker](https://docs.docker.com/get-docker/) if you haven't already. Then, run:
 
-```
+:::{tab} Bash (Linux/macOS)
+```bash
 pip install -U requests-cache[all] docker-compose
 curl https://raw.githubusercontent.com/reclosedev/requests-cache/master/docker-compose.yml -O docker-compose.yml
 docker-compose up -d
 ```
+:::
+:::{tab} Powershell (Windows)
+```ps1
+pip install -U requests-cache[all] docker-compose
+Invoke-WebRequest -Uri https://raw.githubusercontent.com/reclosedev/requests-cache/master/docker-compose.yml -Outfile docker-compose.yml
+docker-compose up -d
+```
+:::
+
+## Cache Files
+```{note}
+This section only applies to the {py:mod}`~requests_cache.backends.sqlite` and
+{py:mod}`~requests_cache.backends.filesystem` backends.
+```
+For file-based backends, the cache name will be used as a path to the cache file(s). You can use
+a relative path, absolute path, or use some additional options for system-specific default paths.
+
+### Relative Paths
+```python
+>>> # Database path for SQLite cache
+>>> session = CachedSession('http_cache', backend='sqlite')
+>>> print(session.cache.db_path)
+'<current working dir>/http_cache.sqlite'
+```
+```python
+>>> # Base directory for Filesystem cache
+>>> session = CachedSession('http_cache', backend='filesystem')
+>>> print(session.cache.db_path)
+'<current working dir>/http_cache/'
+```
+
+```{note}
+Parent directories will always be created, if they don't already exist.
+```
+
+### Absolute Paths
+You can also give an absolute path, including user paths (with `~`).
+```python
+>>> session = CachedSession('~/.myapp/http_cache', backend='sqlite')
+>>> print(session.cache.db_path)
+'/home/user/.myapp/http_cache.sqlite'
+```
+
+### System Paths
+If you don't know exactly where you want to put your cache files, your system's **temp directory**
+or **cache directory** is a good choice. Some options are available as shortcuts to use whatever the
+default locations are for your operating system.
+
+Use the default temp directory with the `use_temp` option:
+:::{tab} Linux
+```python
+>>> session = CachedSession('http_cache', backend='sqlite', use_temp=True)
+>>> print(session.cache.db_path)
+'/tmp/http_cache.sqlite'
+```
+:::
+:::{tab} macOS
+```python
+>>> session = CachedSession('http_cache', backend='sqlite', use_temp=True)
+>>> print(session.cache.db_path)
+'/var/folders/xx/http_cache.sqlite'
+```
+:::
+:::{tab} Windows
+```python
+>>> session = CachedSession('http_cache', backend='sqlite', use_temp=True)
+>>> print(session.cache.db_path)
+'C:\\Users\\user\\AppData\\Local\\temp\\http_cache.sqlite'
+```
+:::
+
+Or use the default cache directory with the `use_cache_dir` option:
+:::{tab} Linux
+```python
+>>> session = CachedSession('http_cache', backend='filesystem', use_cache_dir=True)
+>>> print(session.cache.db_path)
+'/home/user/.cache/http_cache/'
+```
+:::
+:::{tab} macOS
+```python
+>>> session = CachedSession('http_cache', backend='filesystem', use_cache_dir=True)
+>>> print(session.cache.db_path)
+'/Users/user/Library/Caches/http_cache/'
+```
+:::
+:::{tab} Windows
+```python
+>>> session = CachedSession('http_cache', backend='filesystem', use_cache_dir=True)
+>>> print(session.cache.db_path)
+'C:\\Users\\user\\AppData\\Local\\http_cache\\'
+```
+:::
+
+```{note}
+If the cache name is an absolute path, the `use_temp` and `use_cache_dir` options will be ignored.
+If it's a relative path, it will be relative to the temp or cache directory, respectively.
+```
+
+There are a number of other system default locations that might be appropriate for a cache file. See
+the [appdirs](https://github.com/ActiveState/appdirs) library for an easy cross-platform way to get
+the most commonly used ones.
 
 ## Cache Options
 A number of options are available to modify which responses are cached and how they are cached.

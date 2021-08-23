@@ -12,66 +12,8 @@ for requests-cache.
 
 Cache Files
 ^^^^^^^^^^^
-The cache name will be used as the cache's filename and (optionally) its path. You can specify a
-just a filename, optionally with a file extension, and it will be created in the current working
-directory.
-
-Relative Paths
-~~~~~~~~~~~~~~
-
-    >>> # Base filename only
-    >>> session = CachedSession('http_cache')
-    >>> print(session.cache.db_path)
-    '<current working dir>/http_cache.sqlite'
-
-    >>> # Filename with extension
-    >>> session = CachedSession('http_cache.db')
-    >>> print(session.cache.db_path)
-    '<current working dir>/http_cache.db'
-
-    >>> # Relative path with subdirectory
-    >>> session = CachedSession('cache_dir/http_cache')
-    >>> print(session.cache.db_path)
-    '<current working dir>/cache_dir/http_cache.sqlite'
-
-Absolute Paths
-~~~~~~~~~~~~~~
-You can also give an absolute path, including user paths (with `~`).
-
-    >>> session = CachedSession('/home/user/.cache/http_cache')
-    >>> print(session.cache.db_path)
-    '/home/user/.cache/http_cache.sqlite'
-
-    >>> session = CachedSession('~/.cache/http_cache')
-    >>> print(session.cache.db_path)
-    '/home/user/.cache/http_cache.sqlite'
-
-.. note::
-    Parent directories will always be created, if they don't already exist.
-
-Special System Paths
-~~~~~~~~~~~~~~~~~~~~
-If you don't know exactly where you want to put your cache file, your **system's default temp
-directory** or **cache directory** is a good choice.
-
-Use your system's default temp directory with the ``use_temp`` option:
-
-    >>> session = CachedSession('http_cache', use_temp=True)
-    >>> print(session.cache.db_path)
-    '/tmp/http_cache.sqlite'
-
-.. note::
-    If the cache name is an absolute path, the ``use_temp`` option will be ignored. If it's a
-    relative path, it will be relative to the temp directory.
-
-Use your system's default cache directory with the ``use_cache_dir`` option:
-
-If you want an easy cross-platform way to get the system cache directory, use the
-`appdirs <https://github.com/ActiveState/appdirs>`_ library:
-
-    >>> session = CachedSession('http_cache', use_cache_dir=True)
-    >>> print(session.cache.db_path)
-    '/home/user/.cache/http_cache.sqlite'
+* See :ref:`user_guide:cache files` for general info on cache files
+* If you specify a name without an extension, the default extension ``.sqlite`` will be used
 
 In-Memory Caching
 ~~~~~~~~~~~~~~~~~
@@ -84,7 +26,7 @@ Or specify a memory URI with additional options:
 
     >>> session = CachedSession(':file:memdb1?mode=memory')
 
-Or just `:memory:`, if you are only using the cache from a single thread:
+Or just ``:memory:``, if you are only using the cache from a single thread:
 
     >>> session = CachedSession(':memory:')
 
@@ -102,9 +44,8 @@ Concurrency
 ^^^^^^^^^^^
 SQLite supports concurrent access, so it is safe to use from a multi-threaded and/or multi-process
 application. It supports unlimited concurrent reads. Writes, however, are queued and run in serial,
-so if you have a massively parallel application making large volumes of requests, you may want to
-consider a different backend that's specifically made for that kind of workload, like
-:py:class:`.RedisCache`.
+so if you need to make large volumes of concurrent requests, you may want to consider a different
+backend that's specifically made for that kind of workload, like :py:class:`.RedisCache`.
 
 Connection Options
 ^^^^^^^^^^^^^^^^^^
@@ -147,7 +88,7 @@ class SQLiteCache(BaseCache):
     """SQLite cache backend.
 
     Args:
-        db_path: Database file path (expands user paths and creates parent dirs)
+        db_path: Database file path
         use_cache_dir: Store datebase in a user cache directory (e.g., `~/.cache/http_cache.sqlite`)
         use_temp: Store database in a temp directory (e.g., ``/tmp/http_cache.sqlite``)
         use_memory: Store database in memory instead of in a file
