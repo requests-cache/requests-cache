@@ -1,4 +1,5 @@
 # requests-cache documentation build configuration file
+import logging
 import os
 import sys
 from os.path import abspath, dirname, join
@@ -122,11 +123,15 @@ def setup(app):
 
 
 def patch_automodapi(app):
-    """Monkey-patch the automodapi extension to exclude imported members.
-
+    """Monkey-patch the automodapi extension to exclude imported members:
     https://github.com/astropy/sphinx-automodapi/blob/master/sphinx_automodapi/automodsumm.py#L135
+
+    Also patches an unreleased fix for Sphinx 4 compatibility:
+    https://github.com/astropy/sphinx-automodapi/pull/129
     """
     from sphinx_automodapi import automodsumm
+    from sphinx_automodapi.automodsumm import Automodsumm
     from sphinx_automodapi.utils import find_mod_objs
 
     automodsumm.find_mod_objs = lambda *args: find_mod_objs(args[0], onlylocals=True)
+    Automodsumm.warn = lambda *args: logging.getLogger('sphinx_automodapi').warn(*args)

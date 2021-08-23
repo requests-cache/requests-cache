@@ -19,7 +19,7 @@ Or via :py:class:`.MongoCache`:
 
 API Reference
 ^^^^^^^^^^^^^
-.. automodsumm:: requests_cache.backends.mongo
+.. automodsumm:: requests_cache.backends.mongodb
    :classes-only:
    :nosignatures:
 """
