@@ -1,5 +1,5 @@
 import pickle
-from os.path import isfile
+from os.path import dirname, isfile
 from shutil import rmtree
 from tempfile import gettempdir
 
@@ -57,3 +57,6 @@ class TestFileCache(BaseCacheTest):
         for path in session.cache.paths():
             assert isfile(path)
             assert path.endswith(f'.{expected_extension}')
+
+        # Redirects db should be in the same directory as response files
+        assert dirname(session.cache.redirects.db_path) == session.cache.responses.cache_dir

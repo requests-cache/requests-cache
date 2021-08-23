@@ -38,7 +38,7 @@ API Reference
 from contextlib import contextmanager
 from glob import glob
 from os import listdir, makedirs, unlink
-from os.path import basename, dirname, join, splitext
+from os.path import basename, join, splitext
 from pathlib import Path
 from pickle import PickleError
 from shutil import rmtree
@@ -64,12 +64,18 @@ class FileCache(BaseCache):
     def __init__(self, cache_name: Union[Path, str] = 'http_cache', use_temp: bool = False, **kwargs):
         super().__init__(**kwargs)
         self.responses = FileDict(cache_name, use_temp=use_temp, **kwargs)
-        db_path = join(dirname(self.responses.cache_dir), 'redirects.sqlite')
+        db_path = join(self.responses.cache_dir, 'redirects.sqlite')
         self.redirects = SQLiteDict(db_path, 'redirects', **kwargs)
 
     def paths(self) -> List[str]:
         """Get absolute file paths to all cached responses"""
         return self.responses.paths()
+
+    def clear(self):
+        """Clear the cache"""
+        # FileDict.clear() removes and re-creates the cache directory, including redirects.sqlite
+        self.responses.clear()
+        self.redirects.init_db()
 
 
 class FileDict(BaseStorage):
@@ -126,8 +132,7 @@ class FileDict(BaseStorage):
                 f.write(self.serializer.dumps(value))
 
     def __iter__(self):
-        for path in self.paths():
-            yield splitext(basename(path))[0]
+        yield from self.keys()
 
     def __len__(self):
         return len(listdir(self.cache_dir))
@@ -136,6 +141,9 @@ class FileDict(BaseStorage):
         with self._try_io(ignore_errors=True):
             rmtree(self.cache_dir, ignore_errors=True)
             makedirs(self.cache_dir)
+
+    def keys(self):
+        return [splitext(basename(path))[0] for path in self.paths()]
 
     def paths(self) -> List[str]:
         """Get absolute file paths to all cached responses"""
