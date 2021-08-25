@@ -1,5 +1,6 @@
 from io import BytesIO
 from logging import getLogger
+from typing import Mapping
 
 from attr import define, field, fields_dict
 from requests import Response
@@ -18,18 +19,20 @@ class CachedHTTPResponse(HTTPResponse):
     """
 
     decode_content: bool = field(default=None)
-    headers: HTTPHeaderDict = field(factory=dict)
+    headers: HTTPHeaderDict = None  # Not serialized; set in either init or CachedResponse post-init
     reason: str = field(default=None)
     request_url: str = field(default=None)
     status: int = field(default=0)
     strict: int = field(default=0)
     version: int = field(default=0)
 
-    def __init__(self, *args, body: bytes = None, **kwargs):
+    def __init__(self, *args, body: bytes = None, headers: Mapping = None, **kwargs):
         """First initialize via HTTPResponse, then via attrs"""
         kwargs = {k: v for k, v in kwargs.items() if v is not None}
         super().__init__(body=BytesIO(body or b''), preload_content=False, **kwargs)
+
         self._body = body
+        self.headers = HTTPHeaderDict(headers)
         self.__attrs_init__(*args, **kwargs)
 
     @classmethod
@@ -37,7 +40,8 @@ class CachedHTTPResponse(HTTPResponse):
         """Create a CachedHTTPResponse based on an original response"""
         # Copy basic attributes
         raw = original_response.raw
-        kwargs = {k: getattr(raw, k, None) for k in fields_dict(cls).keys()}
+        copy_attrs = list(fields_dict(cls).keys()) + ['headers']
+        kwargs = {k: getattr(raw, k, None) for k in copy_attrs}
 
         # Note: _request_url is not available in urllib <=1.21
         kwargs['request_url'] = getattr(raw, '_request_url', None)

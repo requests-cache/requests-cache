@@ -6,6 +6,7 @@ from attr import define, field
 from requests import PreparedRequest, Response
 from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
+from urllib3.response import HTTPHeaderDict
 
 from ..cache_control import ExpirationTime, get_expiration_datetime
 from . import CachedHTTPResponse, CachedRequest
@@ -23,24 +24,26 @@ class CachedResponse(Response):
 
     _content: bytes = field(default=None)
     _next: Optional[CachedRequest] = field(default=None)
-    url: str = field(default=None)
-    status_code: int = field(default=0)
-    cache_key: str = field(default=None)
+    cache_key: Optional[str] = None  # Not serialized; set by BaseCache.get_response()
     cookies: RequestsCookieJar = field(factory=RequestsCookieJar)
     created_at: datetime = field(factory=datetime.utcnow)
     elapsed: timedelta = field(factory=timedelta)
-    expires: Optional[datetime] = field(default=None)
     encoding: str = field(default=None)
-    headers: CaseInsensitiveDict = field(factory=dict)
+    expires: Optional[datetime] = field(default=None)
+    headers: CaseInsensitiveDict = field(factory=CaseInsensitiveDict)
     history: List['CachedResponse'] = field(factory=list)  # type: ignore
+    raw: CachedHTTPResponse = field(factory=CachedHTTPResponse, repr=False)
     reason: str = field(default=None)
     request: CachedRequest = field(factory=CachedRequest)  # type: ignore
-    raw: CachedHTTPResponse = field(factory=CachedHTTPResponse, repr=False)
+    status_code: int = field(default=0)
+    url: str = field(default=None)
 
     def __attrs_post_init__(self):
         """Re-initialize raw response body after deserialization"""
         if self.raw._body is None and self._content is not None:
             self.raw.reset(self._content)
+        if not self.raw.headers:
+            self.raw.headers = HTTPHeaderDict(self.headers)
 
     @classmethod
     def from_response(cls, original_response: Response, **kwargs):
