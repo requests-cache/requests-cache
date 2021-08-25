@@ -1,0 +1,46 @@
+http_interactions:
+- recorded_at: '2021-08-15T02:14:11.003635'
+  request:
+    body: !!binary |
+      Tm9uZQ==
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.26.0
+    method: GET
+    uri: https://httpbin.org/get
+  response:
+    body:
+      encoding: utf-8
+      string: !!binary |
+        ewogICJhcmdzIjoge30sIAogICJoZWFkZXJzIjogewogICAgIkFjY2VwdCI6ICIqLyoiLCAKICAg
+        ICJBY2NlcHQtRW5jb2RpbmciOiAiZ3ppcCwgZGVmbGF0ZSIsIAogICAgIkhvc3QiOiAiaHR0cGJp
+        bi5vcmciLCAKICAgICJVc2VyLUFnZW50IjogInB5dGhvbi1yZXF1ZXN0cy8yLjI2LjAiLCAKICAg
+        ICJYLUFtem4tVHJhY2UtSWQiOiAiUm9vdD0xLTYxMTg3ODcyLTM4YjE1NmZhMjliOTU3ODMzM2Nj
+        NmJmMCIKICB9LCAKICAib3JpZ2luIjogIjE3My4yMS4xMjYuMTQ1IiwgCiAgInVybCI6ICJodHRw
+        czovL2h0dHBiaW4ub3JnL2dldCIKfQo=
+    headers:
+      Access-Control-Allow-Credentials:
+      - 'true'
+      Access-Control-Allow-Origin:
+      - '*'
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '308'
+      Content-Type:
+      - application/json
+      Date:
+      - Sun, 15 Aug 2021 02:14:10 GMT
+      Server:
+      - gunicorn/19.9.0
+    status:
+      code: 200
+      reason: OK
+    url: https://httpbin.org/get
+recorded_with: requests-cache 0.8.0

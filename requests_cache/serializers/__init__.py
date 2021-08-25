@@ -13,6 +13,7 @@ from .preconf import (
     utf8_encoder,
     yaml_serializer,
 )
+from .vcr import vcr_serializer
 
 __all__ = [
     'SERIALIZERS',
