@@ -67,6 +67,11 @@ class FileCache(BaseCache):
         db_path = join(self.responses.cache_dir, 'redirects.sqlite')
         self.redirects = SQLiteDict(db_path, 'redirects', **kwargs)
 
+    @property
+    def cache_dir(self) -> str:
+        """Base directory for cache files"""
+        return self.responses.cache_dir
+
     def paths(self) -> List[str]:
         """Get absolute file paths to all cached responses"""
         return self.responses.paths()
