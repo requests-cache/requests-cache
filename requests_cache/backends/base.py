@@ -74,6 +74,7 @@ class BaseCache:
             if key not in self.responses:
                 key = self.redirects[key]
             response = self.responses[key]
+            response.cache_key = key  # Set cache key here, since it's not serialized
             response.reset()  # In case response was in memory and content has already been read
             return response
         except KeyError:
@@ -92,7 +93,7 @@ class BaseCache:
             expire_after: Time in seconds until this cache item should expire
         """
         cache_key = cache_key or self.create_key(response.request)
-        cached_response = CachedResponse.from_response(response, cache_key=cache_key, expires=expires)
+        cached_response = CachedResponse.from_response(response, expires=expires)
         cached_response.request = remove_ignored_params(cached_response.request, self.ignored_parameters)
         self.responses[cache_key] = cached_response
         for r in response.history:

@@ -23,6 +23,7 @@
 **Other features:**
 * Add `BaseCache.update()` method as a shortcut for exporting to a different cache instance
 * Add support for custom cache key callbacks with `key_fn` parameter
+* Slightly reduce size of serialized responses
 
 **Depedencies:**
 * Require python 3.7+

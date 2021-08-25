@@ -49,11 +49,11 @@ def init_converter(factory: Callable[..., GenConverter] = None):
 
     # Convert datetimes to and from iso-formatted strings
     converter.register_unstructure_hook(datetime, lambda obj: obj.isoformat() if obj else None)  # type: ignore
-    converter.register_structure_hook(datetime, to_datetime)
+    converter.register_structure_hook(datetime, _to_datetime)
 
     # Convert timedeltas to and from float values in seconds
     converter.register_unstructure_hook(timedelta, lambda obj: obj.total_seconds() if obj else None)  # type: ignore
-    converter.register_structure_hook(timedelta, to_timedelta)
+    converter.register_structure_hook(timedelta, _to_timedelta)
 
     # Convert dict-like objects to and from plain dicts
     converter.register_unstructure_hook(RequestsCookieJar, lambda obj: dict(obj.items()))  # type: ignore
@@ -72,13 +72,13 @@ def init_converter(factory: Callable[..., GenConverter] = None):
     return converter
 
 
-def to_datetime(obj, cls) -> datetime:
+def _to_datetime(obj, cls) -> datetime:
     if isinstance(obj, str):
         obj = datetime.fromisoformat(obj)
     return obj
 
 
-def to_timedelta(obj, cls) -> timedelta:
+def _to_timedelta(obj, cls) -> timedelta:
     if isinstance(obj, (int, float)):
         obj = timedelta(seconds=obj)
     return obj

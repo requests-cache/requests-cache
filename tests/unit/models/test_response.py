@@ -10,10 +10,9 @@ from tests.conftest import MOCKED_URL
 
 
 def test_basic_attrs(mock_session):
-    response = CachedResponse.from_response(mock_session.get(MOCKED_URL), cache_key='5ff64e')
+    response = CachedResponse.from_response(mock_session.get(MOCKED_URL))
 
     assert response.from_cache is True
-    assert response.cache_key == '5ff64e'
     assert response.url == MOCKED_URL
     assert response.status_code == 200
     assert response.reason is None
