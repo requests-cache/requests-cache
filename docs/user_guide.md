@@ -125,7 +125,7 @@ You can also clear out all responses in the cache with {py:func}`.clear`, and ch
 requests-cache is currently installed with {py:func}`.is_installed`.
 
 #### Limitations
-Like any other utility that uses global patching, there are some scenarios where you won't want to
+Like any other utility that uses monkey-patching, there are some scenarios where you won't want to
 use {py:func}`.install_cache`:
 - In a multi-threaded or multiprocess application
 - In an application that uses other packages that extend or modify {py:class}`requests.Session`
@@ -212,6 +212,29 @@ docker-compose up -d
 ```
 :::
 
+(exporting)=
+### Exporting To A Different Backend
+If you have cached data that you want to copy or migrate to a different backend, you can do this
+with `CachedSession.cache.update()`. For example, if you want to dump the contents of a Redis cache
+to JSON files:
+```python
+>>> src_session = CachedSession('my_cache', backend='redis')
+>>> dest_session = CachedSession('~/workspace/cache_dump', backend='filesystem', serializer='json')
+>>> dest_session.cache.update(src_session.cache)
+
+>>> # List the exported files
+>>> print(dest_session.cache.paths())
+'/home/user/workspace/cache_dump/9e7a71a3ff2e.json'
+'/home/user/workspace/cache_dump/8a922ff3c53f.json'
+```
+
+Or, using backend classes directly:
+```python
+>>> src_cache = RedisCache()
+>>> dest_cache = FileCache('~/workspace/cache_dump', serializer='json')
+>>> dest_cache.update(src_cache)
+```
+
 ## Cache Files
 ```{note}
 This section only applies to the {py:mod}`~requests_cache.backends.sqlite` and
@@ -230,7 +253,7 @@ a relative path, absolute path, or use some additional options for system-specif
 ```python
 >>> # Base directory for Filesystem cache
 >>> session = CachedSession('http_cache', backend='filesystem')
->>> print(session.cache.db_path)
+>>> print(session.cache.cache_dir)
 '<current working dir>/http_cache/'
 ```
 
@@ -278,21 +301,21 @@ Or use the default cache directory with the `use_cache_dir` option:
 :::{tab} Linux
 ```python
 >>> session = CachedSession('http_cache', backend='filesystem', use_cache_dir=True)
->>> print(session.cache.db_path)
+>>> print(session.cache.cache_dir)
 '/home/user/.cache/http_cache/'
 ```
 :::
 :::{tab} macOS
 ```python
 >>> session = CachedSession('http_cache', backend='filesystem', use_cache_dir=True)
->>> print(session.cache.db_path)
+>>> print(session.cache.cache_dir)
 '/Users/user/Library/Caches/http_cache/'
 ```
 :::
 :::{tab} Windows
 ```python
 >>> session = CachedSession('http_cache', backend='filesystem', use_cache_dir=True)
->>> print(session.cache.db_path)
+>>> print(session.cache.cache_dir)
 'C:\\Users\\user\\AppData\\Local\\http_cache\\'
 ```
 :::
