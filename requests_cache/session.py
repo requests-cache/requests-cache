@@ -294,14 +294,14 @@ class CachedSession(CacheMixin, OriginalSession):
             ``['sqlite', 'mongodb', 'gridfs', 'redis', 'dynamodb', 'memory']``.
         expire_after: Time after which cached items will expire
         urls_expire_after: Expiration times to apply for different URL patterns
-        allowable_codes: Only cache responses with one of these codes
+        allowable_codes: Only cache responses with one of these status codes
         allowable_methods: Cache only responses for one of these HTTP methods
         include_get_headers: Make request headers part of the cache key
         ignored_parameters: List of request parameters to be excluded from the cache key
-        filter_fn: Function that takes a :py:class:`aiohttp.ClientResponse` object and
-            returns a boolean indicating whether or not that response should be cached. Will be
-            applied to both new and previously cached responses.
-        key_fn: Function for generating cutom cache keys based on request info
+        filter_fn: Function that takes a :py:class:`~requests.Response` object and returns a boolean
+            indicating whether or not that response should be cached. Will be applied to both new
+            and previously cached responses.
+        key_fn: Function for generating custom cache keys based on request info
         old_data_on_error: Return stale cache data if a new request raises an exception
         cache_control: Use Cache-Control request and response headers
     """

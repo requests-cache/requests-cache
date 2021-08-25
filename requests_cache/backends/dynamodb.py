@@ -18,9 +18,9 @@ These can be passed via :py:class:`.CachedSession`:
 
     >>> session = CachedSession('http_cache', backend='dynamodb', region_name='us-west-2')
 
-Or via :py:class:`.DynamoDbCache`:
+Or via :py:class:`.DynamoCache`:
 
-    >>> backend = DynamoDbCache(region_name='us-west-2')
+    >>> backend = DynamoCache(region_name='us-west-2')
     >>> session = CachedSession('http_cache', backend=backend)
 
 API Reference

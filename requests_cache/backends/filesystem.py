@@ -24,10 +24,10 @@ Or as YAML (requires ``pyyaml``):
 
 Cache Files
 ^^^^^^^^^^^
+* See :ref:`user_guide:cache files` for general info on cache files
 * The path for a given response will be in the format ``<cache_name>/<cache_key>``
-* Use :py:meth:`.FileCache.paths` to get a list of all cached response paths
 * Redirects are stored in a separate SQLite database, located at ``<cache_name>/redirects.sqlite``
-* See :py:mod:`~requests_cache.backends.sqlite` for more details on specifying paths
+* Use :py:meth:`.FileCache.paths` to get a list of all cached response paths
 
 API Reference
 ^^^^^^^^^^^^^
@@ -67,13 +67,18 @@ class FileCache(BaseCache):
         db_path = join(self.responses.cache_dir, 'redirects.sqlite')
         self.redirects = SQLiteDict(db_path, 'redirects', **kwargs)
 
+    @property
+    def cache_dir(self) -> str:
+        """Base directory for cache files"""
+        return self.responses.cache_dir
+
     def paths(self) -> List[str]:
         """Get absolute file paths to all cached responses"""
         return self.responses.paths()
 
     def clear(self):
         """Clear the cache"""
-        # FileDict.clear() removes and re-creates the cache directory, including redirects.sqlite
+        # FileDict.clear() removes the cache directory, including redirects.sqlite
         self.responses.clear()
         self.redirects.init_db()
 
