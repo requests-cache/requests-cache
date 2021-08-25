@@ -63,21 +63,6 @@ class BaseCache:
         for response in self.values():
             yield response.url
 
-    def save_response(self, response: AnyResponse, cache_key: str = None, expires: datetime = None):
-        """Save a response to the cache
-
-        Args:
-            cache_key: Cache key for this response; will otherwise be generated based on request
-            response: response to save
-            expire_after: Time in seconds until this cache item should expire
-        """
-        cache_key = cache_key or self.create_key(response.request)
-        cached_response = CachedResponse.from_response(response, cache_key=cache_key, expires=expires)
-        cached_response.request = remove_ignored_params(cached_response.request, self.ignored_parameters)
-        self.responses[cache_key] = cached_response
-        for r in response.history:
-            self.redirects[self.create_key(r.request)] = cache_key
-
     def get_response(self, key: str, default=None) -> CachedResponse:
         """Retrieve a response from the cache, if it exists
 
@@ -97,6 +82,43 @@ class BaseCache:
             logger.error(f'Unable to deserialize response with key {key}: {str(e)}')
             logger.debug(e, exc_info=True)
             return default
+
+    def save_response(self, response: AnyResponse, cache_key: str = None, expires: datetime = None):
+        """Save a response to the cache
+
+        Args:
+            cache_key: Cache key for this response; will otherwise be generated based on request
+            response: response to save
+            expire_after: Time in seconds until this cache item should expire
+        """
+        cache_key = cache_key or self.create_key(response.request)
+        cached_response = CachedResponse.from_response(response, cache_key=cache_key, expires=expires)
+        cached_response.request = remove_ignored_params(cached_response.request, self.ignored_parameters)
+        self.responses[cache_key] = cached_response
+        for r in response.history:
+            self.redirects[self.create_key(r.request)] = cache_key
+
+    def bulk_delete(self, keys: Iterable[str]):
+        """Remove multiple responses and their associated redirects from the cache"""
+        self.responses.bulk_delete(keys)
+        # Remove any redirects that no longer point to an existing response
+        invalid_redirects = [k for k, v in self.redirects.items() if v not in self.responses]
+        self.redirects.bulk_delete(set(keys) | set(invalid_redirects))
+
+    def clear(self):
+        """Delete all items from the cache"""
+        logger.info('Clearing all items from the cache')
+        self.responses.clear()
+        self.redirects.clear()
+
+    def create_key(self, request: AnyRequest, **kwargs) -> str:
+        """Create a normalized cache key from a request object"""
+        return self.key_fn(
+            request,
+            ignored_parameters=self.ignored_parameters,
+            include_get_headers=self.include_get_headers,
+            **kwargs,
+        )
 
     def delete(self, key: str):
         """Delete a response or redirect from the cache, as well any associated redirect history"""
@@ -121,18 +143,19 @@ class BaseCache:
         """Delete cached responses + redirects for multiple request URLs (``GET`` requests only)"""
         self.bulk_delete([url_to_key(url, self.ignored_parameters) for url in urls])
 
-    def bulk_delete(self, keys: Iterable[str]):
-        """Remove multiple responses and their associated redirects from the cache"""
-        self.responses.bulk_delete(keys)
-        # Remove any redirects that no longer point to an existing response
-        invalid_redirects = [k for k, v in self.redirects.items() if v not in self.responses]
-        self.redirects.bulk_delete(set(keys) | set(invalid_redirects))
+    def has_key(self, key: str) -> bool:
+        """Returns `True` if cache has `key`, `False` otherwise"""
+        return key in self.responses or key in self.redirects
 
-    def clear(self):
-        """Delete all items from the cache"""
-        logger.info('Clearing all items from the cache')
-        self.responses.clear()
-        self.redirects.clear()
+    def has_url(self, url: str) -> bool:
+        """Returns `True` if cache has `url`, `False` otherwise. Works only for GET request urls"""
+        return self.has_key(url_to_key(url, self.ignored_parameters))  # noqa: W601
+
+    def keys(self, check_expiry=False) -> Iterator[str]:
+        """Get all cache keys for redirects and valid responses combined"""
+        yield from self.redirects.keys()
+        for key, _ in self._get_valid_responses(check_expiry=check_expiry):
+            yield key
 
     def remove_expired_responses(self, expire_after: ExpirationTime = None):
         """Remove expired and invalid responses from the cache, optionally with revalidation
@@ -162,39 +185,22 @@ class BaseCache:
             for key, response in keys_to_update.items():
                 self.responses[key] = response
 
-    def create_key(self, request: AnyRequest, **kwargs) -> str:
-        """Create a normalized cache key from a request object"""
-        return self.key_fn(
-            request,
-            ignored_parameters=self.ignored_parameters,
-            include_get_headers=self.include_get_headers,
-            **kwargs,
-        )
-
-    def has_key(self, key: str) -> bool:
-        """Returns `True` if cache has `key`, `False` otherwise"""
-        return key in self.responses or key in self.redirects
-
-    def has_url(self, url: str) -> bool:
-        """Returns `True` if cache has `url`, `False` otherwise. Works only for GET request urls"""
-        return self.has_key(url_to_key(url, self.ignored_parameters))  # noqa: W601
-
-    def keys(self, check_expiry=False) -> Iterator[str]:
-        """Get all cache keys for redirects and valid responses combined"""
-        yield from self.redirects.keys()
-        for key, _ in self._get_valid_responses(check_expiry=check_expiry):
-            yield key
-
-    def values(self, check_expiry=False) -> Iterator[CachedResponse]:
-        """Get all valid response objects from the cache"""
-        for _, response in self._get_valid_responses(check_expiry=check_expiry):
-            yield response
-
     def response_count(self, check_expiry=False) -> int:
         """Get the number of responses in the cache, excluding invalid (unusable) responses.
         Can also optionally exclude expired responses.
         """
         return len(list(self.values(check_expiry=check_expiry)))
+
+    def update(self, other: 'BaseCache'):
+        """Update this cache with the contents of another cache"""
+        logger.debug(f'Copying {len(other.responses)} responses from {repr(other)} to {repr(self)}')
+        self.responses.update(other.responses)
+        self.redirects.update(other.redirects)
+
+    def values(self, check_expiry=False) -> Iterator[CachedResponse]:
+        """Get all valid response objects from the cache"""
+        for _, response in self._get_valid_responses(check_expiry=check_expiry):
+            yield response
 
     def _get_valid_responses(
         self, check_expiry=False, delete=False

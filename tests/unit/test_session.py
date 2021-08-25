@@ -154,6 +154,17 @@ def test_keys(mock_session):
     assert set(mock_session.cache.keys()) == all_keys
 
 
+def test_update(mock_session):
+    src_cache = BaseCache()
+    for i in range(20):
+        src_cache.responses[f'key_{i}'] = f'value_{i}'
+        src_cache.redirects[f'key_{i}'] = f'value_{i}'
+
+    mock_session.cache.update(src_cache)
+    assert len(mock_session.cache.responses) == 20
+    assert len(mock_session.cache.redirects) == 20
+
+
 def test_values(mock_session):
     for url in [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_HTTPS]:
         mock_session.get(url)

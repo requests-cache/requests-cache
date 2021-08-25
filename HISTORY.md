@@ -21,6 +21,7 @@
   (e.g., less prone to invalidation due to future updates)
 
 **Other features:**
+* Add `BaseCache.update()` method as a shortcut for exporting to a different cache instance
 * Add support for custom cache key callbacks with `key_fn` parameter
 
 **Depedencies:**
