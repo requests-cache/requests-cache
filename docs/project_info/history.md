@@ -1,0 +1,3 @@
+(changelog)=
+```{include} ../../HISTORY.md
+```

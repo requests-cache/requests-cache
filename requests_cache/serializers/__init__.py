@@ -1,4 +1,4 @@
-"""Response serialization utilities. See :ref:`user_guide:serializers` for general usage info.
+"""Response serialization utilities. See :ref:`serializers` for general usage info.
 """
 # flake8: noqa: F401
 from .cattrs import CattrStage

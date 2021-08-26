@@ -1,4 +1,7 @@
-# Contributor Covenant Code of Conduct
+# Code of Conduct
+This Code of Conduct is adapted from
+[Contributor Covenant, version 1.4](https://www.contributor-covenant.org/version/1/4/code-of-conduct.html).
+See [FAQ](https://www.contributor-covenant.org/faq) for answers to common questions.
 
 ## Our Pledge
 
@@ -66,11 +69,3 @@ faith may face temporary or permanent repercussions as determined by other
 members of the project's leadership.
 
 ## Attribution
-
-This Code of Conduct is adapted from the [Contributor Covenant][homepage], version 1.4,
-available at https://www.contributor-covenant.org/version/1/4/code-of-conduct.html
-
-[homepage]: https://www.contributor-covenant.org
-
-For answers to common questions about this code of conduct, see
-https://www.contributor-covenant.org/faq

@@ -1,3 +1,4 @@
+(related-projects)=
 # Related Projects
 If requests-cache isn't quite what you need, you can help make it better! See the
 {ref}`Contributing Guide <contributing>` for details.
@@ -30,4 +31,4 @@ You can also check out these other python projects related to caching and/or HTT
   for tests; inspired by Ruby's [VCR](https://github.com/vcr/vcr)]. Works at the `httplib` level and
   is compatible with multiple HTTP libraries.
 * [betamax](https://github.com/betamaxpy/betamax): Records responses to local files and plays them back
-  for tests; also inspired by Ruby's [VCR](https://github.com/vcr/vcr)]. Made specifically for `requests`.
+  for tests; also inspired by Ruby's [VCR](https://github.com/vcr/vcr). Made specifically for `requests`.

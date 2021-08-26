@@ -1,6 +1,4 @@
-"""Classes and functions for cache persistence. See :ref:`user_guide:cache backends` for general
-usage info.
-"""
+"""Classes and functions for cache persistence. See :ref:`backends` for general usage info."""
 # flake8: noqa: F401
 from inspect import signature
 from logging import getLogger

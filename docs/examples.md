@@ -1,3 +1,4 @@
+(examples)=
 # Examples
 This section contains some complete examples that demonstrate the main features of requests-cache.
 
@@ -93,15 +94,15 @@ The following scripts can also be found in the
 :::
 
 (custom_keys)=
-### Custom cache key function
-```{include} ../examples/custom_cache_keys.py
+### Custom request matcher
+```{include} ../examples/custom_request_matcher.py
 :start-line: 2
 :end-line: 15
 ```
 
 :::{admonition} Example code
 :class: toggle
-```{literalinclude} ../examples/custom_cache_keys.py
+```{literalinclude} ../examples/custom_request_matcher.py
 :lines: 1,17-
 ```
 :::

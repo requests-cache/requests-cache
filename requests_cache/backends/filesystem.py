@@ -24,7 +24,7 @@ Or as YAML (requires ``pyyaml``):
 
 Cache Files
 ^^^^^^^^^^^
-* See :ref:`user_guide:cache files` for general info on cache files
+* See :ref:`files` for general info on specifying cache paths
 * The path for a given response will be in the format ``<cache_name>/<cache_key>``
 * Redirects are stored in a separate SQLite database, located at ``<cache_name>/redirects.sqlite``
 * Use :py:meth:`.FileCache.paths` to get a list of all cached response paths
