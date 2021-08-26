@@ -56,6 +56,7 @@ As well as headers, if `include_get_headers` is also used:
 Since `ignored_parameters` is most often used for sensitive info like credentials, these values will also be removed from the cached request parameters, body, and headers.
 ```
 
+(custom-matching)=
 ## Custom Request Matching
 If you need more advanced behavior, you can implement your own custom request matching.
 

@@ -1,8 +1,10 @@
-<!-- TODO: Better title for this section -->
-# Usage with other requests features
+# Advanced Requests
+Following are some tips on using requests-cache with some of the more
+[advanced features](https://docs.python-requests.org/en/latest/user/advanced/) of the requests
+library.
 
-## Request Hooks
-Requests has an [Event Hook](https://requests.readthedocs.io/en/master/user/advanced/#event-hooks)
+## Event Hooks
+Requests has an [event hook](https://requests.readthedocs.io/en/master/user/advanced/#event-hooks)
 system that can be used to add custom behavior into different parts of the request process.
 It can be used, for example, for request throttling:
 

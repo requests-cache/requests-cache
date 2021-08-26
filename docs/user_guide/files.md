@@ -35,8 +35,7 @@ You can also give an absolute path, including user paths (with `~`).
 
 ## System Paths
 If you don't know exactly where you want to put your cache files, your system's **temp directory**
-or **cache directory** is a good choice. Some options are available as shortcuts to use whatever the
-default locations are for your operating system.
+or **cache directory** is a good choice. Some options are available as shortcuts for these locations.
 
 Use the default temp directory with the `use_temp` option:
 :::{tab} Linux
