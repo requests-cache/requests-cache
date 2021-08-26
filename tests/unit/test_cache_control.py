@@ -138,37 +138,29 @@ def test_init_from_settings(url, request_expire_after, expected_expiration):
     ],
 )
 def test_update_from_cached_response(response_headers, expected_request_headers):
-    """Test with Cache-Control response headers"""
+    """Test that conditional request headers are added if the cached response is expired"""
     actions = CacheActions.from_request(
         cache_key='key',
         request=MagicMock(url='https://img.site.com/base/img.jpg'),
-        cache_control=True,
     )
     cached_response = CachedResponse(headers=response_headers, expires=datetime.now() - timedelta(1))
+
     actions.update_from_cached_response(cached_response)
-    assert actions.add_request_headers == expected_request_headers
+    assert actions.request_headers == expected_request_headers
 
 
 def test_update_from_cached_response__ignored():
-    """Test with Cache-Control response headers"""
-    # Do nothing if cache-control=Fase
+    """Test that conditional request headers are NOT applied if the cached response is not expired"""
     actions = CacheActions.from_request(
         cache_key='key',
         request=MagicMock(url='https://img.site.com/base/img.jpg'),
-        cache_control=False,
     )
     cached_response = CachedResponse(
-        headers={'ETag': ETAG, 'Last-Modified': LAST_MODIFIED},
-        expires=datetime.now() - timedelta(1),
+        headers={'ETag': ETAG, 'Last-Modified': LAST_MODIFIED}, expires=None
     )
-    actions.update_from_cached_response(cached_response)
-    assert actions.add_request_headers == {}
 
-    # Do nothing if the response is not expired
-    actions.cache_control = True
-    cached_response.expires = None
     actions.update_from_cached_response(cached_response)
-    assert actions.add_request_headers == {}
+    assert actions.request_headers == {}
 
 
 @pytest.mark.parametrize(
