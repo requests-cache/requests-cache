@@ -13,7 +13,7 @@ from .preconf import (
     utf8_encoder,
     yaml_serializer,
 )
-from .vcr import vcr_serializer
+from .vcr import to_vcr_cassette, to_vcr_cassettes_by_host
 
 __all__ = [
     'SERIALIZERS',
