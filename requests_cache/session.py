@@ -173,7 +173,7 @@ class CacheMixin(MIXIN_BASE):
         If applicable, also add request headers to check if the remote resource has been modified.
         If we get a 304 Not Modified response, return the expired cache item.
         """
-        request.headers.update(actions.add_request_headers)
+        request.headers.update(actions.request_headers)
         response = super().send(request, **kwargs)
         actions.update_from_response(response)
 

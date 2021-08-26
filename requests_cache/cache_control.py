@@ -54,10 +54,10 @@ class CacheActions:
     5. Per-session expiration
     """
 
-    add_request_headers: Dict = field(factory=dict)
     cache_control: bool = field(default=False)
     cache_key: str = field(default=None)
     expire_after: ExpirationTime = field(default=None)
+    request_headers: Dict[str, str] = field(factory=dict)
     skip_read: bool = field(default=False)
     skip_write: bool = field(default=False)
 
@@ -121,17 +121,18 @@ class CacheActions:
         """Convert the user/header-provided expiration value to a datetime"""
         return get_expiration_datetime(self.expire_after)
 
-    # TODO: Behavior if no other expiration method was specified (expire_after=-1)?
     def update_from_cached_response(self, response: CachedResponse):
         """Used after fetching a cached response, but before potentially sending a new request.
         Check for relevant cache headers on a cached response, and set corresponding request headers.
         """
-        if not self.cache_control or not response or not response.is_expired:
+        if not response or not response.is_expired:
             return
 
-        self.add_request_headers['If-None-Match'] = response.headers.get('ETag')
-        self.add_request_headers['If-Modified-Since'] = response.headers.get('Last-Modified')
-        self.add_request_headers = {k: v for k, v in self.add_request_headers.items() if v}
+        if response.headers.get('ETag'):
+            self.request_headers['If-None-Match'] = response.headers['ETag']
+        if response.headers.get('Last-Modified'):
+            self.request_headers['If-Modified-Since'] = response.headers['Last-Modified']
+        self.request_headers = {k: v for k, v in self.request_headers.items() if v}
 
     def update_from_response(self, response: Response):
         """Used after receiving a new response but before saving it to the cache.

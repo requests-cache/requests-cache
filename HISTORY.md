@@ -4,7 +4,7 @@
 [See all issues and PRs for 0.8](https://github.com/reclosedev/requests-cache/milestone/3?closed=1)
 
 **Conditional requests:**
-* Add support for the following request + response headers to enable conditional requests:
+* Add support for conditional requests using the following request + response headers:
   * `ETag` + `If-None-Match` headers
   * `Last-Modified` + `If-Modified-Since` headers
   * `304 Not Modified` responses
