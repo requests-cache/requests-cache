@@ -33,8 +33,9 @@ def get_placeholder_class(original_exception: Exception = None):
 
 try:
     from .backends import *
-    from .patcher import *
+    from .cache_control import DO_NOT_CACHE, CacheActions
     from .models import *
+    from .patcher import *
     from .serializers import *
     from .session import ALL_METHODS, CachedSession, CacheMixin
 # Log and ignore ImportErrors, if setup.py is invoked outside a virtualenv

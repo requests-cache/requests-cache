@@ -335,43 +335,69 @@ There are a number of other system default locations that might be appropriate f
 the [appdirs](https://github.com/ActiveState/appdirs) library for an easy cross-platform way to get
 the most commonly used ones.
 
-## Cache Options
-A number of options are available to modify which responses are cached and how they are cached.
+## Cache Filtering
+In many cases you will want to choose what you want to cache instead of just caching everything. By
+default, all **read-only** (`GET` and `HEAD`) **requests with a 200 response code** are cached. A
+few options are available to modify this behavior.
 
-### HTTP Methods
-By default, only GET and HEAD requests are cached. To cache additional HTTP methods, specify them
-with `allowable_methods`. For example, caching POST requests can be used to ensure you don't send
-the same data multiple times:
+```{note}
+When using {py:class}`.CachedSession`, any requests that you don't want to cache can also be made
+with a regular {py:class}`requests.Session` object, or wrapper functions like
+{py:func}`requests.get`, etc.
+```
+
+### Cached HTTP Methods
+To cache additional HTTP methods, specify them with `allowable_methods`:
 ```python
 >>> session = CachedSession(allowable_methods=('GET', 'POST'))
 >>> session.post('http://httpbin.org/post', json={'param': 'value'})
 ```
 
-### Status Codes
-By default, only responses with a 200 status code are cached. To cache additional status codes,
-specify them with `allowable_codes`"
+For example, some APIs use the `POST` method to request data via a JSON-formatted request body, for
+requests that may exceed the max size of a `GET` request. You may also want to cache `POST` requests
+to ensure you don't send the exact same data multiple times.
+
+### Cached Status Codes
+To cache additional status codes, specify them with `allowable_codes`
 ```python
 >>> session = CachedSession(allowable_codes=(200, 418))
 >>> session.get('http://httpbin.org/teapot')
 ```
 
-### Request Parameters
-By default, all request parameters are taken into account when caching responses. In some cases,
-there may be request parameters that don't affect the response data, for example authentication tokens
-or credentials. If you want to ignore specific parameters, specify them with `ignored_parameters`:
+(selective-caching)=
+### Cached URLs
+You can use {ref}`URL patterns <url-patterns>` to define an allowlist for selective caching, by
+using a expiration value of `0` (or `requests_cache.DO_NOT_CACHE`, to be more explicit) for
+non-matching request URLs:
 ```python
->>> session = CachedSession(ignored_parameters=['auth-token'])
->>> # Only the first request will be sent
->>> session.get('http://httpbin.org/get', params={'auth-token': '2F63E5DF4F44'})
->>> session.get('http://httpbin.org/get', params={'auth-token': 'D9FAEB3449D3'})
+>>> from requests_cache import DO_NOT_CACHE, CachedSession
+>>> urls_expire_after = {
+...     '*.site_1.com': 30,
+...     'site_2.com/static': -1,
+...     '*': DO_NOT_CACHE,
+... }
+>>> session = CachedSession(urls_expire_after=urls_expire_after)
 ```
 
-In addition to allowing the cache to ignore these parameters when fetching cached results, these
-parameters will also be removed from the cache data, including in the request headers.
-This makes `ignored_parameters` a good way to prevent key material or other secrets from being
-saved in the cache backend.
+Note that the catch-all rule above (`'*'`) will behave the same as setting the session-level
+expiration to `0`:
+```python
+>>> urls_expire_after = {'*.site_1.com': 30, 'site_2.com/static': -1}
+>>> session = CachedSession(urls_expire_after=urls_expire_after, expire_after=0)
+```
 
-### Request Headers
+### Custom Cache Filtering
+If you would like more control over which requests get cached, see
+{ref}`advanced_usage:custom cache filtering`.
+
+## Request Matching
+Requests are matched according to the request URL, parameters and body. All of these values are
+normalized to account for any variations that do not modify response content.
+
+There are additional options to match according to request headers, ignore specific request
+parameters, or create your own custom request matcher.
+
+### Matching Request Headers
 In some cases, different headers may result in different response data, so you may want to cache
 them separately. To enable this, use `include_get_headers`:
 ```python
@@ -380,6 +406,51 @@ them separately. To enable this, use `include_get_headers`:
 >>> session.get('http://httpbin.org/headers', {'Accept': 'text/plain'})
 >>> session.get('http://httpbin.org/headers', {'Accept': 'application/json'})
 ```
+
+### Selective Parameter Matching
+By default, all normalized request parameters are matched. In some cases, there may be request
+parameters that don't affect the response data, for example authentication tokens or credentials.
+If you want to ignore specific parameters, specify them with the `ignored_parameters` option.
+
+**Request Parameters:**
+
+In this example, only the first request will be sent, and the second request will be a cache hit
+due to the ignored parameters:
+```python
+>>> session = CachedSession(ignored_parameters=['auth-token'])
+>>> session.get('http://httpbin.org/get', params={'auth-token': '2F63E5DF4F44'})
+>>> r = session.get('http://httpbin.org/get', params={'auth-token': 'D9FAEB3449D3'})
+>>> assert r.from_cache is True
+```
+
+**Request Body Parameters:**
+
+This also applies to parameters in a JSON-formatted request body:
+```python
+>>> session = CachedSession(allowable_methods=('GET', 'POST'), ignored_parameters=['auth-token'])
+>>> session.post('http://httpbin.org/post', json={'auth-token': '2F63E5DF4F44'})
+>>> r = session.post('http://httpbin.org/post', json={'auth-token': 'D9FAEB3449D3'})
+>>> assert r.from_cache is True
+```
+
+**Request Headers:**
+
+As well as headers, if `include_get_headers` is also used:
+```python
+>>> session = CachedSession(ignored_parameters=['auth-token'], include_get_headers=True)
+>>> session.get('http://httpbin.org/get', headers={'auth-token': '2F63E5DF4F44'})
+>>> r = session.get('http://httpbin.org/get', headers={'auth-token': 'D9FAEB3449D3'})
+>>> assert r.from_cache is True
+```
+
+### Removing Sensitive Request Info
+`ignored_parameters` will also be removed from the cached response, including request parameters,
+body, and headers. This makes `ignored_parameters` a good way to prevent credentials or other
+sensitive info from being saved in the cache backend.
+
+### Custom Request Matching
+If you need more control over request matching behavior, see
+{ref}`advanced_usage:custom request matching`.
 
 ## Cache Expiration
 By default, cached responses will be stored indefinitely. There are a number of options for
@@ -424,7 +495,8 @@ Examples:
 >>> session = CachedSession(expire_after=0)
 ```
 
-### URL Patterns
+(url-patterns)=
+### Expiration With URL Patterns
 You can use `urls_expire_after` to set different expiration values based on URL glob patterns.
 This allows you to customize caching based on what you know about the resources you're requesting
 or how you intend to use them. For example, you might request one resource that gets updated
@@ -437,15 +509,6 @@ frequently, another that changes infrequently, and another that never changes. E
 ...     'site_2.com/static': -1,
 ... }
 >>> session = CachedSession(urls_expire_after=urls_expire_after)
-```
-
-You can also use this to define an allowlist, so only the patterns you define will be cached:
-```python
->>> urls_expire_after = {
-...     '*.site_1.com': 30,
-...     'site_2.com/static': -1,
-...     '*': 0,  # Every other non-matching URL: do not cache
-... }
 ```
 
 **Notes:**
