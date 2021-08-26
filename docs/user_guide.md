@@ -378,7 +378,7 @@ them separately. To enable this, use `include_get_headers`:
 ## Cache Expiration
 By default, cached responses will be stored indefinitely. There are a number of options for
 specifying how long to store responses, either with a single expiration value, glob patterns,
-or cache headers.
+or {ref}`cache headers <headers>`.
 
 The simplest option is to initialize the cache with an `expire_after` value, which will apply to all
 reponses:
@@ -450,40 +450,6 @@ You can also use this to define an allowlist, so only the patterns you define wi
 - If there is more than one match, the first match will be used in the order they are defined
 - If no patterns match a request, `CachedSession.expire_after` will be used as a default
 
-(cache-control)=
-### Cache Headers
-Most common request and response cache headers are supported, including
-[Cache-Control](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control)
-and [ETags](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag).
-To enable this behavior, use the `cache_control` option:
-```python
->>> session = CachedSession(cache_control=True)
-```
-
-```{warning}
-This is **not** intended to be strict implementation of HTTP caching, e.g. according to
-[RFC 2616](https://datatracker.ietf.org/doc/html/rfc2616)
-```
-
-**Supported request headers:**
-- `Cache-Control: max-age`: Used as the expiration time in seconds
-- `Cache-Control: no-cache`: Skips reading response data from the cache
-- `Cache-Control: no-store`: Skips reading and writing response data from/to the cache
-- `If-None-Match`: Automatically added if an `ETag` is available
-- `If-Modified-Since`: Automatically added if `Last-Modified` is available
-
-**Supported response headers:**
-- `Cache-Control: max-age`: Used as the expiration time in seconds
-- `Cache-Control: no-store` Skips writing response data to the cache
-- `Expires`: Used as an absolute expiration time
-- `ETag`: Returns expired cache data if the remote content has not changed (`304 Not Modified` response)
-- `Last-Modified`: Returns expired cache data if the remote content has not changed (`304 Not Modified` response)
-
-**Notes:**
-- Unlike a browser or proxy cache, `max-age=0` does not clear previously cached responses.
-- If enabled, Cache-Control directives will take priority over any other `expire_after` value.
-  See {ref}`user_guide:expiration precedence` for the full order of precedence.
-
 ### Removing Expired Responses
 For better performance, expired responses won't be removed immediately, but will be removed
 (or replaced) the next time they are requested.
@@ -507,6 +473,69 @@ You can also apply a different `expire_after` to previously cached responses, wh
 revalidate the cache with the new expiration time:
 ```python
 >>> session.remove_expired_responses(expire_after=timedelta(days=30))
+```
+
+(headers)=
+## Cache Headers
+Most common request and response headers related to caching are supported, including
+[Cache-Control](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control)
+and [ETags](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag).
+
+```{note}
+requests-cache is not intended to be strict implementation of HTTP caching according to
+[RFC 2616](https://datatracker.ietf.org/doc/html/rfc2616),
+[RFC 7234](https://datatracker.ietf.org/doc/html/rfc7234), etc. These RFCs describe many behaviors
+that make sense in the context of a browser or proxy cache, but not for a python application.
+```
+
+### Conditional Requests
+[Conditional requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Conditional_requests) are
+automatically sent for any servers that support them. Once a cached response expires, it will only
+be updated if the remote content has changed.
+
+Here's an example using the [GitHub API](https://docs.github.com/en/rest) to get info about the
+requests-cache repo:
+```python
+>>> # Cache a response that will expire immediately
+>>> url = 'https://api.github.com/repos/reclosedev/requests-cache'
+>>> session = CachedSession(expire_after=0.0001)
+>>> session.get(url)
+>>> time.sleep(0.0001)
+
+>>> # The cached response will still be used until the remote content actually changes
+>>> response = session.get(url)
+>>> print(response.from_cache, response.is_expired)
+True, True
+```
+
+### Cache-Control
+If enabled, `Cache-Control` directives will take priority over any other `expire_after` value.
+See {ref}`user_guide:expiration precedence` for the full order of precedence.
+
+To enable this behavior, use the `cache_control` option:
+```python
+>>> session = CachedSession(cache_control=True)
+```
+  
+### Supported Headers
+The following headers are currently supported:
+
+**Request headers:**
+- `Cache-Control: max-age`: Used as the expiration time in seconds
+- `Cache-Control: no-cache`: Skips reading response data from the cache
+- `Cache-Control: no-store`: Skips reading and writing response data from/to the cache
+- `If-None-Match`: Automatically added if an `ETag` is available
+- `If-Modified-Since`: Automatically added if `Last-Modified` is available
+
+**Response headers:**
+- `Cache-Control: max-age`: Used as the expiration time in seconds
+- `Cache-Control: no-store` Skips writing response data to the cache
+- `Expires`: Used as an absolute expiration time
+- `ETag`: Returns expired cache data if the remote content has not changed (`304 Not Modified` response)
+- `Last-Modified`: Returns expired cache data if the remote content has not changed (`304 Not Modified` response)
+
+```{note}
+Unlike a browser or proxy cache, `max-age=0` does not clear previously cached responses.
 ```
 
 (serializers)=
