@@ -48,8 +48,8 @@ Once you have your key, create a {py:func}`.safe_pickle_serializer` with it:
 ```
 
 :::{note}
-You can also make your own {ref}`custom serializer <advanced_usage:custom serializers>`
-using `itsdangerous`, if you would like more control over how responses are serialized.
+You can also make your own {ref}`custom-serializers`, if you would like more control over how
+responses are serialized.
 :::
 
 You can verify that it's working by modifying the cached item (*without* your key):
@@ -65,3 +65,7 @@ Then, if you try to get that cached response again (*with* your key), you will g
 >>> session.get('https://httpbin.org/get')
 BadSignature: Signature b'iFNmzdUOSw5vqrR9Cb_wfI1EoZ8' does not match
 ```
+
+## Removing Sensitive Info
+The {ref}`ignored_parameters <filter-params>` option can be used to prevent credentials and other
+sensitive info from being saved to the cache. It applies to request parameters, body, and headers.

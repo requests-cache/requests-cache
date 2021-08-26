@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
-Example of a custom cache key function that caches a new response if the version of requests-cache,
-requests, or urllib3 changes.
+Example of a custom {ref}`request matcher <matching>` that caches a new response if the version of
+requests-cache, requests, or urllib3 changes.
 
 This generally isn't needed, since anything that causes a deserialization error will simply result
 in a new request being sent and cached. But you might want to include a library version in your cache

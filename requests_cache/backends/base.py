@@ -39,7 +39,7 @@ class BaseCache:
 
     Lower-level storage operations are handled by :py:class:`.BaseStorage`.
 
-    To extend this with your own custom backend, see :ref:`advanced_usage:custom backends`.
+    To extend this with your own custom backend, see :ref:`custom-backends`.
     """
 
     def __init__(
@@ -247,7 +247,7 @@ class BaseStorage(MutableMapping, ABC):
 
     ``BaseStorage`` also contains a serializer module or instance (defaulting to :py:mod:`pickle`),
     which determines how :py:class:`.CachedResponse` objects are saved internally. See
-    :ref:`user_guide:serializers` for details.
+    :ref:`serializers` for details.
 
     Args:
         serializer: Custom serializer that provides ``loads`` and ``dumps`` methods

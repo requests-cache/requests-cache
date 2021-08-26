@@ -12,7 +12,7 @@ for requests-cache.
 
 Cache Files
 ^^^^^^^^^^^
-* See :ref:`user_guide:cache files` for general info on cache files
+* See :ref:`files` for general info on specifying cache paths
 * If you specify a name without an extension, the default extension ``.sqlite`` will be used
 
 In-Memory Caching

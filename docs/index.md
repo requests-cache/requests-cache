@@ -1,7 +1,7 @@
 
 <!--
 Pre-release warning to reduce confusion on what '/latest' means;
-TODO: remove prior to next minor release
+TODO: remove prior to next minor release, or add script to make this conditional
 -->
 ```{admonition} Note
 :class: warning
@@ -25,13 +25,8 @@ Documentation for the latest stable release can be found at [requests-cache.read
 ```{toctree}
 :maxdepth: 2
 
-user_guide
-advanced_usage
+user_guide/index
 examples
-security
 reference
-contributing
-contributors
-related_projects
-history
+project_info/index
 ````
