@@ -124,12 +124,18 @@ Or completely removed with {py:func}`.uninstall_cache`:
 You can also clear out all responses in the cache with {py:func}`.clear`, and check if
 requests-cache is currently installed with {py:func}`.is_installed`.
 
-#### Limitations
+(monkeypatch-issues)=
+#### Patching Limitations & Potential Issues
 Like any other utility that uses monkey-patching, there are some scenarios where you won't want to
 use {py:func}`.install_cache`:
+- When using other libraries that patch {py:class}`requests.Session`
 - In a multi-threaded or multiprocess application
-- In an application that uses other packages that extend or modify {py:class}`requests.Session`
-- In a package that will be used by other packages or applications
+- In a library that will be imported by other libraries or applications
+- In a larger application that makes requests in several different modules, where it may not be
+  obvious what is and isn't being cached
+
+In any of these cases, consider using {py:class}`.CachedSession`, {py:func}`requests_cache.enabled`,
+or {ref}`user_guide:selective caching`.
 
 (backends)=
 ## Cache Backends
@@ -633,12 +639,14 @@ your own.
 ## Error Handling
 In some cases, you might cache a response, have it expire, but then encounter an error when
 retrieving a new response. If you would like to use expired response data in these cases, use the
-`old_data_on_error` option:
+`old_data_on_error` option.
+
+For example:
 ```python
 >>> # Cache a test response that will expire immediately
 >>> session = CachedSession(old_data_on_error=True)
->>> session.get('https://httpbin.org/get', expire_after=0.001)
->>> time.sleep(0.001)
+>>> session.get('https://httpbin.org/get', expire_after=0.0001)
+>>> time.sleep(0.0001)
 ```
 
 Afterward, let's say the page has moved and you get a 404, or the site is experiencing downtime and
@@ -649,14 +657,15 @@ you get a 500. You will then get the expired cache data instead:
 True, True
 ```
 
-In addition to error codes, `old_data_on_error` also applies to exceptions (typically a
-{py:exc}`~requests.RequestException`). See requests documentation on
+In addition to HTTP error codes, `old_data_on_error` also applies to python exceptions (typically a
+{py:exc}`~requests.RequestException`). See `requests` documentation on
 [Errors and Exceptions](https://2.python-requests.org/en/master/user/quickstart/#errors-and-exceptions)
 for more details on request errors in general.
 
 ## Potential Issues
-- Version updates of `requests`, `urllib3` or `requests-cache` itself may not be compatible with
-  previously cached data (see issues [#56](https://github.com/reclosedev/requests-cache/issues/56)
-  and [#102](https://github.com/reclosedev/requests-cache/issues/102)). In these cases, the cached
-  data will simply be invalidated and a new response will be fetched.
-- See {ref}`security` for notes on serialization security
+- See {ref}`monkeypatch-issues` for issues specific to {py:func}`.install_cache`
+- New releases of `requests`, `urllib3` or `requests-cache` itself may change response data and be
+  be incompatible with previously cached data (see issues
+  [#56](https://github.com/reclosedev/requests-cache/issues/56) and
+  [#102](https://github.com/reclosedev/requests-cache/issues/102)).
+  In these cases, the cached data will simply be invalidated and a new response will be fetched.
