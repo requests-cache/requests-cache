@@ -1,20 +1,48 @@
-# TODO: Maybe this should be a one-way conversion function instead of a full serializer?
-"""YAML serializer compatible with VCR-based libraries, including `vcrpy
-<https://github.com/kevin1024/vcrpy>`_ and `betamax <https://github.com/betamaxpy/betamax>`_.
+"""Utilities to export responses to a format compatible with VCR-based libraries, including
+`vcrpy <https://github.com/kevin1024/vcrpy>`_ and `betamax <https://github.com/betamaxpy/betamax>`_.
 """
+from __future__ import annotations
+
 from os import makedirs
 from os.path import abspath, dirname, expanduser, join
-from typing import Any, Dict, Iterable
+from typing import TYPE_CHECKING, Any, Dict, Iterable
 from urllib.parse import urlparse
 
-from .. import __version__, get_placeholder_class
-from ..models import CachedHTTPResponse, CachedRequest, CachedResponse
-from .pipeline import SerializerPipeline, Stage
+from .. import __version__
+from ..models import CachedResponse
 from .preconf import yaml_preconf_stage
 
+if TYPE_CHECKING:
+    from ..backends import BaseCache
 
-def to_vcr_cassette(responses: Iterable[CachedResponse]) -> Dict:
-    """Convert responses to a VCR cassette"""
+
+def to_vcr_cassette(cache: BaseCache, path: str):
+    """Export cached responses to a VCR-compatible YAML file (cassette)
+
+    Args:
+        cache: Cache instance containing response data to export
+        path: Path for new cassette file
+    """
+
+    responses = cache.responses.values()
+    write_cassette(to_vcr_cassette_dict(responses), path)
+
+
+def to_vcr_cassettes_by_host(cache: BaseCache, cassette_dir: str = '.'):
+    """Export cached responses as VCR-compatible YAML files (cassettes), split into separate files
+    based on request host
+
+    Args:
+        cache: Cache instance containing response data to export
+        cassette_dir: Base directory for cassette library
+    """
+    responses = cache.responses.values()
+    for host, cassette in to_vcr_cassette_dicts_by_host(responses).items():
+        write_cassette(cassette, join(cassette_dir, f'{host}.yml'))
+
+
+def to_vcr_cassette_dict(responses: Iterable[CachedResponse]) -> Dict:
+    """Convert responses to a VCR cassette dict"""
     return {
         'http_interactions': [to_vcr_episode(r) for r in responses],
         'recorded_with': f'requests-cache {__version__}',
@@ -47,69 +75,16 @@ def to_vcr_episode(response: CachedResponse) -> Dict:
     }
 
 
-def from_vcr_episode(cassette_dict: Dict):
-    data = cassette_dict.get('interactions') or cassette_dict.get('http_interactions') or cassette_dict
-    request = CachedRequest(
-        body=data['request']['body'],
-        headers=data['request']['headers'],
-        method=data['request']['method'],
-        url=data['request']['uri'],
-    )
-    raw_response = CachedHTTPResponse(body=data['response']['body'])  # type: ignore  # TODO: fix type hint
-    return CachedResponse(
-        content=data['response']['body']['string'],
-        encoding=data['response']['body'].get('encoding'),
-        headers=data['response']['headers'],
-        raw=raw_response,
-        reason=data['response']['status']['message'],
-        request=request,
-        status_code=data['response']['status']['code'],
-        url=data['response']['url'],
-    )
-
-
-try:
-    import yaml
-
-    vcr_stage = Stage(dumps=to_vcr_episode, loads=from_vcr_episode)
-    vcr_serializer = SerializerPipeline(
-        [
-            yaml_preconf_stage,
-            vcr_stage,
-            Stage(yaml, loads='safe_load', dumps='safe_dump'),
-        ]
-    )  #: VRC-compatible YAML serializer
-except ImportError as e:
-    yaml_serializer = get_placeholder_class(e)
-
-
-# Experimental
-# ------------
-
-
-def save_vcr_cassette(responses: Iterable[CachedResponse], path: str):
-    """Save responses as VCR-compatible YAML files"""
-    _write_cassette(to_vcr_cassette(responses), path)
-
-
-def save_vcr_cassettes_by_host(responses: Iterable[CachedResponse], cassette_dir: str):
-    """Save responses as VCR-compatible YAML files, with one cassette per request host"""
-
-    cassettes_by_host = _to_vcr_cassettes_by_host(responses)
-    for host, cassette in cassettes_by_host.items():
-        _write_cassette(cassette, join(cassette_dir, f'{host}.yml'))
-
-
-def _to_vcr_cassettes_by_host(responses: Iterable[CachedResponse]) -> Dict[str, Dict]:
+def to_vcr_cassette_dicts_by_host(responses: Iterable[CachedResponse]) -> Dict[str, Dict]:
     responses_by_host: Dict[str, Any] = {}
     for response in responses:
         host = urlparse(response.request.url).netloc
         responses_by_host.setdefault(host, [])
         responses_by_host[host].append(response)
-    return {host: to_vcr_cassette(responses) for host, responses in responses_by_host.items()}
+    return {host: to_vcr_cassette_dict(responses) for host, responses in responses_by_host.items()}
 
 
-def _write_cassette(cassette, path):
+def write_cassette(cassette, path):
     import yaml
 
     path = abspath(expanduser(path))
