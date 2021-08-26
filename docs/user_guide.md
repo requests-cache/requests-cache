@@ -61,14 +61,15 @@ Basic usage looks like this:
 >>> session.get('http://httpbin.org/get')
 ```
 
-Any {py:class}`requests.Session` method can be used (but see {ref}`user_guide:http methods` section
-below for config details):
+Any {py:class}`requests.Session` method can be used (but see
+{ref}`user_guide:cached http methods` section for options):
 ```python
 >>> session.request('GET', 'http://httpbin.org/get')
 >>> session.head('http://httpbin.org/get')
 ```
 
-Caching can be temporarily disabled with {py:meth}`.CachedSession.cache_disabled`:
+Caching can be temporarily disabled for the session with
+{py:meth}`.CachedSession.cache_disabled`:
 ```python
 >>> with session.cache_disabled():
 ...     session.get('http://httpbin.org/get')
@@ -134,8 +135,8 @@ use {py:func}`.install_cache`:
 - In a larger application that makes requests in several different modules, where it may not be
   obvious what is and isn't being cached
 
-In any of these cases, consider using {py:class}`.CachedSession`, {py:func}`requests_cache.enabled`,
-or {ref}`user_guide:selective caching`.
+In any of these cases, consider using {py:class}`.CachedSession`, the {py:func}`.enabled`
+contextmanager, or {ref}`selective-caching`.
 
 (backends)=
 ## Cache Backends
@@ -153,6 +154,8 @@ In the rare case that SQLite is not available
 in-memory cache is used by default.
 ```
 
+See {py:mod}`.requests_cache.backends` for usage details for specific backends.
+### Backend Dependencies
 Most of the other backends require some extra dependencies, listed below.
 
 Backend                                                | Class                      | Alias          | Dependencies
@@ -194,9 +197,6 @@ Each backend class also accepts optional parameters for the underlying connectio
 ```python
 >>> session = CachedSession('my_cache', backend='sqlite', timeout=30)
 ```
-
-See {py:mod}`.requests_cache.backends` for more backend-specific usage details, and see
-{ref}`advanced_usage:custom backends` for details on creating your own implementation.
 
 ### Testing Backends
 If you just want to quickly try out all of the available backends for comparison,
@@ -240,6 +240,9 @@ Or, using backend classes directly:
 >>> dest_cache = FileCache('~/workspace/cache_dump', serializer='json')
 >>> dest_cache.update(src_cache)
 ```
+
+### Custom Backends
+See {ref}`advanced_usage:custom backends` for details on creating your own backend implementation.
 
 ## Cache Files
 ```{note}
@@ -519,12 +522,38 @@ frequently, another that changes infrequently, and another that never changes. E
 - If there is more than one match, the first match will be used in the order they are defined
 - If no patterns match a request, `CachedSession.expire_after` will be used as a default
 
+### Expiration and Error Handling
+In some cases, you might cache a response, have it expire, but then encounter an error when
+retrieving a new response. If you would like to use expired response data in these cases, use the
+`old_data_on_error` option.
+
+For example:
+```python
+>>> # Cache a test response that will expire immediately
+>>> session = CachedSession(old_data_on_error=True)
+>>> session.get('https://httpbin.org/get', expire_after=0.0001)
+>>> time.sleep(0.0001)
+```
+
+Afterward, let's say the page has moved and you get a 404, or the site is experiencing downtime and
+you get a 500. You will then get the expired cache data instead:
+```python
+>>> response = session.get('https://httpbin.org/get')
+>>> print(response.from_cache, response.is_expired)
+True, True
+```
+
+In addition to HTTP error codes, `old_data_on_error` also applies to python exceptions (typically a
+{py:exc}`~requests.RequestException`). See `requests` documentation on
+[Errors and Exceptions](https://2.python-requests.org/en/master/user/quickstart/#errors-and-exceptions)
+for more details on request errors in general.
+
 ### Removing Expired Responses
-For better performance, expired responses won't be removed immediately, but will be removed
+For better read performance, expired responses won't be removed immediately, but will be removed
 (or replaced) the next time they are requested.
 :::{tip}
 Implementing one or more cache eviction algorithms is being considered. If this is something you are
-interested in, please provide feedback via [issues](https://github.com/reclosedev/requests-cache/issues/new/choose)!
+interested in, please provide feedback via [issues](https://github.com/reclosedev/requests-cache/issues)!
 :::
 
 To manually clear all expired responses, use
@@ -585,7 +614,7 @@ To enable this behavior, use the `cache_control` option:
 ```python
 >>> session = CachedSession(cache_control=True)
 ```
-  
+
 ### Supported Headers
 The following headers are currently supported:
 
@@ -695,35 +724,9 @@ pip install requests-cache[bson]
 See {ref}`security` for recommended setup steps for more secure cache serialization, particularly
 when using {py:mod}`pickle`.
 
-### Other Serialization Formats
+### Custom Serializers
 See {ref}`advanced_usage:custom serializers` for other possible formats, and options for creating
-your own.
-
-## Error Handling
-In some cases, you might cache a response, have it expire, but then encounter an error when
-retrieving a new response. If you would like to use expired response data in these cases, use the
-`old_data_on_error` option.
-
-For example:
-```python
->>> # Cache a test response that will expire immediately
->>> session = CachedSession(old_data_on_error=True)
->>> session.get('https://httpbin.org/get', expire_after=0.0001)
->>> time.sleep(0.0001)
-```
-
-Afterward, let's say the page has moved and you get a 404, or the site is experiencing downtime and
-you get a 500. You will then get the expired cache data instead:
-```python
->>> response = session.get('https://httpbin.org/get')
->>> print(response.from_cache, response.is_expired)
-True, True
-```
-
-In addition to HTTP error codes, `old_data_on_error` also applies to python exceptions (typically a
-{py:exc}`~requests.RequestException`). See `requests` documentation on
-[Errors and Exceptions](https://2.python-requests.org/en/master/user/quickstart/#errors-and-exceptions)
-for more details on request errors in general.
+your own implementation.
 
 ## Potential Issues
 - See {ref}`monkeypatch-issues` for issues specific to {py:func}`.install_cache`
