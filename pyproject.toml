@@ -70,10 +70,10 @@ redis    = ["redis"]
 bson     = ["bson"]   # BSON comes with pymongo, but can also be used as a standalone codec
 json     = ["ujson"]  # Will optionally be used by JSON serializer for improved performance
 security = ["itsdangerous"]
-yaml     = ["yaml"]
+yaml     = ["pyyaml"]
 
 # All optional packages combined, for demo/evaluation purposes
-all      = ["boto3", "botocore", "itsdangerous", "pymongo", "redis", "ujson", "yaml"]
+all      = ["boto3", "botocore", "itsdangerous", "pymongo", "pyyaml", "redis", "ujson"]
 
 # Documentation
 docs     = ["furo", "linkify-it-py", "myst-parser", "sphinx", "sphinx-autodoc-typehints",

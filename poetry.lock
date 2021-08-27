@@ -1198,7 +1198,7 @@ docs = ["sphinx", "jaraco.packaging (>=8.2)", "rst.linker (>=1.9)"]
 testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-cov", "pytest-enabler (>=1.0.1)", "jaraco.itertools", "func-timeout", "pytest-black (>=0.3.7)", "pytest-mypy"]
 
 [extras]
-all = ["boto3", "botocore", "itsdangerous", "pymongo", "redis", "ujson"]
+all = ["boto3", "botocore", "itsdangerous", "pymongo", "pyyaml", "redis", "ujson"]
 bson = ["bson"]
 docs = ["furo", "linkify-it-py", "myst-parser", "sphinx", "sphinx-autodoc-typehints", "sphinx-automodapi", "sphinx-copybutton", "sphinx-inline-tabs", "sphinx-panels", "sphinxcontrib-apidoc"]
 dynamodb = ["boto3", "botocore"]
@@ -1206,12 +1206,12 @@ json = ["ujson"]
 mongodb = ["pymongo"]
 redis = ["redis"]
 security = ["itsdangerous"]
-yaml = []
+yaml = ["pyyaml"]
 
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "37b082f9dfe33561268c2cc2e5bc8ce23302d8e97f548e9cdf5f4eb9ce974841"
+content-hash = "cd051d290c392d46b3b9bec80e3ac464e745af2d17a075fe01dfb3816faca697"
 
 [metadata.files]
 alabaster = [
