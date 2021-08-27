@@ -1,5 +1,5 @@
 (examples)=
-# {fa}`laptop-code` Examples
+# {fa}`laptop-code,style=fas` Examples
 This section contains some complete examples that demonstrate the main features of requests-cache.
 
 ## Articles
@@ -51,6 +51,32 @@ The following scripts can also be found in the
 :class: toggle
 ```{literalinclude} ../examples/expiration.py
 :lines: 1,5-
+```
+:::
+
+### URL patterns
+```{include} ../examples/url_patterns.py
+:start-line: 3
+:end-line: 4
+```
+
+:::{admonition} Example code
+:class: toggle
+```{literalinclude} ../examples/url_patterns.py
+:lines: 1,6-
+```
+:::
+
+### Multi-threaded requests
+```{include} ../examples/threads.py
+:start-line: 2
+:end-line: 4
+```
+
+:::{admonition} Example code
+:class: toggle
+```{literalinclude} ../examples/threads.py
+:lines: 1,6-
 ```
 :::
 
