@@ -54,6 +54,19 @@ The following scripts can also be found in the
 ```
 :::
 
+### Multi-threaded requests
+```{include} ../examples/threads.py
+:start-line: 2
+:end-line: 4
+```
+
+:::{admonition} Example code
+:class: toggle
+```{literalinclude} ../examples/threads.py
+:lines: 1,6-
+```
+:::
+
 ### Logging requests
 ```{include} ../examples/log_requests.py
 :start-line: 2
