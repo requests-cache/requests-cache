@@ -1,14 +1,17 @@
 <!-- TODO: This could use some more details and examples -->
 (inspection)=
-# Cache Inspection
+# {fa}`search` Cache Inspection
 Here are some ways to get additional information out of the cache session, backend, and responses:
 
 ## Response Details
 The following attributes are available on responses:
 - `from_cache`: indicates if the response came from the cache
+- `cache_key`: The unique identifier used to match the request to the response (see {ref}`matching`
+  for details)
 - `created_at`: {py:class}`~datetime.datetime` of when the cached response was created or last updated
-- `expires`: {py:class}`~datetime.datetime` after which the cached response will expire
-- `is_expired`: indicates if the cached response is expired (if an old response was returned due to a request error)
+- `expires`: {py:class}`~datetime.datetime` after which the cached response will expire (see
+  {ref}`expiration` for details)
+- `is_expired`: indicates if the cached response is expired (if, for example, an old response was returned due to a request error)
 
 Examples:
 :::{admonition} Example code

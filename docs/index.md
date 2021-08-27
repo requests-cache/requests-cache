@@ -25,8 +25,8 @@ Documentation for the latest stable release can be found at [requests-cache.read
 ```{toctree}
 :maxdepth: 2
 
-user_guide/index
-examples
+user_guide
 reference
-project_info/index
+examples
+project_info
 ````

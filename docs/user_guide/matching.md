@@ -1,5 +1,5 @@
 (matching)=
-# Request Matching
+# {fa}`equals` Request Matching
 Requests are matched according to the request URL, parameters and body. All of these values are
 normalized to account for any variations that do not modify response content.
 
@@ -56,6 +56,7 @@ As well as headers, if `include_get_headers` is also used:
 Since `ignored_parameters` is most often used for sensitive info like credentials, these values will also be removed from the cached request parameters, body, and headers.
 ```
 
+(custom-matching)=
 ## Custom Request Matching
 If you need more advanced behavior, you can implement your own custom request matching.
 

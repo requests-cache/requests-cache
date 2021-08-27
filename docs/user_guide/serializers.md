@@ -1,5 +1,5 @@
 (serializers)=
-# Serializers
+# {fa}`barcode` Serializers
 ![](../_static/file-pickle_32px.png)
 ![](../_static/file-json_32px.png)
 ![](../_static/file-yaml_32px.png)

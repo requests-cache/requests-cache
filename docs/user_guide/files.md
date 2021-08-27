@@ -1,8 +1,8 @@
 (files)=
-# Cache Files
+# {fa}`folder-open` Cache Files
 ```{note}
-This section only applies to the {py:mod}`~requests_cache.backends.sqlite` and
-{py:mod}`~requests_cache.backends.filesystem` backends.
+This section only applies to the {py:mod}`SQLite <requests_cache.backends.sqlite>` and
+{py:mod}`Filesystem <requests_cache.backends.filesystem>` backends.
 ```
 For file-based backends, the cache name will be used as a path to the cache file(s). You can use
 a relative path, absolute path, or use some additional options for system-specific default paths.
@@ -35,8 +35,7 @@ You can also give an absolute path, including user paths (with `~`).
 
 ## System Paths
 If you don't know exactly where you want to put your cache files, your system's **temp directory**
-or **cache directory** is a good choice. Some options are available as shortcuts to use whatever the
-default locations are for your operating system.
+or **cache directory** is a good choice. Some options are available as shortcuts for these locations.
 
 Use the default temp directory with the `use_temp` option:
 :::{tab} Linux

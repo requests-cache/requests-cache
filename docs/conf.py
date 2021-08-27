@@ -38,6 +38,7 @@ extensions = [
     'sphinx_automodapi.smart_resolver',
     'sphinx_copybutton',
     'sphinx_inline_tabs',
+    'sphinx_panels',
     'sphinxcontrib.apidoc',
     'myst_parser',
 ]
@@ -94,7 +95,12 @@ apidoc_toc_file = False
 # HTML general settings
 html_favicon = join('_static', 'favicon.ico')
 html_js_files = ['collapsible_container.js']
-html_css_files = ['collapsible_container.css', 'table.css']
+html_css_files = [
+    'collapsible_container.css',
+    'table.css',
+    'https://use.fontawesome.com/releases/v5.15.3/css/all.css',
+    'https://use.fontawesome.com/releases/v5.15.3/css/v4-shims.css',
+]
 html_show_sphinx = False
 pygments_style = 'friendly'
 pygments_dark_style = 'material'
@@ -106,11 +112,11 @@ html_theme_options = {
     'dark_logo': 'requests-cache-logo-white.png',
     'sidebar_hide_name': True,
     'light_css_variables': {
-        'color-brand-primary': '#2962ff',
+        'color-brand-primary': '#0288d1',
         'color-brand-content': '#2a5adf',
     },
     'dark_css_variables': {
-        'color-brand-primary': '#2b8cee',
+        'color-brand-primary': '#5eb8ff',
         'color-brand-content': '#368ce2',
     },
 }

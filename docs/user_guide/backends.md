@@ -1,5 +1,5 @@
 (backends)=
-# Backends
+# {fa}`database` Backends
 ![](../_static/sqlite_32px.png)
 ![](../_static/redis_32px.png)
 ![](../_static/mongodb_32px.png)
@@ -8,13 +8,14 @@
 
 Several cache backends are included. The default is SQLite, since it's generally the simplest to
 use, and requires no extra dependencies or configuration.
+
+See {py:mod}`.requests_cache.backends` for usage details for specific backends.
+
 ```{note}
 In the rare case that SQLite is not available
 (for example, [on Heroku](https://devcenter.heroku.com/articles/sqlite3)), a non-persistent
 in-memory cache is used by default.
 ```
-
-See {py:mod}`.requests_cache.backends` for usage details for specific backends.
 
 ## Backend Dependencies
 Most of the other backends require some extra dependencies, listed below.
