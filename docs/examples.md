@@ -54,6 +54,19 @@ The following scripts can also be found in the
 ```
 :::
 
+### URL patterns
+```{include} ../examples/url_patterns.py
+:start-line: 3
+:end-line: 4
+```
+
+:::{admonition} Example code
+:class: toggle
+```{literalinclude} ../examples/url_patterns.py
+:lines: 1,6-
+```
+:::
+
 ### Multi-threaded requests
 ```{include} ../examples/threads.py
 :start-line: 2
