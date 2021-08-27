@@ -1,5 +1,5 @@
 (examples)=
-# {fa}`laptop-code` Examples
+# {fa}`laptop-code,style=fas` Examples
 This section contains some complete examples that demonstrate the main features of requests-cache.
 
 ## Articles
