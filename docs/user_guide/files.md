@@ -1,8 +1,8 @@
 (files)=
-# Cache Files
+# {fa}`folder-open` Cache Files
 ```{note}
-This section only applies to the {py:mod}`~requests_cache.backends.sqlite` and
-{py:mod}`~requests_cache.backends.filesystem` backends.
+This section only applies to the {py:mod}`SQLite <requests_cache.backends.sqlite>` and
+{py:mod}`Filesystem <requests_cache.backends.filesystem>` backends.
 ```
 For file-based backends, the cache name will be used as a path to the cache file(s). You can use
 a relative path, absolute path, or use some additional options for system-specific default paths.

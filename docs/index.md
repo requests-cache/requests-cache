@@ -26,7 +26,7 @@ Documentation for the latest stable release can be found at [requests-cache.read
 :maxdepth: 2
 
 user_guide
-examples
 reference
+examples
 project_info
 ````

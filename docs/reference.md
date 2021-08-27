@@ -1,7 +1,6 @@
 % Note: The module sources referenced here are auto-generated with apidoc
 (reference)=
-
-# API Reference
+# {fa}`list` API Reference
 This section covers all the public interfaces of requests-cache.
 
 :::{tip}

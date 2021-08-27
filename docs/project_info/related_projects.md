@@ -1,5 +1,5 @@
 (related-projects)=
-# Related Projects
+# {fa}`external-link` Related Projects
 If requests-cache isn't quite what you need, you can help make it better! See the
 {ref}`Contributing Guide <contributing>` for details.
 

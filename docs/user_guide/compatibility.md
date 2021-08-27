@@ -1,6 +1,6 @@
 <!-- TODO: Fix relative links -->
 (compatibility)=
-# Usage with other requests-based libraries
+# {fa}`plus-square` Usage with other requests-based libraries
 This library works by patching and/or extending {py:class}`requests.Session`. Many other libraries
 out there do the same thing, making it potentially difficult to combine them.
 
@@ -123,7 +123,7 @@ This has the advantage of only using request-mock's behavior for
 
 :::{admonition} Example code
 :class: toggle
-```{literalinclude} ../tests/compat/test_requests_mock_load_cache.py
+```{literalinclude} ../../tests/compat/test_requests_mock_load_cache.py
 :lines: 21-40
 ```
 :::
@@ -131,7 +131,7 @@ This has the advantage of only using request-mock's behavior for
 To turn that into a complete example:
 :::{admonition} Example code
 :class: toggle
-```{literalinclude} ../tests/compat/test_requests_mock_load_cache.py
+```{literalinclude} ../../tests/compat/test_requests_mock_load_cache.py
 ```
 :::
 
@@ -141,6 +141,6 @@ requests-mock examples above.
 
 :::{admonition} Example code
 :class: toggle
-```{literalinclude} ../tests/compat/test_responses_load_cache.py
+```{literalinclude} ../../tests/compat/test_responses_load_cache.py
 ```
 :::

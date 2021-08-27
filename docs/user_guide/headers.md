@@ -1,5 +1,5 @@
 (headers)=
-# Cache Headers
+# {fa}`file-code` Cache Headers
 Most common request and response headers related to caching are supported, including
 [Cache-Control](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control)
 and [ETags](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag).

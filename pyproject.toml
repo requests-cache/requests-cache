@@ -57,6 +57,7 @@ sphinx-autodoc-typehints   = {optional=true, version="^1.11"}
 sphinx-automodapi          = {optional=true, version="^0.13"}
 sphinx-copybutton          = {optional=true, version=">=0.3,<0.5"}
 sphinx-inline-tabs         = {optional=true, version="^2021.4.11-beta.9", python=">=3.8"}
+sphinx-panels              = {optional=true, version="^0.6"}
 sphinxcontrib-apidoc       = {optional=true, version="^0.3"}
 
 [tool.poetry.extras]
@@ -72,11 +73,12 @@ security = ["itsdangerous"]
 yaml     = ["yaml"]
 
 # All optional packages combined, for demo/evaluation purposes
-all      = ["boto3", "botocore", "itsdangerous", "pymongo", "redis", "ujson"]
+all      = ["boto3", "botocore", "itsdangerous", "pymongo", "redis", "ujson", "yaml"]
 
 # Documentation
 docs     = ["furo", "linkify-it-py", "myst-parser", "sphinx", "sphinx-autodoc-typehints",
-            "sphinx-automodapi", "sphinx-copybutton", "sphinx-inline-tabs", "sphinxcontrib-apidoc"]
+            "sphinx-automodapi", "sphinx-copybutton", "sphinx-inline-tabs", "sphinx-panels",
+            "sphinxcontrib-apidoc"]
 
 [tool.poetry.dev-dependencies]
 # For unit + integration tests

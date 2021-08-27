@@ -1,4 +1,4 @@
-# Installation
+# {fa}`download` Installation
 Installation instructions:
 
 :::{tab} Pip

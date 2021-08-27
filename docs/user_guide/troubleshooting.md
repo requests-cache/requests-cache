@@ -1,5 +1,5 @@
 (debug)=
-# Troubleshooting
+# {fa}`exclamation-circle` Troubleshooting
 Here are a few tips for avoiding and debugging some common problems.
 
 ## Potential Issues

@@ -1,6 +1,6 @@
 <!-- TODO: This could use some more details and examples -->
 (inspection)=
-# Cache Inspection
+# {fa}`search` Cache Inspection
 Here are some ways to get additional information out of the cache session, backend, and responses:
 
 ## Response Details

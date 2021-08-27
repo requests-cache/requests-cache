@@ -1,4 +1,4 @@
-# Project Info
+# {fa}`info-circle` Project Info
 
 ```{toctree}
 :maxdepth: 2
