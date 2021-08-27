@@ -384,8 +384,9 @@ def test_response_defaults(mock_session):
     response_1 = mock_session.get(MOCKED_URL)
     response_2 = mock_session.get(MOCKED_URL)
     response_3 = mock_session.get(MOCKED_URL)
+    cache_key = '5f07348eed38b2417f6e14b25b592170'
 
-    assert response_1.cache_key.startswith('fd2afc8d')
+    assert response_1.cache_key == cache_key
     assert response_1.created_at is None
     assert response_1.expires is None
     assert response_1.from_cache is False
@@ -393,7 +394,7 @@ def test_response_defaults(mock_session):
 
     assert isinstance(response_2.created_at, datetime)
     assert isinstance(response_2.expires, datetime)
-    assert response_2.cache_key.startswith('fd2afc8d')
+    assert response_2.cache_key == cache_key
     assert response_2.created_at == response_3.created_at
     assert response_2.expires == response_3.expires
     assert response_2.from_cache is response_3.from_cache is True

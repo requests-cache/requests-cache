@@ -16,7 +16,7 @@ def test_normalize_dict__skip_body():
     assert normalize_dict(b'some bytes', normalize_data=False) == b'some bytes'
 
 
-CACHE_KEY = '60f16f69ec5a24991e4e58ded8d92bd78f1b8468a5e0ac8db7533d5cb113f7f2'
+CACHE_KEY = '6e742f4ac5ec7f504cbe707b396afba9'
 
 
 # All of the following variations should produce the same cache key
