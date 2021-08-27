@@ -25,7 +25,7 @@ def main():
 
     # Get some debugging info about the cache
     print(session.cache)
-    print('Cached URLS:', session.cache.urls)
+    print('Cached URLS:', list(session.cache.urls))
 
 
 if __name__ == "__main__":
