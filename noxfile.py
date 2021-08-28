@@ -13,9 +13,9 @@ nox.options.reuse_existing_virtualenvs = True
 nox.options.sessions = ['lint', 'cov']
 
 LIVE_DOCS_PORT = 8181
-LIVE_DOCS_IGNORE = ['*.pyc', '*.tmp']
+LIVE_DOCS_IGNORE = ['*.pyc', '*.tmp', join('**', 'modules', '*')]
 LIVE_DOCS_WATCH = ['requests_cache', 'examples']
-CLEAN_DIRS = ['dist', 'build', join('docs', '_build')]
+CLEAN_DIRS = ['dist', 'build', join('docs', '_build'), join('docs', 'modules')]
 
 UNIT_TESTS = join('tests', 'unit')
 INTEGRATION_TESTS = join('tests', 'integration')
