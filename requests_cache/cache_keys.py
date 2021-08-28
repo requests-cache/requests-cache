@@ -1,5 +1,4 @@
-"""Internal utilities for generating cache keys based on request details + :py:class:`.BaseCache`
-settings
+"""Internal utilities for generating the cache keys that are used to match requests
 
 .. automodsumm:: requests_cache.cache_keys
    :functions-only:
@@ -18,6 +17,8 @@ from requests.models import CaseInsensitiveDict
 from requests.utils import default_headers
 from url_normalize import url_normalize
 
+from . import get_valid_kwargs
+
 if TYPE_CHECKING:
     from .models import AnyRequest
 
@@ -27,12 +28,18 @@ RequestContent = Union[Mapping, str, bytes]
 
 
 def create_key(
-    request: AnyRequest,
+    request: AnyRequest = None,
     ignored_parameters: Iterable[str] = None,
     include_get_headers: bool = False,
     **kwargs,
 ) -> str:
-    """Create a normalized cache key from a request object"""
+    """Create a normalized cache key from a request object or :py:class:`~requests.Request`
+    arguments
+    """
+    if not request:
+        request_kwargs = get_valid_kwargs(Request.__init__, kwargs)
+        request = Session().prepare_request(Request(**request_kwargs))
+
     key = sha256(encode((request.method or '').upper()))
     url = remove_ignored_url_params(request, ignored_parameters)
     url = url_normalize(url)
@@ -144,12 +151,6 @@ def normalize_dict(
             pass
 
     return items
-
-
-def url_to_key(url: str, *args, **kwargs) -> str:
-    """Create a cache key from a request URL"""
-    request = Session().prepare_request(Request('GET', url))
-    return create_key(request, *args, **kwargs)
 
 
 def encode(value, encoding='utf-8') -> bytes:

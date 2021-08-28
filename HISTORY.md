@@ -17,11 +17,14 @@
 * SQLite: Add `SQLiteCache.db_path` property
 
 **Serialization:**
-* Use `cattrs` for serialization by default, which enables a more forwards-compatible serialization format
-  (e.g., less prone to invalidation due to future updates)
+* Use `cattrs` by default for optimized serialization
 
 **Other features:**
 * Add `BaseCache.update()` method as a shortcut for exporting to a different cache instance
+* Allow `BaseCache.has_url()` and `delete_url()` to optionally take arguments for `requests.Request`
+  instead of just a URL
+* Allow `create_key()` to optionally take arguments for `requests.Request` instead of a request
+  object
 * Add support for custom cache key callbacks with `key_fn` parameter
 * Slightly reduce size of serialized responses
 

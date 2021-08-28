@@ -20,7 +20,7 @@ from requests_cache.backends import (
     get_placeholder_class,
 )
 from requests_cache.backends.base import DESERIALIZE_ERRORS
-from requests_cache.cache_keys import url_to_key
+from requests_cache.cache_keys import create_key
 from tests.conftest import (
     MOCKED_URL,
     MOCKED_URL_404,
@@ -320,10 +320,28 @@ def test_clear(mock_session):
     assert not mock_session.cache.has_url(MOCKED_URL_REDIRECT)
 
 
+def test_has_url(mock_session):
+    mock_session.get(MOCKED_URL)
+    assert mock_session.cache.has_url(MOCKED_URL)
+    assert not mock_session.cache.has_url(MOCKED_URL_REDIRECT)
+
+
+def test_has_url__request_args(mock_session):
+    mock_session.get(MOCKED_URL, params={'foo': 'bar'})
+    assert mock_session.cache.has_url(MOCKED_URL, params={'foo': 'bar'})
+    assert not mock_session.cache.has_url(MOCKED_URL)
+
+
 def test_delete_url(mock_session):
     mock_session.get(MOCKED_URL)
     mock_session.cache.delete_url(MOCKED_URL)
     assert not mock_session.cache.has_url(MOCKED_URL)
+
+
+def test_delete_url__request_args(mock_session):
+    mock_session.get(MOCKED_URL, params={'foo': 'bar'})
+    mock_session.cache.delete_url(MOCKED_URL, params={'foo': 'bar'})
+    assert not mock_session.cache.has_url(MOCKED_URL, params={'foo': 'bar'})
 
 
 def test_delete_url__nonexistent_response(mock_session):
@@ -545,7 +563,7 @@ def test_remove_expired_responses__error(mock_session):
     mock_session.get(MOCKED_URL_JSON)
 
     def error_on_key(key):
-        if key == url_to_key(MOCKED_URL_JSON):
+        if key == create_key(method='GET', url=MOCKED_URL_JSON):
             raise PickleError
         return mock_session.get(MOCKED_URL_JSON)
 

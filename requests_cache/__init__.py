@@ -1,5 +1,6 @@
 # flake8: noqa: E402,F401
 from logging import getLogger
+from typing import Callable, Iterable, Dict
 
 logger = getLogger(__name__)
 
@@ -31,9 +32,17 @@ def get_placeholder_class(original_exception: Exception = None):
     return Placeholder
 
 
+def get_valid_kwargs(func: Callable, kwargs: Dict, extras: Iterable[str] = None) -> Dict:
+    """Get the subset of non-None ``kwargs`` that are valid params for ``func``"""
+    params = list(signature(func).parameters)
+    params.extend(extras or [])
+    return {k: v for k, v in kwargs.items() if k in params and v is not None}
+
+
 try:
     from .backends import *
     from .cache_control import DO_NOT_CACHE, CacheActions
+    from .cache_keys import create_key
     from .models import *
     from .patcher import *
     from .serializers import *

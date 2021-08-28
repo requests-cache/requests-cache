@@ -13,7 +13,7 @@ from logging import getLogger
 from typing import Callable, Iterable, Iterator, Tuple, Union
 
 from ..cache_control import ExpirationTime
-from ..cache_keys import create_key, remove_ignored_params, url_to_key
+from ..cache_keys import create_key, remove_ignored_params
 from ..models import AnyRequest, AnyResponse, CachedResponse
 from ..serializers import init_serializer
 
@@ -112,10 +112,10 @@ class BaseCache:
         self.responses.clear()
         self.redirects.clear()
 
-    def create_key(self, request: AnyRequest, **kwargs) -> str:
+    def create_key(self, request: AnyRequest = None, **kwargs) -> str:
         """Create a normalized cache key from a request object"""
         return self.key_fn(
-            request,
+            request=request,
             ignored_parameters=self.ignored_parameters,
             include_get_headers=self.include_get_headers,
             **kwargs,
@@ -136,21 +136,24 @@ class BaseCache:
             except KeyError:
                 pass
 
-    def delete_url(self, url: str):
-        """Delete a cached response + redirects for ``GET <url>``"""
-        self.delete(url_to_key(url, self.ignored_parameters))
+    def delete_url(self, url: str, method: str = 'GET', **kwargs):
+        """Delete a cached response for the specified request"""
+        key = self.create_key(method=method, url=url, **kwargs)
+        self.delete(key)
 
-    def delete_urls(self, urls: Iterable[str]):
-        """Delete cached responses + redirects for multiple request URLs (``GET`` requests only)"""
-        self.bulk_delete([url_to_key(url, self.ignored_parameters) for url in urls])
+    def delete_urls(self, urls: Iterable[str], method: str = 'GET', **kwargs):
+        """Delete all cached responses for the specified requests"""
+        keys = [self.create_key(method=method, url=url, **kwargs) for url in urls]
+        self.bulk_delete(keys)
 
     def has_key(self, key: str) -> bool:
-        """Returns `True` if cache has `key`, `False` otherwise"""
+        """Returns ``True`` if ``key`` is in the cache"""
         return key in self.responses or key in self.redirects
 
-    def has_url(self, url: str) -> bool:
-        """Returns `True` if cache has `url`, `False` otherwise. Works only for GET request urls"""
-        return self.has_key(url_to_key(url, self.ignored_parameters))  # noqa: W601
+    def has_url(self, url: str, method: str = 'GET', **kwargs) -> bool:
+        """Returns ``True`` if the specified request is cached"""
+        key = self.create_key(method=method, url=url, **kwargs)
+        return self.has_key(key)  # noqa: W601
 
     def keys(self, check_expiry=False) -> Iterator[str]:
         """Get all cache keys for redirects and valid responses combined"""

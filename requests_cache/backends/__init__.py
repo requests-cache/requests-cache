@@ -4,7 +4,7 @@ from inspect import signature
 from logging import getLogger
 from typing import Callable, Dict, Iterable, Type, Union
 
-from .. import get_placeholder_class
+from .. import get_placeholder_class, get_valid_kwargs
 from .base import BaseCache, BaseStorage
 
 # Backend-specific keyword arguments equivalent to 'cache_name'
@@ -27,13 +27,6 @@ BACKEND_KWARGS = CACHE_NAME_KWARGS + [
 
 BackendSpecifier = Union[str, BaseCache, Type[BaseCache]]
 logger = getLogger(__name__)
-
-
-def get_valid_kwargs(func: Callable, kwargs: Dict, extras: Iterable[str] = None) -> Dict:
-    """Get the subset of non-None ``kwargs`` that are valid params for ``func``"""
-    params = list(signature(func).parameters)
-    params.extend(extras or [])
-    return {k: v for k, v in kwargs.items() if k in params and v is not None}
 
 
 # Import all backend classes for which dependencies are installed
