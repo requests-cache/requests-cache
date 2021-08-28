@@ -290,14 +290,16 @@ class CachedSession(CacheMixin, OriginalSession):
 
     Args:
         cache_name: Cache prefix or namespace, depending on backend
-        backend: Cache backend name, class, or instance; name may be one of
-            ``['sqlite', 'mongodb', 'gridfs', 'redis', 'dynamodb', 'memory']``.
+        backend: Cache backend name, or instance; name may be one of
+            ``['sqlite', 'mongodb', 'gridfs', 'redis', 'dynamodb', 'memory']``
+        serializer: Serializer name or instance; name may be one of
+            ``['pickle', 'json', 'yaml', 'bson']``.
         expire_after: Time after which cached items will expire
         urls_expire_after: Expiration times to apply for different URL patterns
         allowable_codes: Only cache responses with one of these status codes
         allowable_methods: Cache only responses for one of these HTTP methods
-        include_get_headers: Make request headers part of the cache key
-        ignored_parameters: List of request parameters to be excluded from the cache key
+        include_get_headers: Match request headers when reading from the cache
+        ignored_parameters: List of request parameters to exclude from the cache and not match
         filter_fn: Function that takes a :py:class:`~requests.Response` object and returns a boolean
             indicating whether or not that response should be cached. Will be applied to both new
             and previously cached responses.

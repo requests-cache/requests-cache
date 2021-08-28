@@ -23,9 +23,10 @@ pip install --pre requests-cache
 See {ref}`contributing` for setup steps for local development
 :::
 
+(requirements)=
 ## Requirements
-You may need additional dependencies depending on which backend you want to use. To install with
-extra dependencies for all supported {ref}`backends`:
+You may need additional dependencies depending on which features you want to use. To install with
+extra dependencies for all supported {ref}`backends` and {ref}`serializers`:
 ```
 pip install requests-cache[all]
 ```

@@ -20,22 +20,25 @@ Complete project documentation can be found at [requests-cache.readthedocs.io](h
 ## Features
 * 🍰 **Ease of use:** Keep using the `requests` library you're already familiar with. Add caching
   with a [drop-in replacement](https://requests-cache.readthedocs.io/en/stable/api.html#sessions)
-  for `requests.Session`, or [install globally](https://requests-cache.readthedocs.io/en/stable/user_guide.html#patching)
+  for `requests.Session`, or
+  [install globally](https://requests-cache.readthedocs.io/en/stable/user_guide.html#patching)
   to add caching to all `requests` functions.
-* 🚀 **Performance:** Get sub-millisecond response times for cached responses
+* 🚀 **Performance:** Get sub-millisecond response times for cached responses. When they expire, you
+  still save time with
+  [conditional requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Conditional_requests).
 * 💾 **Persistence:** Works with several
-  [storage backends](https://requests-cache.readthedocs.io/en/stable/user_guide.html#cache-backends),
+  [storage backends](https://requests-cache.readthedocs.io/en/stable/user_guide.html#cache-backends)
   including SQLite, Redis, MongoDB, and DynamoDB; or save responses as plain JSON files, YAML,
   and more
 * ⚙️ **Customization:** Works out of the box with zero config, but with a robust set of features for
-  tweaking and extending the library to suit your needs
+  configuring and extending the library to suit your needs
 * 🕗 **Expiration:** Keep your cache fresh using
-  [Cache-Control](https://requests-cache.readthedocs.io/en/stable/user_guide.html#cache-headers),
+  [Cache-Control](https://requests-cache.readthedocs.io/en/stable/user_guide.html#cache-control),
   eagerly cache everything for long-term storage, use
   [URL patterns](https://requests-cache.readthedocs.io/en/stable/user_guide.html#url-patterns)
-  for selective caching, or anything in between
-* ✔️ **Compatibility:** Can be combined with
-  [other popular libraries based on requests](https://requests-cache.readthedocs.io/en/stable/advanced_usage.html#library-compatibility)
+  for selective caching, or any combination of strategies
+* ✔️ **Compatibility:** Can be combined with other popular
+  [libraries based on requests](https://requests-cache.readthedocs.io/en/stable/advanced_usage.html#library-compatibility)
 
 ## Quickstart
 First, install with pip:
@@ -72,19 +75,45 @@ for i in range(60):
 With caching, the response will be fetched once, saved to `demo_cache.sqlite`, and subsequent
 requests will return the cached response near-instantly.
 
-If you don't want to manage a session object, or just want to quickly test it out in your application
-without modifying any code, requests-cache can also be installed globally:
+**Patch it:**
+
+If you don't want to manage a session object, or just want to quickly test it out in your
+application without modifying any code, requests-cache can also be installed globally, and all
+requests will be transparently cached:
 ```python
+import requests
+import requests_cache
+
 requests_cache.install_cache('demo_cache')
 requests.get('http://httpbin.org/delay/1')
+```
+
+**Customize it:**
+
+A quick example of some of the options available:
+```python
+from datetime import timedelta
+from requests_cache import CachedSession
+
+session = CachedSession(
+    'demo_cache',
+    use_cache_dir=True                 # Save files in the default user cache dir
+    cache_control=True,                # Use Cache-Control headers for expiration, if available
+    expire_after=timedelta(days=1),    # Otherwise expire responses after one day
+    allowable_methods=['GET', 'POST']  # Cache POST requests to avoid sending the same data twice
+    allowable_codes=[200, 400]         # Cache 400 responses as a solemn reminder of your failures
+    include_get_headers=True,          # Match all request headers
+    ignored_parameters=['api_key'],    # Don't match this param or save it in the cache
+    old_data_on_error=True,            # In case of request errors, use stale cache data if possible
+)
 ```
 
 <!-- RTD-IGNORE -->
 ## Next Steps
 To find out more about what you can do with requests-cache, see:
 
-* The
-  [User Guide](https://requests-cache.readthedocs.io/en/stable/user_guide.html)
+* [User Guide](https://requests-cache.readthedocs.io/en/stable/user_guide.html)
+* [API Reference](https://requests-cache.readthedocs.io/en/stable/reference.html)
 * A working example at Real Python:
   [Caching External API Requests](https://realpython.com/blog/python/caching-external-api-requests)
 * More examples in the
