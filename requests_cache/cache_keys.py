@@ -33,8 +33,7 @@ def create_key(
     **kwargs,
 ) -> str:
     """Create a normalized cache key from a request object"""
-    key = sha256()
-    key.update(encode((request.method or '').upper()))
+    key = sha256(encode((request.method or '').upper()))
     url = remove_ignored_url_params(request, ignored_parameters)
     url = url_normalize(url)
     key.update(encode(url))
