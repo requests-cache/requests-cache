@@ -39,6 +39,8 @@ def create_key(
     if not request:
         request_kwargs = get_valid_kwargs(Request.__init__, kwargs)
         request = Session().prepare_request(Request(**request_kwargs))
+    if TYPE_CHECKING:
+        assert request is not None
 
     key = sha256(encode((request.method or '').upper()))
     url = remove_ignored_url_params(request, ignored_parameters)
