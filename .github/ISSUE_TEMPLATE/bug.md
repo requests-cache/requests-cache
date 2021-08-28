@@ -6,6 +6,10 @@ labels: bug
 
 ---
 
+<!--
+Note: See the troubleshooting page for help with some common issues:
+https://requests-cache.readthedocs.io/en/latest/user_guide/troubleshooting.html
+-->
 ### The problem
 _A description of what the bug is, including a complete traceback (if applicable)_
 
@@ -19,6 +23,6 @@ _With a complete code example, if possible_
 _Is there an existing workaround for this issue?_
 
 ### Environment
-- requests-cache version: [e.g. `0.6.2` or `master`]
+- requests-cache version: [e.g. `0.8.1` or `master`]
 - Python version: [e.g. `3.9`]
 - Platform: [e.g. Debian 10]

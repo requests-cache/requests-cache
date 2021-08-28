@@ -67,6 +67,7 @@ frequently, another that changes infrequently, and another that never changes. E
 - If there is more than one match, the first match will be used in the order they are defined
 - If no patterns match a request, `CachedSession.expire_after` will be used as a default
 
+(request-errors)=
 ## Expiration and Error Handling
 In some cases, you might cache a response, have it expire, but then encounter an error when
 retrieving a new response. If you would like to use expired response data in these cases, use the
