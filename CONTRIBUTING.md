@@ -152,19 +152,19 @@ docker exec readthedocs make all
 ## Pull Requests
 Here are some general guidelines for submitting a pull request:
 
-- If the changes are trivial, just briefly explain the changes in the PR description.
-- Otherwise, please submit an issue describing the proposed change prior to submitting a PR.
-- Please add unit test coverage and updated docs (if applicable) for your changes.
-- Submit the PR to be merged into the `master` branch.
-
+- If the changes are trivial, just briefly explain the changes in the PR description
+- Otherwise, please submit an issue describing the proposed change prior to submitting a PR
+- Add unit test coverage for your changes
+- If your changes add or modify user-facing behavior, add documentation describing those changes
+- Submit the PR to be merged into the `master` branch
 
 ## Notes for Maintainers
 
 ### Releases
-- Releases are built and published to pypi based on **git tags.**
+- Releases are built and published to PyPI based on **git tags.**
 - [Milestones](https://github.com/reclosedev/requests-cache/milestones) will be used to track
 progress on major and minor releases.
-- GitHub Actions will build and deploy packages to PyPi on tagged commits
+- GitHub Actions will build and deploy packages to PyPI on tagged commits
 on the `master` branch.
 
 Release steps:
@@ -190,8 +190,7 @@ pip install -U requests-cache
 
 Notes:
 * See python packaging docs on
-[pre-release versioning](https://packaging.python.org/guides/distributing-packages-using-setuptools/#pre-release-versioning) for more info on how this works.
-for more details.
+[pre-release versioning](https://packaging.python.org/guides/distributing-packages-using-setuptools/#pre-release-versioning) for more info on how this works
 * Any collaborator can trigger a pre-release build for requests-cache by going to
-  **Actions > Deploy > Run workflow**.
-* A complete list of builds can by found on [PyPI under 'Release History'](https://pypi.org/project/requests-cache/#history).
+  **Actions > Deploy > Run workflow**
+* A complete list of builds can by found on [PyPI under 'Release History'](https://pypi.org/project/requests-cache/#history)
