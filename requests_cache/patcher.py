@@ -7,6 +7,8 @@
    :functions-only:
    :nosignatures:
 """
+from __future__ import annotations
+
 from contextlib import contextmanager
 from logging import getLogger
 from typing import Optional, Type
