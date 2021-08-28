@@ -81,8 +81,7 @@ except ImportError:
 
     _json_preconf_stage = json_preconf_stage
 
-_json_stage = Stage(json)
-_json_stage.dumps = partial(json.dumps, indent=2)
+_json_stage = Stage(dumps=partial(json.dumps, indent=2), loads=json.loads)
 json_serializer = SerializerPipeline(
     [_json_preconf_stage, _json_stage]
 )  #: Complete JSON serializer; uses ultrajson if available
