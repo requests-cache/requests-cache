@@ -1,6 +1,6 @@
 # History
 
-## 0.8.0 (TBD)
+## 0.8.0 (2021-TBD)
 [See all issues and PRs for 0.8](https://github.com/reclosedev/requests-cache/milestone/3?closed=1)
 
 **Conditional requests:**
@@ -33,19 +33,16 @@
     * Note: python 3.6 support in 0.7.x will continue to be maintained until it reaches EOL (2021-12-23)
     * Any bugfixes for 0.8 that also apply to 0.7 will be backported
 * Add new `appdirs` dependency (for user cache directories)
-* Update `cattrs` from optional to a required dependency
-* Update `itsdangerous` required to an optional dependency
+* Update `cattrs` from optional to required dependency
+* Update `itsdangerous` from required to optional (but recommended) dependency
 * Require requests 2.22+ and urllib3 1.25.5+
 
 **Deprecations & removals:**
 * Remove deprecated `core` module
-* Remove deprecated `BaseCache.remove_old_entries()` method
-* For consistency with other backends, rename:
-  * `DbCache` -> `SQLiteCache`
-  * `DbDict` -> `SQLiteDict`
-  * `DbPickleDict` -> `SQLitePickleDict`
-  * `DynamoDbCache` -> `DynamoCache`
-  * `DynamoDbDict` -> `DynamoDict`
+* Remove deprecated `BaseCache.remove_old_entries()` method (use `remove_expired_responses()` instead)
+* For consistent naming across backends, rename:
+  * `Db*` -> `SQLiteCache`, `SQLiteDict`, `SQLitePickleDict`
+  * `DynamoDb*` -> `DynamoCache`, `DynamoDict`
   * Add aliases for previous names for backwards-compatibility
 
 -----

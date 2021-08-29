@@ -12,8 +12,8 @@ You can also check out these other python projects related to caching and/or HTT
   file-based cache built on SQLite
 
 ## Async
-* [aiohttp-client-cache](https://github.com/JWCook/aiohttp-client-cache): An async HTTP cache for
-  `aiohttp`, based on `requests-cache`
+* [aiohttp-client-cache](https://github.com/JWCook/aiohttp-client-cache): A client-side async cache
+  for `aiohttp`, based on `requests-cache`
 * [aiohttp-cache](https://github.com/cr0hn/aiohttp-cache): A server-side async HTTP cache for the
   `aiohttp` web server
 * [aiocache](https://github.com/aio-libs/aiocache): General-purpose (not HTTP-specific) async cache
@@ -26,9 +26,11 @@ You can also check out these other python projects related to caching and/or HTT
 ## Testing
 * [requests-mock](https://github.com/jamielennox/requests-mock): A `requests` transport adapter that
   mocks HTTP responses
-* [responses](https://github.com/getsentry/responses): A utility for mocking out the `requests` library
+* [responses](https://github.com/getsentry/responses): A utility for mocking out the `requests`
+  library
 * [vcrpy](https://github.com/kevin1024/vcrpy): Records responses to local files and plays them back
-  for tests; inspired by Ruby's [VCR](https://github.com/vcr/vcr)]. Works at the `httplib` level and
+  for tests; inspired by Ruby's [VCR](https://github.com/vcr/vcr). Works at the `httplib` level and
   is compatible with multiple HTTP libraries.
-* [betamax](https://github.com/betamaxpy/betamax): Records responses to local files and plays them back
-  for tests; also inspired by Ruby's [VCR](https://github.com/vcr/vcr). Made specifically for `requests`.
+* [betamax](https://github.com/betamaxpy/betamax): Records responses to local files and plays them
+  back for tests; also inspired by Ruby's [VCR](https://github.com/vcr/vcr). Made specifically for
+  `requests`.

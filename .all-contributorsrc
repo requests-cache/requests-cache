@@ -650,6 +650,15 @@
       "contributions": [
         "ideas"
       ]
+    },
+    {
+      "login": "davidstosik",
+      "name": "David Stosik",
+      "avatar_url": "https://avatars.githubusercontent.com/u/816901?v=4",
+      "profile": "http://davidstosik.github.io/",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,

@@ -75,7 +75,7 @@ for i in range(60):
 With caching, the response will be fetched once, saved to `demo_cache.sqlite`, and subsequent
 requests will return the cached response near-instantly.
 
-**Patch it:**
+**Patching:**
 
 If you don't want to manage a session object, or just want to quickly test it out in your
 application without modifying any code, requests-cache can also be installed globally, and all
@@ -88,7 +88,7 @@ requests_cache.install_cache('demo_cache')
 requests.get('http://httpbin.org/delay/1')
 ```
 
-**Customize it:**
+**Configuration:**
 
 A quick example of some of the options available:
 ```python
@@ -114,6 +114,7 @@ To find out more about what you can do with requests-cache, see:
 
 * [User Guide](https://requests-cache.readthedocs.io/en/stable/user_guide.html)
 * [API Reference](https://requests-cache.readthedocs.io/en/stable/reference.html)
+* [Project Info](https://requests-cache.readthedocs.io/en/latest/project_info.html)
 * A working example at Real Python:
   [Caching External API Requests](https://realpython.com/blog/python/caching-external-api-requests)
 * More examples in the
