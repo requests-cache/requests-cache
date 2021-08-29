@@ -16,27 +16,27 @@ The following scripts can also be found in the
 [examples/](https://github.com/reclosedev/requests-cache/tree/master/examples) folder on GitHub.
 
 ### Basic usage (with sessions)
-```{include} ../examples/basic_usage.py
+```{include} ../examples/basic_sessions.py
 :start-line: 3
 :end-line: 4
 ```
 
-:::{admonition} Example code
+:::{admonition} Example: basic_sessions.py
 :class: toggle
-```{literalinclude} ../examples/basic_usage.py
+```{literalinclude} ../examples/basic_sessions.py
 :lines: 1,6-
 ```
 :::
 
 ### Basic usage (with patching)
-```{include} ../examples/session_patch.py
+```{include} ../examples/basic_patching.py
 :start-line: 3
 :end-line: 4
 ```
 
-:::{admonition} Example code
+:::{admonition} Example: basic_patching.py
 :class: toggle
-```{literalinclude} ../examples/session_patch.py
+```{literalinclude} ../examples/basic_patching.py
 :lines: 1,6-
 ```
 :::
@@ -47,7 +47,7 @@ The following scripts can also be found in the
 :end-line: 3
 ```
 
-:::{admonition} Example code
+:::{admonition} Example: expiration.py
 :class: toggle
 ```{literalinclude} ../examples/expiration.py
 :lines: 1,5-
@@ -60,7 +60,7 @@ The following scripts can also be found in the
 :end-line: 4
 ```
 
-:::{admonition} Example code
+:::{admonition} Example: /url_patterns.py
 :class: toggle
 ```{literalinclude} ../examples/url_patterns.py
 :lines: 1,6-
@@ -73,7 +73,7 @@ The following scripts can also be found in the
 :end-line: 4
 ```
 
-:::{admonition} Example code
+:::{admonition} Example: threads.py
 :class: toggle
 ```{literalinclude} ../examples/threads.py
 :lines: 1,6-
@@ -86,7 +86,7 @@ The following scripts can also be found in the
 :end-line: 3
 ```
 
-:::{admonition} Example code
+:::{admonition} Example: log_requests.py
 :class: toggle
 ```{literalinclude} ../examples/log_requests.py
 :lines: 1,5-
@@ -99,7 +99,7 @@ The following scripts can also be found in the
 :end-line: 8
 ```
 
-:::{admonition} Example code
+:::{admonition} Example: benchmark.py
 :class: toggle
 ```{literalinclude} ../examples/benchmark.py
 :lines: 1,10-
@@ -112,7 +112,7 @@ The following scripts can also be found in the
 :end-line: 4
 ```
 
-:::{admonition} Example code
+:::{admonition} Example: convert_cache.py
 :class: toggle
 ```{literalinclude} ../examples/convert_cache.py
 :lines: 1,6-
@@ -126,7 +126,7 @@ The following scripts can also be found in the
 :end-line: 15
 ```
 
-:::{admonition} Example code
+:::{admonition} Example: custom_request_matcher.py
 :class: toggle
 ```{literalinclude} ../examples/custom_request_matcher.py
 :lines: 1,17-

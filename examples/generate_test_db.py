@@ -47,7 +47,7 @@ def populate_cache(progress, task):
 
     # Cache a variety of different response formats, which may result in different behavior
     urls = [
-        ('GET', 'https://httpbin.org/{endpoint}')
+        ('GET', f'https://httpbin.org/{endpoint}')
         for endpoint in HTTPBIN_FORMATS + HTTPBIN_EXTRA_ENDPOINTS
     ]
     urls += [(method, 'https://httpbin.org/{method.lower()}') for method in HTTPBIN_METHODS]
