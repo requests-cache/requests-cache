@@ -15,3 +15,5 @@ I have already added Code Shelter to the project's PyPI page, so feel free to
 make any releases necessary.
 
 Thank you!
+
+– Roman Haritonov

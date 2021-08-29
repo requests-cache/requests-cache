@@ -10,13 +10,14 @@ received a response in a timely manner, please reach out on the Code Shelter cha
 [projects/requests-cache](https://codeshelter.zulipchat.com/#narrow/stream/186993-projects/topic/requests-cache).
 
 ## Development Status
-While the original author no longer has time to work on requests-cache
-([see note here](https://github.com/reclosedev/requests-cache/blob/master/CODESHELTER.md)),
-one or more maintainers are available via [Code Shelter](https://www.codeshelter.co) to help keep
-this project going.
+Requests-cache is under active development! While the original author no longer has time to work on
+requests-cache ([see note
+here](https://requests-cache.readthedocs.io/en/latest/project_info/codeshelter.md)), maintainers are
+available via [Code Shelter](https://www.codeshelter.co) to help keep this project going.
 
-If there is a new feature you would like to see, the best way to make that happen is to submit a PR
-for it!
+Contributions are very welcome, and will be attributed on the
+[Contributors](https://requests-cache.readthedocs.io/en/latest/project_info/contributors.html)
+page.
 
 ## Pre-release Installation
 If you want to test out the latest in-development changes, you can install pre-release versions:
