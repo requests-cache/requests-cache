@@ -26,7 +26,7 @@ Backend                                                | Class                  
 [Redis](https://redis.io)                              | {py:class}`.RedisCache`    | `'redis'`      | [redis-py](https://github.com/andymccurdy/redis-py)
 [MongoDB](https://www.mongodb.com)                     | {py:class}`.MongoCache`    | `'mongodb'`    | [pymongo](https://github.com/mongodb/mongo-python-driver)
 [GridFS](https://docs.mongodb.com/manual/core/gridfs/) | {py:class}`.GridFSCache`   | `'gridfs'`     | [pymongo](https://github.com/mongodb/mongo-python-driver)
-[DynamoDB](https://aws.amazon.com/dynamodb)            | {py:class}`.DynamoCache`   | `'dynamodb'`   | [boto3](https://github.com/boto/boto3)
+[DynamoDB](https://aws.amazon.com/dynamodb)            | {py:class}`.DynamoDbCache` | `'dynamodb'`   | [boto3](https://github.com/boto/boto3)
 Filesystem                                             | {py:class}`.FileCache`     | `'filesystem'` |
 Memory                                                 | {py:class}`.BaseCache`     | `'memory'`     |
 

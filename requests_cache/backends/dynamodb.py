@@ -18,9 +18,9 @@ These can be passed via :py:class:`.CachedSession`:
 
     >>> session = CachedSession('http_cache', backend='dynamodb', region_name='us-west-2')
 
-Or via :py:class:`.DynamoCache`:
+Or via :py:class:`.DynamoDbCache`:
 
-    >>> backend = DynamoCache(region_name='us-west-2')
+    >>> backend = DynamoDbCache(region_name='us-west-2')
     >>> session = CachedSession('http_cache', backend=backend)
 
 API Reference
@@ -39,7 +39,7 @@ from botocore.exceptions import ClientError
 from . import BaseCache, BaseStorage, get_valid_kwargs
 
 
-class DynamoCache(BaseCache):
+class DynamoDbCache(BaseCache):
     """DynamoDB cache backend
 
     Args:
@@ -52,13 +52,13 @@ class DynamoCache(BaseCache):
 
     def __init__(self, table_name: str = 'http_cache', connection: ServiceResource = None, **kwargs):
         super().__init__(**kwargs)
-        self.responses = DynamoDict(table_name, 'responses', connection=connection, **kwargs)
-        self.redirects = DynamoDict(
+        self.responses = DynamoDbDict(table_name, 'responses', connection=connection, **kwargs)
+        self.redirects = DynamoDbDict(
             table_name, 'redirects', connection=self.responses.connection, **kwargs
         )
 
 
-class DynamoDict(BaseStorage):
+class DynamoDbDict(BaseStorage):
     """A dictionary-like interface for DynamoDB key-value store
 
     **Notes:**
