@@ -45,10 +45,9 @@
 **Deprecations & removals:**
 * Remove deprecated `core` module
 * Remove deprecated `BaseCache.remove_old_entries()` method (use `remove_expired_responses()` instead)
-* For consistent naming across backends, rename:
-    * `Db*` -> `SQLiteCache`, `SQLiteDict`, `SQLitePickleDict`
-    * `DynamoDb*` -> `DynamoCache`, `DynamoDict`
-    * Add aliases for previous names for backwards-compatibility
+* For consistency with other backends, rename SQLite backend classes:
+  * `backends.sqlite.Db*` -> `SQLiteCache`, `SQLiteDict`, `SQLitePickleDict`
+  * Add aliases for previous names for backwards-compatibility
 
 -----
 ### 0.7.5 (2021-TBD)
