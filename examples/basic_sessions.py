@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # flake8: noqa: F841
 """
-A simple example using requests-cache with httpbin
+A simple example using requests-cache with [httpbin](https://httpbin.org)
 """
 import time
 

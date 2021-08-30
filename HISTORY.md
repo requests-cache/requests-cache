@@ -5,16 +5,21 @@
 
 **Conditional requests:**
 * Add support for conditional requests using the following request + response headers:
-  * `ETag` + `If-None-Match` headers
-  * `Last-Modified` + `If-Modified-Since` headers
-  * `304 Not Modified` responses
+    * `ETag` + `If-None-Match` headers
+    * `Last-Modified` + `If-Modified-Since` headers
+    * `304 Not Modified` responses
 
 **Backends:**
-* Filesystem: Add `use_cache_dir` option to use platform-specific user cache directory
-* Filesystem: Add `FileCache.paths()` method
-* SQLite: Add `use_cache_dir` option to use platform-specific user cache directory
-* SQLite: Add `use_memory` option and support for in-memory databases
-* SQLite: Add `SQLiteCache.db_path` property
+* Filesystem:
+    * Add `FileCache.cache_dir` wrapper property
+    * Add `FileCache.paths()` method
+    * Add `use_cache_dir` option to use platform-specific user cache directory
+    * Return `pathlib.Path` objects for all file paths
+* SQLite:
+    * Add `SQLiteCache.db_path` wrapper property
+    * Add `use_memory` option and support for in-memory databases
+    * Add `use_cache_dir` option to use platform-specific user cache directory
+    * Return `pathlib.Path` objects for all file paths
 
 **Serialization:**
 * Use `cattrs` by default for optimized serialization
@@ -41,9 +46,9 @@
 * Remove deprecated `core` module
 * Remove deprecated `BaseCache.remove_old_entries()` method (use `remove_expired_responses()` instead)
 * For consistent naming across backends, rename:
-  * `Db*` -> `SQLiteCache`, `SQLiteDict`, `SQLitePickleDict`
-  * `DynamoDb*` -> `DynamoCache`, `DynamoDict`
-  * Add aliases for previous names for backwards-compatibility
+    * `Db*` -> `SQLiteCache`, `SQLiteDict`, `SQLitePickleDict`
+    * `DynamoDb*` -> `DynamoCache`, `DynamoDict`
+    * Add aliases for previous names for backwards-compatibility
 
 -----
 ### 0.7.5 (2021-TBD)
@@ -56,13 +61,16 @@
 * Fix some issues with parallelizing tests using pytest-xdist
 
 ### 0.7.3 (2021-08-10)
-* SQLite backend: Update `DbCache.clear()` to succeed even if the database is corrupted
-* SQLite backend: update `DbDict.bulk_delete()` to split the operation into multiple statements to support
-  deleting more items than SQLite's variable limit (999)
-* Filesystem backend: When using JSON serializer, pretty-print JSON by default
-* Filesystem backend: Add an appropriate file extension to cache files (`.json`, `.yaml`, `.pkl`, etc.) by default.
-  Can be overridden or disabled with the `extension` parameter.
-* Add a `BaseCache.delete_urls()` method to bulk delete multiple responses from the cache based on request URL
+* SQLite backend:
+    * Update `DbCache.clear()` to succeed even if the database is corrupted
+    * Update `DbDict.bulk_delete()` to split the operation into multiple statements to support
+    deleting more items than SQLite's variable limit (999)
+* Filesystem backend:
+    * When using JSON serializer, pretty-print JSON by default
+    * Add an appropriate file extension to cache files (`.json`, `.yaml`, `.pkl`, etc.) by default;
+      can be overridden or disabled with the `extension` parameter.
+* Add a `BaseCache.delete_urls()` method to bulk delete multiple responses from the cache based on
+  request URL
 
 ### 0.7.2 (2021-07-21)
 * Add support for `Response.next` (to get the next request in a redirect chain) when 302 responses are cached directly
@@ -77,7 +85,7 @@
 
 **Backends:**
 * Add a filesystem backend that stores responses as local files
-* SQLite and filesystem: Add `use_temp` option to store files in a temp directory
+* SQLite and Filesystem: Add `use_temp` option to store files in a temp directory
 * SQLite: Use persistent thread-local connections, and improve performance for bulk operations
 * DynamoDB: Fix `DynamoDbDict.__iter__` to return keys instead of values
 * MongoDB: Remove usage of deprecated pymongo `Collection.find_and_modify()`
@@ -103,8 +111,9 @@
 
 **Serialization:**
 * Add data models for all serialized objects
-* Add a BSON serializer
 * Add a JSON serializer
+* Add a YAML serializer
+* Add a BSON serializer
 * Add optional support for `cattrs`
 * Add optional support for `ultrajson`
 
@@ -189,8 +198,8 @@ for making this release possible!
 * Add `CachedResponse` class to wrap cached `requests.Response` objects, which makes additional
   cache information available to client code
 * Add `CachedHTTPResponse` class to wrap `urllib3.response.HTTPResponse` objects, available via `CachedResponse.raw`
-  * Re-construct the raw response on demand to avoid storing extra data in the cache
-  * Improve emulation of raw request behavior used for iteration, streaming requests, etc.
+    * Re-construct the raw response on demand to avoid storing extra data in the cache
+    * Improve emulation of raw request behavior used for iteration, streaming requests, etc.
 * Add `BaseCache.urls` property to get all URLs persisted in the cache
 * Add optional support for `itsdangerous` for more secure serialization
 
@@ -198,7 +207,7 @@ for making this release possible!
 * Fix caching requests with data specified in `json` parameter
 * Fix caching requests with `verify` parameter
 * Fix duplicate cached responses due to some unhandled variations in URL format
-  * To support this, the `url-normalize` library has been added to dependencies
+    * To support this, the `url-normalize` library has been added to dependencies
 * Fix usage of backend-specific params when used in place of `cache_name`
 * Fix potential TypeError with `DbPickleDict` initialization
 * Fix usage of `CachedSession.cache_disabled` if used within another contextmanager

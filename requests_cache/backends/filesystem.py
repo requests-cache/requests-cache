@@ -12,14 +12,14 @@ want to save responses in a human-readable format, you can use one of the other 
 
     >>> session = CachedSession('~/http_cache', backend='filesystem', serializer='json')
     >>> session.get('https://httpbin.org/get')
-    >>> print(session.cache.paths())
+    >>> print(list(session.cache.paths()))
     ['/home/user/http_cache/4dc151d95200ec.json']
 
 Or as YAML (requires ``pyyaml``):
 
     >>> session = CachedSession('~/http_cache', backend='filesystem', serializer='yaml')
     >>> session.get('https://httpbin.org/get')
-    >>> print(session.cache.paths())
+    >>> print(list(session.cache.paths()))
     ['/home/user/http_cache/4dc151d95200ec.yaml']
 
 Cache Files
@@ -36,17 +36,15 @@ API Reference
    :nosignatures:
 """
 from contextlib import contextmanager
-from glob import glob
-from os import listdir, makedirs, unlink
-from os.path import basename, join, splitext
+from os import makedirs
 from pathlib import Path
 from pickle import PickleError
 from shutil import rmtree
-from typing import List, Union
+from typing import Iterator
 
 from ..serializers import SERIALIZERS
 from . import BaseCache, BaseStorage
-from .sqlite import SQLiteDict, get_cache_path
+from .sqlite import AnyPath, SQLiteDict, get_cache_path
 
 
 class FileCache(BaseCache):
@@ -61,18 +59,17 @@ class FileCache(BaseCache):
             will be used.
     """
 
-    def __init__(self, cache_name: Union[Path, str] = 'http_cache', use_temp: bool = False, **kwargs):
+    def __init__(self, cache_name: AnyPath = 'http_cache', use_temp: bool = False, **kwargs):
         super().__init__(**kwargs)
         self.responses = FileDict(cache_name, use_temp=use_temp, **kwargs)
-        db_path = join(self.responses.cache_dir, 'redirects.sqlite')
-        self.redirects = SQLiteDict(db_path, 'redirects', **kwargs)
+        self.redirects = SQLiteDict(self.cache_dir / 'redirects.sqlite', 'redirects', **kwargs)
 
     @property
-    def cache_dir(self) -> str:
+    def cache_dir(self) -> Path:
         """Base directory for cache files"""
-        return self.responses.cache_dir
+        return Path(self.responses.cache_dir)
 
-    def paths(self) -> List[str]:
+    def paths(self) -> Iterator[Path]:
         """Get absolute file paths to all cached responses"""
         return self.responses.paths()
 
@@ -88,7 +85,7 @@ class FileDict(BaseStorage):
 
     def __init__(
         self,
-        cache_name,
+        cache_name: AnyPath,
         use_temp: bool = False,
         use_cache_dir: bool = False,
         extension: str = None,
@@ -96,7 +93,7 @@ class FileDict(BaseStorage):
     ):
         super().__init__(**kwargs)
         self.cache_dir = get_cache_path(cache_name, use_cache_dir=use_cache_dir, use_temp=use_temp)
-        self.extension = extension if extension is not None else _get_default_ext(self.serializer)
+        self.extension = _get_extension(extension, self.serializer)
         self.is_binary = False
         makedirs(self.cache_dir, exist_ok=True)
 
@@ -109,15 +106,14 @@ class FileDict(BaseStorage):
             if not ignore_errors:
                 raise KeyError(e)
 
-    def _path(self, key):
-        ext = f'.{self.extension}' if self.extension else ''
-        return join(self.cache_dir, f'{key}{ext}')
+    def _path(self, key) -> Path:
+        return self.cache_dir / f'{key}{self.extension}'
 
     def __getitem__(self, key):
         mode = 'rb' if self.is_binary else 'r'
         with self._try_io():
             try:
-                with open(self._path(key), mode) as f:
+                with self._path(key).open(mode) as f:
                     return self.serializer.loads(f.read())
             except UnicodeDecodeError:
                 self.is_binary = True
@@ -125,7 +121,7 @@ class FileDict(BaseStorage):
 
     def __delitem__(self, key):
         with self._try_io():
-            unlink(self._path(key))
+            self._path(key).unlink()
 
     def __setitem__(self, key, value):
         serialized_value = self.serializer.dumps(value)
@@ -133,30 +129,33 @@ class FileDict(BaseStorage):
             self.is_binary = True
         mode = 'wb' if self.is_binary else 'w'
         with self._try_io():
-            with open(self._path(key), mode) as f:
+            with self._path(key).open(mode) as f:
                 f.write(self.serializer.dumps(value))
 
     def __iter__(self):
         yield from self.keys()
 
     def __len__(self):
-        return len(listdir(self.cache_dir))
+        return sum(1 for _ in self.paths())
 
     def clear(self):
         with self._try_io(ignore_errors=True):
             rmtree(self.cache_dir, ignore_errors=True)
-            makedirs(self.cache_dir)
+            self.cache_dir.mkdir()
 
     def keys(self):
-        return [splitext(basename(path))[0] for path in self.paths()]
+        return [path.stem for path in self.paths()]
 
-    def paths(self) -> List[str]:
+    def paths(self) -> Iterator[Path]:
         """Get absolute file paths to all cached responses"""
-        return glob(self._path('*'))
+        return self.cache_dir.glob(f'*{self.extension}')
 
 
-def _get_default_ext(serializer) -> str:
-    for k, v in SERIALIZERS.items():
-        if serializer is v:
-            return k.replace('pickle', 'pkl')
+def _get_extension(extension: str = None, serializer=None) -> str:
+    """Use either the provided file extension, or get the serializer's default extension"""
+    if extension:
+        return f'.{extension}'
+    for name, obj in SERIALIZERS.items():
+        if serializer is obj:
+            return '.' + name.replace('pickle', 'pkl')
     return ''
