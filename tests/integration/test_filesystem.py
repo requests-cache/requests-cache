@@ -1,5 +1,4 @@
 import pickle
-from os.path import dirname, isfile
 from shutil import rmtree
 from tempfile import gettempdir
 
@@ -28,14 +27,14 @@ class TestFileDict(BaseStorageTest):
     def test_use_cache_dir(self):
         relative_path = self.storage_class(CACHE_NAME).cache_dir
         cache_dir_path = self.storage_class(CACHE_NAME, use_cache_dir=True).cache_dir
-        assert not relative_path.startswith(user_cache_dir())
-        assert cache_dir_path.startswith(user_cache_dir())
+        assert not str(relative_path).startswith(user_cache_dir())
+        assert str(cache_dir_path).startswith(user_cache_dir())
 
     def test_use_temp(self):
         relative_path = self.storage_class(CACHE_NAME).cache_dir
         temp_path = self.storage_class(CACHE_NAME, use_temp=True).cache_dir
-        assert not relative_path.startswith(gettempdir())
-        assert temp_path.startswith(gettempdir())
+        assert not str(relative_path).startswith(gettempdir())
+        assert str(temp_path).startswith(gettempdir())
 
 
 class TestFileCache(BaseCacheTest):
@@ -55,8 +54,8 @@ class TestFileCache(BaseCacheTest):
         expected_extension = serializer_name.replace('pickle', 'pkl')
         assert len(list(session.cache.paths())) == num_files
         for path in session.cache.paths():
-            assert isfile(path)
-            assert path.endswith(f'.{expected_extension}')
+            assert path.is_file()
+            assert path.suffix == f'.{expected_extension}'
 
         # Redirects db should be in the same directory as response files
-        assert dirname(session.cache.redirects.db_path) == session.cache.responses.cache_dir
+        assert session.cache.redirects.db_path.parent == session.cache.responses.cache_dir

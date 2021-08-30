@@ -24,14 +24,14 @@ class SQLiteTestCase(BaseStorageTest):
     def test_use_cache_dir(self):
         relative_path = self.storage_class(CACHE_NAME).db_path
         cache_dir_path = self.storage_class(CACHE_NAME, use_cache_dir=True).db_path
-        assert not relative_path.startswith(user_cache_dir())
-        assert cache_dir_path.startswith(user_cache_dir())
+        assert not str(relative_path).startswith(user_cache_dir())
+        assert str(cache_dir_path).startswith(user_cache_dir())
 
     def test_use_temp(self):
         relative_path = self.storage_class(CACHE_NAME).db_path
         temp_path = self.storage_class(CACHE_NAME, use_temp=True).db_path
-        assert not relative_path.startswith(gettempdir())
-        assert temp_path.startswith(gettempdir())
+        assert not str(relative_path).startswith(gettempdir())
+        assert str(temp_path).startswith(gettempdir())
 
     def test_use_memory(self):
         cache = self.init_cache(use_memory=True)
