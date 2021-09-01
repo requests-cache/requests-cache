@@ -11,6 +11,19 @@ on `AWS Lambda <https://aws.amazon.com/lambda>`_.
     DynamoDB binary item sizes are limited to 400KB. If you need to cache larger responses, consider
     using a different backend.
 
+Creating Tables
+^^^^^^^^^^^^^^^
+Tables will be automatically created if they don't already exist. This is convienient if you just
+want to quickly test out DynamoDB as a cache backend, but in a production environment you will
+likely want to create the tables yourself, for example with `CloudFormation
+<https://aws.amazon.com/cloudformation/>`_ or `Terraform <https://www.terraform.io/>`_. Here are the
+details you'll need:
+
+* Tables: two tables, named ``responses`` and ``redirects``
+* Partition key (aka namespace): ``namespace``
+* Range key (aka sort key): ``key``
+* Attributes: ``namespace`` (string) and ``key`` (string)
+
 Connection Options
 ^^^^^^^^^^^^^^^^^^
 The DynamoDB backend accepts any keyword arguments for :py:meth:`boto3.session.Session.resource`.
@@ -85,7 +98,7 @@ class DynamoDbDict(BaseStorage):
         super().__init__(**kwargs)
         connection_kwargs = get_valid_kwargs(boto3.Session, kwargs, extras=['endpoint_url'])
         self.connection = connection or boto3.resource('dynamodb', **connection_kwargs)
-        self._self_key = namespace
+        self.namespace = namespace
 
         try:
             self.connection.create_table(
@@ -115,7 +128,17 @@ class DynamoDbDict(BaseStorage):
         self._table.wait_until_exists()
 
     def composite_key(self, key: str) -> Dict[str, str]:
-        return {'namespace': self._self_key, 'key': str(key)}
+        return {'namespace': self.namespace, 'key': str(key)}
+
+    def _scan(self):
+        expression_attribute_values = {':Namespace': self.namespace}
+        expression_attribute_names = {'#N': 'namespace'}
+        key_condition_expression = '#N = :Namespace'
+        return self._table.query(
+            ExpressionAttributeValues=expression_attribute_values,
+            ExpressionAttributeNames=expression_attribute_names,
+            KeyConditionExpression=key_condition_expression,
+        )
 
     def __getitem__(self, key):
         result = self._table.get_item(Key=self.composite_key(key))
@@ -135,13 +158,18 @@ class DynamoDbDict(BaseStorage):
         if 'Attributes' not in response:
             raise KeyError
 
-    def __len__(self):
-        return self.__count_table()
-
     def __iter__(self):
-        response = self.__scan_table()
-        for v in response['Items']:
-            yield v['key']
+        response = self._scan()
+        for item in response['Items']:
+            yield item['key']
+
+    def __len__(self):
+        return self._table.query(
+            Select='COUNT',
+            ExpressionAttributeNames={'#N': 'namespace'},
+            ExpressionAttributeValues={':Namespace': self.namespace},
+            KeyConditionExpression='#N = :Namespace',
+        )['Count']
 
     def bulk_delete(self, keys: Iterable[str]):
         """Delete multiple keys from the cache. Does not raise errors for missing keys."""
@@ -150,28 +178,4 @@ class DynamoDbDict(BaseStorage):
                 batch.delete_item(Key=self.composite_key(key))
 
     def clear(self):
-        response = self.__scan_table()
-        for v in response['Items']:
-            composite_key = {'namespace': v['namespace'], 'key': v['key']}
-            self._table.delete_item(Key=composite_key)
-
-    def __scan_table(self):
-        expression_attribute_values = {':Namespace': self._self_key}
-        expression_attribute_names = {'#N': 'namespace'}
-        key_condition_expression = '#N = :Namespace'
-        return self._table.query(
-            ExpressionAttributeValues=expression_attribute_values,
-            ExpressionAttributeNames=expression_attribute_names,
-            KeyConditionExpression=key_condition_expression,
-        )
-
-    def __count_table(self):
-        expression_attribute_values = {':Namespace': self._self_key}
-        expression_attribute_names = {'#N': 'namespace'}
-        key_condition_expression = '#N = :Namespace'
-        return self._table.query(
-            Select='COUNT',
-            ExpressionAttributeValues=expression_attribute_values,
-            ExpressionAttributeNames=expression_attribute_names,
-            KeyConditionExpression=key_condition_expression,
-        )['Count']
+        self.bulk_delete((k for k in self))
