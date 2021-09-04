@@ -78,6 +78,19 @@ session = CachedLimiterSession(
 )
 ```
 
+## Requests-OAuthlib
+Usage with [requests-oauthlib](https://github.com/requests/requests-oauthlib) is the same as other
+libraries that subclass `requests.Session`:
+```python
+>>> from requests_cache import CacheMixin
+>>> from requests_oauthlib import OAuth2Session
+
+>>> class CachedOAuth2Session(CacheMixin, OAuth2Session):
+...     """Session with features from both CachedSession and OAuth2Session"""
+
+>>> session = CachedOAuth2Session('my_client_id')
+```
+
 ## Internet Archive
 Usage with [internetarchive](https://github.com/jjjake/internetarchive) is the same as other libraries
 that subclass `requests.Session`:
@@ -87,6 +100,8 @@ that subclass `requests.Session`:
 
 >>> class CachedArchiveSession(CacheMixin, ArchiveSession):
 ...     """Session with features from both CachedSession and ArchiveSession"""
+
+>>> session = CachedArchiveSession()
 ```
 
 ## Requests-Mock
