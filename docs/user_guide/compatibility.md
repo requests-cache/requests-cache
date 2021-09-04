@@ -44,39 +44,15 @@ The same approach can be used with other libraries that subclass {py:class}`requ
 Some libraries, including [requests-futures](https://github.com/ross/requests-futures),
 support wrapping an existing session object:
 ```python
+>>> from requests_cache import CachedSession
+>>> from requests_futures.sessions import FuturesSession
+
 >>> session = FutureSession(session=CachedSession())
 ```
 
 In this case, `FutureSession` must wrap `CachedSession` rather than the other way around, since
 `FutureSession` returns (as you might expect) futures rather than response objects.
 See [issue #135](https://github.com/reclosedev/requests-cache/issues/135) for more notes on this.
-
-## Requests-Ratelimiter
-[requests-ratelimiter](https://github.com/JWCook/requests-ratelimiter) adds rate-limiting to
-requests via the [pyrate-limiter](https://github.com/vutran1710/PyrateLimiter) library. It also
-provides a mixin, but note that the inheritance order is important: If rate-limiting is applied
-_after_ caching, you get the added benefit of not counting cache hits against your rate limit.
-```python
-from pyrate_limiter import RedisBucket, RequestRate, Duration
-from requests import Session
-from requests_cache import CacheMixin, RedisCache
-from requests_ratelimiter import LimiterMixin
-
-
-class CachedLimiterSession(CacheMixin, LimiterMixin, Session):
-    """Session class with caching and rate-limiting behavior. Accepts arguments for both
-    LimiterSession and CachedSession.
-    """
-
-
-# Limit non-cached requests to 5 requests per second, with unlimited cached requests
-# Optionally use Redis as both the bucket backend and the cache backend
-session = CachedLimiterSession(
-    rates=RequestRate(5, Duration.SECOND),
-    bucket_class=RedisBucket,
-    backend=RedisCache(),
-)
-```
 
 ## Requests-OAuthlib
 Usage with [requests-oauthlib](https://github.com/requests/requests-oauthlib) is the same as other
@@ -89,6 +65,31 @@ libraries that subclass `requests.Session`:
 ...     """Session with features from both CachedSession and OAuth2Session"""
 
 >>> session = CachedOAuth2Session('my_client_id')
+```
+
+## Requests-Ratelimiter
+[requests-ratelimiter](https://github.com/JWCook/requests-ratelimiter) adds rate-limiting to
+requests via the [pyrate-limiter](https://github.com/vutran1710/PyrateLimiter) library. It also
+provides a mixin, but note that the inheritance order is important: If rate-limiting is applied
+_after_ caching, you get the added benefit of not counting cache hits against your rate limit.
+```python
+>>> from pyrate_limiter import RedisBucket, RequestRate, Duration
+>>> from requests import Session
+>>> from requests_cache import CacheMixin, RedisCache
+>>> from requests_ratelimiter import LimiterMixin
+
+>>> class CachedLimiterSession(CacheMixin, LimiterMixin, Session):
+...     """Session class with caching and rate-limiting behavior. Accepts arguments for both
+...     LimiterSession and CachedSession.
+...     """
+
+>>> # Limit non-cached requests to 5 requests per second, with unlimited cached requests
+>>> # Optionally use Redis as both the bucket backend and the cache backend
+>>> session = CachedLimiterSession(
+...     rates=RequestRate(5, Duration.SECOND),
+...     bucket_class=RedisBucket,
+...     backend=RedisCache(),
+... )
 ```
 
 ## Internet Archive
