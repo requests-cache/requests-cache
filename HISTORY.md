@@ -1,13 +1,14 @@
 # History
 
-## 0.8.0 (2021-09-TBD)
+## 0.8.0 (2021-09-09)
 [See all issues and PRs for 0.8](https://github.com/reclosedev/requests-cache/milestone/3?closed=1)
 
-**Conditional requests:**
-* Add support for conditional requests using the following request + response headers:
+**Conditional requests & validation:**
+* Add support for conditional requests and cache validation using:
     * `ETag` + `If-None-Match` headers
     * `Last-Modified` + `If-Modified-Since` headers
     * `304 Not Modified` responses
+* If a cached response is expired but contains a validator, a conditional request will by sent, and a new response will be cached and returned only if the remote content has not changed
 
 **Backends:**
 * Filesystem:
@@ -26,23 +27,21 @@
 
 **Other features:**
 * Add `BaseCache.update()` method as a shortcut for exporting to a different cache instance
-* Allow `BaseCache.has_url()` and `delete_url()` to optionally take arguments for `requests.Request`
-  instead of just a URL
-* Allow `create_key()` to optionally take arguments for `requests.Request` instead of a request
-  object
+* Allow `BaseCache.has_url()` and `delete_url()` to optionally take arguments for `requests.Request` instead of just a URL
+* Allow `create_key()` to optionally take arguments for `requests.Request` instead of a request object
 * Add support for custom cache key callbacks with `key_fn` parameter
 * Slightly reduce size of serialized responses
 
 **Depedencies:**
-* Require python 3.7+
-    * Note: python 3.6 support in 0.7.x will continue to be maintained until it reaches EOL (2021-12-23)
-    * Any bugfixes for 0.8 that also apply to 0.7 will be backported
-* Add new `appdirs` dependency (for user cache directories)
+* Add `appdirs` as a dependency for cross-platform usage of user cache directories
 * Update `cattrs` from optional to required dependency
 * Update `itsdangerous` from required to optional (but recommended) dependency
 * Require requests 2.22+ and urllib3 1.25.5+
 
 **Deprecations & removals:**
+* Drop support for python 3.6
+    * Note: python 3.6 support in 0.7.x will continue to be maintained at least until it reaches EOL (2021-12-23)
+    * Any bugfixes for 0.8 that also apply to 0.7 will be backported
 * Remove deprecated `core` module
 * Remove deprecated `BaseCache.remove_old_entries()` method (use `remove_expired_responses()` instead)
 * For consistency with other backends, rename SQLite backend classes:
@@ -62,12 +61,10 @@
 ### 0.7.3 (2021-08-10)
 * SQLite backend:
     * Update `DbCache.clear()` to succeed even if the database is corrupted
-    * Update `DbDict.bulk_delete()` to split the operation into multiple statements to support
-    deleting more items than SQLite's variable limit (999)
+    * Update `DbDict.bulk_delete()` to split the operation into multiple statements to support deleting more items than SQLite's variable limit (999)
 * Filesystem backend:
     * When using JSON serializer, pretty-print JSON by default
-    * Add an appropriate file extension to cache files (`.json`, `.yaml`, `.pkl`, etc.) by default;
-      can be overridden or disabled with the `extension` parameter.
+    * Add an appropriate file extension to cache files (`.json`, `.yaml`, `.pkl`, etc.) by default; can be overridden or disabled with the `extension` parameter.
 * Add a `BaseCache.delete_urls()` method to bulk delete multiple responses from the cache based on
   request URL
 
@@ -116,7 +113,8 @@
 * Add optional support for `cattrs`
 * Add optional support for `ultrajson`
 
-**General:**
+**Other features:**
+* requests-cache is now fully typed and PEP-561 compliant
 * Add option to manually cache response objects with `BaseCache.save_response()`
 * Add `BaseCache.keys()` and `values()` methods
 * Add `BaseCache.response_count()` method to get an accurate count of responses (excluding invalid and expired)
@@ -128,19 +126,23 @@
 * Update `ignored_parameters` to also exclude ignored request params, body params, or headers from cached response data (to avoid storing API keys or other credentials)
 * Only log request exceptions if `old_data_on_error` is set
 
-**Compatibility, packaging, and tests:**
-* Fix some compatibility issues with `requests 2.17` and `2.18`
+**Depedencies:**
 * Add minimum `requests` version of `2.17`
-* Run tests for each supported version of `requests`
+* Add `attrs` as a dependency for improved serialization models
+* Add `cattrs` as an optional dependency
 * Add some package extras to install optional dependencies (via `pip install`):
+    * `requests-cache[all]` (to install everything)
     * `requests-cache[bson]`
     * `requests-cache[json]`
     * `requests-cache[dynamodb]`
     * `requests-cache[mongodb]`
     * `requests-cache[redis]`
-* Packaging is now handled with Poetry. For users, installation still works the same. For developers,
-  see [Contributing Guide](https://requests-cache.readthedocs.io/en/stable/contributing.html) for details
-* requests-cache is now fully typed and PEP-561 compliant
+
+**Compatibility and packaging:**
+* Fix some compatibility issues with `requests 2.17` and `2.18`
+* Run pre-release tests for each supported version of `requests`
+* Packaging is now handled with Poetry. For users, installation still works the same. For developers, see [Contributing Guide](https://requests-cache.readthedocs.io/en/stable/contributing.html) for details
+
 
 -----
 ### 0.6.4 (2021-06-04)
@@ -167,9 +169,7 @@ Fix a bug in which `filter_fn()` would get called on `response.request` instead 
 ## 0.6.0 (2021-04-09)
 [See all issues and PRs for 0.6](https://github.com/reclosedev/requests-cache/milestone/1?closed=1)
 
-Thanks to [Code Shelter](https://www.codeshelter.co) and
-[contributors](https://requests-cache.readthedocs.io/en/stable/contributors.html)
-for making this release possible!
+Thanks to [Code Shelter](https://www.codeshelter.co) and [contributors](https://requests-cache.readthedocs.io/en/stable/contributors.html) for making this release possible!
 
 **Backends:**
 * SQLite: Allow passing user paths (`~/path-to-cache`) to database file with `db_path` param
@@ -177,9 +177,7 @@ for making this release possible!
 * Make default table names consistent across backends (`'http_cache'`)
 
 **Expiration:**
-* Cached responses are now stored with an absolute expiration time, so `CachedSession.expire_after`
-  no longer applies retroactively. To revalidate previously cached items with a new expiration time,
-  see below:
+* Cached responses are now stored with an absolute expiration time, so `CachedSession.expire_after` no longer applies retroactively. To revalidate previously cached items with a new expiration time see below:
 * Add support for overriding original expiration (i.e., revalidating) in `CachedSession.remove_expired_responses()`
 * Add support for setting expiration for individual requests
 * Add support for setting expiration based on URL glob patterns
@@ -187,51 +185,45 @@ for making this release possible!
 * Add support for explicitly disabling expiration with `-1` (Since `None` may be ambiguous in some cases)
 
 **Serialization:**
-* **Note:** Due to the following changes, responses cached with previous versions of requests-cache
-  will be invalid. These **old responses will be treated as expired**, and will be refreshed the
-  next time they are requested. They can also be manually converted or removed, if needed (see notes below).
-* Add [example script](https://github.com/reclosedev/requests-cache/blob/master/examples/convert_cache.py)
-  to convert an existing cache from previous serialization format to new one
-* When running `remove_expired_responses()`, also remove responses that are invalid due to updated
-  serialization format
-* Add `CachedResponse` class to wrap cached `requests.Response` objects, which makes additional
-  cache information available to client code
+* **Note:** Due to the following changes, responses cached with previous versions of requests-cache will be invalid. These **old responses will be treated as expired**, and will be refreshed the next time they are requested. They can also be manually converted or removed, if needed (see notes below).
+* Add [example script](https://github.com/reclosedev/requests-cache/blob/master/examples/convert_cache.py) to convert an existing cache from previous serialization format to new one
+* When running `remove_expired_responses()`, also remove responses that are invalid due to updated serialization format
+* Add `CachedResponse` class to wrap cached `requests.Response` objects, which makes additional cache information available to client code
 * Add `CachedHTTPResponse` class to wrap `urllib3.response.HTTPResponse` objects, available via `CachedResponse.raw`
     * Re-construct the raw response on demand to avoid storing extra data in the cache
     * Improve emulation of raw request behavior used for iteration, streaming requests, etc.
 * Add `BaseCache.urls` property to get all URLs persisted in the cache
 * Add optional support for `itsdangerous` for more secure serialization
 
+**Other features:**
+* Add `CacheMixin` class to make the features of `CachedSession` usable as a mixin class, for [compatibility with other requests-based libraries](https://requests-cache.readthedocs.io/en/stable/advanced_usage.html#library-compatibility).
+* Add `HEAD` to default `allowable_methods`
+
 **Bugfixes:**
 * Fix caching requests with data specified in `json` parameter
 * Fix caching requests with `verify` parameter
 * Fix duplicate cached responses due to some unhandled variations in URL format
-    * To support this, the `url-normalize` library has been added to dependencies
 * Fix usage of backend-specific params when used in place of `cache_name`
 * Fix potential TypeError with `DbPickleDict` initialization
 * Fix usage of `CachedSession.cache_disabled` if used within another contextmanager
 * Fix non-thread-safe iteration in `BaseCache`
-* Fix `get_cache()`, `clear()`, and `remove_expired_responses()` so they will do nothing if
-  requests-cache is not installed
+* Fix `get_cache()`, `clear()`, and `remove_expired_responses()` so they will do nothing if requests-cache is not installed
 * Update usage of deprecated MongoClient `save()` method
 * Replace some old bugs with new and different bugs, just to keep life interesting
 
-**General:**
-* Drop support for python <= 3.5
+**Depedencies:**
+* Add `itsdangerous` as a dependency for secure serialization
+* Add `url-normalize` as a dependency for better request normalization and reducing duplications
+
+**Deprecations & removals:**
+* Drop support for python 2.7, 3.4, and 3.5
 * Deprecate `core` module; all imports should be made from top-level package instead
     * e.g.: `from requests_cache import CachedSession`
-* Add `CacheMixin` class to make the features of `CachedSession` usable as a mixin class,
-  for [compatibility with other requests-based libraries](https://requests-cache.readthedocs.io/en/stable/advanced_usage.html#library-compatibility).
-* Add `HEAD` to default `allowable_methods`
+    * Imports `from requests_cache.core` will raise a `DeprecationWarning`, and will be removed in a future release
 
 **Docs & Tests:**
-* Add type annotations to main functions/methods in public API, and include in documentation on
-  [readthedocs](https://requests-cache.readthedocs.io/en/stable/)
-* Add [Contributing Guide](https://requests-cache.readthedocs.io/en/stable/contributing.html),
-  [Security](https://requests-cache.readthedocs.io/en/stable/security.html) info,
-  and more examples & detailed usage info in
-  [User Guide](https://requests-cache.readthedocs.io/en/stable/user_guide.html) and
-  [Advanced Usage](https://requests-cache.readthedocs.io/en/stable/advanced_usage.html) sections.
+* Add type annotations to main functions/methods in public API, and include in documentation on [readthedocs](https://requests-cache.readthedocs.io/en/stable/)
+* Add [Contributing Guide](https://requests-cache.readthedocs.io/en/stable/contributing.html), [Security](https://requests-cache.readthedocs.io/en/stable/security.html) info, and more examples & detailed usage info in [User Guide](https://requests-cache.readthedocs.io/en/stable/user_guide.html) and [Advanced Usage](https://requests-cache.readthedocs.io/en/stable/advanced_usage.html) sections.
 * Increase test coverage and rewrite most tests using pytest
 * Add containerized backends for both local and CI integration testing
 
