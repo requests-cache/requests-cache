@@ -45,17 +45,17 @@ class BaseCache:
     def __init__(
         self,
         *args,
-        match_headers: bool = False,
+        match_headers: Union[Iterable[str], bool] = False,
         ignored_parameters: Iterable[str] = None,
         key_fn: KEY_FN = None,
         **kwargs,
     ):
         self.responses: BaseStorage = DictStorage()
         self.redirects: BaseStorage = DictStorage()
-        self.match_headers = match_headers or kwargs.get('include_get_headers')
         self.ignored_parameters = ignored_parameters
         self.key_fn = key_fn or create_key
         self.name: str = kwargs.get('cache_name', '')
+        self.match_headers = match_headers or kwargs.pop('include_get_headers', False)
 
     @property
     def urls(self) -> Iterator[str]:

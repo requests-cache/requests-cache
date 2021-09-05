@@ -299,7 +299,8 @@ class CachedSession(CacheMixin, OriginalSession):
         urls_expire_after: Expiration times to apply for different URL patterns
         allowable_codes: Only cache responses with one of these status codes
         allowable_methods: Cache only responses for one of these HTTP methods
-        match_headers: Match request headers when reading from the cache
+        match_headers: Match request headers when reading from the cache; may be either a boolean
+            or a list of specific headers to match
         ignored_parameters: List of request parameters to not match against, and exclude from the cache
         filter_fn: Function that takes a :py:class:`~requests.Response` object and returns a boolean
             indicating whether or not that response should be cached. Will be applied to both new

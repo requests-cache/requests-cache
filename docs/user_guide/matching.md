@@ -1,10 +1,9 @@
 (matching)=
 # {fa}`equals,style=fas` Request Matching
-Requests are matched according to the request URL, parameters and body. All of these values are
-normalized to account for any variations that do not modify response content.
+Requests are matched according to the request method, URL, parameters and body. All of these values
+are normalized to account for any variations that do not modify response content.
 
-There are additional options to match according to request headers, ignore specific request
-parameters, or create your own custom request matcher.
+There are some additional options to configure how you want requests to be matched.
 
 ## Matching Request Headers
 In some cases, different headers may result in different response data, so you may want to cache
@@ -14,6 +13,11 @@ them separately. To enable this, use `match_headers`:
 >>> # Both of these requests will be sent and cached separately
 >>> session.get('http://httpbin.org/headers', {'Accept': 'text/plain'})
 >>> session.get('http://httpbin.org/headers', {'Accept': 'application/json'})
+```
+
+If you only want to match specific headers and not others, you can provide them as a list:
+```python
+>>> session = CachedSession(match_headers=['Accept', 'Accept-Language'])
 ```
 
 (filter-params)=
