@@ -104,6 +104,7 @@ class SQLiteCache(BaseCache):
         self.responses = SQLitePickleDict(db_path, table_name='responses', **kwargs)
         self.redirects = SQLiteDict(db_path, table_name='redirects', **kwargs)
 
+    @property
     def db_path(self) -> AnyPath:
         return self.responses.db_path
 
