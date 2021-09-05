@@ -43,10 +43,10 @@ class BaseCacheTest:
     backend_class: Type[BaseCache] = None
     init_kwargs: Dict = {}
 
-    def init_session(self, clear=True, **kwargs) -> CachedSession:
+    def init_session(self, cache_name=CACHE_NAME, clear=True, **kwargs) -> CachedSession:
         kwargs.setdefault('allowable_methods', ALL_METHODS)
         kwargs.setdefault('serializer', 'pickle')
-        backend = self.backend_class(CACHE_NAME, **self.init_kwargs, **kwargs)
+        backend = self.backend_class(cache_name, **self.init_kwargs, **kwargs)
         if clear:
             backend.clear()
 
