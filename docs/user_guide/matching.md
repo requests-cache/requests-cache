@@ -8,9 +8,9 @@ parameters, or create your own custom request matcher.
 
 ## Matching Request Headers
 In some cases, different headers may result in different response data, so you may want to cache
-them separately. To enable this, use `include_get_headers`:
+them separately. To enable this, use `match_headers`:
 ```python
->>> session = CachedSession(include_get_headers=True)
+>>> session = CachedSession(match_headers=True)
 >>> # Both of these requests will be sent and cached separately
 >>> session.get('http://httpbin.org/headers', {'Accept': 'text/plain'})
 >>> session.get('http://httpbin.org/headers', {'Accept': 'application/json'})
@@ -45,9 +45,9 @@ This also applies to parameters in a JSON-formatted request body:
 
 **Request Headers:**
 
-As well as headers, if `include_get_headers` is also used:
+As well as headers, if `match_headers` is also used:
 ```python
->>> session = CachedSession(ignored_parameters=['auth-token'], include_get_headers=True)
+>>> session = CachedSession(ignored_parameters=['auth-token'], match_headers=True)
 >>> session.get('http://httpbin.org/get', headers={'auth-token': '2F63E5DF4F44'})
 >>> r = session.get('http://httpbin.org/get', headers={'auth-token': 'D9FAEB3449D3'})
 >>> assert r.from_cache is True

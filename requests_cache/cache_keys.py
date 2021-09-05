@@ -30,7 +30,7 @@ RequestContent = Union[Mapping, str, bytes]
 def create_key(
     request: AnyRequest = None,
     ignored_parameters: Iterable[str] = None,
-    include_get_headers: bool = False,
+    match_headers: bool = False,
     **kwargs,
 ) -> str:
     """Create a normalized cache key from a request object or :py:class:`~requests.Request`
@@ -51,7 +51,7 @@ def create_key(
     body = remove_ignored_body_params(request, ignored_parameters)
     if body:
         key.update(body)
-    if include_get_headers and request.headers != DEFAULT_HEADERS:
+    if match_headers and request.headers != DEFAULT_HEADERS:
         exclude_headers = list(ignored_parameters or []) + DEFAULT_EXCLUDE_HEADERS
         headers = normalize_dict(remove_ignored_headers(request, exclude_headers))
         if TYPE_CHECKING:
