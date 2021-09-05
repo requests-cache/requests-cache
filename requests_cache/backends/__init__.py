@@ -16,7 +16,7 @@ BACKEND_KWARGS = CACHE_NAME_KWARGS + [
     'endpoint_url',
     'fast_save',
     'ignored_parameters',
-    'include_get_headers',
+    'match_headers',
     'name',
     'read_capacity_units',
     'region_name',

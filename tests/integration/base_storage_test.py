@@ -16,9 +16,9 @@ class BaseStorageTest:
     picklable: bool = False
     num_instances: int = 10  # Max number of cache instances to test
 
-    def init_cache(self, index=0, clear=True, **kwargs):
+    def init_cache(self, cache_name=CACHE_NAME, index=0, clear=True, **kwargs):
         kwargs.setdefault('serializer', 'pickle')
-        cache = self.storage_class(CACHE_NAME, f'table_{index}', **self.init_kwargs, **kwargs)
+        cache = self.storage_class(cache_name, f'table_{index}', **self.init_kwargs, **kwargs)
         if clear:
             cache.clear()
         return cache
@@ -32,7 +32,7 @@ class BaseStorageTest:
         """Test basic dict methods with multiple cache instances:
         ``getitem, setitem, delitem, len, contains``
         """
-        caches = [self.init_cache(i) for i in range(10)]
+        caches = [self.init_cache(index=i) for i in range(10)]
         for i in range(self.num_instances):
             caches[i][f'key_{i}'] = f'value_{i}'
             caches[i][f'key_{i+1}'] = f'value_{i+1}'
@@ -50,7 +50,7 @@ class BaseStorageTest:
         """Test iterable dict methods with multiple cache instances:
         ``iter, keys, values, items``
         """
-        caches = [self.init_cache(i) for i in range(self.num_instances)]
+        caches = [self.init_cache(index=i) for i in range(self.num_instances)]
         for i in range(self.num_instances):
             caches[i][f'key_{i}'] = f'value_{i}'
 
@@ -79,6 +79,7 @@ class BaseStorageTest:
         for i in range(20):
             cache[f'key_{i}'] = f'value_{i}'
         cache.bulk_delete([f'key_{i}' for i in range(5)])
+        cache.bulk_delete(['nonexistent_key'])
 
         assert len(cache) == 15
         assert set(cache.keys()) == {f'key_{i}' for i in range(5, 20)}

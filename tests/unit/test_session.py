@@ -385,7 +385,7 @@ def test_response_defaults(mock_session):
     response_2 = mock_session.get(MOCKED_URL)
     response_3 = mock_session.get(MOCKED_URL)
 
-    assert response_1.cache_key.startswith('4398752d')
+    assert response_1.cache_key.startswith('fd2afc8d')
     assert response_1.created_at is None
     assert response_1.expires is None
     assert response_1.from_cache is False
@@ -393,29 +393,35 @@ def test_response_defaults(mock_session):
 
     assert isinstance(response_2.created_at, datetime)
     assert isinstance(response_2.expires, datetime)
-    assert response_2.cache_key.startswith('4398752d')
+    assert response_2.cache_key.startswith('fd2afc8d')
     assert response_2.created_at == response_3.created_at
     assert response_2.expires == response_3.expires
     assert response_2.from_cache is response_3.from_cache is True
     assert response_2.is_expired is response_3.is_expired is False
 
 
-def test_include_get_headers(mock_session):
-    """With include_get_headers, requests with different headers should have different cache keys"""
-    mock_session.cache.include_get_headers = True
+def test_match_headers(mock_session):
+    """With match_headers, requests with different headers should have different cache keys"""
+    mock_session.cache.match_headers = True
     headers_list = [{'Accept': 'text/json'}, {'Accept': 'text/xml'}, {'Accept': 'custom'}, None]
     for headers in headers_list:
         assert mock_session.get(MOCKED_URL, headers=headers).from_cache is False
         assert mock_session.get(MOCKED_URL, headers=headers).from_cache is True
 
 
-def test_include_get_headers_normalize(mock_session):
-    """With include_get_headers, the same headers (in any order) should have the same cache key"""
-    mock_session.cache.include_get_headers = True
+def test_match_headers_normalize(mock_session):
+    """With match_headers, the same headers (in any order) should have the same cache key"""
+    mock_session.cache.match_headers = True
     headers = {'Accept': 'text/json', 'Custom': 'abc'}
     reversed_headers = {'Custom': 'abc', 'Accept': 'text/json'}
     assert mock_session.get(MOCKED_URL, headers=headers).from_cache is False
     assert mock_session.get(MOCKED_URL, headers=reversed_headers).from_cache is True
+
+
+def test_include_get_headers():
+    """include_get_headers is aliased to match_headers for backwards-compatibility"""
+    session = CachedSession(include_get_headers=True, backend='memory')
+    assert session.cache.match_headers is True
 
 
 @pytest.mark.parametrize('exception_cls', DESERIALIZE_ERRORS)
