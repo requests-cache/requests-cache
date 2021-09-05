@@ -19,22 +19,34 @@ class TestFileDict(BaseStorageTest):
     def teardown_class(cls):
         rmtree(CACHE_NAME, ignore_errors=True)
 
-    def init_cache(self, index=0, **kwargs):
-        cache = self.storage_class(f'{CACHE_NAME}_{index}', serializer=pickle, use_temp=True, **kwargs)
-        cache.clear()
+    def init_cache(self, index=0, clear=True, **kwargs):
+        cache = FileDict(f'{CACHE_NAME}_{index}', serializer=pickle, use_temp=True, **kwargs)
+        if clear:
+            cache.clear()
         return cache
 
     def test_use_cache_dir(self):
-        relative_path = self.storage_class(CACHE_NAME).cache_dir
-        cache_dir_path = self.storage_class(CACHE_NAME, use_cache_dir=True).cache_dir
+        relative_path = FileDict(CACHE_NAME).cache_dir
+        cache_dir_path = FileDict(CACHE_NAME, use_cache_dir=True).cache_dir
         assert not str(relative_path).startswith(user_cache_dir())
         assert str(cache_dir_path).startswith(user_cache_dir())
 
     def test_use_temp(self):
-        relative_path = self.storage_class(CACHE_NAME).cache_dir
-        temp_path = self.storage_class(CACHE_NAME, use_temp=True).cache_dir
+        relative_path = FileDict(CACHE_NAME).cache_dir
+        temp_path = FileDict(CACHE_NAME, use_temp=True).cache_dir
         assert not str(relative_path).startswith(gettempdir())
         assert str(temp_path).startswith(gettempdir())
+
+    def test_load_previous_binary_file(self):
+        """If we init a new cache and load a file previously saved in binary mode, the cache should
+        handle this and open future files in binary mode for the rest of the session.
+        """
+        cache = self.init_cache()
+        cache['foo'] = 'bar'
+
+        cache = self.init_cache(clear=False)
+        assert cache['foo'] == 'bar'
+        assert cache.is_binary is True
 
 
 class TestFileCache(BaseCacheTest):
