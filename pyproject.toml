@@ -94,7 +94,7 @@ timeout-decorator     = "^0.5"
 
 # For linting, etc.; additional tools are managed by pre-commit
 mypy                  = "^0.910"
-pre-commit            = "^2.12"
+pre-commit            = "^2.15"
 
 # For convenience in local development
 nox                   = "^2021.6.12"
