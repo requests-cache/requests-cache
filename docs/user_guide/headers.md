@@ -5,10 +5,10 @@ Most common request and response headers related to caching are supported, inclu
 and [ETags](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag).
 
 ```{note}
-requests-cache is not intended to be strict implementation of HTTP caching according to
+requests-cache is not (yet) intended to be strict implementation of HTTP caching according to
 [RFC 2616](https://datatracker.ietf.org/doc/html/rfc2616),
-[RFC 7234](https://datatracker.ietf.org/doc/html/rfc7234), etc. These RFCs describe many behaviors
-that make sense in the context of a browser or proxy cache, but not for a python application.
+[RFC 7234](https://datatracker.ietf.org/doc/html/rfc7234), etc. If there is additional behavior you
+would like to see, please create an issue to request it.
 ```
 
 ## Conditional Requests
@@ -56,7 +56,3 @@ The following headers are currently supported:
 - `Expires`: Used as an absolute expiration time
 - `ETag`: Returns expired cache data if the remote content has not changed (`304 Not Modified` response)
 - `Last-Modified`: Returns expired cache data if the remote content has not changed (`304 Not Modified` response)
-
-```{note}
-Unlike a browser or proxy cache, `max-age=0` does not clear previously cached responses.
-```

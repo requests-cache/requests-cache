@@ -48,6 +48,9 @@ class SQLiteTestCase(BaseStorageTest):
         cache.clear()
         assert len(cache) == 0
 
+    def test_use_memory__uri(self):
+        self.init_cache(':memory:').db_path == ':memory:'
+
     def test_bulk_commit(self):
         cache = self.init_cache()
         with cache.bulk_commit():
@@ -169,3 +172,10 @@ class TestSQLiteCache(BaseCacheTest):
         session.cache.clear()
 
         assert len(session.cache.responses) == 0
+
+    def test_db_path(self):
+        """This is just provided as an alias, since both requests and redirects share the same db
+        file
+        """
+        session = self.init_session()
+        assert session.cache.db_path == session.cache.responses.db_path
