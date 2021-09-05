@@ -104,7 +104,14 @@
 * Add support for HTTP timestamps (RFC 5322) in ``expire_after`` parameters
 * Add support for bypassing the cache if `expire_after=0`
 * Add support for making a cache allowlist using URL patterns
-
+GET https://iam.amazonaws.com?Action=ListUsers&Version=2010-05-08&
+X-Amz-Algorithm=AWS4-HMAC-SHA256&
+X-Amz-Credential=AKIDEXAMPLE%2F20150830%2Fus-east-1%2Fiam%2Faws4_request&
+X-Amz-Date=20150830T123600Z&X-Amz-Expires=60&
+X-Amz-SignedHeaders=content-type%3Bhost&
+X-Amz-Signature=37ac2f4fde00b0ac9bd9eadeb459b1bbee224158d66e7ae5fcadb70b2d181d02 HTTP/1.1
+content-type: application/x-www-form-urlencoded; charset=utf-8
+host: iam.amazonaws.com
 **Serialization:**
 * Add data models for all serialized objects
 * Add a JSON serializer
