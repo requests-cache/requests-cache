@@ -28,12 +28,13 @@
 **Other features:**
 * Add `BaseCache.update()` method as a shortcut for exporting to a different cache instance
 * Allow `BaseCache.has_url()` and `delete_url()` to optionally take arguments for `requests.Request` instead of just a URL
-* Allow `create_key()` to optionally take arguments for `requests.Request` instead of a request object
+* Allow `create_key()` to optionally accept arguments for `requests.Request` instead of a request object
+* Allow `match_headers` to optionally accept a list of specific headers to match
 * Add support for custom cache key callbacks with `key_fn` parameter
 * Slightly reduce size of serialized responses
 
 **Depedencies:**
-* Add `appdirs` as a dependency for cross-platform usage of user cache directories
+* Add `appdirs` as a dependency for easier cross-platform usage of user cache directories
 * Update `cattrs` from optional to required dependency
 * Update `itsdangerous` from required to optional (but recommended) dependency
 * Require requests 2.22+ and urllib3 1.25.5+
@@ -44,6 +45,9 @@
     * Any bugfixes for 0.8 that also apply to 0.7 will be backported
 * Remove deprecated `core` module
 * Remove deprecated `BaseCache.remove_old_entries()` method (use `remove_expired_responses()` instead)
+* For clarity about matching behavior, rename `include_get_headers` to `match_headers`
+  * References in the docs to 'cache key' related behavior is now described as 'request matching' to avoid confusion
+  * Add alias for previous parameter for backwards-compatibility
 * For consistency with other backends, rename SQLite backend classes:
   * `backends.sqlite.Db*` -> `SQLiteCache`, `SQLiteDict`, `SQLitePickleDict`
   * Add aliases for previous names for backwards-compatibility
@@ -104,14 +108,7 @@
 * Add support for HTTP timestamps (RFC 5322) in ``expire_after`` parameters
 * Add support for bypassing the cache if `expire_after=0`
 * Add support for making a cache allowlist using URL patterns
-GET https://iam.amazonaws.com?Action=ListUsers&Version=2010-05-08&
-X-Amz-Algorithm=AWS4-HMAC-SHA256&
-X-Amz-Credential=AKIDEXAMPLE%2F20150830%2Fus-east-1%2Fiam%2Faws4_request&
-X-Amz-Date=20150830T123600Z&X-Amz-Expires=60&
-X-Amz-SignedHeaders=content-type%3Bhost&
-X-Amz-Signature=37ac2f4fde00b0ac9bd9eadeb459b1bbee224158d66e7ae5fcadb70b2d181d02 HTTP/1.1
-content-type: application/x-www-form-urlencoded; charset=utf-8
-host: iam.amazonaws.com
+
 **Serialization:**
 * Add data models for all serialized objects
 * Add a JSON serializer

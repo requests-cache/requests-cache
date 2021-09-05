@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 from hashlib import sha256
 from operator import itemgetter
-from typing import TYPE_CHECKING, Iterable, List, Mapping, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, Iterable, List, Mapping, Optional, Tuple, Union
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from requests import Request, Session
@@ -22,68 +22,85 @@ from . import get_valid_kwargs
 if TYPE_CHECKING:
     from .models import AnyRequest
 
-DEFAULT_HEADERS = default_headers()
-DEFAULT_EXCLUDE_HEADERS = ['Cache-Control', 'If-None-Match', 'If-Modified-Since']
+DEFAULT_REQUEST_HEADERS = default_headers()
+DEFAULT_EXCLUDE_HEADERS = {'Cache-Control', 'If-None-Match', 'If-Modified-Since'}
 RequestContent = Union[Mapping, str, bytes]
 
 
 def create_key(
     request: AnyRequest = None,
     ignored_parameters: Iterable[str] = None,
-    match_headers: bool = False,
+    match_headers: Union[Iterable[str], bool] = False,
     **kwargs,
 ) -> str:
-    """Create a normalized cache key from a request object or :py:class:`~requests.Request`
+    """Create a normalized cache key from either a request object or :py:class:`~requests.Request`
     arguments
     """
+    # Create a PreparedRequest, if needed
     if not request:
         request_kwargs = get_valid_kwargs(Request.__init__, kwargs)
         request = Session().prepare_request(Request(**request_kwargs))
     if TYPE_CHECKING:
         assert request is not None
 
+    # Add method and relevant request settings
     key = sha256(encode((request.method or '').upper()))
-    url = remove_ignored_url_params(request, ignored_parameters)
-    url = url_normalize(url)
-    key.update(encode(url))
     key.update(encode(kwargs.get('verify', True)))
 
+    # Add filtered/normalized URL + request params
+    url = remove_ignored_url_params(request, ignored_parameters)
+    key.update(encode(url_normalize(url)))
+
+    # Add filtered request body
     body = remove_ignored_body_params(request, ignored_parameters)
     if body:
         key.update(body)
-    if match_headers and request.headers != DEFAULT_HEADERS:
-        exclude_headers = list(ignored_parameters or []) + DEFAULT_EXCLUDE_HEADERS
-        headers = normalize_dict(remove_ignored_headers(request, exclude_headers))
-        if TYPE_CHECKING:
-            assert isinstance(headers, dict)
-        for name, value in headers.items():
-            key.update(encode(f'{name}={value}'))
+
+    # Add filtered/normalized headers
+    headers = get_matched_headers(request.headers, ignored_parameters, match_headers)
+    for k, v in headers.items():
+        key.update(encode(f'{k}={v}'))
 
     return key.hexdigest()
 
 
-def remove_ignored_params(
-    request: AnyRequest, ignored_parameters: Optional[Iterable[str]]
-) -> AnyRequest:
-    """Remove ignored parameters from reuqest URL, body, and headers"""
-    if not ignored_parameters:
-        return request
-    request.headers = remove_ignored_headers(request, ignored_parameters)
-    request.url = remove_ignored_url_params(request, ignored_parameters)
-    request.body = remove_ignored_body_params(request, ignored_parameters)
-    return request
+def get_matched_headers(
+    headers: CaseInsensitiveDict, ignored_parameters: Optional[Iterable[str]], match_headers
+) -> Dict:
+    """Get only the headers we should match against, given an optional include list and/or exclude
+    list. Also normalizes headers (sorted/lowercased keys).
+    """
+    if not match_headers:
+        return {}
+
+    included = set(match_headers if isinstance(match_headers, Iterable) else headers.keys())
+    included -= set(ignored_parameters or [])
+    included -= DEFAULT_EXCLUDE_HEADERS
+    return {k.lower(): headers[k] for k in sorted(included) if k in headers}
 
 
 def remove_ignored_headers(
     request: AnyRequest, ignored_parameters: Optional[Iterable[str]]
 ) -> CaseInsensitiveDict:
-    """Remove any ignored parameters from reuqest headers"""
+    """Remove any ignored request headers"""
     if not ignored_parameters:
         return request.headers
     headers = CaseInsensitiveDict(request.headers.copy())
     for k in ignored_parameters:
         headers.pop(k, None)
     return headers
+
+
+def remove_ignored_params(
+    request: AnyRequest, ignored_parameters: Optional[Iterable[str]]
+) -> AnyRequest:
+    """Remove ignored parameters from request URL, body, and headers"""
+    if not ignored_parameters:
+        return request
+    request.headers = remove_ignored_headers(request, ignored_parameters)
+    request.url = remove_ignored_url_params(request, ignored_parameters)
+    request.body = remove_ignored_body_params(request, ignored_parameters)
+    return request
 
 
 def remove_ignored_url_params(request: AnyRequest, ignored_parameters: Optional[Iterable[str]]) -> str:
@@ -135,10 +152,6 @@ def normalize_dict(
         items: Request params, data, or json
         normalize_data: Also normalize stringified JSON
     """
-
-    def sort_dict(d):
-        return dict(sorted(d.items(), key=itemgetter(0)))
-
     if not items:
         return None
     if isinstance(items, Mapping):
@@ -153,6 +166,10 @@ def normalize_dict(
             pass
 
     return items
+
+
+def sort_dict(d: Mapping) -> Dict:
+    return dict(sorted(d.items(), key=itemgetter(0)))
 
 
 def encode(value, encoding='utf-8') -> bytes:
