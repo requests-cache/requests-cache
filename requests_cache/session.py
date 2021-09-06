@@ -57,7 +57,7 @@ class CacheMixin(MIXIN_BASE):
         stale_if_error: bool = False,
         **kwargs,
     ):
-        self.cache = init_backend(backend, cache_name, **kwargs)
+        self.cache = init_backend(cache_name, backend, **kwargs)
         self.allowable_codes = allowable_codes
         self.allowable_methods = allowable_methods
         self.expire_after = expire_after

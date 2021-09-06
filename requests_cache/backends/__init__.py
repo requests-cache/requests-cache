@@ -2,7 +2,7 @@
 # flake8: noqa: F401
 from inspect import signature
 from logging import getLogger
-from typing import Callable, Dict, Iterable, Type, Union
+from typing import Callable, Dict, Iterable, Optional, Type, Union
 
 from .. import get_placeholder_class, get_valid_kwargs
 from .base import BaseCache, BaseStorage
@@ -72,21 +72,21 @@ BACKEND_CLASSES = {
 }
 
 
-def init_backend(backend: BackendSpecifier = None, *args, **kwargs) -> BaseCache:
+def init_backend(cache_name: str, backend: Optional[BackendSpecifier], **kwargs) -> BaseCache:
     """Initialize a backend from a name, class, or instance"""
-    logger.debug(f'Initializing backend: {backend}')
+    logger.debug(f'Initializing backend: {backend} {cache_name}')
 
-    # Omit 'cache_name' positional arg if an equivalent backend-specific kwarg is specified
-    # TODO: The difference in parameter names here can be problematic. A better solution for this
-    #       would be nice, if it can be done without breaking backwards-compatibility.
-    if any([k in kwargs for k in CACHE_NAME_KWARGS]):
-        args = tuple()
+    # The 'cache_name' arg has a different purpose depending on the backend. If an equivalent
+    # backend-specific keyword arg is specified, handle that here to avoid conflicts. A consistent
+    # positional-only or keyword-only arg would be better, but probably not worth a breaking change.
+    cache_name_kwargs = [kwargs.pop(k) for k in CACHE_NAME_KWARGS if k in kwargs]
+    cache_name = cache_name or cache_name_kwargs[0]
 
     # Determine backend class
     if isinstance(backend, BaseCache):
         return backend
     elif isinstance(backend, type):
-        return backend(*args, **kwargs)
+        return backend(cache_name, **kwargs)
     elif not backend:
         backend = 'sqlite' if BACKEND_CLASSES['sqlite'] else 'memory'
 
@@ -94,4 +94,4 @@ def init_backend(backend: BackendSpecifier = None, *args, **kwargs) -> BaseCache
     if backend not in BACKEND_CLASSES:
         raise ValueError(f'Invalid backend: {backend}. Choose from: {BACKEND_CLASSES.keys()}')
 
-    return BACKEND_CLASSES[backend](*args, **kwargs)
+    return BACKEND_CLASSES[backend](cache_name, **kwargs)
