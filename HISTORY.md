@@ -16,6 +16,7 @@
     * Add `FileCache.paths()` method
     * Add `use_cache_dir` option to use platform-specific user cache directory
     * Return `pathlib.Path` objects for all file paths
+    * Use shorter hashes for file names
 * SQLite:
     * Add `SQLiteCache.db_path` wrapper property
     * Add `use_memory` option and support for in-memory databases
@@ -31,6 +32,7 @@
 * Allow `create_key()` to optionally accept arguments for `requests.Request` instead of a request object
 * Allow `match_headers` to optionally accept a list of specific headers to match
 * Add support for custom cache key callbacks with `key_fn` parameter
+* By default use blake2 instead of sha256 for generating cache keys
 * Slightly reduce size of serialized responses
 
 **Depedencies:**
@@ -126,8 +128,8 @@
 * Add more detailed repr methods for `CachedSession`, `CachedResponse`, and `BaseCache`
 * Add support for caching multipart form uploads
 * Update `BaseCache.urls` to only skip invalid responses, not delete them (for better performance)
-* Update `old_data_on_error` option to also handle error response codes
 * Update `ignored_parameters` to also exclude ignored request params, body params, or headers from cached response data (to avoid storing API keys or other credentials)
+* Update `old_data_on_error` option to also handle error response codes
 * Only log request exceptions if `old_data_on_error` is set
 
 **Depedencies:**
