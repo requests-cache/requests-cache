@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 import json
-from hashlib import sha256
+from hashlib import blake2b
 from operator import itemgetter
 from typing import TYPE_CHECKING, Dict, Iterable, List, Mapping, Optional, Tuple, Union
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
@@ -44,7 +44,8 @@ def create_key(
         assert request is not None
 
     # Add method and relevant request settings
-    key = sha256(encode((request.method or '').upper()))
+    key = blake2b(digest_size=8)
+    key.update(encode((request.method or '').upper()))
     key.update(encode(kwargs.get('verify', True)))
 
     # Add filtered/normalized URL + request params
