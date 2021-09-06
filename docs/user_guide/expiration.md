@@ -71,12 +71,12 @@ frequently, another that changes infrequently, and another that never changes. E
 ## Expiration and Error Handling
 In some cases, you might cache a response, have it expire, but then encounter an error when
 retrieving a new response. If you would like to use expired response data in these cases, use the
-`old_data_on_error` option.
+`stale_if_error` option.
 
 For example:
 ```python
 >>> # Cache a test response that will expire immediately
->>> session = CachedSession(old_data_on_error=True)
+>>> session = CachedSession(stale_if_error=True)
 >>> session.get('https://httpbin.org/get', expire_after=0.0001)
 >>> time.sleep(0.0001)
 ```
@@ -89,7 +89,7 @@ you get a 500. You will then get the expired cache data instead:
 True, True
 ```
 
-In addition to HTTP error codes, `old_data_on_error` also applies to python exceptions (typically a
+In addition to HTTP error codes, `stale_if_error` also applies to python exceptions (typically a
 {py:exc}`~requests.RequestException`). See `requests` documentation on
 [Errors and Exceptions](https://2.python-requests.org/en/master/user/quickstart/#errors-and-exceptions)
 for more details on request errors in general.

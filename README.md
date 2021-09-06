@@ -102,9 +102,9 @@ session = CachedSession(
     expire_after=timedelta(days=1),    # Otherwise expire responses after one day
     allowable_methods=['GET', 'POST']  # Cache POST requests to avoid sending the same data twice
     allowable_codes=[200, 400]         # Cache 400 responses as a solemn reminder of your failures
-    match_headers=True,                # Match all request headers
     ignored_parameters=['api_key'],    # Don't match this param or save it in the cache
-    old_data_on_error=True,            # In case of request errors, use stale cache data if possible
+    match_headers=True,                # Match all request headers
+    stale_if_error=True,               # In case of request errors, use stale cache data if possible
 )
 ```
 
