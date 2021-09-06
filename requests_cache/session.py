@@ -50,11 +50,11 @@ class CacheMixin(MIXIN_BASE):
         backend: BackendSpecifier = None,
         expire_after: ExpirationTime = -1,
         urls_expire_after: Dict[str, ExpirationTime] = None,
+        cache_control: bool = False,
         allowable_codes: Iterable[int] = (200,),
         allowable_methods: Iterable[str] = ('GET', 'HEAD'),
         filter_fn: FILTER_FN = None,
-        old_data_on_error: bool = False,
-        cache_control: bool = False,
+        stale_if_error: bool = False,
         **kwargs,
     ):
         self.cache = init_backend(backend, cache_name, **kwargs)
@@ -62,9 +62,9 @@ class CacheMixin(MIXIN_BASE):
         self.allowable_methods = allowable_methods
         self.expire_after = expire_after
         self.urls_expire_after = urls_expire_after
-        self.filter_fn = filter_fn or (lambda r: True)
-        self.old_data_on_error = old_data_on_error
         self.cache_control = cache_control
+        self.filter_fn = filter_fn or (lambda r: True)
+        self.stale_if_error = stale_if_error or kwargs.pop('old_data_on_error', False)
 
         self.cache.name = cache_name  # Set to handle backend=<instance>
         self._request_expire_after: ExpirationTime = None
@@ -146,7 +146,7 @@ class CacheMixin(MIXIN_BASE):
         # If the response is expired, missing, or the cache is disabled, then fetch a new response
         if cached_response is None:
             response = self._send_and_cache(request, actions, **kwargs)
-        elif is_expired and self.old_data_on_error:
+        elif is_expired and self.stale_if_error:
             response = self._resend_and_ignore(request, actions, cached_response, **kwargs)
         elif is_expired:
             response = self._resend(request, actions, cached_response, **kwargs)
@@ -275,7 +275,7 @@ class CacheMixin(MIXIN_BASE):
             'urls_expire_after',
             'allowable_codes',
             'allowable_methods',
-            'old_data_on_error',
+            'stale_if_error',
             'cache_control',
         ]
         attr_strs = [f'{k}={repr(getattr(self, k))}' for k in repr_attrs]
@@ -297,6 +297,7 @@ class CachedSession(CacheMixin, OriginalSession):
             ``['pickle', 'json', 'yaml', 'bson']``.
         expire_after: Time after which cached items will expire
         urls_expire_after: Expiration times to apply for different URL patterns
+        cache_control: Use Cache-Control headers to set expiration
         allowable_codes: Only cache responses with one of these status codes
         allowable_methods: Cache only responses for one of these HTTP methods
         match_headers: Match request headers when reading from the cache; may be either a boolean
@@ -306,8 +307,7 @@ class CachedSession(CacheMixin, OriginalSession):
             indicating whether or not that response should be cached. Will be applied to both new
             and previously cached responses.
         key_fn: Function for generating custom cache keys based on request info
-        old_data_on_error: Return stale cache data if a new request raises an exception
-        cache_control: Use Cache-Control request and response headers
+        stale_if_error: Return stale cache data if a new request raises an exception
     """
 
 

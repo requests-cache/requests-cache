@@ -70,7 +70,7 @@ Here are some error messages you may see either in the logs or (more rarely) in 
     either {py:meth}`~.BaseCache.clear` the cache or {py:meth}`~.BaseCache.remove_expired_responses`
     to get rid of the invalid responses.
 * **`Request for URL {url} failed; using cached response`:** This is just a notification that the
-  {ref}`old_data_on_error <request-errors>` option is working as intended
+  {ref}`stale_if_error <request-errors>` option is working as intended
 * **{py:exc}`~requests.RequestException`:** These are general request errors not specific to
   requests-cache. See `requests` documentation on
   [Errors and Exceptions](https://2.python-requests.org/en/master/user/quickstart/#errors-and-exceptions)

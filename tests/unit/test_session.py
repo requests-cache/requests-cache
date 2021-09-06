@@ -434,9 +434,9 @@ def test_cache_error(exception_cls, mock_session):
 
 
 def test_expired_request_error(mock_session):
-    """Without old_data_on_error (default), if there is an error while re-fetching an expired
+    """Without stale_if_error (default), if there is an error while re-fetching an expired
     response, the request should be re-raised and the expired item deleted"""
-    mock_session.old_data_on_error = False
+    mock_session.stale_if_error = False
     mock_session.expire_after = 0.01
     mock_session.get(MOCKED_URL)
     time.sleep(0.01)
@@ -447,9 +447,9 @@ def test_expired_request_error(mock_session):
     assert len(mock_session.cache.responses) == 0
 
 
-def test_old_data_on_error__exception(mock_session):
-    """With old_data_on_error, expect to get old cache data if there is an exception during a request"""
-    mock_session.old_data_on_error = True
+def test_stale_if_error__exception(mock_session):
+    """With stale_if_error, expect to get old cache data if there is an exception during a request"""
+    mock_session.stale_if_error = True
     mock_session.expire_after = 0.2
 
     assert mock_session.get(MOCKED_URL).from_cache is False
@@ -460,9 +460,9 @@ def test_old_data_on_error__exception(mock_session):
         assert response.from_cache is True and response.is_expired is True
 
 
-def test_old_data_on_error__error_code(mock_session):
-    """With old_data_on_error, expect to get old cache data if a response has an error status code"""
-    mock_session.old_data_on_error = True
+def test_stale_if_error__error_code(mock_session):
+    """With stale_if_error, expect to get old cache data if a response has an error status code"""
+    mock_session.stale_if_error = True
     mock_session.expire_after = 0.2
     mock_session.allowable_codes = (200, 404)
 
@@ -471,6 +471,12 @@ def test_old_data_on_error__error_code(mock_session):
     time.sleep(0.2)
     response = mock_session.get(MOCKED_URL_404)
     assert response.from_cache is True and response.is_expired is True
+
+
+def test_old_data_on_error():
+    """stale_if_error is aliased to old_data_on_error for backwards-compatibility"""
+    session = CachedSession(old_data_on_error=True, backend='memory')
+    assert session.stale_if_error is True
 
 
 def test_cache_disabled(mock_session):

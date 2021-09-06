@@ -28,31 +28,35 @@
 
 **Other features:**
 * Add `BaseCache.update()` method as a shortcut for exporting to a different cache instance
-* Allow `BaseCache.has_url()` and `delete_url()` to optionally take arguments for `requests.Request` instead of just a URL
-* Allow `create_key()` to optionally accept arguments for `requests.Request` instead of a request object
+* Allow `BaseCache.has_url()` and `delete_url()` to optionally take parameters for `requests.Request` instead of just a URL
+* Allow `create_key()` to optionally accept parameters for `requests.Request` instead of a request object
 * Allow `match_headers` to optionally accept a list of specific headers to match
 * Add support for custom cache key callbacks with `key_fn` parameter
 * By default use blake2 instead of sha256 for generating cache keys
 * Slightly reduce size of serialized responses
 
+**Backwards-compatible API changes:**
+
+The following changes are meant to make certain behaviors more obvious for new users, without breaking existing usage:
+* For consistency with `Cache-Control: stale-if-error`, rename `old_data_on_error` to `stale_if_error`
+  * Going forward, any new options based on a standard HTTP caching feature will be named after that feature
+* For clarity about matching behavior, rename `include_get_headers` to `match_headers`
+  * References in the docs to cache keys and related behavior are now described as 'request matching'
+* For consistency with other backends, rename SQLite backend classes: `backends.sqlite.Db*` -> `SQLiteCache`, `SQLiteDict`, `SQLitePickleDict`
+* Add aliases for all previous parameter/class names for backwards-compatibility
+
 **Depedencies:**
 * Add `appdirs` as a dependency for easier cross-platform usage of user cache directories
 * Update `cattrs` from optional to required dependency
 * Update `itsdangerous` from required to optional (but recommended) dependency
-* Require requests 2.22+ and urllib3 1.25.5+
+* Require `requests` 2.22+ and `urllib3` 1.25.5+
 
 **Deprecations & removals:**
 * Drop support for python 3.6
-    * Note: python 3.6 support in 0.7.x will continue to be maintained at least until it reaches EOL (2021-12-23)
+    * **Note:** python 3.6 support in 0.7.x will continue to be maintained at least until it reaches EOL (2021-12-23)
     * Any bugfixes for 0.8 that also apply to 0.7 will be backported
 * Remove deprecated `core` module
-* Remove deprecated `BaseCache.remove_old_entries()` method (use `remove_expired_responses()` instead)
-* For clarity about matching behavior, rename `include_get_headers` to `match_headers`
-  * References in the docs to 'cache key' related behavior is now described as 'request matching' to avoid confusion
-  * Add alias for previous parameter for backwards-compatibility
-* For consistency with other backends, rename SQLite backend classes:
-  * `backends.sqlite.Db*` -> `SQLiteCache`, `SQLiteDict`, `SQLitePickleDict`
-  * Add aliases for previous names for backwards-compatibility
+* Remove deprecated `BaseCache.remove_old_entries()` method
 
 -----
 ### 0.7.5 (2021-TBD)
@@ -226,6 +230,7 @@ Thanks to [Code Shelter](https://www.codeshelter.co) and [contributors](https://
 * Deprecate `core` module; all imports should be made from top-level package instead
     * e.g.: `from requests_cache import CachedSession`
     * Imports `from requests_cache.core` will raise a `DeprecationWarning`, and will be removed in a future release
+* Rename `BaseCache.remove_old_entries()` to `remove_expired_responses()`, to match its wrapper method `CachedSession.remove_expired_responses()`
 
 **Docs & Tests:**
 * Add type annotations to main functions/methods in public API, and include in documentation on [readthedocs](https://requests-cache.readthedocs.io/en/stable/)
@@ -252,6 +257,7 @@ Project is now added to [Code Shelter](https://www.codeshelter.co)
 * Fix bulk_commit #78
 * Fix remove_expired_responses missed in __init__.py #93
 * Fix deprecation warnings #122, thanks to mbarkhau
+* Drop support for python 2.6
 
 -----
 ### 0.4.13 (2016-12-23)
