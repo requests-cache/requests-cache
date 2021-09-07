@@ -48,7 +48,6 @@ ujson                      = {optional=true, version=">=4.0"}
 
 # All the bells and whistles for building documentation;
 # defined here because readthedocs doesn't (yet?) support poetry.dev-dependencies
-# [tool.poetry.dev-dependencies]
 furo                       = {optional=true, version=">=2021.8.11-beta.42"}
 linkify-it-py              = {optional=true, version="^1.0.1"}
 myst-parser                = {optional=true, version="^0.15.1"}
