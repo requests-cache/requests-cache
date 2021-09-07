@@ -1,6 +1,6 @@
 # History
 
-## 0.8.0 (2021-09-09)
+## 0.8.0 (2021-09-07)
 [See all issues and PRs for 0.8](https://github.com/reclosedev/requests-cache/milestone/3?closed=1)
 
 **Conditional requests & validation:**
