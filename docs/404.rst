@@ -1,0 +1,6 @@
+:orphan:
+
+:fa:`times-circle` Page not found
+=================================
+This page may have been moved or deleted.
+Check the sidebar links or search bar to find what you're looking for.

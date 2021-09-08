@@ -41,6 +41,7 @@ extensions = [
     'sphinx_panels',
     'sphinxcontrib.apidoc',
     'myst_parser',
+    'notfound.extension',
 ]
 
 # MyST extensions
@@ -83,6 +84,10 @@ copybutton_prompt_is_regexp = True
 # Generate labels in the format <page>:<section>
 autosectionlabel_prefix_document = True
 
+# Use sphinx_autodoc_typehints extension instead of autodoc's built-in type hints
+autodoc_typehints = 'none'
+always_document_param_types = True
+
 # Use apidoc to auto-generate rst sources
 apidoc_module_dir = PACKAGE_DIR
 apidoc_output_dir = 'modules'
@@ -102,14 +107,15 @@ html_css_files = [
     'https://use.fontawesome.com/releases/v5.15.3/css/v4-shims.css',
 ]
 html_show_sphinx = False
+notfound_default_version = 'stable'
 pygments_style = 'friendly'
 pygments_dark_style = 'material'
 
 # HTML theme settings
 html_theme = 'furo'
 html_theme_options = {
-    'light_logo': 'requests-cache-logo.png',
-    'dark_logo': 'requests-cache-logo-white.png',
+    'light_logo': 'requests-cache-logo.webp',
+    'dark_logo': 'requests-cache-logo-white.webp',
     'sidebar_hide_name': True,
     'light_css_variables': {
         'color-brand-primary': '#0288d1',
