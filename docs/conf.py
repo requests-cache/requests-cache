@@ -84,6 +84,10 @@ copybutton_prompt_is_regexp = True
 # Generate labels in the format <page>:<section>
 autosectionlabel_prefix_document = True
 
+# Use sphinx_autodoc_typehints extension instead of autodoc's built-in type hints
+autodoc_typehints = 'none'
+always_document_param_types = True
+
 # Use apidoc to auto-generate rst sources
 apidoc_module_dir = PACKAGE_DIR
 apidoc_output_dir = 'modules'

@@ -9,9 +9,8 @@
 [![PyPI - Python Versions](https://img.shields.io/pypi/pyversions/requests-cache)](https://pypi.org/project/requests-cache)
 
 ## Summary
-**requests-cache** is a transparent, persistent cache for the python [requests](http://python-requests.org)
-library. It can substantially improve performance and reduce network traffic, making it an ideal
-companion for almost any application using `requests`.
+**requests-cache** is a transparent, persistent cache that provides an easy way to get better
+performance with the python [requests](http://python-requests.org) library.
 
 <!-- RTD-IGNORE -->
 Complete project documentation can be found at [requests-cache.readthedocs.io](https://requests-cache.readthedocs.io).
