@@ -45,7 +45,7 @@ The following changes are meant to make certain behaviors more obvious for new u
 * For consistency with other backends, rename SQLite backend classes: `backends.sqlite.Db*` -> `SQLiteCache`, `SQLiteDict`, `SQLitePickleDict`
 * Add aliases for all previous parameter/class names for backwards-compatibility
 
-**Depedencies:**
+**Dependencies:**
 * Add `appdirs` as a dependency for easier cross-platform usage of user cache directories
 * Update `cattrs` from optional to required dependency
 * Update `itsdangerous` from required to optional (but recommended) dependency

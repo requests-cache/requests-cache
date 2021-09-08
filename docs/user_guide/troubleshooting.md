@@ -75,6 +75,7 @@ Here are some error messages you may see either in the logs or (more rarely) in 
   requests-cache. See `requests` documentation on
   [Errors and Exceptions](https://2.python-requests.org/en/master/user/quickstart/#errors-and-exceptions)
   for more details.
+* **{py:exc}`ModuleNotFoundError`**: `No module named 'requests_cache.core'`: This module was deprecated in `v0.6` and removed in `v0.8`. Just import from `requests_cache` instead of `requests_cache.core`.
 * **{py:exc}`ImportError`:**
   * If you see this at **import time**, it means that one or more **required** dependencies are not
     installed
