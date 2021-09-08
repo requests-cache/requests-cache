@@ -41,6 +41,7 @@ extensions = [
     'sphinx_panels',
     'sphinxcontrib.apidoc',
     'myst_parser',
+    'notfound.extension',
 ]
 
 # MyST extensions
@@ -102,6 +103,7 @@ html_css_files = [
     'https://use.fontawesome.com/releases/v5.15.3/css/v4-shims.css',
 ]
 html_show_sphinx = False
+notfound_default_version = 'stable'
 pygments_style = 'friendly'
 pygments_dark_style = 'material'
 
