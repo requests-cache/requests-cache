@@ -59,7 +59,7 @@ except ImportError as e:
 # Aliases for backwards-compatibility
 DbCache = SQLiteCache
 DbDict = SQLiteDict
-DbPickeDict = SQLitePickleDict
+DbPickleDict = SQLitePickleDict
 
 BACKEND_CLASSES = {
     'dynamodb': DynamoDbCache,
