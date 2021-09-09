@@ -35,7 +35,7 @@ class BaseCache:
         self.name: str = kwargs.get('cache_name', '')
         self.redirects: BaseStorage = DictStorage()
         self.responses: BaseStorage = DictStorage()
-        self.include_get_headers = include_get_headers
+        self.include_get_headers = include_get_headers or kwargs.get('match_headers', False)
         self.ignored_parameters = ignored_parameters
 
     @property

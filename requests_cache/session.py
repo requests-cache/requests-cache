@@ -48,7 +48,7 @@ class CacheMixin(MIXIN_BASE):
         self.expire_after = expire_after
         self.urls_expire_after = urls_expire_after
         self.filter_fn = filter_fn or (lambda r: True)
-        self.old_data_on_error = old_data_on_error
+        self.old_data_on_error = old_data_on_error or kwargs.get('stale_if_error', False)
         self.cache_control = cache_control
 
         self.cache.name = cache_name  # Set to handle backend=<instance>

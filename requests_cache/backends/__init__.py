@@ -63,6 +63,10 @@ try:
 except ImportError as e:
     FileCache = FileDict = get_placeholder_class(e)  # type: ignore
 
+# Aliases for forwards-compatibility with v0.8+
+SQLiteCache = DbCache
+SQLiteDict = DbDict
+SQLitePickleDict = DbPickleDict
 
 BACKEND_CLASSES = {
     'dynamodb': DynamoDbCache,
