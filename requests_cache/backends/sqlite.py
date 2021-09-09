@@ -328,3 +328,9 @@ def sqlite_template(
     uri: bool = False,
 ):
     """Template function to get an accurate signature for the builtin :py:func:`sqlite3.connect`"""
+
+
+# Aliases for backwards-compatibility
+DbCache = SQLiteCache
+DbDict = SQLiteDict
+DbPickeDict = SQLitePickleDict
