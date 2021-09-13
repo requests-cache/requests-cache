@@ -14,6 +14,7 @@ from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from fnmatch import fnmatch
 from logging import getLogger
+from math import ceil
 from typing import TYPE_CHECKING, Any, Dict, Mapping, Optional, Tuple, Union
 
 from attr import define, field
@@ -152,10 +153,10 @@ def get_expiration_datetime(expire_after: ExpirationTime) -> Optional[datetime]:
     return datetime.utcnow() + expire_after
 
 
-def get_expiration_seconds(expire_after: ExpirationTime) -> Optional[float]:
+def get_expiration_seconds(expire_after: ExpirationTime) -> Optional[int]:
     """Convert an expiration value in any supported format to an expiration time in seconds"""
     expires = get_expiration_datetime(expire_after)
-    return (expires - datetime.utcnow()).total_seconds() if expires else None
+    return ceil((expires - datetime.utcnow()).total_seconds()) if expires else None
 
 
 def get_cache_directives(headers: Mapping) -> Dict:

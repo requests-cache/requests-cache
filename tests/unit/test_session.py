@@ -636,18 +636,20 @@ def test_remove_expired_responses__per_request(mock_session):
     mock_session.mock_adapter.register_uri('GET', second_url, status_code=200)
     mock_session.mock_adapter.register_uri('GET', third_url, status_code=200)
     mock_session.get(MOCKED_URL)
-    mock_session.get(second_url, expire_after=0.4)
-    mock_session.get(third_url, expire_after=0.8)
+    mock_session.get(second_url, expire_after=1)
+    mock_session.get(third_url, expire_after=2)
 
     # All 3 responses should still be cached
     mock_session.remove_expired_responses()
+    for response in mock_session.cache.responses.values():
+        print('Expires:', response.expires - datetime.utcnow() if response.expires else None)
     assert len(mock_session.cache.responses) == 3
 
-    # One should be expired after 0.4s, and another should be expired after 0.8s
-    time.sleep(0.4)
+    # One should be expired after 1s, and another should be expired after 2s
+    time.sleep(1)
     mock_session.remove_expired_responses()
     assert len(mock_session.cache.responses) == 2
-    time.sleep(0.4)
+    time.sleep(2)
     mock_session.remove_expired_responses()
     assert len(mock_session.cache.responses) == 1
 
@@ -655,21 +657,19 @@ def test_remove_expired_responses__per_request(mock_session):
 def test_per_request__expiration(mock_session):
     """No per-session expiration is set, but then overridden with per-request expiration"""
     mock_session.expire_after = None
-    response = mock_session.get(MOCKED_URL, expire_after=0.01)
+    response = mock_session.get(MOCKED_URL, expire_after=1)
     assert response.from_cache is False
-    time.sleep(0.01)
+    time.sleep(1)
     response = mock_session.get(MOCKED_URL)
     assert response.from_cache is False
 
 
 def test_per_request__no_expiration(mock_session):
     """A per-session expiration is set, but then overridden with no per-request expiration"""
-    mock_session.expire_after = 0.01
+    mock_session.expire_after = 1
     response = mock_session.get(MOCKED_URL, expire_after=-1)
     assert response.from_cache is False
-    time.sleep(0.01)
-    response = mock_session.get(MOCKED_URL)
-    assert response.from_cache is True
+    assert response.expires is None
 
 
 def test_unpickle_errors(mock_session):
