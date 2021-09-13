@@ -25,7 +25,7 @@ from urllib3 import filepost
 
 from . import get_valid_kwargs
 from .backends import BackendSpecifier, init_backend
-from .cache_control import CacheActions, ExpirationTime
+from .cache_control import CacheActions, ExpirationTime, get_expiration_seconds
 from .cache_keys import normalize_dict
 from .models import AnyResponse, CachedResponse, set_response_defaults
 
@@ -67,7 +67,6 @@ class CacheMixin(MIXIN_BASE):
         self.stale_if_error = stale_if_error or kwargs.pop('old_data_on_error', False)
 
         self.cache.name = cache_name  # Set to handle backend=<instance>
-        self._request_expire_after: ExpirationTime = None
         self._disabled = False
         self._lock = RLock()
 
@@ -75,13 +74,14 @@ class CacheMixin(MIXIN_BASE):
         session_kwargs = get_valid_kwargs(super().__init__, kwargs)
         super().__init__(**session_kwargs)  # type: ignore
 
-    def request(  # type: ignore  # Note: Session.request() doesn't have expire_after param
+    def request(  # type: ignore  # Note: An extra param (expire_after) is added here
         self,
         method: str,
         url: str,
         params: Dict = None,
         data: Any = None,
         json: Dict = None,
+        headers: Dict = None,
         expire_after: ExpirationTime = None,
         **kwargs,
     ) -> AnyResponse:
@@ -95,8 +95,7 @@ class CacheMixin(MIXIN_BASE):
         Args:
             expire_after: Expiration time to set only for this request; see details below.
                 Overrides ``CachedSession.expire_after``. Accepts all the same values as
-                ``CachedSession.expire_after`` except for ``None``; use ``-1`` to disable expiration
-                on a per-request basis.
+                ``CachedSession.expire_after``. Use ``-1`` to disable expiration.
 
         Returns:
             Either a new or cached response
@@ -112,13 +111,19 @@ class CacheMixin(MIXIN_BASE):
         7. :py:meth:`.BaseCache.save_response` (if not previously cached)
 
         """
-        with self.request_expire_after(expire_after), patch_form_boundary(**kwargs):
+        # If present, set per-request expiration as a request header, to be handled in send()
+        if expire_after is not None:
+            headers = headers or {}
+            headers['Cache-Control'] = f'max-age={get_expiration_seconds(expire_after)}'
+
+        with patch_form_boundary(**kwargs):
             return super().request(
                 method,
                 url,
                 params=normalize_dict(params),
                 data=normalize_dict(data),
                 json=normalize_dict(json),
+                headers=headers,
                 **kwargs,
             )
 
@@ -129,7 +134,6 @@ class CacheMixin(MIXIN_BASE):
         actions = CacheActions.from_request(
             cache_key=cache_key,
             request=request,
-            request_expire_after=self._request_expire_after,
             session_expire_after=self.expire_after,
             urls_expire_after=self.urls_expire_after,
             cache_control=self.cache_control,
@@ -250,16 +254,6 @@ class CacheMixin(MIXIN_BASE):
                 yield
             finally:
                 self._disabled = False
-
-    @contextmanager
-    def request_expire_after(self, expire_after: ExpirationTime = None):
-        """Temporarily override ``expire_after`` for an individual request. This is needed to
-        persist the value between requests.Session.request() -> send()."""
-        # TODO: Is there a way to pass this via request kwargs -> PreparedRequest?
-        with self._lock:
-            self._request_expire_after = expire_after
-            yield
-            self._request_expire_after = None
 
     def remove_expired_responses(self, expire_after: ExpirationTime = None):
         """Remove expired responses from the cache, optionally with revalidation

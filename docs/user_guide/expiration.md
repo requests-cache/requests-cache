@@ -16,8 +16,8 @@ reponses:
 Expiration can be set on a per-session, per-URL, or per-request basis, in addition to cache
 headers (see sections below for usage details). When there are multiple values provided for a given
 request, the following order of precedence is used:
-1. Cache-Control request headers (if enabled)
-2. Cache-Control response headers (if enabled)
+1. Cache-Control response headers (if enabled)
+2. Cache-Control request headers
 3. Per-request expiration (`expire_after` argument for {py:meth}`.CachedSession.request`)
 4. Per-URL expiration (`urls_expire_after` argument for {py:class}`.CachedSession`)
 5. Per-session expiration (`expire_after` argument for {py:class}`.CacheBackend`)

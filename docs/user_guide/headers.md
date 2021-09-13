@@ -32,8 +32,11 @@ True, True
 ```
 
 ## Cache-Control
-If enabled, `Cache-Control` directives will take priority over any other `expire_after` value.
-See {ref}`precedence` for the full order of precedence.
+`Cache-Control` request headers will be used if present. This is mainly useful for patching an
+existing library that sets request headers.
+
+`Cache-Control` response headers are an opt-in feature. If enabled, these will take priority over
+any other `expire_after` values. See {ref}`precedence` for the full order of precedence.
 
 To enable this behavior, use the `cache_control` option:
 ```python
