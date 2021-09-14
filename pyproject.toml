@@ -13,6 +13,7 @@ keywords = ["requests", "cache", "http", "persistence", "sqlite", "redis", "mong
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
 ]
 include = [

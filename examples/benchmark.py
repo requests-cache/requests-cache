@@ -2,9 +2,9 @@
 """
 An example of benchmarking cache write speeds with semi-randomized response content
 
-Usage:
+Usage (optionally for a specific backend and/or serializer):
 ```
-python benchmark.py -b <backend name>
+python benchmark.py -b <backend> -s <serializer>
 ```
 """
 from argparse import ArgumentParser
@@ -84,8 +84,9 @@ def get_randomized_response(i=0):
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('-b', '--backend', default='sqlite')
+    parser.add_argument('-s', '--serializer', default='pickle')
     args = parser.parse_args()
-    print(f'[cyan]Benchmarking {args.backend} backend')
+    print(f'[cyan]Benchmarking {args.backend} backend with {args.serializer} serializer')
 
     kwargs = {}
     if args.backend == 'dynamodb':
@@ -94,6 +95,11 @@ if __name__ == '__main__':
         args.backend = 'sqlite'
         kwargs = {'use_memory': True}
 
-    session = CachedSession(CACHE_NAME, backend=args.backend, **kwargs)
+    session = CachedSession(
+        CACHE_NAME,
+        backend=args.backend,
+        serializer=args.serializer,
+        **kwargs,
+    )
     test_write_speed(session)
     test_read_speed(session)
