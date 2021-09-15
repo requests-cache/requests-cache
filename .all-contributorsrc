@@ -659,6 +659,24 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "RodericDay",
+      "name": "Roderic Day",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6867226?v=4",
+      "profile": "https://roderic.ca/",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "jonasjancarik",
+      "name": "Jonáš Jančařík",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2459191?v=4",
+      "profile": "https://github.com/jonasjancarik",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
