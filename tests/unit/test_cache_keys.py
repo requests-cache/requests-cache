@@ -59,4 +59,4 @@ def test_remove_ignored_headers__empty():
     request.method = 'GET'
     request.url = 'https://img.site.com/base/img.jpg'
     request.headers = {'foo': 'bar'}
-    assert remove_ignored_headers(request, ignored_parameters=None) == request.headers
+    assert remove_ignored_headers(request.headers, ignored_parameters=None) == request.headers

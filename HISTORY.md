@@ -1,5 +1,10 @@
 # History
 
+## 0.8.1 (2021-09-15)
+* Redact `ingored_parameters` from `CachedResponse.url` (if used for credentials or other sensitive info)
+* Fix an incorrect debug log message about skipping cache write
+* Add some additional aliases for `DbDict`, etc. so fully qualified imports don't break
+
 ## 0.8.0 (2021-09-07)
 [See all issues and PRs for 0.8](https://github.com/reclosedev/requests-cache/milestone/3?closed=1)
 
