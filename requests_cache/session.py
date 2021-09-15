@@ -157,8 +157,9 @@ class CacheMixin(MIXIN_BASE):
         actions.update_from_response(response)
 
         if self._is_cacheable(response, actions):
-            logger.debug(f'Skipping cache write for URL: {request.url}')
             self.cache.save_response(response, actions.cache_key, actions.expires)
+        else:
+            logger.debug(f'Skipping cache write for URL: {request.url}')
         return set_response_defaults(response, actions.cache_key)
 
     def _resend(self, request: PreparedRequest, actions: CacheActions, **kwargs) -> AnyResponse:
