@@ -85,20 +85,38 @@ def test_all_methods(field, method, mock_session):
 
 @pytest.mark.parametrize('method', ALL_METHODS)
 @pytest.mark.parametrize('field', ['params', 'data', 'json'])
-def test_all_methods__ignore_parameters(field, method, mock_session):
+def test_all_methods__ignored_parameters__not_matched(field, method, mock_session):
     """Test all relevant combinations of methods and data fields. Requests with different request
     params, data, or json should not be cached under different keys based on an ignored param.
     """
     mock_session.cache.ignored_parameters = ['ignored']
-    params_1 = {'ignored': 1, 'not ignored': 1}
-    params_2 = {'ignored': 2, 'not ignored': 1}
-    params_3 = {'ignored': 2, 'not ignored': 2}
+    mock_session.cache.match_headers = True
+    params_1 = {'ignored': 'value_1', 'not_ignored': 'value_1'}
+    params_2 = {'ignored': 'value_2', 'not_ignored': 'value_1'}
+    params_3 = {'ignored': 'value_2', 'not_ignored': 'value_2'}
 
     assert mock_session.request(method, MOCKED_URL, **{field: params_1}).from_cache is False
     assert mock_session.request(method, MOCKED_URL, **{field: params_1}).from_cache is True
     assert mock_session.request(method, MOCKED_URL, **{field: params_2}).from_cache is True
     mock_session.request(method, MOCKED_URL, params={'a': 'b'})
     assert mock_session.request(method, MOCKED_URL, **{field: params_3}).from_cache is False
+
+
+@pytest.mark.parametrize('method', ALL_METHODS)
+@pytest.mark.parametrize('field', ['params', 'headers', 'data', 'json'])
+def test_all_methods__ignored_parameters__redacted(field, method, mock_session):
+    """Test all relevant combinations of methods and data fields. Requests with ignored params
+    should have those values redacted from the cached response.
+    """
+    mock_session.cache.ignored_parameters = ['access_token']
+    params_1 = {'access_token': 'asdf', 'not_ignored': 'value_1'}
+
+    mock_session.request(method, MOCKED_URL, **{field: params_1})
+    cached_response = mock_session.request(method, MOCKED_URL, **{field: params_1})
+    assert 'access_token' not in cached_response.url
+    assert 'access_token' not in cached_response.request.url
+    assert 'access_token' not in cached_response.request.headers
+    assert 'access_token' not in cached_response.request.body.decode('utf-8')
 
 
 def test_https(mock_session):

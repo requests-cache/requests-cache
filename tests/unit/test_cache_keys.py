@@ -15,11 +15,11 @@ def test_remove_ignored_body_params__binary():
     request.url = 'https://img.site.com/base/img.jpg'
     request.body = b'some bytes'
     request.headers = {'Content-Type': 'application/octet-stream'}
-    assert remove_ignored_body_params(request, ignored_params=None) == request.body
+    assert remove_ignored_body_params(request, ignored_parameters=None) == request.body
 
 
 def test_remove_ignored_headers__empty():
     request = PreparedRequest()
     request.url = 'https://img.site.com/base/img.jpg'
     request.headers = {'foo': 'bar'}
-    assert remove_ignored_headers(request, ignored_params=None) == request.headers
+    assert remove_ignored_headers(request.headers, ignored_parameters=None) == request.headers

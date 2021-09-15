@@ -8,7 +8,7 @@ from logging import getLogger
 from typing import Iterable, Iterator, Tuple, Union
 
 from ..cache_control import ExpirationTime
-from ..cache_keys import create_key, remove_ignored_params, url_to_key
+from ..cache_keys import create_key, remove_ignored_params, remove_ignored_url_params, url_to_key
 from ..models import AnyRequest, AnyResponse, CachedResponse
 from ..serializers import init_serializer
 
@@ -55,6 +55,7 @@ class BaseCache:
         cache_key = cache_key or self.create_key(response.request)
         cached_response = CachedResponse.from_response(response, cache_key=cache_key, expires=expires)
         cached_response.request = remove_ignored_params(cached_response.request, self.ignored_parameters)
+        cached_response.url = remove_ignored_url_params(cached_response.url, self.ignored_parameters)
         self.responses[cache_key] = cached_response
 
     def save_redirect(self, request: AnyRequest, response_key: str):

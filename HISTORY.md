@@ -1,9 +1,10 @@
 # History
 
-### 0.7.5 (2021-TBD)
+### 0.7.5 (2021-09-15)
 * Fix incorrect location of `redirects.sqlite` when using filesystem backend
 * Fix issue in which `redirects.sqlite` would get included in response paths with filesystem backend
-* Add aliases for forwards-compatibility with v0.8+
+* Add aliases for forwards-compatibility with 0.8+
+* Backport fixes from 0.8.1
 
 ### 0.7.4 (2021-08-16)
 * Fix an issue with httpdate strings from `Expires` headers not getting converted to UTC
