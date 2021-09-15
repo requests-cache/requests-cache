@@ -49,7 +49,7 @@ def create_key(
     key.update(encode(kwargs.get('verify', True)))
 
     # Add filtered/normalized URL + request params
-    url = remove_ignored_url_params(request, ignored_parameters)
+    url = remove_ignored_url_params(request.url, ignored_parameters)
     key.update(encode(url_normalize(url)))
 
     # Add filtered request body
@@ -81,12 +81,13 @@ def get_matched_headers(
 
 
 def remove_ignored_headers(
-    request: AnyRequest, ignored_parameters: Optional[Iterable[str]]
+    headers: Mapping, ignored_parameters: Optional[Iterable[str]]
 ) -> CaseInsensitiveDict:
     """Remove any ignored request headers"""
     if not ignored_parameters:
-        return request.headers
-    headers = CaseInsensitiveDict(request.headers.copy())
+        return CaseInsensitiveDict(headers)
+
+    headers = CaseInsensitiveDict(headers)
     for k in ignored_parameters:
         headers.pop(k, None)
     return headers
@@ -98,21 +99,29 @@ def remove_ignored_params(
     """Remove ignored parameters from request URL, body, and headers"""
     if not ignored_parameters:
         return request
-    request.headers = remove_ignored_headers(request, ignored_parameters)
-    request.url = remove_ignored_url_params(request, ignored_parameters)
+    request.headers = remove_ignored_headers(request.headers, ignored_parameters)
+    request.url = remove_ignored_url_params(request.url, ignored_parameters)
     request.body = remove_ignored_body_params(request, ignored_parameters)
     return request
 
 
-def remove_ignored_url_params(request: AnyRequest, ignored_parameters: Optional[Iterable[str]]) -> str:
+def remove_ignored_url_params(url: Optional[str], ignored_parameters: Optional[Iterable[str]]) -> str:
     """Remove any ignored request parameters from the URL"""
-    url_str = str(request.url)
-    if not ignored_parameters:
-        return url_str
+    if not ignored_parameters or not url:
+        return url or ''
 
-    url = urlparse(url_str)
-    query = _filter_params(parse_qsl(url.query), ignored_parameters)
-    return urlunparse((url.scheme, url.netloc, url.path, url.params, urlencode(query), url.fragment))
+    url_tokens = urlparse(url)
+    query = _filter_params(parse_qsl(url_tokens.query), ignored_parameters)
+    return urlunparse(
+        (
+            url_tokens.scheme,
+            url_tokens.netloc,
+            url_tokens.path,
+            url_tokens.params,
+            urlencode(query),
+            url_tokens.fragment,
+        )
+    )
 
 
 def remove_ignored_body_params(

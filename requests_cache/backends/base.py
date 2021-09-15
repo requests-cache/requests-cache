@@ -13,7 +13,7 @@ from logging import getLogger
 from typing import Callable, Iterable, Iterator, Tuple, Union
 
 from ..cache_control import ExpirationTime
-from ..cache_keys import create_key, remove_ignored_params
+from ..cache_keys import create_key, remove_ignored_params, remove_ignored_url_params
 from ..models import AnyRequest, AnyResponse, CachedResponse
 from ..serializers import init_serializer
 
@@ -94,6 +94,7 @@ class BaseCache:
         """
         cache_key = cache_key or self.create_key(response.request)
         cached_response = CachedResponse.from_response(response, expires=expires)
+        cached_response.url = remove_ignored_url_params(response.url, self.ignored_parameters)
         cached_response.request = remove_ignored_params(cached_response.request, self.ignored_parameters)
         self.responses[cache_key] = cached_response
         for r in response.history:
