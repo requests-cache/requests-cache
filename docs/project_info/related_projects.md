@@ -3,7 +3,7 @@
 If requests-cache isn't quite what you need, you can help make it better! See the
 {ref}`Contributing Guide <contributing>` for details.
 
-You can also check out these other python projects related to caching and/or HTTP requests:
+You can also check out these other python projects related to caching HTTP requests:
 
 ## General
 * [CacheControl](https://github.com/ionrock/cachecontrol): An HTTP cache for `requests` that caches
@@ -34,3 +34,6 @@ You can also check out these other python projects related to caching and/or HTT
 * [betamax](https://github.com/betamaxpy/betamax): Records responses to local files and plays them
   back for tests; also inspired by Ruby's [VCR](https://github.com/vcr/vcr). Made specifically for
   `requests`.
+* [HTTPretty](https://github.com/gabrielfalcao/HTTPretty): HTTP Client mocking tool that provides a full fake TCP socket module; inspired by Ruby's [FakeWeb](https://github.com/chrisk/fakeweb).
+* [aioresponses](https://github.com/pnuckowski/aioresponses): A helper to mock web requests in `aiohttp`, inspired by `responses`
+* [aresponses](https://github.com/aresponses/aresponses): An asyncio testing server for mocking external services
