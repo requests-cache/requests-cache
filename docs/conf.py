@@ -114,8 +114,8 @@ pygments_dark_style = 'material'
 # HTML theme settings
 html_theme = 'furo'
 html_theme_options = {
-    'light_logo': 'requests-cache-logo.webp',
-    'dark_logo': 'requests-cache-logo-white.webp',
+    'light_logo': 'requests-cache-logo-light.webp',
+    'dark_logo': 'requests-cache-logo-dark.webp',
     'sidebar_hide_name': True,
     'light_css_variables': {
         'color-brand-primary': '#0288d1',

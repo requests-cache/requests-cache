@@ -11,8 +11,10 @@ TODO: add script to make this conditional
 -->
 
 (index-page)=
+# Requests-Cache
 <!-- Include Readme contents, except for the links to readthedocs, which would be redundant here -->
 ```{include} ../README.md
+:start-line: 2
 :end-before: <!-- RTD-IGNORE -->
 ```
 ```{include} ../README.md
