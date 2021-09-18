@@ -1,5 +1,10 @@
 # History
 
+## 0.8.2 (Unreleased)
+* Use `Cache-Control` **request** headers by default
+* Support `expire_after` param for `CachedSession.send()`
+* Make per-request expiration thread-safe for both `CachedSession.request()` and `CachedSession.send()`
+
 ## 0.8.1 (2021-09-15)
 * Redact `ingored_parameters` from `CachedResponse.url` (if used for credentials or other sensitive info)
 * Fix an incorrect debug log message about skipping cache write
