@@ -9,7 +9,8 @@ readme = "README.md"
 documentation = "https://requests-cache.readthedocs.io"
 homepage = "https://github.com/reclosedev/requests-cache"
 repository = "https://github.com/reclosedev/requests-cache"
-keywords = ["requests", "cache", "http", "persistence", "sqlite", "redis", "mongodb", "gridfs", "dynamodb"]
+keywords = ["requests", "cache", "http", "python-requests", "web", "performance", "sqlite", "redis",
+            "mongodb", "gridfs", "dynamodb"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
