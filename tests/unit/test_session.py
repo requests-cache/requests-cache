@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 import pytest
 import requests
+from requests import Request
 from requests.structures import CaseInsensitiveDict
 
 from requests_cache import ALL_METHODS, CachedResponse, CachedSession
@@ -659,6 +660,21 @@ def test_per_request__expiration(mock_session):
     mock_session.expire_after = None
     response = mock_session.get(MOCKED_URL, expire_after=1)
     assert response.from_cache is False
+    assert mock_session.get(MOCKED_URL).from_cache is True
+
+    time.sleep(1)
+    response = mock_session.get(MOCKED_URL)
+    assert response.from_cache is False
+
+
+def test_per_request__prepared_request(mock_session):
+    """The same should work for PreparedRequests with CachedSession.send()"""
+    mock_session.expire_after = None
+    request = Request(method='GET', url=MOCKED_URL, headers={}, data=None).prepare()
+    response = mock_session.send(request, expire_after=1)
+    assert response.from_cache is False
+    assert mock_session.send(request).from_cache is True
+
     time.sleep(1)
     response = mock_session.get(MOCKED_URL)
     assert response.from_cache is False

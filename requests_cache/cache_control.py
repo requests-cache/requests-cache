@@ -70,6 +70,7 @@ class CacheActions:
         cache_control: bool = False,
         session_expire_after: ExpirationTime = None,
         urls_expire_after: ExpirationPatterns = None,
+        request_expire_after: ExpirationTime = None,
         **kwargs,
     ):
         """Initialize from request info and cache settings"""
@@ -77,6 +78,7 @@ class CacheActions:
         directives = get_cache_directives(request.headers)
         expire_after = coalesce(
             directives.get('max-age'),
+            request_expire_after,
             get_url_expiration(request.url, urls_expire_after),
             session_expire_after,
         )

@@ -109,7 +109,6 @@ class CacheMixin(MIXIN_BASE):
         5. :py:meth:`.BaseCache.get_response`
         6. :py:meth:`requests.Session.send` (if not previously cached)
         7. :py:meth:`.BaseCache.save_response` (if not previously cached)
-
         """
         # If present, set per-request expiration as a request header, to be handled in send()
         if expire_after is not None:
@@ -127,13 +126,16 @@ class CacheMixin(MIXIN_BASE):
                 **kwargs,
             )
 
-    def send(self, request: PreparedRequest, **kwargs) -> AnyResponse:
+    def send(
+        self, request: PreparedRequest, expire_after: ExpirationTime = None, **kwargs
+    ) -> AnyResponse:
         """Send a prepared request, with caching. See :py:meth:`.request` for notes on behavior."""
         # Determine which actions to take based on request info, headers, and cache settings
         cache_key = self.cache.create_key(request, **kwargs)
         actions = CacheActions.from_request(
             cache_key=cache_key,
             request=request,
+            request_expire_after=expire_after,
             session_expire_after=self.expire_after,
             urls_expire_after=self.urls_expire_after,
             cache_control=self.cache_control,
