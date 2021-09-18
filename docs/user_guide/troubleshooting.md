@@ -76,7 +76,7 @@ Here are some error messages you may see either in the logs or (more rarely) in 
   [Errors and Exceptions](https://2.python-requests.org/en/master/user/quickstart/#errors-and-exceptions)
   for more details.
 * **{py:exc}`ModuleNotFoundError`**: `No module named 'requests_cache.core'`: This module was deprecated in `v0.6` and removed in `v0.8`. Just import from `requests_cache` instead of `requests_cache.core`.
-* **{py:exc}`ImportError`:**
+* **{py:exc}`ImportError`:** Indicates a missing required or optional dependency.
   * If you see this at **import time**, it means that one or more **required** dependencies are not
     installed
   * If you see this at **runtime** or in a **log message**, it means that one or more **optional**
@@ -85,7 +85,21 @@ Here are some error messages you may see either in the logs or (more rarely) in 
 * **{py:exc}`sqlite3.OperationalError`: `unable to open database file`** or **{py:exc}`IOError`:**
   This usually indicates a file permissions or ownership issue with either the database file or its parent directory.
 * **{py:exc}`sqlite3.OperationalError`: `database is locked`:** This indicates a concurrency issue, and
-  likely a bug. requests-cache + SQLite is intended to be thread-safe and multiprocess-safe, so please create a bug report if you encounter this.
+  likely a bug. requests-cache + SQLite is intended to be thread-safe and multiprocess-safe, so
+  please create a bug report if you encounter this.
+* **{py:exc}`ResourceWarning`: `unclosed <ssl.SSLSocket ...>`:** This warning can **safely be ignored.**
+  * This is normal behavior for {py:class}`requests.Session`, which uses connection pooling for better
+    performance. In other words, these connections are intentionally left open to reduce the number of
+    round-trips required for consecutive requests. For more details, see the following issues:
+  * [requests/#3912: ResourceWarning: unclosed socket.socket when I run a unittest？](https://github.com/psf/requests/issues/3912)
+  * [requests/#2963: ResourceWarning still triggered when warnings enabled](https://github.com/psf/requests/issues/2963#issuecomment-169631513)
+  * [requests-cache/#413](https://github.com/reclosedev/requests-cache/issues/413)
+  * If needed, this warning can be suppressed with:
+    ```python
+    import warnings
+
+    warnings.simplefilter('ignore', ResourceWarning)
+    ```
 
 ## Bug Reports
 If you believe you've found a bug, or if you're just having trouble getting requests-cache to work
