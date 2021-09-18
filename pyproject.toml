@@ -114,6 +114,9 @@ skip-string-normalization = true
 [tool.coverage.html]
 directory = 'test-reports'
 
+[tool.coverage.xml]
+output = 'test-reports/coverage.xml'
+
 [tool.coverage.run]
 branch = true
 source = ['requests_cache']

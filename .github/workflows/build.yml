@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 env:
   LATEST_PY_VERSION: 3.9
-  COVERAGE_ARGS: '--cov --cov-report=term --cov-report=html'
+  COVERAGE_ARGS: '--cov --cov-report=term --cov-report=xml'
   XDIST_ARGS: '--numprocesses=auto --dist=loadfile'
 
 jobs:
@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-18.04
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9, 3.10.0-rc.1]
+        python-version: [3.7, 3.8, 3.9, 3.10.0-rc.2]
       fail-fast: false
     services:
       nginx:
@@ -56,11 +56,6 @@ jobs:
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: poetry install -v -E all
-      - name: Workaround for issue with poetry package extras (python 3.10 only)
-        if: ${{ startsWith(matrix.python-version, '3.10') }}
-        run: |
-          source $VENV
-          pip install -U cattrs
 
       # Run tests with coverage report
       - name: Run tests
@@ -69,15 +64,19 @@ jobs:
           pytest -rs -x tests/unit ${{ env.XDIST_ARGS }} ${{ env.COVERAGE_ARGS }}
           pytest -rs -x tests/integration --cov-append ${{ env.XDIST_ARGS }} ${{ env.COVERAGE_ARGS }}
 
-      # Latest python version: send coverage report to coveralls
-      - name: Run coveralls
+      # Latest python version: send coverage report to codecov
+      - name: "Upload coverage to Codecov"
         if: ${{ matrix.python-version == env.LATEST_PY_VERSION }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          source $VENV
-          pip install coveralls
-          coveralls --service=github
+        uses: codecov/codecov-action@v2
+
+      # - name: Run coveralls
+      #   if: ${{ matrix.python-version == env.LATEST_PY_VERSION }}
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   run: |
+      #     source $VENV
+      #     pip install coveralls
+      #     coveralls --service=github
 
   # Run code analysis checks via pre-commit hooks
   analyze:
