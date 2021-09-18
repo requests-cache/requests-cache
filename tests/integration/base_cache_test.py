@@ -132,30 +132,32 @@ class BaseCacheTest:
             response_3 = get_json(httpbin('cookies/set/test3/test4'))
             assert response_3 == get_json(httpbin('cookies'))
 
-    @pytest.mark.parametrize('cache_control', [True, False])
     @pytest.mark.parametrize(
-        'request_headers, expected_expiration',
+        'cache_control, request_headers, expected_expiration',
         [
-            ({}, 60),
-            ({'Cache-Control': 'max-age=360'}, 360),
-            ({'Cache-Control': 'no-store'}, None),
-            ({'Expires': HTTPDATE_STR, 'Cache-Control': 'max-age=360'}, 360),
+            (True, {}, 60),
+            (True, {'Cache-Control': 'max-age=360'}, 60),
+            (True, {'Cache-Control': 'no-store'}, None),
+            (True, {'Expires': HTTPDATE_STR, 'Cache-Control': 'max-age=360'}, 60),
+            (False, {}, None),
+            (False, {'Cache-Control': 'max-age=360'}, 360),
+            (False, {'Cache-Control': 'no-store'}, None),
+            (False, {'Expires': HTTPDATE_STR, 'Cache-Control': 'max-age=360'}, 360),
         ],
     )
-    def test_cache_control_expiration(self, request_headers, expected_expiration, cache_control):
+    def test_cache_control_expiration(self, cache_control, request_headers, expected_expiration):
         """Test cache headers for both requests and responses. The `/cache/{seconds}` endpoint returns
         Cache-Control headers, which should be used unless request headers are sent.
         No headers should be used if `cache_control=False`.
         """
         session = self.init_session(cache_control=cache_control)
-        now = datetime.utcnow()
         session.get(httpbin('cache/60'), headers=request_headers)
         response = session.get(httpbin('cache/60'), headers=request_headers)
 
-        if expected_expiration is None or cache_control is False:
+        if expected_expiration is None:
             assert response.expires is None
         else:
-            assert_delta_approx_equal(now, response.expires, expected_expiration)
+            assert_delta_approx_equal(datetime.utcnow(), response.expires, expected_expiration)
 
     @pytest.mark.parametrize(
         'cached_response_headers, expected_from_cache',
@@ -205,13 +207,13 @@ class BaseCacheTest:
             assert session.post(httpbin('post'), files={'file1': BytesIO(b'10' * 1024)}).from_cache
 
     def test_remove_expired_responses(self):
-        session = self.init_session(expire_after=0.01)
+        session = self.init_session(expire_after=1)
 
         # Populate the cache with several responses that should expire immediately
         for response_format in HTTPBIN_FORMATS:
             session.get(httpbin(response_format))
         session.get(httpbin('redirect/1'))
-        sleep(0.01)
+        sleep(1)
 
         # Cache a response + redirects, which should be the only non-expired cache items
         session.get(httpbin('get'), expire_after=-1)
