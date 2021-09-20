@@ -6,6 +6,7 @@ from collections import UserDict, defaultdict
 from datetime import datetime, timedelta
 from pickle import PickleError
 from unittest.mock import patch
+from urllib.parse import urlencode
 
 import pytest
 import requests
@@ -279,15 +280,14 @@ def test_raw_data(method, mock_session):
     """POST and PUT requests with different data (raw) should be cached under different keys"""
     assert mock_session.request(method, MOCKED_URL, data='raw data').from_cache is False
     assert mock_session.request(method, MOCKED_URL, data='raw data').from_cache is True
-    assert mock_session.request(method, MOCKED_URL, data='new raw data').from_cache is False
+    assert mock_session.request(method, MOCKED_URL, data='{"data": "new raw data"}').from_cache is False
 
 
-@pytest.mark.parametrize('mapping_class', [dict, UserDict, CaseInsensitiveDict])
 @pytest.mark.parametrize('field', ['params', 'data', 'json'])
-def test_normalize_params(field, mapping_class, mock_session):
-    """Test normalization with different combinations of data fields and dict-like classes"""
+def test_normalize_params(field, mock_session):
+    """Test normalization with different combinations of data fields"""
     params = {"a": "a", "b": ["1", "2", "3"], "c": "4"}
-    reversed_params = mapping_class(sorted(params.items(), reverse=True))
+    reversed_params = dict(sorted(params.items(), reverse=True))
 
     assert mock_session.get(MOCKED_URL, **{field: params}).from_cache is False
     assert mock_session.get(MOCKED_URL, **{field: params}).from_cache is True
@@ -297,25 +297,47 @@ def test_normalize_params(field, mapping_class, mock_session):
     assert mock_session.post(MOCKED_URL, **{field: {"a": "b"}}).from_cache is False
 
 
-@pytest.mark.parametrize('field', ['data', 'json'])
-def test_normalize_serialized_body(field, mock_session):
-    """Test normalization for serialized request body content"""
+@pytest.mark.parametrize('mapping_class', [dict, UserDict, CaseInsensitiveDict])
+def test_normalize_params__custom_dicts(mapping_class, mock_session):
+    """Test normalization with different dict-like classes"""
     params = {"a": "a", "b": ["1", "2", "3"], "c": "4"}
-    reversed_params = dict(sorted(params.items(), reverse=True))
+    params = mapping_class(params.items())
 
-    assert mock_session.post(MOCKED_URL, **{field: json.dumps(params)}).from_cache is False
-    assert mock_session.post(MOCKED_URL, **{field: json.dumps(params)}).from_cache is True
-    assert mock_session.post(MOCKED_URL, **{field: json.dumps(reversed_params)}).from_cache is True
+    assert mock_session.get(MOCKED_URL, params=params).from_cache is False
+    assert mock_session.get(MOCKED_URL, params=params).from_cache is True
+    assert mock_session.post(MOCKED_URL, params=params).from_cache is False
+    assert mock_session.post(MOCKED_URL, params=params).from_cache is True
 
 
-def test_normalize_non_json_body(mock_session):
+def test_normalize_params__serialized_body(mock_session):
+    """Test normalization for serialized request body content"""
+    headers = {'Content-Type': 'application/json'}
+    params = {"a": "a", "b": ["1", "2", "3"], "c": "4"}
+    sorted_params = json.dumps(params)
+    reversed_params = json.dumps(dict(sorted(params.items(), reverse=True)))
+
+    assert mock_session.post(MOCKED_URL, headers=headers, data=sorted_params).from_cache is False
+    assert mock_session.post(MOCKED_URL, headers=headers, data=sorted_params).from_cache is True
+    assert mock_session.post(MOCKED_URL, headers=headers, data=reversed_params).from_cache is True
+
+
+def test_normalize_params__urlencoded_body(mock_session):
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+    params = urlencode({"a": "a", "b": "!@#$%^&*()[]", "c": "4"})
+
+    assert mock_session.post(MOCKED_URL, headers=headers, data=params).from_cache is False
+    assert mock_session.post(MOCKED_URL, headers=headers, data=params).from_cache is True
+    assert mock_session.post(MOCKED_URL, headers=headers, data=params).from_cache is True
+
+
+def test_normalize_params__non_json_body(mock_session):
     """For serialized request body content that isn't in JSON format, no normalization is expected"""
     assert mock_session.post(MOCKED_URL, data=b'key_1=value_1,key_2=value_2').from_cache is False
     assert mock_session.post(MOCKED_URL, data=b'key_1=value_1,key_2=value_2').from_cache is True
     assert mock_session.post(MOCKED_URL, data=b'key_2=value_2,key_1=value_1').from_cache is False
 
 
-def test_normalize_url(mock_session):
+def test_normalize_params__url(mock_session):
     """Test URL variations that should all result in the same key"""
     urls = [
         'https://site.com?param_1=value_1&param_2=value_2',
@@ -403,7 +425,7 @@ def test_response_defaults(mock_session):
     response_1 = mock_session.get(MOCKED_URL)
     response_2 = mock_session.get(MOCKED_URL)
     response_3 = mock_session.get(MOCKED_URL)
-    cache_key = '71c046cdb0afaa62'
+    cache_key = 'd7fa9fb7317b7412'
 
     assert response_1.cache_key == cache_key
     assert response_1.created_at is None
@@ -423,19 +445,32 @@ def test_response_defaults(mock_session):
 def test_match_headers(mock_session):
     """With match_headers, requests with different headers should have different cache keys"""
     mock_session.cache.match_headers = True
-    headers_list = [{'Accept': 'text/json'}, {'Accept': 'text/xml'}, {'Accept': 'custom'}, None]
+    headers_list = [{'Accept': 'application/json'}, {'Accept': 'text/xml'}, {'Accept': 'custom'}, None]
     for headers in headers_list:
         assert mock_session.get(MOCKED_URL, headers=headers).from_cache is False
         assert mock_session.get(MOCKED_URL, headers=headers).from_cache is True
 
 
-def test_match_headers_normalize(mock_session):
+def test_match_headers__normalize(mock_session):
     """With match_headers, the same headers (in any order) should have the same cache key"""
     mock_session.cache.match_headers = True
-    headers = {'Accept': 'text/json', 'Custom': 'abc'}
-    reversed_headers = {'Custom': 'abc', 'Accept': 'text/json'}
+    headers = {'Accept': 'application/json', 'Custom': 'abc'}
+    reversed_headers = {'Custom': 'abc', 'Accept': 'application/json'}
     assert mock_session.get(MOCKED_URL, headers=headers).from_cache is False
     assert mock_session.get(MOCKED_URL, headers=reversed_headers).from_cache is True
+
+
+def test_match_headers__list(mock_session):
+    """match_headers can optionally be a list of specific headers to include"""
+    mock_session.cache.match_headers = ['Accept']
+    headers_1 = {'Accept': 'application/json', 'User-Agent': 'qutebrowser'}
+    headers_2 = {'Accept': 'application/json', 'User-Agent': 'Firefox'}
+    headers_3 = {'Accept': 'text/plain', 'User-Agent': 'qutebrowser'}
+
+    assert mock_session.get(MOCKED_URL, headers=headers_1).from_cache is False
+    assert mock_session.get(MOCKED_URL, headers=headers_1).from_cache is True
+    assert mock_session.get(MOCKED_URL, headers=headers_2).from_cache is True
+    assert mock_session.get(MOCKED_URL, headers=headers_3).from_cache is False
 
 
 def test_include_get_headers():

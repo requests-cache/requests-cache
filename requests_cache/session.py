@@ -26,9 +26,9 @@ from urllib3 import filepost
 from . import get_valid_kwargs
 from .backends import BackendSpecifier, init_backend
 from .cache_control import CacheActions, ExpirationTime, get_expiration_seconds
-from .cache_keys import normalize_dict
 from .models import AnyResponse, CachedResponse, set_response_defaults
 
+__all__ = ['ALL_METHODS', 'CachedSession', 'CacheMixin']
 ALL_METHODS = ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
 FILTER_FN = Callable[[AnyResponse], bool]
 
@@ -119,9 +119,9 @@ class CacheMixin(MIXIN_BASE):
             return super().request(
                 method,
                 url,
-                params=normalize_dict(params),
-                data=normalize_dict(data),
-                json=normalize_dict(json),
+                params=params,
+                data=data,
+                json=json,
                 headers=headers,
                 **kwargs,
             )
