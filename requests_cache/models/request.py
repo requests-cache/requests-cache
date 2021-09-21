@@ -1,6 +1,6 @@
 from logging import getLogger
 
-from attr import define, field, fields_dict
+from attr import asdict, define, field, fields_dict
 from requests import PreparedRequest
 from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
@@ -26,6 +26,10 @@ class CachedRequest:
         kwargs = {k: getattr(original_request, k, None) for k in fields_dict(cls).keys()}
         kwargs['cookies'] = getattr(original_request, '_cookies', None)
         return cls(**kwargs)
+
+    def copy(self) -> 'CachedRequest':
+        """Return a copy of the CachedRequest"""
+        return self.__class__(**asdict(self))
 
     def prepare(self) -> PreparedRequest:
         """Convert the CachedRequest back into a PreparedRequest"""

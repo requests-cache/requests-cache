@@ -4,6 +4,8 @@
 * Use `Cache-Control` **request** headers by default
 * Support `expire_after` param for `CachedSession.send()`
 * Make per-request expiration thread-safe for both `CachedSession.request()` and `CachedSession.send()`
+* Handle some additional corner cases when normalizing request data
+* Some micro-optimizations for request matching
 
 ## 0.8.1 (2021-09-15)
 * Redact `ingored_parameters` from `CachedResponse.url` (if used for credentials or other sensitive info)

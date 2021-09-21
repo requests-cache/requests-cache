@@ -2,24 +2,13 @@
 This just contains tests for some extra edge cases not covered elsewhere.
 """
 import pytest
-from requests import PreparedRequest
+from requests import PreparedRequest, Request
 
-from requests_cache.cache_keys import (
-    create_key,
-    normalize_dict,
-    remove_ignored_body_params,
-    remove_ignored_headers,
-)
+from requests_cache.cache_keys import create_key, normalize_request
+
+CACHE_KEY = 'e8cb526891875e37'
 
 
-def test_normalize_dict__skip_body():
-    assert normalize_dict(b'some bytes', normalize_data=False) == b'some bytes'
-
-
-CACHE_KEY = 'f8cd92cfe57ddbf9'
-
-
-# All of the following variations should produce the same cache key
 @pytest.mark.parametrize(
     'url, params',
     [
@@ -35,9 +24,9 @@ CACHE_KEY = 'f8cd92cfe57ddbf9'
         ('https://example.com?', {'foo': 'bar', 'param': '1'}),
     ],
 )
-def test_normalize_url_params(url, params):
-    request = PreparedRequest()
-    request.prepare(
+def test_create_key__normalize_url_params(url, params):
+    """All of the above variations should produce the same cache key"""
+    request = Request(
         method='GET',
         url=url,
         params=params,
@@ -45,18 +34,41 @@ def test_normalize_url_params(url, params):
     assert create_key(request) == CACHE_KEY
 
 
-def test_remove_ignored_body_params__binary():
-    request = PreparedRequest()
-    request.method = 'GET'
-    request.url = 'https://img.site.com/base/img.jpg'
-    request.body = b'some bytes'
-    request.headers = {'Content-Type': 'application/octet-stream'}
-    assert remove_ignored_body_params(request, ignored_parameters=None) == request.body
+def test_normalize_request__json_body():
+    request = Request(
+        method='GET',
+        url='https://img.site.com/base/img.jpg',
+        data=b'{"param_1": "value_1", "param_2": "value_2"}',
+        headers={'Content-Type': 'application/json'},
+    )
+    assert normalize_request(request, ignored_parameters=['param_2']).body == b'{"param_1": "value_1"}'
+
+
+def test_normalize_request__invalid_json_body():
+    request = Request(
+        method='GET',
+        url='https://img.site.com/base/img.jpg',
+        data=b'invalid JSON!',
+        headers={'Content-Type': 'application/json'},
+    )
+    assert normalize_request(request, ignored_parameters=['param_2']).body == b'invalid JSON!'
+
+
+def test_normalize_request__binary_body():
+    request = Request(
+        method='GET',
+        url='https://img.site.com/base/img.jpg',
+        data=b'some bytes',
+        headers={'Content-Type': 'application/octet-stream'},
+    )
+    assert normalize_request(request, ignored_parameters=['param']).body == request.data
 
 
 def test_remove_ignored_headers__empty():
     request = PreparedRequest()
-    request.method = 'GET'
-    request.url = 'https://img.site.com/base/img.jpg'
-    request.headers = {'foo': 'bar'}
-    assert remove_ignored_headers(request.headers, ignored_parameters=None) == request.headers
+    request.prepare(
+        method='GET',
+        url='https://img.site.com/base/img.jpg',
+        headers={'foo': 'bar'},
+    )
+    assert normalize_request(request, ignored_parameters=None).headers == request.headers

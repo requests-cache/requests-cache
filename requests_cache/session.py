@@ -26,9 +26,9 @@ from urllib3 import filepost
 from . import get_valid_kwargs
 from .backends import BackendSpecifier, init_backend
 from .cache_control import CacheActions, ExpirationTime, get_expiration_seconds
-from .cache_keys import normalize_dict
 from .models import AnyResponse, CachedResponse, set_response_defaults
 
+__all__ = ['ALL_METHODS', 'CachedSession', 'CacheMixin']
 ALL_METHODS = ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
 FILTER_FN = Callable[[AnyResponse], bool]
 
@@ -119,9 +119,9 @@ class CacheMixin(MIXIN_BASE):
             return super().request(
                 method,
                 url,
-                params=normalize_dict(params),
-                data=normalize_dict(data),
-                json=normalize_dict(json),
+                params=params,
+                data=data,
+                json=json,
                 headers=headers,
                 **kwargs,
             )
@@ -129,8 +129,13 @@ class CacheMixin(MIXIN_BASE):
     def send(
         self, request: PreparedRequest, expire_after: ExpirationTime = None, **kwargs
     ) -> AnyResponse:
-        """Send a prepared request, with caching. See :py:meth:`.request` for notes on behavior."""
-        # Determine which actions to take based on request info, headers, and cache settings
+        """Send a prepared request, with caching. See :py:meth:`.request` for notes on behavior, and
+        see :py:meth:`requests.Session.send` for parameters. Additional parameters:
+
+        Args:
+            expire_after: Expiration time to set only for this request
+        """
+        # Determine which actions to take based on request info and cache settings
         cache_key = self.cache.create_key(request, **kwargs)
         actions = CacheActions.from_request(
             cache_key=cache_key,
@@ -149,7 +154,7 @@ class CacheMixin(MIXIN_BASE):
             actions.update_from_cached_response(cached_response)
         is_expired = getattr(cached_response, 'is_expired', False)
 
-        # If the response is expired, missing, or the cache is disabled, then fetch a new response
+        # If the response is expired or missing, or the cache is disabled, then fetch a new response
         if cached_response is None:
             response = self._send_and_cache(request, actions, **kwargs)
         elif is_expired and self.stale_if_error:
@@ -159,7 +164,7 @@ class CacheMixin(MIXIN_BASE):
         else:
             response = cached_response
 
-        # If the request has been filtered out, delete the previously cached response if it exists
+        # If the request has been filtered out and was previously cached, delete it
         if not self.filter_fn(response):
             logger.debug(f'Deleting filtered response for URL: {response.url}')
             self.cache.delete(cache_key)
@@ -310,8 +315,9 @@ class CachedSession(CacheMixin, OriginalSession):
 
 @contextmanager
 def patch_form_boundary(**request_kwargs):
-    """Patch the form boundary used to separate multipart uploads. ``requests`` does not provide a
-    way to pass a custom boundary to urllib3, so this just monkey-patches it instead.
+    """If the ``files`` param is present, patch the form boundary used to separate multipart
+    uploads. ``requests`` does not provide a way to pass a custom boundary to urllib3, so this just
+    monkey-patches it instead.
     """
     if request_kwargs.get('files'):
         original_boundary = filepost.choose_boundary

@@ -41,12 +41,12 @@ def get_valid_kwargs(func: Callable, kwargs: Dict, extras: Iterable[str] = None)
 
 try:
     from .backends import *
-    from .cache_control import DO_NOT_CACHE, CacheActions
-    from .cache_keys import create_key
+    from .cache_control import *
+    from .cache_keys import *
     from .models import *
     from .patcher import *
     from .serializers import *
-    from .session import ALL_METHODS, CachedSession, CacheMixin
-# Log and ignore ImportErrors, if setup.py is invoked outside a virtualenv
+    from .session import *
+# Log and ignore ImportErrors, if imported outside a virtualenv (e.g., just to check __version__)
 except ImportError as e:
     logger.warning(e)
