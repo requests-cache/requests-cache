@@ -26,13 +26,13 @@ if TYPE_CHECKING:
 __all__ = ['DO_NOT_CACHE', 'CacheActions']
 # May be set by either headers or expire_after param to disable caching
 DO_NOT_CACHE = 0
-
 # Supported Cache-Control directives
 CACHE_DIRECTIVES = ['max-age', 'no-cache', 'no-store']
 
 CacheDirective = Tuple[str, Union[None, int, bool]]
 ExpirationTime = Union[None, int, float, str, datetime, timedelta]
 ExpirationPatterns = Dict[str, ExpirationTime]
+
 logger = getLogger(__name__)
 
 

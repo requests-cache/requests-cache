@@ -21,8 +21,7 @@ from requests_mock import ANY as ANY_METHOD
 from requests_mock import Adapter
 from timeout_decorator import timeout
 
-import requests_cache
-from requests_cache.session import ALL_METHODS, CachedSession
+from requests_cache import ALL_METHODS, CachedSession, install_cache, uninstall_cache
 
 CACHE_NAME = 'pytest_cache'
 
@@ -143,13 +142,13 @@ def installed_session(tempfile_path) -> CachedSession:
     """Get a CachedSession using a temporary SQLite db, with global patching.
     Installs cache before test and uninstalls after.
     """
-    requests_cache.install_cache(
+    install_cache(
         cache_name=tempfile_path,
         backend='sqlite',
         allowable_methods=ALL_METHODS,
     )
     yield requests.Session()
-    requests_cache.uninstall_cache()
+    uninstall_cache()
 
 
 def mount_mock_adapter(session: CachedSession) -> CachedSession:
