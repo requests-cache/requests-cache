@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from .models import CachedResponse
 
 __all__ = ['DO_NOT_CACHE', 'CacheActions']
+
 # May be set by either headers or expire_after param to disable caching
 DO_NOT_CACHE = 0
 # Supported Cache-Control directives
@@ -41,10 +42,10 @@ class CacheActions:
     """A class that translates cache settings and headers into specific actions to take for a
     given cache item. Actions include:
 
-    * Reading from the cache
-    * Writing to the cache
-    * Setting cache expiration
-    * Adding request headers
+    * Read from the cache
+    * Write to the cache
+    * Set cache expiration
+    * Add headers for conditional requests
 
     If multiple sources provide an expiration time, they will be used in the following order of
     precedence:
@@ -54,14 +55,17 @@ class CacheActions:
     3. Per-request expiration
     4. Per-URL expiration
     5. Per-session expiration
+
+    See :ref:`headers` for more details about behavior.
     """
 
     cache_control: bool = field(default=False)
     cache_key: str = field(default=None)
     expire_after: ExpirationTime = field(default=None)
-    request_headers: Dict[str, str] = field(factory=dict)
+    request_directives: Dict[str, str] = field(factory=dict)
     skip_read: bool = field(default=False)
     skip_write: bool = field(default=False)
+    validation_headers: Dict[str, str] = field(factory=dict)
 
     @classmethod
     def from_request(
@@ -75,22 +79,30 @@ class CacheActions:
         **kwargs,
     ):
         """Initialize from request info and cache settings"""
-        # Check expire_after values in order of precedence
         directives = get_cache_directives(request.headers)
+        logger.debug(f'Cache directives from request headers: {directives}')
+
+        # Check expiration values in order of precedence
         expire_after = coalesce(
             directives.get('max-age'),
             request_expire_after,
             get_url_expiration(request.url, urls_expire_after),
             session_expire_after,
         )
-        do_not_cache = expire_after == DO_NOT_CACHE
+
+        # Check conditions for reading from the cache, based on request headers and possibly
+        # expire_after options. With cache_control=True, don't consider expire_after options, since
+        # these can be overridden by response headers.
+        check_expiration = directives.get('max-age') if cache_control else expire_after
+        do_not_cache = check_expiration == DO_NOT_CACHE or 'no-store' in directives
 
         return cls(
             cache_control=cache_control,
             cache_key=cache_key,
             expire_after=expire_after,
-            skip_read=do_not_cache or 'no-store' in directives or 'no-cache' in directives,
-            skip_write=do_not_cache or 'no-store' in directives,
+            request_directives=directives,
+            skip_read=do_not_cache or 'no-cache' in directives,
+            skip_write=do_not_cache,
         )
 
     @property
@@ -109,25 +121,28 @@ class CacheActions:
             return
 
         if response.headers.get('ETag'):
-            self.request_headers['If-None-Match'] = response.headers['ETag']
+            self.validation_headers['If-None-Match'] = response.headers['ETag']
         if response.headers.get('Last-Modified'):
-            self.request_headers['If-Modified-Since'] = response.headers['Last-Modified']
-        self.request_headers = {k: v for k, v in self.request_headers.items() if v}
+            self.validation_headers['If-Modified-Since'] = response.headers['Last-Modified']
 
     def update_from_response(self, response: Response):
         """Update expiration + actions based on response headers, if not previously set.
 
         Used after receiving a new response but before saving it to the cache.
         """
-        if not self.cache_control or not response:
+        if not response or not self.cache_control:
             return
 
         directives = get_cache_directives(response.headers)
-        do_not_cache = directives.get('max-age') == DO_NOT_CACHE
+        logger.debug(f'Cache directives from response headers: {directives}')
+
+        # Check expiration headers and conditions for writing to the cache
         self.expire_after = coalesce(
             directives.get('max-age'), directives.get('expires'), self.expire_after
         )
-        self.skip_write = self.skip_write or do_not_cache or 'no-store' in directives
+        self.skip_write = any(
+            [self.expire_after == DO_NOT_CACHE, 'no-store' in directives, self.skip_write]
+        )
 
 
 def coalesce(*values: Any, default=None) -> Any:

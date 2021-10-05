@@ -88,19 +88,19 @@ def test_init_from_headers(headers, expected_expiration):
 @pytest.mark.parametrize(
     'url, request_expire_after, expected_expiration',
     [
-        # ('img.site_1.com', None, timedelta(hours=12)),
-        # ('img.site_1.com', 60, 60),
-        # ('http://img.site.com/base/', None, 1),
-        # ('https://img.site.com/base/img.jpg', None, 1),
-        # ('site_2.com/resource_1', None, timedelta(hours=20)),
-        # ('http://site_2.com/resource_1/index.html', None, timedelta(hours=20)),
-        # ('http://site_2.com/resource_2/', None, timedelta(days=7)),
-        # ('http://site_2.com/static/', None, -1),
+        ('img.site_1.com', None, timedelta(hours=12)),
+        ('img.site_1.com', 60, 60),
+        ('http://img.site.com/base/', None, 1),
+        ('https://img.site.com/base/img.jpg', None, 1),
+        ('site_2.com/resource_1', None, timedelta(hours=20)),
+        ('http://site_2.com/resource_1/index.html', None, timedelta(hours=20)),
+        ('http://site_2.com/resource_2/', None, timedelta(days=7)),
+        ('http://site_2.com/static/', None, -1),
         ('http://site_2.com/static/img.jpg', None, -1),
-        # ('site_2.com', None, 1),
-        # ('site_2.com', 60, 60),
-        # ('some_other_site.com', None, 1),
-        # ('some_other_site.com', 60, 60),
+        ('site_2.com', None, 1),
+        ('site_2.com', 60, 60),
+        ('some_other_site.com', None, 1),
+        ('some_other_site.com', 60, 60),
     ],
 )
 def test_init_from_settings(url, request_expire_after, expected_expiration):
@@ -125,7 +125,42 @@ def test_init_from_settings(url, request_expire_after, expected_expiration):
 
 
 @pytest.mark.parametrize(
-    'response_headers, expected_request_headers',
+    'cache_control, headers, expire_after, expected_expiration, expected_skip_read',
+    [
+        (False, {'Cache-Control': 'max-age=60'}, 1, 60, False),
+        (False, {}, 1, 1, False),
+        (False, {}, 0, 0, True),
+        (True, {'Cache-Control': 'max-age=60'}, 1, 60, False),
+        (True, {'Cache-Control': 'max-age=0'}, 1, 0, True),
+        (True, {'Cache-Control': 'no-store'}, 1, 1, True),
+        (True, {'Cache-Control': 'no-cache'}, 1, 1, True),
+        (True, {}, 1, 1, False),
+        (True, {}, 0, 0, False),
+    ],
+)
+def test_init_from_settings_and_headers(
+    cache_control, headers, expire_after, expected_expiration, expected_skip_read
+):
+    """Test behavior with both cache settings and request headers. The only variation in behavior
+    with cache_control=True is that expire_after=0 should *not* cause the cache read to be skipped.
+    """
+    request = MagicMock(
+        url='https://img.site.com/base/img.jpg',
+        headers=headers,
+    )
+
+    actions = CacheActions.from_request(
+        cache_key='key',
+        cache_control=cache_control,
+        request=request,
+        session_expire_after=expire_after,
+    )
+    assert actions.expire_after == expected_expiration
+    assert actions.skip_read == expected_skip_read
+
+
+@pytest.mark.parametrize(
+    'response_headers, expected_validation_headers',
     [
         ({}, {}),
         ({'ETag': ETAG}, {'If-None-Match': ETAG}),
@@ -136,7 +171,7 @@ def test_init_from_settings(url, request_expire_after, expected_expiration):
         ),
     ],
 )
-def test_update_from_cached_response(response_headers, expected_request_headers):
+def test_update_from_cached_response(response_headers, expected_validation_headers):
     """Test that conditional request headers are added if the cached response is expired"""
     actions = CacheActions.from_request(
         cache_key='key',
@@ -145,7 +180,7 @@ def test_update_from_cached_response(response_headers, expected_request_headers)
     cached_response = CachedResponse(headers=response_headers, expires=datetime.now() - timedelta(1))
 
     actions.update_from_cached_response(cached_response)
-    assert actions.request_headers == expected_request_headers
+    assert actions.validation_headers == expected_validation_headers
 
 
 def test_update_from_cached_response__ignored():
@@ -159,7 +194,7 @@ def test_update_from_cached_response__ignored():
     )
 
     actions.update_from_cached_response(cached_response)
-    assert actions.request_headers == {}
+    assert actions.validation_headers == {}
 
 
 @pytest.mark.parametrize(
