@@ -136,12 +136,23 @@ class CacheActions:
         directives = get_cache_directives(response.headers)
         logger.debug(f'Cache directives from response headers: {directives}')
 
-        # Check expiration headers and conditions for writing to the cache
+        # Check expiration headers
         self.expire_after = coalesce(
             directives.get('max-age'), directives.get('expires'), self.expire_after
         )
+
+        # If expiration is 0 and there's a validator, save it to the cache and revalidate on use
+        has_validator = response.headers.get('ETag') or response.headers.get('Last-Modified')
+        if self.expire_after == DO_NOT_CACHE and has_validator:
+            self.expire_after = datetime.utcnow()
+
+        # Check conditions for writing to the cache
         self.skip_write = any(
-            [self.expire_after == DO_NOT_CACHE, 'no-store' in directives, self.skip_write]
+            [
+                self.expire_after == DO_NOT_CACHE,
+                'no-store' in directives,
+                self.skip_write,
+            ]
         )
 
 

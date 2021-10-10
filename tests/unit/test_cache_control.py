@@ -238,6 +238,21 @@ def test_update_from_response__ignored():
     assert actions.expire_after is None
 
 
+@patch('requests_cache.cache_control.datetime')
+def test_update_from_response__revalidate(mock_datetime):
+    """If expiration is 0 and there's a validator the response should be cached and revalidated"""
+    url = 'https://img.site.com/base/img.jpg'
+    actions = CacheActions.from_request(
+        cache_key='key',
+        request=MagicMock(url=url),
+        cache_control=True,
+    )
+    actions.update_from_response(
+        MagicMock(url=url, headers={'Cache-Control': 'max-age=0', 'ETag': ETAG})
+    )
+    assert actions.expire_after == mock_datetime.utcnow()
+
+
 @pytest.mark.parametrize('directive', IGNORED_DIRECTIVES)
 def test_ignored_headers(directive):
     """Ensure that currently unimplemented Cache-Control headers do not affect behavior"""

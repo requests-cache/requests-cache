@@ -5,11 +5,12 @@ from io import BytesIO
 from threading import Thread
 from time import sleep, time
 from typing import Dict, Type
+from unittest.mock import MagicMock, patch
 from urllib.parse import parse_qs, urlparse
 
 import pytest
 import requests
-from requests.models import PreparedRequest
+from requests import PreparedRequest, Session
 
 from requests_cache import ALL_METHODS, CachedResponse, CachedSession
 from requests_cache.backends.base import BaseCache
@@ -168,7 +169,7 @@ class BaseCacheTest:
             ({'ETag': ETAG, 'Last-Modified': LAST_MODIFIED}, True),
         ],
     )
-    def test_304_not_modified(self, cached_response_headers, expected_from_cache):
+    def test_conditional_request(self, cached_response_headers, expected_from_cache):
         """Test behavior of ETag and Last-Modified headers and 304 responses.
 
         When a cached response contains one of these headers, corresponding request headers should
@@ -183,6 +184,29 @@ class BaseCacheTest:
 
         response = session.get(httpbin('cache'))
         assert response.from_cache == expected_from_cache
+
+    def test_conditional_request__max_age_0(self):
+        """With both max-age=0 and a validator, the response should be saved and revalidated on next
+        request
+        """
+        url = httpbin('response-headers')
+        response_headers = {'Cache-Control': 'max-age=0', 'ETag': ETAG}
+        session = self.init_session(cache_control=True)
+
+        # This endpoint returns request params as response headers
+        session.get(url, params=response_headers)
+
+        # It doesn't respond to conditional requests, but let's just pretend it does
+        with patch.object(Session, 'send', return_value=MagicMock(status_code=304)):
+            response = session.get(url, params=response_headers)
+
+        assert response.from_cache is True
+        assert response.is_expired is True
+
+        # cache_key = list(session.cache.responses.keys())[0]
+        # response = session.cache.responses[cache_key]
+        # response.request.url = httpbin(f'etag/{ETAG}')
+        # response = session.get(httpbin('response-headers'), params=response_headers)
 
     @pytest.mark.parametrize('stream', [True, False])
     def test_response_decode(self, stream):
