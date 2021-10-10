@@ -3,6 +3,7 @@
 ## 0.8.2 (Unreleased)
 * Use `Cache-Control` **request** headers by default
 * Support `expire_after` param for `CachedSession.send()`
+* Filesystem and SQLite backends: Add better error message if parent path exists but isn't a directory
 * Make per-request expiration thread-safe for both `CachedSession.request()` and `CachedSession.send()`
 * Handle some additional corner cases when normalizing request data
 * Some micro-optimizations for request matching
