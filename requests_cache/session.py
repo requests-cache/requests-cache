@@ -16,7 +16,7 @@
 from contextlib import contextmanager
 from logging import getLogger
 from threading import RLock
-from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, Optional
+from typing import TYPE_CHECKING, Callable, Dict, Iterable, Optional
 
 from requests import PreparedRequest, Response
 from requests import Session as OriginalSession
@@ -78,9 +78,6 @@ class CacheMixin(MIXIN_BASE):
         self,
         method: str,
         url: str,
-        params: Dict = None,
-        data: Any = None,
-        json: Dict = None,
         headers: Dict = None,
         expire_after: ExpirationTime = None,
         **kwargs,
@@ -116,15 +113,7 @@ class CacheMixin(MIXIN_BASE):
             headers['Cache-Control'] = f'max-age={get_expiration_seconds(expire_after)}'
 
         with patch_form_boundary(**kwargs):
-            return super().request(
-                method,
-                url,
-                params=params,
-                data=data,
-                json=json,
-                headers=headers,
-                **kwargs,
-            )
+            return super().request(method, url, headers=headers, **kwargs)
 
     def send(
         self, request: PreparedRequest, expire_after: ExpirationTime = None, **kwargs
@@ -182,10 +171,10 @@ class CacheMixin(MIXIN_BASE):
     ) -> AnyResponse:
         """Send the request and cache the response, unless disabled by settings or headers.
 
-        If applicable, also add request headers to check if the remote resource has been modified.
-        If we get a 304 Not Modified response, return the expired cache item.
+        If applicable, also add headers to make a conditional request. If we get a 304 Not Modified
+        response, return the stale cache item.
         """
-        request.headers.update(actions.request_headers)
+        request.headers.update(actions.validation_headers)
         response = super().send(request, **kwargs)
         actions.update_from_response(response)
 
@@ -202,9 +191,9 @@ class CacheMixin(MIXIN_BASE):
         self, request: PreparedRequest, actions: CacheActions, cached_response: CachedResponse, **kwargs
     ) -> AnyResponse:
         """Attempt to resend the request and cache the new response. If the request fails, delete
-        the expired cache item.
+        the stale cache item.
         """
-        logger.debug('Expired response; attempting to re-send request')
+        logger.debug('Stale response; attempting to re-send request')
         try:
             return self._send_and_cache(request, actions, cached_response, **kwargs)
         except Exception:
@@ -215,10 +204,10 @@ class CacheMixin(MIXIN_BASE):
         self, request: PreparedRequest, actions: CacheActions, cached_response: CachedResponse, **kwargs
     ) -> AnyResponse:
         """Attempt to resend the request and cache the new response. If there are any errors, ignore
-        them and and return the expired cache item.
+        them and and return the stale cache item.
         """
         # Attempt to send the request and cache the new response
-        logger.debug('Expired response; attempting to re-send request')
+        logger.debug('Stale response; attempting to re-send request')
         try:
             response = self._send_and_cache(request, actions, cached_response, **kwargs)
             response.raise_for_status()
