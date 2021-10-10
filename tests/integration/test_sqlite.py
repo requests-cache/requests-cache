@@ -1,8 +1,10 @@
 import os
-from tempfile import gettempdir
+from os.path import join
+from tempfile import NamedTemporaryFile, gettempdir
 from threading import Thread
 from unittest.mock import patch
 
+import pytest
 from appdirs import user_cache_dir
 
 from requests_cache.backends.base import BaseCache
@@ -50,6 +52,13 @@ class SQLiteTestCase(BaseStorageTest):
 
     def test_use_memory__uri(self):
         self.init_cache(':memory:').db_path == ':memory:'
+
+    def test_non_dir_parent_exists(self):
+        """Expect a custom error message if a parent path already exists but isn't a directory"""
+        with NamedTemporaryFile() as tmp:
+            with pytest.raises(FileExistsError) as exc_info:
+                self.storage_class(join(tmp.name, 'invalid_path'))
+                assert 'not a directory' in str(exc_info.value)
 
     def test_bulk_commit(self):
         cache = self.init_cache()

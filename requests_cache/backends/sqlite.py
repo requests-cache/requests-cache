@@ -145,14 +145,13 @@ class SQLiteDict(BaseStorage):
         **kwargs,
     ):
         super().__init__(**kwargs)
+        self._can_commit = True
+        self._local_context = threading.local()
+        self._lock = threading.RLock()
         self.connection_kwargs = get_valid_kwargs(sqlite_template, kwargs)
         self.db_path = _get_sqlite_cache_path(db_path, use_cache_dir, use_temp, use_memory)
         self.fast_save = fast_save
         self.table_name = table_name
-
-        self._lock = threading.RLock()
-        self._can_commit = True
-        self._local_context = threading.local()
         self.init_db()
 
     def init_db(self):
@@ -312,9 +311,15 @@ def get_cache_path(db_path: AnyPath, use_cache_dir: bool = False, use_temp: bool
     elif use_temp and not db_path.is_absolute():
         db_path = Path(gettempdir()) / db_path
 
-    # Expand relative and user paths (~/*), and make sure parent dirs exist
+    # Expand relative and user paths (~), make parent dir(s), and better error if parent is a file
     db_path = db_path.absolute().expanduser()
-    db_path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+    except FileExistsError:
+        raise FileExistsError(
+            f'Parent path exists and is not a directory: {db_path.parent}.'
+            'Please either delete the file or choose a different path.'
+        )
     return db_path
 
 
