@@ -185,12 +185,14 @@ class BaseCacheTest:
         response = session.get(httpbin('cache'))
         assert response.from_cache == expected_from_cache
 
-    def test_conditional_request__max_age_0(self):
+    @pytest.mark.parametrize('validator_headers', [{'ETag': ETAG}, {'Last-Modified': LAST_MODIFIED}])
+    @pytest.mark.parametrize('cache_headers', [{'Cache-Control': 'max-age=0'}, {'Expires': '0'}])
+    def test_conditional_request__max_age_0(self, cache_headers, validator_headers):
         """With both max-age=0 and a validator, the response should be saved and revalidated on next
         request
         """
         url = httpbin('response-headers')
-        response_headers = {'Cache-Control': 'max-age=0', 'ETag': ETAG}
+        response_headers = {**cache_headers, **validator_headers}
         session = self.init_session(cache_control=True)
 
         # This endpoint returns request params as response headers
@@ -202,11 +204,6 @@ class BaseCacheTest:
 
         assert response.from_cache is True
         assert response.is_expired is True
-
-        # cache_key = list(session.cache.responses.keys())[0]
-        # response = session.cache.responses[cache_key]
-        # response.request.url = httpbin(f'etag/{ETAG}')
-        # response = session.get(httpbin('response-headers'), params=response_headers)
 
     @pytest.mark.parametrize('stream', [True, False])
     def test_response_decode(self, stream):

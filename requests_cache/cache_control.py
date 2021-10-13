@@ -90,19 +90,18 @@ class CacheActions:
             session_expire_after,
         )
 
-        # Check conditions for reading from the cache, based on request headers and possibly
-        # expire_after options. With cache_control=True, don't consider expire_after options, since
-        # these can be overridden by response headers.
+        # Check conditions for caching based on request headers. Also check expire_after options
+        # unless cache_control=True, in which case these may be overridden by response headers.
         check_expiration = directives.get('max-age') if cache_control else expire_after
-        do_not_cache = check_expiration == DO_NOT_CACHE or 'no-store' in directives
+        skip_write = check_expiration == DO_NOT_CACHE or 'no-store' in directives
 
         return cls(
             cache_control=cache_control,
             cache_key=cache_key,
             expire_after=expire_after,
             request_directives=directives,
-            skip_read=do_not_cache or 'no-cache' in directives,
-            skip_write=do_not_cache,
+            skip_read=skip_write or 'no-cache' in directives,
+            skip_write=skip_write,
         )
 
     @property
@@ -111,8 +110,8 @@ class CacheActions:
         return get_expiration_datetime(self.expire_after)
 
     def update_from_cached_response(self, response: CachedResponse):
-        """Check for relevant cache headers on a cached response, and set corresponding request
-        headers for a conditional request, if possible.
+        """Check for relevant cache headers from a cached response, and set headers for a
+        conditional request, if possible.
 
         Used after fetching a cached response, but before potentially sending a new request
         (if expired).
@@ -126,7 +125,7 @@ class CacheActions:
             self.validation_headers['If-Modified-Since'] = response.headers['Last-Modified']
 
     def update_from_response(self, response: Response):
-        """Update expiration + actions based on response headers, if not previously set.
+        """Update expiration + actions based on headers from a new response.
 
         Used after receiving a new response but before saving it to the cache.
         """
@@ -136,24 +135,17 @@ class CacheActions:
         directives = get_cache_directives(response.headers)
         logger.debug(f'Cache directives from response headers: {directives}')
 
-        # Check expiration headers
+        # Check headers for expiration, validators, and other cache directives
         self.expire_after = coalesce(
             directives.get('max-age'), directives.get('expires'), self.expire_after
         )
+        has_validator = response.headers.get('ETag') or response.headers.get('Last-Modified')
+        no_store = 'no-store' in directives or 'no-store' in self.request_directives
 
         # If expiration is 0 and there's a validator, save it to the cache and revalidate on use
-        has_validator = response.headers.get('ETag') or response.headers.get('Last-Modified')
-        if self.expire_after == DO_NOT_CACHE and has_validator:
-            self.expire_after = datetime.utcnow()
-
-        # Check conditions for writing to the cache
-        self.skip_write = any(
-            [
-                self.expire_after == DO_NOT_CACHE,
-                'no-store' in directives,
-                self.skip_write,
-            ]
-        )
+        # Otherwise, skip writing to the cache if specified by expiration or other headers
+        expire_immediately = try_int(self.expire_after) == DO_NOT_CACHE
+        self.skip_write = (expire_immediately or no_store) and not has_validator
 
 
 def coalesce(*values: Any, default=None) -> Any:
@@ -167,12 +159,11 @@ def get_expiration_datetime(expire_after: ExpirationTime) -> Optional[datetime]:
     if expire_after is None or expire_after == -1:
         return None
     # Expire immediately
-    elif expire_after == DO_NOT_CACHE:
+    elif try_int(expire_after) == DO_NOT_CACHE:
         return datetime.utcnow()
     # Already a datetime or datetime str
     if isinstance(expire_after, str):
-        expire_after = parse_http_date(expire_after)
-        return to_utc(expire_after) if expire_after else None
+        return parse_http_date(expire_after)
     elif isinstance(expire_after, datetime):
         return to_utc(expire_after)
 
@@ -193,8 +184,10 @@ def get_cache_directives(headers: Mapping) -> Dict:
     if not headers:
         return {}
 
-    cache_directives = headers.get('Cache-Control', '').split(',')
-    kv_directives = dict([split_kv_directive(value) for value in cache_directives])
+    kv_directives = {}
+    if headers.get('Cache-Control'):
+        cache_directives = headers['Cache-Control'].split(',')
+        kv_directives = dict([split_kv_directive(value) for value in cache_directives])
 
     if 'Expires' in headers:
         kv_directives['expires'] = headers['Expires']
@@ -218,7 +211,8 @@ def get_url_expiration(
 def parse_http_date(value: str) -> Optional[datetime]:
     """Attempt to parse an HTTP (RFC 5322-compatible) timestamp"""
     try:
-        return parsedate_to_datetime(value)
+        expire_after = parsedate_to_datetime(value)
+        return to_utc(expire_after)
     except (TypeError, ValueError):
         logger.debug(f'Failed to parse timestamp: {value}')
         return None
@@ -246,8 +240,8 @@ def to_utc(dt: datetime):
     return dt
 
 
-def try_int(value: Optional[str]) -> Optional[int]:
-    """Convert a string value to an int, if possible, otherwise ``None``"""
+def try_int(value: Any) -> Optional[int]:
+    """Convert a value to an int, if possible, otherwise ``None``"""
     return int(str(value)) if str(value).isnumeric() else None
 
 

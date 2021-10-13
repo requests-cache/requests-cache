@@ -221,6 +221,7 @@ def test_update_from_response(headers, expected_expiration):
     actions.update_from_response(MagicMock(url=url, headers=headers))
 
     if expected_expiration == DO_NOT_CACHE:
+        assert not actions.expire_after  # May be either 0 or None
         assert actions.skip_write is True
     else:
         assert actions.expire_after == expected_expiration
@@ -229,28 +230,24 @@ def test_update_from_response(headers, expected_expiration):
 
 def test_update_from_response__ignored():
     url = 'https://img.site.com/base/img.jpg'
-    actions = CacheActions.from_request(
-        cache_key='key',
-        request=MagicMock(url=url),
-        cache_control=False,
-    )
+    actions = CacheActions.from_request(cache_key='key', request=MagicMock(url=url), cache_control=False)
     actions.update_from_response(MagicMock(url=url, headers={'Cache-Control': 'max-age=5'}))
     assert actions.expire_after is None
 
 
+@pytest.mark.parametrize('validator_headers', [{'ETag': ETAG}, {'Last-Modified': LAST_MODIFIED}])
+@pytest.mark.parametrize('cache_headers', [{'Cache-Control': 'max-age=0'}, {'Expires': '0'}])
 @patch('requests_cache.cache_control.datetime')
-def test_update_from_response__revalidate(mock_datetime):
-    """If expiration is 0 and there's a validator the response should be cached and revalidated"""
+def test_update_from_response__revalidate(mock_datetime, cache_headers, validator_headers):
+    """If expiration is 0 and there's a validator, the response should be cached, but with immediate
+    expiration
+    """
     url = 'https://img.site.com/base/img.jpg'
-    actions = CacheActions.from_request(
-        cache_key='key',
-        request=MagicMock(url=url),
-        cache_control=True,
-    )
-    actions.update_from_response(
-        MagicMock(url=url, headers={'Cache-Control': 'max-age=0', 'ETag': ETAG})
-    )
-    assert actions.expire_after == mock_datetime.utcnow()
+    headers = {**cache_headers, **validator_headers}
+    actions = CacheActions.from_request(cache_key='key', request=MagicMock(url=url), cache_control=True)
+    actions.update_from_response(MagicMock(url=url, headers=headers))
+    assert actions.expires == mock_datetime.utcnow()
+    assert actions.skip_write is False
 
 
 @pytest.mark.parametrize('directive', IGNORED_DIRECTIVES)
