@@ -100,10 +100,6 @@ class CachedResponse(Response):
         self.expires = get_expiration_datetime(expire_after)
         return self.is_expired
 
-    def reset(self):
-        if self.raw:
-            self.raw.reset()
-
     @property
     def size(self) -> int:
         """Get the size of the response body in bytes"""

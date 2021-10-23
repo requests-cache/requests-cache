@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "requests-cache"
-version = "0.8.2"
+version = "0.9.0"
 description = "A transparent persistent cache for the requests library"
 authors = ["Roman Haritonov"]
 maintainers = ["Jordan Cook"]

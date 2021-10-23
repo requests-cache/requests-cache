@@ -5,7 +5,7 @@ from logging import getLogger
 from typing import Callable, Dict, Iterable, Optional, Type, Union
 
 from .. import get_placeholder_class, get_valid_kwargs
-from .base import BaseCache, BaseStorage
+from .base import BaseCache, BaseStorage, DictStorage
 
 # Backend-specific keyword arguments equivalent to 'cache_name'
 CACHE_NAME_KWARGS = ['db_path', 'db_name', 'namespace', 'table_name']
