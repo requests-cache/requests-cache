@@ -1,16 +1,27 @@
 # History
 
-## 0.8.2 (Unreleased)
+## 0.9.0 (Unreleased)
+[See all issues and PRs for 0.9](https://github.com/reclosedev/requests-cache/milestone/4?closed=1)
+
+**Expiration & Headers:**
 * Use `Cache-Control` **request** headers by default
-* Support `expire_after` param for `CachedSession.send()`
-* Filesystem and SQLite backends: Add better error message if parent path exists but isn't a directory
-* Make per-request expiration thread-safe for both `CachedSession.request()` and `CachedSession.send()`
-* Handle some additional corner cases when normalizing request data
-* Some micro-optimizations for request matching
-* Fix issue with cache headers not being used correctly if `cache_control=True` is used with an `expire_after` value
 * Support immediate expiration + revalidation for `Cache-Control: max-age=0` and `Expires: 0`
+
+**Backends:**
+* Filesystem and SQLite backends: Add better error message if parent path exists but isn't a directory
+
+**Other features:**
+* Support `expire_after` param for `CachedSession.send()`
+
+**Performance:**
 * Fix duplicate read operation for checking whether to read from redirects cache
 * Skip unnecessary contains check if a key is in the main responses cache
+* Make per-request expiration thread-safe for both `CachedSession.request()` and `CachedSession.send()`
+* Some micro-optimizations for request matching
+
+**Bugfixes:**
+* Handle some additional corner cases when normalizing request data
+* Fix issue with cache headers not being used correctly if `cache_control=True` is used with an `expire_after` value
 * Fix license metadata as shown on PyPI
 
 ## 0.8.1 (2021-09-15)
@@ -21,7 +32,7 @@
 ## 0.8.0 (2021-09-07)
 [See all issues and PRs for 0.8](https://github.com/reclosedev/requests-cache/milestone/3?closed=1)
 
-**Conditional requests & validation:**
+**Expiration & Headers:**
 * Add support for conditional requests and cache validation using:
     * `ETag` + `If-None-Match` headers
     * `Last-Modified` + `If-Modified-Since` headers
@@ -122,7 +133,7 @@ The following changes are meant to make certain behaviors more obvious for new u
     * Redis: `redis.Redis`
     * MongoDB and GridFS: `pymongo.MongoClient`
 
-**Expiration:**
+**Expiration & Headers:**
 * Add optional support for the following **request** headers:
     * `Cache-Control: max-age`
     * `Cache-Control: no-cache`
