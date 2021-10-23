@@ -91,6 +91,21 @@ class BaseCacheTest:
         assert r2.from_cache is True
         assert r1.content == r2.content
 
+    def test_response_no_duplicate_read(self):
+        """Ensure that response data is read only once per request, whether it's cached or not"""
+        session = self.init_session()
+        storage_class = type(session.cache.responses)
+
+        # Patch storage class to track number of times getitem is called, without changing behavior
+        with patch.object(
+            storage_class, '__getitem__', side_effect=storage_class.__getitem__
+        ) as getitem:
+            session.get(httpbin('get'))
+            assert getitem.call_count == 1
+
+            session.get(httpbin('get'))
+            assert getitem.call_count == 2
+
     @pytest.mark.parametrize('n_redirects', range(1, 5))
     @pytest.mark.parametrize('endpoint', ['redirect', 'absolute-redirect', 'relative-redirect'])
     def test_redirect_history(self, endpoint, n_redirects):

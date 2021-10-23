@@ -10,7 +10,7 @@ from collections import UserDict
 from collections.abc import MutableMapping
 from datetime import datetime
 from logging import getLogger
-from typing import Callable, Iterable, Iterator, Tuple, Union
+from typing import Callable, Iterable, Iterator, Optional, Tuple, Union
 
 from ..cache_control import ExpirationTime
 from ..cache_keys import create_key, redact_response
@@ -63,7 +63,7 @@ class BaseCache:
         for response in self.values():
             yield response.url
 
-    def get_response(self, key: str, default=None) -> CachedResponse:
+    def get_response(self, key: str, default=None) -> Optional[CachedResponse]:
         """Retrieve a response from the cache, if it exists
 
         Args:
@@ -71,9 +71,9 @@ class BaseCache:
             default: Value to return if `key` is not in the cache
         """
         try:
-            if key not in self.responses:
-                key = self.redirects[key]
-            response = self.responses[key]
+            response = self.responses.get(key)
+            if response is None:  # Note: bool(requests.Response) is False if status > 400
+                response = self.responses[self.redirects[key]]
             response.cache_key = key  # Set cache key here, since it's not serialized
             response.reset()  # In case response was in memory and content has already been read
             return response
