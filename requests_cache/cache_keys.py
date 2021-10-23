@@ -97,12 +97,12 @@ def normalize_request(request: AnyRequest, ignored_parameters: ParamList) -> Any
             to remove from the request
     """
     if isinstance(request, Request):
-        norm_request = Session().prepare_request(request)
+        norm_request: AnyPreparedRequest = Session().prepare_request(request)
     else:
         norm_request = request.copy()
 
     norm_request.method = (norm_request.method or '').upper()
-    norm_request.url = normalize_url(norm_request.url, ignored_parameters)
+    norm_request.url = normalize_url(norm_request.url or '', ignored_parameters)
     norm_request.headers = normalize_headers(norm_request.headers, ignored_parameters)
     norm_request.body = normalize_body(norm_request, ignored_parameters)
     return norm_request
