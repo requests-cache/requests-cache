@@ -28,7 +28,7 @@ __all__ = ['DO_NOT_CACHE', 'CacheActions']
 # May be set by either headers or expire_after param to disable caching
 DO_NOT_CACHE = 0
 # Supported Cache-Control directives
-CACHE_DIRECTIVES = ['max-age', 'no-cache', 'no-store']
+CACHE_DIRECTIVES = ['immutable', 'max-age', 'no-cache', 'no-store']
 
 CacheDirective = Tuple[str, Union[None, int, bool]]
 ExpirationTime = Union[None, int, float, str, datetime, timedelta]
@@ -136,9 +136,12 @@ class CacheActions:
         logger.debug(f'Cache directives from response headers: {directives}')
 
         # Check headers for expiration, validators, and other cache directives
-        self.expire_after = coalesce(
-            directives.get('max-age'), directives.get('expires'), self.expire_after
-        )
+        if directives.get('immutable'):
+            self.expire_after = -1
+        else:
+            self.expire_after = coalesce(
+                directives.get('max-age'), directives.get('expires'), self.expire_after
+            )
         has_validator = response.headers.get('ETag') or response.headers.get('Last-Modified')
         no_store = 'no-store' in directives or 'no-store' in self.request_directives
 
