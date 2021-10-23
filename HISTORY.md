@@ -5,7 +5,8 @@
 
 **Expiration & Headers:**
 * Use `Cache-Control` **request** headers by default
-* Support immediate expiration + revalidation for `Cache-Control: max-age=0` and `Expires: 0`
+* Add support for `Cache-Control: immutable`
+* Add support for immediate expiration + revalidation with `Cache-Control: max-age=0` and `Expires: 0`
 
 **Backends:**
 * Filesystem and SQLite backends: Add better error message if parent path exists but isn't a directory

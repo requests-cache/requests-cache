@@ -56,6 +56,7 @@ The following headers are currently supported:
 **Response headers:**
 - `Cache-Control: max-age`: Used as the expiration time in seconds
 - `Cache-Control: no-store` Skips writing response data to the cache
+- `Cache-Control: immutable`: Caches the response with no expiration
 - `Expires`: Used as an absolute expiration time
 - `ETag`: Returns expired cache data if the remote content has not changed (`304 Not Modified` response)
 - `Last-Modified`: Returns expired cache data if the remote content has not changed (`304 Not Modified` response)

@@ -206,6 +206,8 @@ def test_update_from_cached_response__ignored():
         ({'Cache-Control': 'public, max-age=60'}, 60),
         ({'Cache-Control': 'max-age=0'}, DO_NOT_CACHE),
         ({'Cache-Control': 'no-store'}, DO_NOT_CACHE),
+        ({'Cache-Control': 'immutable'}, -1),
+        ({'Cache-Control': 'immutable, max-age=60'}, -1),  # Immutable should take precedence
         ({'Expires': HTTPDATE_STR}, HTTPDATE_STR),
         ({'Expires': HTTPDATE_STR, 'Cache-Control': 'max-age=60'}, 60),
     ],
