@@ -677,6 +677,16 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "Iftahh",
+      "name": "Iftah",
+      "avatar_url": "https://avatars.githubusercontent.com/u/798544?v=4",
+      "profile": "https://github.com/Iftahh",
+      "contributions": [
+        "bug",
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
