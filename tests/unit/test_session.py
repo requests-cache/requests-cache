@@ -521,7 +521,7 @@ def test_stale_if_error__error_code(mock_session):
     mock_session.allowable_codes = (200, 404)
 
     assert mock_session.get(MOCKED_URL_404).from_cache is False
-    assert mock_session.get(MOCKED_URL_404).from_cache is True
+
     time.sleep(0.2)
     response = mock_session.get(MOCKED_URL_404)
     assert response.from_cache is True and response.is_expired is True

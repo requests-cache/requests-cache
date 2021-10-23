@@ -9,6 +9,8 @@
 * Some micro-optimizations for request matching
 * Fix issue with cache headers not being used correctly if `cache_control=True` is used with an `expire_after` value
 * Support immediate expiration + revalidation for `Cache-Control: max-age=0` and `Expires: 0`
+* Fix duplicate read operation for checking whether to read from redirects cache
+* Skip unnecessary contains check if a key is in the main responses cache
 * Fix license metadata as shown on PyPI
 
 ## 0.8.1 (2021-09-15)
