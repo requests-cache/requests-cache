@@ -74,8 +74,7 @@ class BaseCache:
             response = self.responses.get(key)
             if response is None:  # Note: bool(requests.Response) is False if status > 400
                 response = self.responses[self.redirects[key]]
-            response.cache_key = key  # Set cache key here, since it's not serialized
-            response.reset()  # In case response was in memory and content has already been read
+            response.cache_key = key
             return response
         except KeyError:
             return default
@@ -289,3 +288,12 @@ class DictStorage(UserDict, BaseStorage):
         is recommended instead.
 
     """
+
+    def __getitem__(self, key):
+        """An additional step is needed here for response data. Since the original response object
+        is still in memory, its content has already been read and needs to be reset.
+        """
+        item = super().__getitem__(key)
+        if getattr(item, 'raw', None):
+            item.raw.reset()
+        return item
