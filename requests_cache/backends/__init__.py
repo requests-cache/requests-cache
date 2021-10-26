@@ -1,10 +1,9 @@
 """Classes and functions for cache persistence. See :ref:`backends` for general usage info."""
 # flake8: noqa: F401
-from inspect import signature
 from logging import getLogger
 from typing import Callable, Dict, Iterable, Optional, Type, Union
 
-from .. import get_placeholder_class, get_valid_kwargs
+from .._utils import get_placeholder_class
 from .base import BaseCache, BaseStorage, DictStorage
 
 # Backend-specific keyword arguments equivalent to 'cache_name'

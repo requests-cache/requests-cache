@@ -20,6 +20,8 @@ from typing import TYPE_CHECKING, Any, Dict, Mapping, Optional, Tuple, Union
 from attr import define, field
 from requests import PreparedRequest, Response
 
+from ._utils import coalesce
+
 if TYPE_CHECKING:
     from .models import CachedResponse
 
@@ -149,11 +151,6 @@ class CacheActions:
         # Otherwise, skip writing to the cache if specified by expiration or other headers
         expire_immediately = try_int(self.expire_after) == DO_NOT_CACHE
         self.skip_write = (expire_immediately or no_store) and not has_validator
-
-
-def coalesce(*values: Any, default=None) -> Any:
-    """Get the first non-``None`` value in a list of values"""
-    return next((v for v in values if v is not None), default)
 
 
 def get_expiration_datetime(expire_after: ExpirationTime) -> Optional[datetime]:

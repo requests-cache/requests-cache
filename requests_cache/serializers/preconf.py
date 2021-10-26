@@ -19,7 +19,7 @@ from cattr.preconf import bson as bson_preconf
 from cattr.preconf import json as json_preconf
 from cattr.preconf import msgpack, orjson, pyyaml, tomlkit, ujson
 
-from .. import get_placeholder_class
+from .._utils import get_placeholder_class
 from .cattrs import CattrStage
 from .pipeline import SerializerPipeline, Stage
 

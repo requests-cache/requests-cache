@@ -23,7 +23,7 @@ from requests import Session as OriginalSession
 from requests.hooks import dispatch_hook
 from urllib3 import filepost
 
-from . import get_valid_kwargs
+from ._utils import get_valid_kwargs
 from .backends import BackendSpecifier, init_backend
 from .cache_control import CacheActions, ExpirationTime, get_expiration_seconds
 from .models import AnyResponse, CachedResponse, set_response_defaults

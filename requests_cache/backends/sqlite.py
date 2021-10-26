@@ -77,7 +77,8 @@ from typing import Collection, Iterable, Iterator, List, Tuple, Type, Union
 
 from appdirs import user_cache_dir
 
-from . import BaseCache, BaseStorage, get_valid_kwargs
+from .._utils import chunkify, get_valid_kwargs
+from . import BaseCache, BaseStorage
 
 MEMORY_URI = 'file::memory:?cache=shared'
 SQLITE_MAX_VARIABLE_NUMBER = 999
@@ -241,7 +242,7 @@ class SQLiteDict(BaseStorage):
         column = 'key' if keys else 'value'
         with self.connection(commit=True) as con:
             # Split into small enough chunks for SQLite to handle
-            for chunk in chunkify(keys or values):
+            for chunk in chunkify(keys or values, max_size=SQLITE_MAX_VARIABLE_NUMBER):
                 marks, args = _format_sequence(chunk)
                 statement = f'DELETE FROM {self.table_name} WHERE {column} IN ({marks})'
                 con.execute(statement, args)
@@ -268,13 +269,6 @@ class SQLitePickleDict(SQLiteDict):
 
     def __getitem__(self, key):
         return self.serializer.loads(super().__getitem__(key))
-
-
-def chunkify(iterable: Iterable, max_size=SQLITE_MAX_VARIABLE_NUMBER) -> Iterator[List]:
-    """Split an iterable into chunks of a max size"""
-    iterable = list(iterable)
-    for index in range(0, len(iterable), max_size):
-        yield iterable[index : index + max_size]
 
 
 def _format_sequence(values: Collection) -> Tuple[str, List]:

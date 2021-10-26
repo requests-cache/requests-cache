@@ -35,8 +35,9 @@ from typing import Iterable
 
 from redis import Redis, StrictRedis
 
+from .._utils import get_valid_kwargs
 from ..cache_keys import decode, encode
-from . import BaseCache, BaseStorage, get_valid_kwargs
+from . import BaseCache, BaseStorage
 
 
 class RedisCache(BaseCache):

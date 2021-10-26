@@ -16,7 +16,7 @@ from requests import Request, Session
 from requests.models import CaseInsensitiveDict
 from url_normalize import url_normalize
 
-from . import get_valid_kwargs
+from ._utils import get_valid_kwargs
 
 if TYPE_CHECKING:
     from .models import AnyPreparedRequest, AnyRequest, CachedResponse

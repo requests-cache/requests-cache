@@ -28,7 +28,8 @@ from typing import Iterable
 
 from pymongo import MongoClient
 
-from . import BaseCache, BaseStorage, get_valid_kwargs
+from .._utils import get_valid_kwargs
+from . import BaseCache, BaseStorage
 
 
 class MongoCache(BaseCache):

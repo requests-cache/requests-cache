@@ -14,7 +14,7 @@ API Reference
 from gridfs import GridFS
 from pymongo import MongoClient
 
-from . import get_valid_kwargs
+from .._utils import get_valid_kwargs
 from .base import BaseCache, BaseStorage
 from .mongodb import MongoDict
 
