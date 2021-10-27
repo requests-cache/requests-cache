@@ -49,7 +49,8 @@ from boto3.dynamodb.types import Binary
 from boto3.resources.base import ServiceResource
 from botocore.exceptions import ClientError
 
-from . import BaseCache, BaseStorage, get_valid_kwargs
+from .._utils import get_valid_kwargs
+from . import BaseCache, BaseStorage
 
 
 class DynamoDbCache(BaseCache):

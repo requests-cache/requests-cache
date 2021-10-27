@@ -14,13 +14,8 @@ from requests import Request
 from requests.structures import CaseInsensitiveDict
 
 from requests_cache import ALL_METHODS, CachedResponse, CachedSession
-from requests_cache.backends import (
-    BACKEND_CLASSES,
-    BaseCache,
-    SQLiteDict,
-    SQLitePickleDict,
-    get_placeholder_class,
-)
+from requests_cache._utils import get_placeholder_class
+from requests_cache.backends import BACKEND_CLASSES, BaseCache, SQLiteDict, SQLitePickleDict
 from requests_cache.backends.base import DESERIALIZE_ERRORS
 from requests_cache.cache_keys import create_key
 from tests.conftest import (

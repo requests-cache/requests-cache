@@ -3,14 +3,8 @@ from unittest.mock import patch
 import pytest
 from pymongo import MongoClient
 
-from requests_cache.backends import (
-    GridFSCache,
-    GridFSPickleDict,
-    MongoCache,
-    MongoDict,
-    MongoPickleDict,
-    get_valid_kwargs,
-)
+from requests_cache._utils import get_valid_kwargs
+from requests_cache.backends import GridFSCache, GridFSPickleDict, MongoCache, MongoDict, MongoPickleDict
 from tests.conftest import fail_if_no_connection
 from tests.integration.base_cache_test import BaseCacheTest
 from tests.integration.base_storage_test import BaseStorageTest
