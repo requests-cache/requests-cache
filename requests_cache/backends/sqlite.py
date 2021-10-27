@@ -102,7 +102,7 @@ class SQLiteCache(BaseCache):
 
     def __init__(self, db_path: AnyPath = 'http_cache', **kwargs):
         super().__init__(**kwargs)
-        self.responses = SQLitePickleDict(db_path, table_name='responses', **kwargs)
+        self.responses: SQLiteDict = SQLitePickleDict(db_path, table_name='responses', **kwargs)
         self.redirects = SQLiteDict(db_path, table_name='redirects', **kwargs)
 
     @property
