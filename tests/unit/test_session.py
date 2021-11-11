@@ -52,9 +52,24 @@ def test_init_backend_instance():
     assert session.cache is backend
 
 
+def test_init_backend_instance__kwargs():
+    backend = MyCache()
+    session = CachedSession(
+        'test_cache',
+        backend=backend,
+        ignored_parameters=['foo'],
+        include_get_headers=True,
+    )
+
+    assert session.cache.cache_name == 'test_cache'
+    assert session.cache.ignored_parameters == ['foo']
+    assert session.cache.match_headers is True
+
+
 def test_init_backend_class():
-    session = CachedSession(backend=MyCache)
+    session = CachedSession('test_cache', backend=MyCache)
     assert isinstance(session.cache, MyCache)
+    assert session.cache.cache_name == 'test_cache'
 
 
 @pytest.mark.parametrize('method', ALL_METHODS)
@@ -138,7 +153,7 @@ def test_repr(mock_session):
     mock_session.cache.redirects['key'] = 'value'
     mock_session.cache.redirects['key_2'] = 'value'
 
-    assert mock_session.cache.name in repr(mock_session) and '10.5' in repr(mock_session)
+    assert mock_session.cache.cache_name in repr(mock_session) and '10.5' in repr(mock_session)
     assert '2 redirects' in str(mock_session.cache) and '1 responses' in str(mock_session.cache)
 
 
