@@ -66,7 +66,6 @@ class CacheMixin(MIXIN_BASE):
         self.filter_fn = filter_fn or (lambda r: True)
         self.stale_if_error = stale_if_error or kwargs.pop('old_data_on_error', False)
 
-        self.cache.name = cache_name  # Set to handle backend=<instance>
         self._disabled = False
         self._lock = RLock()
 

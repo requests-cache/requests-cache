@@ -22,6 +22,7 @@
 
 **Bugfixes:**
 * Handle some additional corner cases when normalizing request data
+* Add support for `BaseCache` keyword arguments passed along with a backend instance
 * Fix issue with cache headers not being used correctly if `cache_control=True` is used with an `expire_after` value
 * Fix license metadata as shown on PyPI
 

@@ -44,7 +44,7 @@ class BaseCache:
 
     def __init__(
         self,
-        *args,
+        cache_name: str = 'http_cache',
         match_headers: Union[Iterable[str], bool] = False,
         ignored_parameters: Iterable[str] = None,
         key_fn: KEY_FN = None,
@@ -52,9 +52,9 @@ class BaseCache:
     ):
         self.responses: BaseStorage = DictStorage()
         self.redirects: BaseStorage = DictStorage()
+        self.cache_name = cache_name
         self.ignored_parameters = ignored_parameters
         self.key_fn = key_fn or create_key
-        self.name: str = kwargs.get('cache_name', '')
         self.match_headers = match_headers or kwargs.pop('include_get_headers', False)
 
     @property
@@ -235,7 +235,7 @@ class BaseCache:
         return f'Total rows: {len(self.responses)} responses, {len(self.redirects)} redirects'
 
     def __repr__(self):
-        return f'<{self.__class__.__name__}(name={self.name})>'
+        return f'<{self.__class__.__name__}(name={self.cache_name})>'
 
 
 class BaseStorage(MutableMapping, ABC):
@@ -261,8 +261,16 @@ class BaseStorage(MutableMapping, ABC):
         serializer=None,
         **kwargs,
     ):
-        self.serializer = init_serializer(serializer, **kwargs)
+        self._serializer = init_serializer(serializer, **kwargs)
         logger.debug(f'Initializing {type(self).__name__} with serializer: {self.serializer}')
+
+    @property
+    def serializer(self):
+        return self._serializer
+
+    @serializer.setter
+    def serializer(self, value):
+        self._serializer = init_serializer(value)
 
     def bulk_delete(self, keys: Iterable[str]):
         """Delete multiple keys from the cache, without raising errors for missing keys. This is a
@@ -288,6 +296,10 @@ class DictStorage(UserDict, BaseStorage):
         is recommended instead.
 
     """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._serializer = None
 
     def __getitem__(self, key):
         """An additional step is needed here for response data. Since the original response object
