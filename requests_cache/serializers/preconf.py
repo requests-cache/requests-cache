@@ -32,6 +32,7 @@ yaml_preconf_stage = CattrStage(pyyaml.make_converter)  #: Pre-serialization ste
 toml_preconf_stage = CattrStage(tomlkit.make_converter)  #: Pre-serialization steps for TOML
 ujson_preconf_stage = CattrStage(ujson.make_converter)  #: Pre-serialization steps for ultrajson
 pickle_serializer = SerializerPipeline([base_stage, pickle])  #: Complete pickle serializer
+utf8_encoder = Stage(dumps=str.encode, loads=lambda x: x.decode())  #: Encode to bytes
 
 
 # Safe pickle serializer

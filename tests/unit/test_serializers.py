@@ -1,5 +1,6 @@
 # Note: Almost all serializer logic is covered by parametrized integration tests.
 # Any additional serializer-specific tests can go here.
+import gzip
 import json
 import sys
 from importlib import reload
@@ -10,7 +11,15 @@ import pytest
 from itsdangerous import Signer
 from itsdangerous.exc import BadSignature
 
-from requests_cache import CachedResponse, CachedSession, safe_pickle_serializer
+from requests_cache import (
+    CachedResponse,
+    CachedSession,
+    SerializerPipeline,
+    Stage,
+    json_serializer,
+    safe_pickle_serializer,
+    utf8_encoder,
+)
 
 
 def test_stdlib_json():
@@ -70,3 +79,17 @@ def test_cache_signing(tempfile_path):
     session = CachedSession(tempfile_path, serializer=serializer)
     with pytest.raises(BadSignature):
         session.cache.responses['key']
+
+
+def test_custom_serializer(tempfile_path):
+    serializer = SerializerPipeline(
+        [
+            json_serializer,  # Serialize to a JSON string
+            utf8_encoder,  # Encode to bytes
+            Stage(dumps=gzip.compress, loads=gzip.decompress),  # Compress
+        ]
+    )
+    session = CachedSession(tempfile_path, serializer=serializer)
+    response = CachedResponse()
+    session.cache.responses['key'] = response
+    assert session.cache.responses['key'] == response
