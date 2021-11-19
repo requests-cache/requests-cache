@@ -8,6 +8,7 @@ from .preconf import (
     json_serializer,
     pickle_serializer,
     safe_pickle_serializer,
+    utf8_encoder,
     yaml_serializer,
 )
 
@@ -22,6 +23,7 @@ __all__ = [
     'safe_pickle_serializer',
     'yaml_serializer',
     'init_serializer',
+    'utf8_encoder',
 ]
 
 SERIALIZERS = {
