@@ -111,12 +111,12 @@ For example, a compressed pickle serializer can be built as:
 :::{admonition} Example code
 :class: toggle
 ```python
->>> import pickle, gzip
->>> from requests_cache.serialzers import SerializerPipeline, Stage
+>>> import gzip
+>>> from requests_cache import CachedSession, SerializerPipeline, Stage, pickle_serializer
 >>> compressed_serializer = SerializerPipeline([
-...     pickle,
-...     Stage(gzip, dumps='compress', loads='decompress'),
-...])
+...     pickle_serializer,
+...     Stage(dumps=gzip.compress, loads=gzip.decompress),
+... ])
 >>> session = CachedSession(serializer=compressed_serializer)
 ```
 :::
@@ -124,31 +124,26 @@ For example, a compressed pickle serializer can be built as:
 ### Text-based Serializers
 If you're using a text-based serialization format like JSON or YAML, some extra steps are needed to
 encode binary data and non-builtin types. The [cattrs](https://cattrs.readthedocs.io) library can do
-the majority of the work here, and some pre-configured converters are included for serveral common
+the majority of the work here, and some pre-configured converters are included for several common
 formats in the {py:mod}`.preconf` module.
 
 For example, a compressed JSON pipeline could be built as follows:
 :::{admonition} Example code
 :class: toggle
 ```python
->>> import json, gzip, codecs
->>> from requests_cache.serializers import SerializerPipeline, Stage, json_converter
+>>> import json, gzip
+>>> from requests_cache import CachedSession, SerializerPipeline, Stage, json_serializer, utf8_encoder
 >>> comp_json_serializer = SerializerPipeline([
-...     json_converter, # Serialize to a JSON string
-...     Stage(codecs.utf_8, dumps='encode', loads='decode'), # Encode to bytes
-...     Stage(gzip, dumps='compress', loads='decompress'), # Compress
-...])
+...     json_serializer, # Serialize to a JSON string
+...     utf8_encoder, # Encode to bytes
+...     Stage(dumps=gzip.compress, loads=gzip.decompress), # Compress
+... ])
 ```
 :::
 
 ```{note}
 If you want to use a different format that isn't included in {py:mod}`.preconf`, you can use
 {py:class}`.CattrStage` as a starting point.
-```
-
-```{note}
-If you want to convert a string representation to bytes (e.g. for compression), you must use a codec
-from {py:mod}`.codecs` (typically `codecs.utf_8`)
 ```
 
 ### Additional Serialization Steps
