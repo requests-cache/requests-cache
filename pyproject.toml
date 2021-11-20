@@ -40,7 +40,7 @@ url-normalize = "^1.4"     # For reducing duplicate cache items
 boto3                      = {optional=true, version="^1.15"}
 botocore                   = {optional=true, version="^1.18"}
 pymongo                    = {optional=true, version="^3.0"}
-redis                      = {optional=true, version="^3.0"}
+redis                      = {optional=true, version=">=3,<5"}
 
 # Optional serialization dependencies
 bson                       = {optional=true, version=">=0.5"}
@@ -92,7 +92,7 @@ pytest-cov            = ">=3.0"
 pytest-rerunfailures  = "^10.1"
 pytest-xdist          = ">=2.2"
 requests-mock         = "^1.8"
-responses             = "0.15"
+responses             = "0.16.0"
 timeout-decorator     = "^0.5"
 
 # Tools for linting, type checking, etc. are managed with pre-commit
@@ -100,7 +100,7 @@ pre-commit            = "^2.15"
 
 # For convenience in local development
 nox                   = "^2021.10.1"
-nox-poetry            = "^0.8.6"
+nox-poetry            = "^0.9.0"
 rich                  = ">=10.0"
 sphinx-autobuild      = "^2021.3.14"
 
