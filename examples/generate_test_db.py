@@ -16,8 +16,11 @@ from requests_cache import ALL_METHODS, CachedResponse, CachedSession
 from requests_cache.models.response import format_file_size
 from tests.conftest import HTTPBIN_FORMATS, HTTPBIN_METHODS
 
+# TODO: If others would find it useful, these settings could be turned into CLI args
+BACKEND = 'sqlite'
+CACHE_NAME = 'rubbish_bin'
+
 BASE_RESPONSE = requests.get('https://httpbin.org/get')
-CACHE_NAME = 'rubbish_bin.sqlite'
 HTTPBIN_EXTRA_ENDPOINTS = [
     'anything',
     'bytes/1024' 'cookies',
@@ -25,8 +28,8 @@ HTTPBIN_EXTRA_ENDPOINTS = [
     'redirect/5',
     'stream-bytes/1024',
 ]
-MAX_EXPIRE_AFTER = 30
-MAX_RESPONSE_SIZE = 10000
+MAX_EXPIRE_AFTER = 30  # In seconds; set to -1 to disable expiration
+MAX_RESPONSE_SIZE = 10000  # In bytes
 N_RESPONSES = 100000
 N_INVALID_RESPONSES = 10
 
@@ -42,7 +45,7 @@ class InvalidResponse(CachedResponse):
 
 
 def populate_cache(progress, task):
-    session = CachedSession(CACHE_NAME, backend='sqlite', allowable_methods=ALL_METHODS)
+    session = CachedSession(CACHE_NAME, backend=BACKEND, allowable_methods=ALL_METHODS)
     n_previous_responses = len(session.cache.responses)
 
     # Cache a variety of different response formats, which may result in different behavior
@@ -50,7 +53,7 @@ def populate_cache(progress, task):
         ('GET', f'https://httpbin.org/{endpoint}')
         for endpoint in HTTPBIN_FORMATS + HTTPBIN_EXTRA_ENDPOINTS
     ]
-    urls += [(method, 'https://httpbin.org/{method.lower()}') for method in HTTPBIN_METHODS]
+    urls += [(method, f'https://httpbin.org/{method.lower()}') for method in HTTPBIN_METHODS]
     for method, url in urls:
         session.request(method, url)
         progress.update(task, advance=1)
@@ -59,7 +62,10 @@ def populate_cache(progress, task):
     with session.cache.responses.bulk_commit():
         for i in range(N_RESPONSES):
             new_response = get_randomized_response(i + n_previous_responses)
-            expires = datetime.now() + timedelta(seconds=random() * MAX_EXPIRE_AFTER)
+            if MAX_EXPIRE_AFTER >= 0:
+                expires = datetime.now() + timedelta(seconds=random() * MAX_EXPIRE_AFTER)
+            else:
+                expires = None
             session.cache.save_response(new_response, expires=expires)
             progress.update(task, advance=1)
 
@@ -106,8 +112,10 @@ def main():
         populate_cache(progress, task)
 
     actual_total_responses = len(CachedSession(CACHE_NAME).cache.responses)
-    cache_file_size = format_file_size(getsize(CACHE_NAME))
-    logger.info(f'Generated cache with {actual_total_responses} responses ({cache_file_size})')
+    logger.info(f'Generated cache with {actual_total_responses} responses')
+    if BACKEND == 'sqlite':
+        cache_file_size = format_file_size(getsize(f'{CACHE_NAME}.sqlite'))
+        logger.info(f'Total cache size: {cache_file_size}')
 
 
 if __name__ == '__main__':
