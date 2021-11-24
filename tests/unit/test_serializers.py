@@ -2,6 +2,7 @@
 # Any additional serializer-specific tests can go here.
 import gzip
 import json
+import pickle
 import sys
 from importlib import reload
 from unittest.mock import patch
@@ -93,3 +94,15 @@ def test_custom_serializer(tempfile_path):
     response = CachedResponse()
     session.cache.responses['key'] = response
     assert session.cache.responses['key'] == response
+
+
+def test_plain_pickle(tempfile_path):
+    """`requests.Response` modifies pickling behavior. If plain `pickle` is used as a serializer,
+    serializing `CachedResponse` should still work as expected.
+    """
+    session = CachedSession(tempfile_path, serializer=pickle)
+
+    response = CachedResponse()
+    session.cache.responses['key'] = response
+    assert session.cache.responses['key'] == response
+    assert session.cache.responses['key'].expires is None

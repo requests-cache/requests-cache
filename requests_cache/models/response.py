@@ -105,6 +105,15 @@ class CachedResponse(Response):
         """Get the size of the response body in bytes"""
         return len(self.content) if self.content else 0
 
+    def __getstate__(self):
+        """Override pickling behavior from ``requests.Response.__getstate__``"""
+        return self.__dict__
+
+    def __setstate__(self, state):
+        """Override pickling behavior from ``requests.Response.__setstate__``"""
+        for name, value in state.items():
+            setattr(self, name, value)
+
     def __str__(self):
         return (
             f'request: {self.request}, response: {self.status_code} '
