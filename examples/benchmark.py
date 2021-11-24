@@ -33,9 +33,9 @@ AWS_OPTIONS = {
 }
 
 
-def test_write_speed(session):
+def test_write_speed(session, max_size):
     for i in range(WARMUP_ITERATIONS):
-        new_response = get_randomized_response(i)
+        new_response = get_randomized_response(i, max_size)
         session.cache.save_response(new_response)
 
     with Progress() as progress:
@@ -43,7 +43,7 @@ def test_write_speed(session):
         start = time()
 
         for i in range(ITERATIONS):
-            new_response = get_randomized_response(i)
+            new_response = get_randomized_response(i, max_size)
             session.cache.save_response(new_response)
             progress.update(task, advance=1)
 
@@ -72,10 +72,10 @@ def test_read_speed(session):
     print(f'[cyan]Elapsed: [green]{elapsed:.3f}[/] seconds (avg [green]{avg:.3f}[/] ms per read)')
 
 
-def get_randomized_response(i=0):
+def get_randomized_response(i=0, max_size=MAX_RESPONSE_SIZE):
     """Get a response with randomized content"""
     new_response = CachedResponse.from_response(BASE_RESPONSE)
-    n_bytes = int(random() * MAX_RESPONSE_SIZE)
+    n_bytes = int(random() * max_size)
     new_response._content = urandom(n_bytes)
     new_response.request.url += f'/response_{i}'
     return new_response
@@ -85,6 +85,7 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('-b', '--backend', default='sqlite')
     parser.add_argument('-s', '--serializer', default='pickle')
+    parser.add_argument('-m', '--max-size', default=MAX_RESPONSE_SIZE, type=float)
     args = parser.parse_args()
     print(f'[cyan]Benchmarking {args.backend} backend with {args.serializer} serializer')
 
@@ -101,5 +102,5 @@ if __name__ == '__main__':
         serializer=args.serializer,
         **kwargs,
     )
-    test_write_speed(session)
+    test_write_speed(session, args.max_size)
     test_read_speed(session)
