@@ -180,7 +180,12 @@ class CacheMixin(MIXIN_BASE):
         if self._is_cacheable(response, actions):
             self.cache.save_response(response, actions.cache_key, actions.expires)
         elif cached_response and response.status_code == 304:
-            logger.debug(f'Response for URL {request.url} has not been modified; using cached response')
+            logger.debug(
+                f'Response for URL {request.url} has not been modified; using cached response and updating expiration date.'
+            )
+            # Update the cache expiration date. Since we performed validation,
+            # the cache entry may be marked as fresh again.
+            self.cache.save_response(cached_response, actions.cache_key, actions.expires)
             return cached_response
         else:
             logger.debug(f'Skipping cache write for URL: {request.url}')
