@@ -183,9 +183,15 @@ class CacheMixin(MIXIN_BASE):
             logger.debug(
                 f'Response for URL {request.url} has not been modified; using cached response and updating expiration date.'
             )
-            # Update the cache expiration date. Since we performed validation,
+            # Update the cache expiration date and the headers (see RFC7234 4.3.4, p.18). Since we performed validation,
             # the cache entry may be marked as fresh again.
-            self.cache.save_response(cached_response, actions.cache_key, actions.expires)
+            cached_response.headers.update(response.headers)
+            # Since it is a 304 response we have to update cache control once again with combination of
+            # cached_response's and 304 response's Cache-Control directives.
+            response.headers = cached_response.headers
+            actions.update_from_response(response)
+            cached_response.expires = actions.expires
+            self.cache.save_response(cached_response, actions.cache_key, cached_response.expires)
             return cached_response
         else:
             logger.debug(f'Skipping cache write for URL: {request.url}')

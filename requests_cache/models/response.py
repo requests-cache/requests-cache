@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 from logging import getLogger
 from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
+import attr
 from attr import define, field
 from requests import PreparedRequest, Response
 from requests.cookies import RequestsCookieJar
@@ -46,9 +47,13 @@ class CachedResponse(Response):
             self.raw.headers = HTTPHeaderDict(self.headers)
 
     @classmethod
-    def from_response(cls, original_response: Response, **kwargs):
-        """Create a CachedResponse based on an original response object"""
-        obj = cls(**kwargs)
+    def from_response(
+        cls, original_response: Union[Response, 'CachedResponse'], expires: datetime = None, **kwargs
+    ):
+        """Create a CachedResponse based on an original Response or another CachedResponse object"""
+        if isinstance(original_response, CachedResponse):
+            return attr.evolve(original_response, expires=expires)
+        obj = cls(expires=expires, **kwargs)
 
         # Copy basic attributes
         for k in Response.__attrs__:
