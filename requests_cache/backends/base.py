@@ -92,8 +92,12 @@ class BaseCache:
             expire_after: Time in seconds until this cache item should expire
         """
         cache_key = cache_key or self.create_key(response.request)
-        cached_response = CachedResponse.from_response(response, expires=expires)
-        cached_response = redact_response(cached_response, self.ignored_parameters)
+        if isinstance(response, CachedResponse):
+            cached_response = response
+            cached_response.expires = expires
+        else:
+            cached_response = CachedResponse.from_response(response, expires=expires)
+            cached_response = redact_response(cached_response, self.ignored_parameters)
         self.responses[cache_key] = cached_response
         for r in response.history:
             self.redirects[self.create_key(r.request)] = cache_key
