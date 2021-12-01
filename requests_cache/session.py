@@ -161,6 +161,18 @@ class CacheMixin(MIXIN_BASE):
         # Dispatch any hooks here, because they are removed before pickling
         return dispatch_hook('response', request.hooks, response, **kwargs)
 
+    def _is_cacheable(self, response: Response, actions: CacheActions) -> bool:
+        """Perform all checks needed to determine if the given response should be saved to the cache"""
+        cache_criteria = {
+            'disabled cache': self._disabled,
+            'disabled method': str(response.request.method) not in self.allowable_methods,
+            'disabled status': response.status_code not in self.allowable_codes,
+            'disabled by filter': not self.filter_fn(response),
+            'disabled by headers or expiration params': actions.skip_write,
+        }
+        logger.debug(f'Pre-cache checks for response from {response.url}: {cache_criteria}')
+        return not any(cache_criteria.values())
+
     def _send_and_cache(
         self,
         request: PreparedRequest,
@@ -180,19 +192,7 @@ class CacheMixin(MIXIN_BASE):
         if self._is_cacheable(response, actions):
             self.cache.save_response(response, actions.cache_key, actions.expires)
         elif cached_response and response.status_code == 304:
-            logger.debug(
-                f'Response for URL {request.url} has not been modified; using cached response and updating expiration date.'
-            )
-            # Update the cache expiration date and the headers (see RFC7234 4.3.4, p.18). Since we performed validation,
-            # the cache entry may be marked as fresh again.
-            cached_response.headers.update(response.headers)
-            # Since it is a 304 response we have to update cache control once again with combination of
-            # cached_response's and 304 response's Cache-Control directives.
-            response.headers = cached_response.headers
-            actions.update_from_response(response)
-            cached_response.expires = actions.expires
-            self.cache.save_response(cached_response, actions.cache_key, cached_response.expires)
-            return cached_response
+            return self._update_revalidated_response(actions, response, cached_response)
         else:
             logger.debug(f'Skipping cache write for URL: {request.url}')
         return set_response_defaults(response, actions.cache_key)
@@ -226,17 +226,18 @@ class CacheMixin(MIXIN_BASE):
             logger.warning(f'Request for URL {request.url} failed; using cached response', exc_info=True)
             return cached_response
 
-    def _is_cacheable(self, response: Response, actions: CacheActions) -> bool:
-        """Perform all checks needed to determine if the given response should be saved to the cache"""
-        cache_criteria = {
-            'disabled cache': self._disabled,
-            'disabled method': str(response.request.method) not in self.allowable_methods,
-            'disabled status': response.status_code not in self.allowable_codes,
-            'disabled by filter': not self.filter_fn(response),
-            'disabled by headers or expiration params': actions.skip_write,
-        }
-        logger.debug(f'Pre-cache checks for response from {response.url}: {cache_criteria}')
-        return not any(cache_criteria.values())
+    def _update_revalidated_response(
+        self, actions: CacheActions, response: Response, cached_response: CachedResponse
+    ) -> CachedResponse:
+        """After revalidation, update the cached response's headers and reset its expiration"""
+        logger.debug(
+            f'Response for URL {response.request.url} has not been modified; updating and using cached response'
+        )
+        cached_response.headers.update(response.headers)
+        actions.update_from_response(cached_response)
+        cached_response.expires = actions.expires
+        self.cache.save_response(cached_response, actions.cache_key, actions.expires)
+        return cached_response
 
     @contextmanager
     def cache_disabled(self):
