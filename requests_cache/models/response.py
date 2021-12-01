@@ -96,6 +96,14 @@ class CachedResponse(Response):
         return self.expires is not None and datetime.utcnow() >= self.expires
 
     @property
+    def ttl(self) -> Optional[int]:
+        """Get time to expiration in seconds"""
+        if self.expires is None or self.is_expired:
+            return None
+        delta = self.expires - datetime.utcnow()
+        return int(delta.total_seconds())
+
+    @property
     def next(self) -> Optional[PreparedRequest]:
         """Returns a PreparedRequest for the next request in a redirect chain, if there is one."""
         return self._next.prepare() if self._next else None

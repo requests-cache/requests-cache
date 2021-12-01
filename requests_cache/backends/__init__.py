@@ -42,9 +42,9 @@ try:
 except ImportError as e:
     MongoCache = MongoDict = MongoPickleDict = get_placeholder_class(e)  # type: ignore
 try:
-    from .redis import RedisCache, RedisDict
+    from .redis import RedisCache, RedisDict, RedisHashDict
 except ImportError as e:
-    RedisCache = RedisDict = get_placeholder_class(e)  # type: ignore
+    RedisCache = RedisDict = RedisHashDict = get_placeholder_class(e)  # type: ignore
 try:
     # Note: Heroku doesn't support SQLite due to ephemeral storage
     from .sqlite import SQLiteCache, SQLiteDict, SQLitePickleDict

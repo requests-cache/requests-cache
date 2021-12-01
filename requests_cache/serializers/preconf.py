@@ -23,7 +23,8 @@ from .._utils import get_placeholder_class
 from .cattrs import CattrStage
 from .pipeline import SerializerPipeline, Stage
 
-base_stage = CattrStage()  #: Base stage for all serializer pipelines
+base_stage = CattrStage()  #: Base stage for all serializer pipelines (or standalone dict serializer)
+dict_serializer = base_stage  #: Partial serializer that unstructures responses into dicts
 bson_preconf_stage = CattrStage(bson_preconf.make_converter)  #: Pre-serialization steps for BSON
 json_preconf_stage = CattrStage(json_preconf.make_converter)  #: Pre-serialization steps for JSON
 msgpack_preconf_stage = CattrStage(msgpack.make_converter)  #: Pre-serialization steps for msgpack
