@@ -25,7 +25,7 @@ class BaseStorageTest:
 
     def teardown_class(cls):
         for i in range(cls.num_instances):
-            cls().init_cache(i, clear=True)
+            cls().init_cache(index=i, clear=True)
 
     def test_basic_methods(self):
         """Test basic dict methods with multiple cache instances:

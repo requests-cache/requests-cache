@@ -19,7 +19,7 @@ def ensure_connection():
 
 class TestRedisDict(BaseStorageTest):
     storage_class = RedisDict
-    num_instances = 1  # Only test a single collecton
+    num_instances = 1  # Only supports a single instance, since it stores items under top-level keys
 
     @patch('requests_cache.backends.redis.StrictRedis')
     def test_connection_kwargs(self, mock_redis):
@@ -30,7 +30,7 @@ class TestRedisDict(BaseStorageTest):
 
 class TestRedisHashDict(TestRedisDict):
     storage_class = RedisHashDict
-    num_instances: int = 10
+    num_instances: int = 10  # Supports multiple instances, since this stores items under hash keys
     picklable = True
 
 

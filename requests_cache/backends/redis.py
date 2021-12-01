@@ -38,7 +38,6 @@ from redis import Redis, StrictRedis
 
 from .._utils import get_valid_kwargs
 from ..cache_keys import decode, encode
-from ..serializers import dict_serializer
 from . import BaseCache, BaseStorage
 
 logger = getLogger(__name__)
@@ -65,17 +64,12 @@ class RedisDict(BaseStorage):
     """A dictionary-like interface for Redis operations.
 
     **Notes:**
-        * Each item is stored as a separate hash
-        * All keys will be encoded as bytes
-        * Does not support custom serializers
+        * All keys will be encoded as bytes, and all values will be serialized
         * Supports TTL
     """
 
-    def __init__(self, namespace: str, connection=None, serializer=None, **kwargs):
-        if serializer:
-            logger.warning('RedisDict does not support custom serializers')
-        super().__init__(serializer=dict_serializer, **kwargs)
-
+    def __init__(self, namespace: str, collection_name: str = None, connection=None, **kwargs):
+        super().__init__(**kwargs)
         connection_kwargs = get_valid_kwargs(Redis, kwargs)
         self.connection = connection or StrictRedis(**connection_kwargs)
         self.namespace = namespace
@@ -91,21 +85,17 @@ class RedisDict(BaseStorage):
         return bool(self.connection.exists(self._bkey(key)))
 
     def __getitem__(self, key):
-        # result = self.connection.get(self._bkey(key))
-        result = self.connection.hgetall(self._bkey(key))
-        if not result:
+        result = self.connection.get(self._bkey(key))
+        if result is None:
             raise KeyError
         return self.serializer.loads(result)
 
     def __setitem__(self, key, item):
         """Save an item to the cache, optionally with TTL"""
-        # if getattr(item, 'ttl', None):
-        #     self.connection.setex(self._bkey(key), item.ttl, self.serializer.dumps(item))
-        # else:
-        #     self.connection.set(self._bkey(key), self.serializer.dumps(item))
-        self.connection.hmset(self._bkey(key), self.serializer.dumps(item))
         if getattr(item, 'ttl', None):
-            self.connection.expire(self._bkey(key), item.ttl)
+            self.connection.setex(self._bkey(key), item.ttl, self.serializer.dumps(item))
+        else:
+            self.connection.set(self._bkey(key), self.serializer.dumps(item))
 
     def __delitem__(self, key):
         if not self.connection.delete(self._bkey(key)):
@@ -152,7 +142,7 @@ class RedisHashDict(BaseStorage):
         super().__init__(**kwargs)
         connection_kwargs = get_valid_kwargs(Redis, kwargs)
         self.connection = connection or StrictRedis(**connection_kwargs)
-        self._hash_key = f'{namespace}:{collection_name}'
+        self._hash_key = f'{namespace}-{collection_name}'
 
     def __contains__(self, key):
         return self.connection.hexists(self._hash_key, encode(key))
