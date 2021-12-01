@@ -687,6 +687,25 @@
         "bug",
         "code"
       ]
+    },
+    {
+      "login": "meggiman",
+      "name": "Manuel Eggimann",
+      "avatar_url": "https://avatars.githubusercontent.com/u/7403253?v=4",
+      "profile": "https://github.com/meggiman",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "jseabold",
+      "name": "Skipper Seabold",
+      "avatar_url": "https://avatars.githubusercontent.com/u/296164?v=4",
+      "profile": "https://github.com/jseabold",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
