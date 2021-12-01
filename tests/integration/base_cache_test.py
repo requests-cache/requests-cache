@@ -220,6 +220,39 @@ class BaseCacheTest:
         assert response.from_cache is True
         assert response.is_expired is True
 
+    @pytest.mark.parametrize('validator_headers', [{'ETag': ETAG}, {'Last-Modified': LAST_MODIFIED}])
+    @pytest.mark.parametrize('cache_headers', [{'Cache-Control': 'max-age=0'}])
+    def test_conditional_request_refreshenes_expire_date(self, cache_headers, validator_headers):
+        """Test that revalidation attempt with 304 responses causes stale entry to become fresh again considering
+        Cache-Control header of the 304 response."""
+        url = httpbin('response-headers')
+        first_response_headers = {**cache_headers, **validator_headers}
+        session = self.init_session(cache_control=True)
+
+        # This endpoint returns request params as response headers
+        session.get(url, params=first_response_headers)
+
+        # Add different Response Header to mocked return value of the session.send() function.
+        updated_response_headers = {**first_response_headers, 'Cache-Control': 'max-age=60'}
+        with patch.object(
+            Session, 'send', return_value=MagicMock(status_code=304, headers=updated_response_headers)
+        ):
+            response = session.get(url, params=first_response_headers)
+        assert response.from_cache is True
+        assert response.is_expired is False
+
+        # Make sure an immediate subsequent request will be served from the cache for another max-age==60 secondss
+        try:
+            with patch.object(Session, 'send', side_effect=AssertionError):
+                response = session.get(url, params=first_response_headers)
+        except AssertionError:
+            assert False, (
+                "Session tried to perform re-validation although cached response should have been "
+                "refreshened."
+            )
+        assert response.from_cache is True
+        assert response.is_expired is False
+
     @pytest.mark.parametrize('stream', [True, False])
     def test_response_decode(self, stream):
         """Test that gzip-compressed raw responses (including streamed responses) can be manually
