@@ -11,6 +11,7 @@
 
 **Backends:**
 * Filesystem and SQLite backends: Add better error message if parent path exists but isn't a directory
+* Redis: Improve performance by using native Redis TTL for cache expiration
 
 **Other features:**
 * Support `expire_after` param for `CachedSession.send()`
