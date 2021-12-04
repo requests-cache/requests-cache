@@ -39,7 +39,7 @@ url-normalize = "^1.4"     # For reducing duplicate cache items
 # Optional backend dependencies
 boto3                      = {optional=true, version="^1.15"}
 botocore                   = {optional=true, version="^1.18"}
-pymongo                    = {optional=true, version="^3.0"}
+pymongo                    = {optional=true, version=">=3,<5"}
 redis                      = {optional=true, version=">=3,<5"}
 
 # Optional serialization dependencies
