@@ -137,7 +137,7 @@ six = ">=1.9.0"
 
 [[package]]
 name = "cattrs"
-version = "1.8.0"
+version = "1.9.0"
 description = "Composable complex class support for attrs and dataclasses."
 category = "main"
 optional = false
@@ -145,6 +145,7 @@ python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
 attrs = ">=20"
+typing_extensions = {version = "*", markers = "python_version >= \"3.7\" and python_version < \"3.8\""}
 
 [[package]]
 name = "certifi"
@@ -1278,8 +1279,8 @@ bson = [
     {file = "bson-0.5.10.tar.gz", hash = "sha256:d6511b2ab051139a9123c184de1a04227262173ad593429d21e443d6462d6590"},
 ]
 cattrs = [
-    {file = "cattrs-1.8.0-py3-none-any.whl", hash = "sha256:901fb2040529ae8fc9d93f48a2cdf7de3e983312ffb2a164ffa4e9847f253af1"},
-    {file = "cattrs-1.8.0.tar.gz", hash = "sha256:5c121ab06a7cac494813c228721a7feb5a6423b17316eeaebf13f5a03e5b0d53"},
+    {file = "cattrs-1.9.0-py3-none-any.whl", hash = "sha256:8eca49962b1bfc09c24d442aa55688be88efe5c24aeef89d3be135614b95c678"},
+    {file = "cattrs-1.9.0.tar.gz", hash = "sha256:1ef33f089e0a494e8d1b487508356f055c865b1955b125c00c991a4358543c80"},
 ]
 certifi = [
     {file = "certifi-2021.10.8-py2.py3-none-any.whl", hash = "sha256:d62a0163eb4c2344ac042ab2bdf75399a71a2d8c7d47eac2e2ee91b9d6339569"},
