@@ -81,6 +81,7 @@ def get_matched_headers(
     else:
         included = set(headers) - DEFAULT_EXCLUDE_HEADERS
 
+    included = sorted(included, key=lambda x:x.lower())
     return [f'{k.lower()}={headers[k]}' for k in included if k in headers]
 
 
