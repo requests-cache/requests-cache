@@ -818,7 +818,7 @@ tests = ["coverage (>=3.7.1,<6.0.0)", "pytest-cov", "pytest-localserver", "flake
 
 [[package]]
 name = "rich"
-version = "10.15.1"
+version = "10.16.1"
 description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
 category = "dev"
 optional = false
@@ -1746,8 +1746,8 @@ responses = [
     {file = "responses-0.16.0.tar.gz", hash = "sha256:a2e3aca2a8277e61257cd3b1c154b1dd0d782b1ae3d38b7fa37cbe3feb531791"},
 ]
 rich = [
-    {file = "rich-10.15.1-py3-none-any.whl", hash = "sha256:a59fb2721c52c5061ac65f318c0afb709e098b1ab6ce5813ea38982654c4b6ee"},
-    {file = "rich-10.15.1.tar.gz", hash = "sha256:93d0ea3c35ecfd8703dbe52b76885e224ad8d68c7766c921c726b14b22a57b7d"},
+    {file = "rich-10.16.1-py3-none-any.whl", hash = "sha256:bbe04dd6ac09e4b00d22cb1051aa127beaf6e16c3d8687b026e96d3fca6aad52"},
+    {file = "rich-10.16.1.tar.gz", hash = "sha256:4949e73de321784ef6664ebbc854ac82b20ff60b2865097b93f3b9b41e30da27"},
 ]
 s3transfer = [
     {file = "s3transfer-0.5.0-py3-none-any.whl", hash = "sha256:9c1dc369814391a6bda20ebbf4b70a0f34630592c9aa520856bf384916af2803"},
