@@ -52,7 +52,7 @@ ujson                      = {optional=true, version=">=4.0"}
 # defined here because readthedocs doesn't (yet?) support poetry.dev-dependencies
 furo                       = {optional=true, version=">=2021.9.8"}
 linkify-it-py              = {optional=true, version="^1.0.1"}
-myst-parser                = {optional=true, version="^0.15.1"}
+myst-parser                = {optional=true, version=">=0.15.1,<0.17.0"}
 sphinx                     = {optional=true, version="4.3.0"}
 sphinx-autodoc-typehints   = {optional=true, version="^1.11"}
 sphinx-automodapi          = {optional=true, version="^0.13"}
