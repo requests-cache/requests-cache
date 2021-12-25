@@ -55,7 +55,7 @@ linkify-it-py              = {optional=true, version="^1.0.1"}
 myst-parser                = {optional=true, version="^0.15.1"}
 sphinx                     = {optional=true, version="4.3.0"}
 sphinx-autodoc-typehints   = {optional=true, version="^1.11"}
-sphinx-automodapi          = {optional=true, version="^0.13"}
+sphinx-automodapi          = {optional=true, version=">=0.13,<0.15"}
 sphinx-copybutton          = {optional=true, version=">=0.3,<0.5"}
 sphinx-inline-tabs         = {optional=true, version="^2021.8.17b10", python=">=3.8"}
 sphinx-notfound-page       = {optional=true, version="*"}

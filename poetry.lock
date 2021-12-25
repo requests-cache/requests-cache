@@ -935,17 +935,17 @@ type_comments = ["typed-ast (>=1.4.0)"]
 
 [[package]]
 name = "sphinx-automodapi"
-version = "0.13"
+version = "0.14.0"
 description = "Sphinx extension for auto-generating API documentation for entire modules"
 category = "main"
 optional = true
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [package.dependencies]
-sphinx = ">=1.7"
+sphinx = ">=2"
 
 [package.extras]
-test = ["pytest", "pytest-cov", "cython", "codecov", "coverage (<5.0)"]
+test = ["pytest", "pytest-cov", "cython", "codecov", "coverage"]
 
 [[package]]
 name = "sphinx-copybutton"
@@ -1231,7 +1231,7 @@ yaml = ["pyyaml"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "2d48833aa76a9a5081d3bb9ee939a9be28b0e057daa64d4965809fe16165420a"
+content-hash = "ee28764fe05d867c16b62b99fb6e0f8133e13942dd386bad59bb13b6f6ab8f96"
 
 [metadata.files]
 alabaster = [
@@ -1778,8 +1778,8 @@ sphinx-autodoc-typehints = [
     {file = "sphinx_autodoc_typehints-1.12.0-py3-none-any.whl", hash = "sha256:5e81776ec422dd168d688ab60f034fccfafbcd94329e9537712c93003bddc04a"},
 ]
 sphinx-automodapi = [
-    {file = "sphinx-automodapi-0.13.tar.gz", hash = "sha256:e1019336df7f7f0bcbf848eff7b84e7bef71691a57d8b5bda9107a2a046a226a"},
-    {file = "sphinx_automodapi-0.13-py3-none-any.whl", hash = "sha256:f9ebc9c10597f3aab1d93e5a8b1829903eee7c64f5bafb0cf71fd40e5c7d95f0"},
+    {file = "sphinx-automodapi-0.14.0.tar.gz", hash = "sha256:6fadf79954920f5686da434032239296209d4598316e8548cd62b5d2098ec6d7"},
+    {file = "sphinx_automodapi-0.14.0-py3-none-any.whl", hash = "sha256:5f89cf29b5f151c24f1e505d6eea5edeca316710907745450fe0c15d3032a612"},
 ]
 sphinx-copybutton = [
     {file = "sphinx-copybutton-0.4.0.tar.gz", hash = "sha256:8daed13a87afd5013c3a9af3575cc4d5bec052075ccd3db243f895c07a689386"},
