@@ -82,7 +82,9 @@ def get_matched_headers(
         included = set(headers) - DEFAULT_EXCLUDE_HEADERS
 
     return [
-        f'{k.lower()}={headers[k]}' for k in sorted(included, key=lambda x: x.lower()) if k in headers
+        f'{k.lower()}={headers[k]}'
+        for k in sorted(included, key=lambda x: x.lower())
+        if k in headers
     ]
 
 
@@ -110,7 +112,9 @@ def normalize_request(request: AnyRequest, ignored_parameters: ParamList) -> Any
     return norm_request
 
 
-def normalize_headers(headers: Mapping[str, str], ignored_parameters: ParamList) -> CaseInsensitiveDict:
+def normalize_headers(
+    headers: Mapping[str, str], ignored_parameters: ParamList
+) -> CaseInsensitiveDict:
     """Sort and filter request headers"""
     if ignored_parameters:
         headers = filter_sort_dict(headers, ignored_parameters)

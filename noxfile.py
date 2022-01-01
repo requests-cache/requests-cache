@@ -19,7 +19,9 @@ CLEAN_DIRS = ['dist', 'build', join('docs', '_build'), join('docs', 'modules')]
 
 UNIT_TESTS = join('tests', 'unit')
 INTEGRATION_TESTS = join('tests', 'integration')
-COVERAGE_ARGS = '--cov --cov-report=term --cov-report=html'  # Generate HTML + stdout coverage report
+COVERAGE_ARGS = (
+    '--cov --cov-report=term --cov-report=html'  # Generate HTML + stdout coverage report
+)
 XDIST_ARGS = '--numprocesses=auto --dist=loadfile'  # Run tests in parallel, grouped by test module
 
 

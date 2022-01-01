@@ -88,8 +88,8 @@ class BaseCache:
 
         Args:
             cache_key: Cache key for this response; will otherwise be generated based on request
-            response: response to save
-            expire_after: Time in seconds until this cache item should expire
+            response: Response to save
+            expires: Absolute expiration time for this response
         """
         cache_key = cache_key or self.create_key(response.request)
         cached_response = CachedResponse.from_response(response, expires=expires)

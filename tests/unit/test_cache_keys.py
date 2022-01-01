@@ -41,7 +41,9 @@ def test_normalize_request__json_body():
         data=b'{"param_1": "value_1", "param_2": "value_2"}',
         headers={'Content-Type': 'application/json'},
     )
-    assert normalize_request(request, ignored_parameters=['param_2']).body == b'{"param_1": "value_1"}'
+    assert (
+        normalize_request(request, ignored_parameters=['param_2']).body == b'{"param_1": "value_1"}'
+    )
 
 
 def test_normalize_request__invalid_json_body():

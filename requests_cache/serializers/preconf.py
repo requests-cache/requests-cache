@@ -23,7 +23,9 @@ from .._utils import get_placeholder_class
 from .cattrs import CattrStage
 from .pipeline import SerializerPipeline, Stage
 
-base_stage = CattrStage()  #: Base stage for all serializer pipelines (or standalone dict serializer)
+base_stage = (
+    CattrStage()
+)  #: Base stage for all serializer pipelines (or standalone dict serializer)
 dict_serializer = base_stage  #: Partial serializer that unstructures responses into dicts
 bson_preconf_stage = CattrStage(bson_preconf.make_converter)  #: Pre-serialization steps for BSON
 json_preconf_stage = CattrStage(json_preconf.make_converter)  #: Pre-serialization steps for JSON
@@ -47,12 +49,13 @@ try:
         """
         return Stage(Signer(secret_key=secret_key, salt=salt), dumps='sign', loads='unsign')
 
-    def safe_pickle_serializer(secret_key=None, salt='requests-cache', **kwargs) -> SerializerPipeline:
+    def safe_pickle_serializer(
+        secret_key=None, salt='requests-cache', **kwargs
+    ) -> SerializerPipeline:
         """Create a serializer that uses ``pickle`` + ``itsdangerous`` to add a signature to
         responses on write, and validate that signature with a secret key on read.
         """
         return SerializerPipeline([base_stage, pickle, signer_stage(secret_key, salt)])
-
 
 except ImportError as e:
     signer_stage = get_placeholder_class(e)

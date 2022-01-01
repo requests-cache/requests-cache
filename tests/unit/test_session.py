@@ -290,7 +290,10 @@ def test_raw_data(method, mock_session):
     """POST and PUT requests with different data (raw) should be cached under different keys"""
     assert mock_session.request(method, MOCKED_URL, data='raw data').from_cache is False
     assert mock_session.request(method, MOCKED_URL, data='raw data').from_cache is True
-    assert mock_session.request(method, MOCKED_URL, data='{"data": "new raw data"}').from_cache is False
+    assert (
+        mock_session.request(method, MOCKED_URL, data='{"data": "new raw data"}').from_cache
+        is False
+    )
 
 
 @pytest.mark.parametrize('field', ['params', 'data', 'json'])
@@ -455,7 +458,12 @@ def test_response_defaults(mock_session):
 def test_match_headers(mock_session):
     """With match_headers, requests with different headers should have different cache keys"""
     mock_session.cache.match_headers = True
-    headers_list = [{'Accept': 'application/json'}, {'Accept': 'text/xml'}, {'Accept': 'custom'}, None]
+    headers_list = [
+        {'Accept': 'application/json'},
+        {'Accept': 'text/xml'},
+        {'Accept': 'custom'},
+        None,
+    ]
     for headers in headers_list:
         assert mock_session.get(MOCKED_URL, headers=headers).from_cache is False
         assert mock_session.get(MOCKED_URL, headers=headers).from_cache is True
@@ -587,7 +595,9 @@ def test_do_not_cache(mock_session):
         (304, True, True, True),
     ],
 )
-def test_304_not_modified(response_code, cache_hit, cache_expired, expected_from_cache, mock_session):
+def test_304_not_modified(
+    response_code, cache_hit, cache_expired, expected_from_cache, mock_session
+):
     url = f'{MOCKED_URL}/endpoint_2'
     if cache_expired:
         mock_session.expire_after = datetime.now() - timedelta(1)
@@ -614,7 +624,9 @@ def test_url_allowlist(mock_session):
 
 def test_remove_expired_responses(mock_session):
     unexpired_url = f'{MOCKED_URL}?x=1'
-    mock_session.mock_adapter.register_uri('GET', unexpired_url, status_code=200, text='mock response')
+    mock_session.mock_adapter.register_uri(
+        'GET', unexpired_url, status_code=200, text='mock response'
+    )
     mock_session.expire_after = timedelta(seconds=0.2)
     mock_session.get(MOCKED_URL)
     mock_session.get(MOCKED_URL_JSON)
