@@ -1,6 +1,6 @@
 # History
 
-## 0.9.0 (Unreleased)
+## 0.9.0 (2022-01-1)
 [See all issues and PRs for 0.9](https://github.com/reclosedev/requests-cache/milestone/4?closed=1)
 
 **Expiration & Headers:**
