@@ -81,8 +81,9 @@ def get_matched_headers(
     else:
         included = set(headers) - DEFAULT_EXCLUDE_HEADERS
 
-    included = sorted(included, key=lambda x:x.lower())
-    return [f'{k.lower()}={headers[k]}' for k in included if k in headers]
+    return [
+        f'{k.lower()}={headers[k]}' for k in sorted(included, key=lambda x: x.lower()) if k in headers
+    ]
 
 
 def normalize_request(request: AnyRequest, ignored_parameters: ParamList) -> AnyPreparedRequest:
