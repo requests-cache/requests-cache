@@ -50,7 +50,7 @@ jobs:
       - uses: supercharge/mongodb-github-action@1.7.0
         with:
           mongodb-version: 4.4
-      - uses: supercharge/redis-github-action@1.2.0
+      - uses: supercharge/redis-github-action@1.4.0
         with:
           redis-version: 6
       - uses: rrainn/dynamodb-action@v2.0.0

@@ -57,7 +57,6 @@ try:
         """
         return SerializerPipeline([base_stage, pickle, signer_stage(secret_key, salt)])
 
-
 except ImportError as e:
     signer_stage = get_placeholder_class(e)
     safe_pickle_serializer = get_placeholder_class(e)
