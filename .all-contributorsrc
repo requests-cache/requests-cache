@@ -706,6 +706,16 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "grubberr",
+      "name": "Serhii Chvaliuk",
+      "avatar_url": "https://avatars.githubusercontent.com/u/195743?v=4",
+      "profile": "https://github.com/grubberr",
+      "contributions": [
+        "bug",
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
