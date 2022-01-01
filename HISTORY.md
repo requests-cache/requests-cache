@@ -23,6 +23,7 @@
 * Some micro-optimizations for request matching
 
 **Bugfixes:**
+* Fix regression bug causing headers used for cache key to not guarantee sort order
 * Handle some additional corner cases when normalizing request data
 * Add support for `BaseCache` keyword arguments passed along with a backend instance
 * Fix issue with cache headers not being used correctly if `cache_control=True` is used with an `expire_after` value
