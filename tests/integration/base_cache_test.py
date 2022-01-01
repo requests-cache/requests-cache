@@ -200,7 +200,9 @@ class BaseCacheTest:
         response = session.get(httpbin('cache'))
         assert response.from_cache == expected_from_cache
 
-    @pytest.mark.parametrize('validator_headers', [{'ETag': ETAG}, {'Last-Modified': LAST_MODIFIED}])
+    @pytest.mark.parametrize(
+        'validator_headers', [{'ETag': ETAG}, {'Last-Modified': LAST_MODIFIED}]
+    )
     @pytest.mark.parametrize('cache_headers', [{'Cache-Control': 'max-age=0'}, {'Expires': '0'}])
     def test_conditional_request__max_age_0(self, cache_headers, validator_headers):
         """With both max-age=0 and a validator, the response should be saved and revalidated on next
@@ -220,7 +222,9 @@ class BaseCacheTest:
         assert response.from_cache is True
         assert response.is_expired is True
 
-    @pytest.mark.parametrize('validator_headers', [{'ETag': ETAG}, {'Last-Modified': LAST_MODIFIED}])
+    @pytest.mark.parametrize(
+        'validator_headers', [{'ETag': ETAG}, {'Last-Modified': LAST_MODIFIED}]
+    )
     @pytest.mark.parametrize('cache_headers', [{'Cache-Control': 'max-age=0'}])
     def test_conditional_request_refreshenes_expire_date(self, cache_headers, validator_headers):
         """Test that revalidation attempt with 304 responses causes stale entry to become fresh again considering
@@ -235,7 +239,9 @@ class BaseCacheTest:
         # Add different Response Header to mocked return value of the session.send() function.
         updated_response_headers = {**first_response_headers, 'Cache-Control': 'max-age=60'}
         with patch.object(
-            Session, 'send', return_value=MagicMock(status_code=304, headers=updated_response_headers)
+            Session,
+            'send',
+            return_value=MagicMock(status_code=304, headers=updated_response_headers),
         ):
             response = session.get(url, params=first_response_headers)
         assert response.from_cache is True

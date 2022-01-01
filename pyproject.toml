@@ -109,7 +109,7 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.black]
-line-length = 105
+line-length = 100
 skip-string-normalization = true
 
 [tool.coverage.html]
@@ -136,7 +136,7 @@ exclude_lines = [
 
 [tool.isort]
 profile = 'black'
-line_length = 105
+line_length = 100
 skip_gitignore = true
 skip = [
     'examples/',

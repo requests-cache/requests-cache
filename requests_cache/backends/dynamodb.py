@@ -64,7 +64,9 @@ class DynamoDbCache(BaseCache):
         kwargs: Additional keyword arguments for :py:meth:`~boto3.session.Session.resource`
     """
 
-    def __init__(self, table_name: str = 'http_cache', connection: ServiceResource = None, **kwargs):
+    def __init__(
+        self, table_name: str = 'http_cache', connection: ServiceResource = None, **kwargs
+    ):
         super().__init__(**kwargs)
         self.responses = DynamoDbDict(table_name, 'responses', connection=connection, **kwargs)
         self.redirects = DynamoDbDict(
@@ -148,7 +150,9 @@ class DynamoDbDict(BaseStorage):
 
         # Depending on the serializer, the value may be either a string or Binary object
         raw_value = result['Item']['value']
-        return self.serializer.loads(raw_value.value if isinstance(raw_value, Binary) else raw_value)
+        return self.serializer.loads(
+            raw_value.value if isinstance(raw_value, Binary) else raw_value
+        )
 
     def __setitem__(self, key, value):
         item = {**self.composite_key(key), 'value': self.serializer.dumps(value)}

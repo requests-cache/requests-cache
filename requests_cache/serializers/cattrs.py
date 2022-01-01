@@ -59,7 +59,9 @@ def init_converter(factory: Callable[..., GenConverter] = None):
     converter.register_unstructure_hook(RequestsCookieJar, lambda obj: dict(obj.items()))  # type: ignore
     converter.register_structure_hook(RequestsCookieJar, lambda obj, cls: cookiejar_from_dict(obj))
     converter.register_unstructure_hook(CaseInsensitiveDict, dict)
-    converter.register_structure_hook(CaseInsensitiveDict, lambda obj, cls: CaseInsensitiveDict(obj))
+    converter.register_structure_hook(
+        CaseInsensitiveDict, lambda obj, cls: CaseInsensitiveDict(obj)
+    )
     converter.register_unstructure_hook(HTTPHeaderDict, dict)
     converter.register_structure_hook(HTTPHeaderDict, lambda obj, cls: HTTPHeaderDict(obj))
 

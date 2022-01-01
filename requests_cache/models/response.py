@@ -48,7 +48,10 @@ class CachedResponse(Response):
 
     @classmethod
     def from_response(
-        cls, original_response: Union[Response, 'CachedResponse'], expires: datetime = None, **kwargs
+        cls,
+        original_response: Union[Response, 'CachedResponse'],
+        expires: datetime = None,
+        **kwargs,
     ):
         """Create a CachedResponse based on an original Response or another CachedResponse object"""
         if isinstance(original_response, CachedResponse):

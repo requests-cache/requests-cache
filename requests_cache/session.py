@@ -198,7 +198,11 @@ class CacheMixin(MIXIN_BASE):
         return set_response_defaults(response, actions.cache_key)
 
     def _resend(
-        self, request: PreparedRequest, actions: CacheActions, cached_response: CachedResponse, **kwargs
+        self,
+        request: PreparedRequest,
+        actions: CacheActions,
+        cached_response: CachedResponse,
+        **kwargs,
     ) -> AnyResponse:
         """Attempt to resend the request and cache the new response. If the request fails, delete
         the stale cache item.
@@ -211,7 +215,11 @@ class CacheMixin(MIXIN_BASE):
             raise
 
     def _resend_and_ignore(
-        self, request: PreparedRequest, actions: CacheActions, cached_response: CachedResponse, **kwargs
+        self,
+        request: PreparedRequest,
+        actions: CacheActions,
+        cached_response: CachedResponse,
+        **kwargs,
     ) -> AnyResponse:
         """Attempt to resend the request and cache the new response. If there are any errors, ignore
         them and and return the stale cache item.
@@ -223,7 +231,9 @@ class CacheMixin(MIXIN_BASE):
             response.raise_for_status()
             return response
         except Exception:
-            logger.warning(f'Request for URL {request.url} failed; using cached response', exc_info=True)
+            logger.warning(
+                f'Request for URL {request.url} failed; using cached response', exc_info=True
+            )
             return cached_response
 
     def _update_revalidated_response(

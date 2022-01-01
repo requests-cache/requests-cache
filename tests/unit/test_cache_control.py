@@ -177,7 +177,9 @@ def test_update_from_cached_response(response_headers, expected_validation_heade
         cache_key='key',
         request=MagicMock(url='https://img.site.com/base/img.jpg'),
     )
-    cached_response = CachedResponse(headers=response_headers, expires=datetime.now() - timedelta(1))
+    cached_response = CachedResponse(
+        headers=response_headers, expires=datetime.now() - timedelta(1)
+    )
 
     actions.update_from_cached_response(cached_response)
     assert actions.validation_headers == expected_validation_headers
@@ -232,7 +234,9 @@ def test_update_from_response(headers, expected_expiration):
 
 def test_update_from_response__ignored():
     url = 'https://img.site.com/base/img.jpg'
-    actions = CacheActions.from_request(cache_key='key', request=MagicMock(url=url), cache_control=False)
+    actions = CacheActions.from_request(
+        cache_key='key', request=MagicMock(url=url), cache_control=False
+    )
     actions.update_from_response(MagicMock(url=url, headers={'Cache-Control': 'max-age=5'}))
     assert actions.expire_after is None
 
@@ -246,7 +250,9 @@ def test_update_from_response__revalidate(mock_datetime, cache_headers, validato
     """
     url = 'https://img.site.com/base/img.jpg'
     headers = {**cache_headers, **validator_headers}
-    actions = CacheActions.from_request(cache_key='key', request=MagicMock(url=url), cache_control=True)
+    actions = CacheActions.from_request(
+        cache_key='key', request=MagicMock(url=url), cache_control=True
+    )
     actions.update_from_response(MagicMock(url=url, headers=headers))
     assert actions.expires == mock_datetime.utcnow()
     assert actions.skip_write is False
