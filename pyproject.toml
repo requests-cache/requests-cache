@@ -99,7 +99,7 @@ timeout-decorator     = "^0.5"
 pre-commit            = "^2.15"
 
 # For convenience in local development
-nox                   = "^2021.10.1"
+nox                   = "^2022.1.7"
 nox-poetry            = "^0.9.0"
 rich                  = ">=10.0"
 sphinx-autobuild      = "^2021.3.14"
