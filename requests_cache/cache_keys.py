@@ -167,7 +167,7 @@ def normalize_json_body(
         return json.dumps(body)
     # If it's invalid JSON, then don't mess with it
     except (AttributeError, TypeError, ValueError):
-        logger.warning('Invalid JSON body:', exc_info=True)
+        logger.debug('Invalid JSON body:', exc_info=True)
         return original_body
 
 
