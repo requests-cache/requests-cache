@@ -1,5 +1,8 @@
 # History
 
+## 0.9.1 (Unreleased)
+* Reduce verbosity of log messages when encountering an invalid JSON request body
+
 ## 0.9.0 (2022-01-01)
 [See all issues and PRs for 0.9](https://github.com/reclosedev/requests-cache/milestone/4?closed=1)
 
