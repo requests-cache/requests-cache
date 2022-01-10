@@ -909,7 +909,7 @@ test = ["pytest", "pytest-cov"]
 
 [[package]]
 name = "sphinx-autodoc-typehints"
-version = "1.13.0"
+version = "1.14.1"
 description = "Type hints (PEP 484) support for the Sphinx autodoc extension"
 category = "main"
 optional = true
@@ -919,7 +919,7 @@ python-versions = ">=3.7"
 Sphinx = ">=4"
 
 [package.extras]
-testing = ["covdefaults (>=2)", "coverage (>=6)", "pytest (>=6)", "pytest-cov (>=3)", "sphobjinv (>=2)", "typing-extensions (>=3.5)"]
+testing = ["covdefaults (>=2)", "coverage (>=6)", "diff-cover (>=6.4)", "pytest (>=6)", "pytest-cov (>=3)", "sphobjinv (>=2)", "typing-extensions (>=3.5)"]
 type_comments = ["typed-ast (>=1.4.0)"]
 
 [[package]]
@@ -1762,8 +1762,8 @@ sphinx-autobuild = [
     {file = "sphinx_autobuild-2021.3.14-py3-none-any.whl", hash = "sha256:8fe8cbfdb75db04475232f05187c776f46f6e9e04cacf1e49ce81bdac649ccac"},
 ]
 sphinx-autodoc-typehints = [
-    {file = "sphinx_autodoc_typehints-1.13.0-py3-none-any.whl", hash = "sha256:d472f78877ad3cb05c9335dc4a203055a8247a47468b26ab231654857d6d4665"},
-    {file = "sphinx_autodoc_typehints-1.13.0.tar.gz", hash = "sha256:58a5be039667d71321330b6bb2636d7e80770f6aa1c1626f81c35dbfe86c4266"},
+    {file = "sphinx_autodoc_typehints-1.14.1-py3-none-any.whl", hash = "sha256:8b3b7da797fa007f7f39c518879a1bdae3a7dab96e170f4cb5a4b96390238369"},
+    {file = "sphinx_autodoc_typehints-1.14.1.tar.gz", hash = "sha256:875de815a1ba609a4c0ebc620faecd8eb57183ba1f4cc6f8abba1790c140e960"},
 ]
 sphinx-automodapi = [
     {file = "sphinx-automodapi-0.13.tar.gz", hash = "sha256:e1019336df7f7f0bcbf848eff7b84e7bef71691a57d8b5bda9107a2a046a226a"},
