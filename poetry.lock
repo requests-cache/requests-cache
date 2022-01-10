@@ -261,7 +261,7 @@ testing = ["covdefaults (>=1.2.0)", "coverage (>=4)", "pytest (>=4)", "pytest-co
 
 [[package]]
 name = "furo"
-version = "2021.11.23"
+version = "2022.1.2"
 description = "A clean customisable Sphinx documentation theme."
 category = "main"
 optional = true
@@ -1359,8 +1359,8 @@ filelock = [
     {file = "filelock-3.4.2.tar.gz", hash = "sha256:38b4f4c989f9d06d44524df1b24bd19e167d851f19b50bf3e3559952dddc5b80"},
 ]
 furo = [
-    {file = "furo-2021.11.23-py3-none-any.whl", hash = "sha256:6d396451ad1aadce380c662fca9362cb10f4fd85f296d74fe3ca32006eb641d7"},
-    {file = "furo-2021.11.23.tar.gz", hash = "sha256:54cecac5f3b688b5c7370d72ecdf1cd91a6c53f0f42751f4a719184b562cde70"},
+    {file = "furo-2022.1.2-py3-none-any.whl", hash = "sha256:958016bfe1387c1e8ddf5b9d71696b69c4eaa5cd8afc9492abfb008aba2d300c"},
+    {file = "furo-2022.1.2.tar.gz", hash = "sha256:b217f218cbcd423ffbfe69baa79389d4ecebf2d86f0d593c44ef31da7b5aed30"},
 ]
 identify = [
     {file = "identify-2.4.1-py2.py3-none-any.whl", hash = "sha256:0192893ff68b03d37fed553e261d4a22f94ea974093aefb33b29df2ff35fed3c"},
