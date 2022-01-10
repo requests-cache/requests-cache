@@ -57,7 +57,7 @@ sphinx                     = {optional=true, version="4.3.0"}
 sphinx-autodoc-typehints   = {optional=true, version="^1.11"}
 sphinx-automodapi          = {optional=true, version="^0.13"}
 sphinx-copybutton          = {optional=true, version=">=0.3,<0.5"}
-sphinx-inline-tabs         = {optional=true, version="^2021.8.17b10", python=">=3.8"}
+sphinx-inline-tabs         = {optional=true, version=">=2021.8.17,<2023.0.0", python=">=3.8"}
 sphinx-notfound-page       = {optional=true, version="*"}
 sphinx-panels              = {optional=true, version="^0.6"}
 sphinxcontrib-apidoc       = {optional=true, version="^0.3"}
@@ -92,7 +92,7 @@ pytest-cov            = ">=3.0"
 pytest-rerunfailures  = "^10.1"
 pytest-xdist          = ">=2.2"
 requests-mock         = "^1.8"
-responses             = "0.16.0"
+responses             = "0.17.0"
 timeout-decorator     = "^0.5"
 
 # Tools for linting, type checking, etc. are managed with pre-commit
