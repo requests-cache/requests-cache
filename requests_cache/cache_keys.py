@@ -171,10 +171,15 @@ def normalize_json_body(
         return original_body
 
 
-# TODO: More thorough tests
 def normalize_params(value: Union[str, bytes], ignored_parameters: ParamList) -> str:
     """Normalize and filter urlencoded params from either a URL or request body with form data"""
-    params = dict(parse_qsl(decode(value)))
+    query_str = decode(value)
+    params = dict(parse_qsl(query_str))
+
+    # parse_qsl doesn't handle key-only params, so add those here
+    key_only_params = [k for k in query_str.split('&') if k and '=' not in k]
+    params.update({k: '' for k in key_only_params})
+
     params = filter_sort_dict(params, ignored_parameters)
     return urlencode(params)
 

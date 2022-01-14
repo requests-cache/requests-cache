@@ -34,6 +34,12 @@ def test_create_key__normalize_url_params(url, params):
     assert create_key(request) == CACHE_KEY
 
 
+def test_create_key__normalize_key_only_params():
+    request_1 = Request(method='GET', url='https://img.site.com/base/img.jpg?param_1')
+    request_2 = Request(method='GET', url='https://img.site.com/base/img.jpg?param_2')
+    assert create_key(request_1) != create_key(request_2)
+
+
 def test_normalize_request__json_body():
     request = Request(
         method='GET',
