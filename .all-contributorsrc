@@ -716,6 +716,15 @@
         "bug",
         "code"
       ]
+    },
+    {
+      "login": "n-a-t-e",
+      "name": "Nate",
+      "avatar_url": "https://avatars.githubusercontent.com/u/26209011?v=4",
+      "profile": "https://github.com/n-a-t-e",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,

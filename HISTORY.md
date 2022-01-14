@@ -1,6 +1,7 @@
 # History
 
 ## 0.9.1 (Unreleased)
+* Add support for key-only request parameters
 * Reduce verbosity of log messages when encountering an invalid JSON request body
 
 ## 0.9.0 (2022-01-01)
