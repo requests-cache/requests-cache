@@ -65,10 +65,10 @@ def init_converter(factory: Callable[..., GenConverter] = None):
     converter.register_unstructure_hook(HTTPHeaderDict, dict)
     converter.register_structure_hook(HTTPHeaderDict, lambda obj, cls: HTTPHeaderDict(obj))
 
-    # Tell cattrs that a 'CachedResponse' forward ref is equivalent to the CachedResponse class
-    converter.register_structure_hook(
-        ForwardRef('CachedResponse'),
-        lambda obj, cls: converter.structure(obj, CachedResponse),
+    # Tell cattrs to resolve forward references (required for CachedResponse.history)
+    converter.register_structure_hook_func(
+        lambda cls: cls.__class__ is ForwardRef,
+        lambda obj, cls: converter.structure(obj, cls.__forward_value__),
     )
 
     return converter
