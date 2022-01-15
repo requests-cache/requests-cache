@@ -725,6 +725,15 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "cheginit",
+      "name": "Taher Chegini",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13016644?v=4",
+      "profile": "https://cheginit.github.io/",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
