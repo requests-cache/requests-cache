@@ -1,7 +1,7 @@
 # History
 
 ## 0.9.1 (2022-01-15)
-* Add support for python 3.10.2 (regarding resolving `ForwardRef` types during deserialization)
+* Add support for python 3.10.2 and 3.9.10 (regarding resolving `ForwardRef` types during deserialization)
 * Add support for key-only request parameters (regarding hashing request data for cache key creation)
 * Reduce verbosity of log messages when encountering an invalid JSON request body
 

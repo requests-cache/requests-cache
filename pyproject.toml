@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "requests-cache"
-version = "0.9.1"
+version = "0.9.2"
 description = "A transparent persistent cache for the requests library"
 authors = ["Roman Haritonov"]
 maintainers = ["Jordan Cook"]
@@ -34,7 +34,7 @@ urllib3       = "^1.25.5"  # Use a slightly newer version than required by reque
 appdirs       = "^1.4.4"   # For options that use platform-specific user cache dirs
 attrs         = "^21.2"    # For response data models
 cattrs        = "^1.8"     # For response serialization
-url-normalize = "^1.4"     # For reducing duplicate cache items
+url-normalize = "^1.4"     # For improved request matching
 
 # Optional backend dependencies
 boto3                      = {optional=true, version="^1.15"}
@@ -84,7 +84,7 @@ docs     = ["furo", "linkify-it-py", "myst-parser", "sphinx", "sphinx-autodoc-ty
 
 [tool.poetry.dev-dependencies]
 # For unit + integration tests
-coverage              = "^6.1"
+coverage              = "^6.3"
 psutil                = "^5.0"
 pytest                = "^6.2"
 pytest-clarity        = "^1.0.1"

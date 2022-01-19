@@ -5,7 +5,7 @@ logger = getLogger('requests_cache')
 
 # Version is defined in pyproject.toml.
 # It's copied here to make it easier for client code to check the installed version.
-__version__ = '0.9.1'
+__version__ = '0.9.2'
 
 try:
     from .backends import *
