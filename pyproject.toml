@@ -84,7 +84,7 @@ docs     = ["furo", "linkify-it-py", "myst-parser", "sphinx", "sphinx-autodoc-ty
 
 [tool.poetry.dev-dependencies]
 # For unit + integration tests
-coverage              = "^6.1"
+coverage              = "^6.3"
 psutil                = "^5.0"
 pytest                = "^6.2"
 pytest-clarity        = "^1.0.1"
