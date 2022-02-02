@@ -17,7 +17,7 @@ from typing import Callable, Dict, ForwardRef, MutableMapping
 from cattr import GenConverter
 from requests.cookies import RequestsCookieJar, cookiejar_from_dict
 from requests.structures import CaseInsensitiveDict
-from urllib3.response import HTTPHeaderDict
+from urllib3._collections import HTTPHeaderDict
 
 from ..models import CachedResponse
 from .pipeline import Stage

@@ -4,7 +4,11 @@ from typing import Mapping
 
 from attr import define, field, fields_dict
 from requests import Response
-from urllib3.response import HTTPHeaderDict, HTTPResponse, is_fp_closed
+from urllib3.response import (  # type: ignore  # import location false positive
+    HTTPHeaderDict,
+    HTTPResponse,
+    is_fp_closed,
+)
 
 logger = getLogger(__name__)
 
@@ -19,7 +23,8 @@ class CachedHTTPResponse(HTTPResponse):
     """
 
     decode_content: bool = field(default=None)
-    headers: HTTPHeaderDict = None  # Not serialized; set in either init or CachedResponse post-init
+    # These headers are redundant and not serialized; copied in init and CachedResponse post-init
+    headers: HTTPHeaderDict = None  # type: ignore
     reason: str = field(default=None)
     request_url: str = field(default=None)
     status: int = field(default=0)
@@ -33,7 +38,7 @@ class CachedHTTPResponse(HTTPResponse):
 
         self._body = body
         self.headers = HTTPHeaderDict(headers)
-        self.__attrs_init__(*args, **kwargs)
+        self.__attrs_init__(*args, **kwargs)  # type: ignore # False positive in mypy 0.920+?
 
     @classmethod
     def from_response(cls, original_response: Response):
@@ -58,7 +63,7 @@ class CachedHTTPResponse(HTTPResponse):
             raw._fp_bytes_read = 0
             raw.length_remaining = len(body)
 
-        return cls(**kwargs)
+        return cls(**kwargs)  # type: ignore  # False positive in mypy 0.920+?
 
     def release_conn(self):
         """No-op for compatibility"""

@@ -25,7 +25,7 @@ class CachedRequest:
         """Create a CachedRequest based on an original request object"""
         kwargs = {k: getattr(original_request, k, None) for k in fields_dict(cls).keys()}
         kwargs['cookies'] = getattr(original_request, '_cookies', None)
-        return cls(**kwargs)
+        return cls(**kwargs)  # type: ignore  # False positive in mypy 0.920+?
 
     def copy(self) -> 'CachedRequest':
         """Return a copy of the CachedRequest"""

@@ -7,7 +7,7 @@ from attr import define, field
 from requests import PreparedRequest, Response
 from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
-from urllib3.response import HTTPHeaderDict
+from urllib3._collections import HTTPHeaderDict
 
 from ..cache_control import ExpirationTime, get_expiration_datetime
 from . import CachedHTTPResponse, CachedRequest
