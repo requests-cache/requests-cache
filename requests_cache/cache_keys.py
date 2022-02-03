@@ -161,6 +161,10 @@ def normalize_json_body(
     original_body: Union[str, bytes], ignored_parameters: ParamList
 ) -> Union[str, bytes]:
     """Normalize and filter a request body with serialized JSON data"""
+
+    if len(original_body) == 0:
+        return original_body
+
     try:
         body = json.loads(decode(original_body))
         body = filter_sort_dict(body, ignored_parameters)
