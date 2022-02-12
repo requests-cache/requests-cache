@@ -56,7 +56,7 @@ myst-parser                = {optional=true, version="^0.15.1"}
 sphinx                     = {optional=true, version="4.3.0"}
 sphinx-autodoc-typehints   = {optional=true, version="^1.11"}
 sphinx-automodapi          = {optional=true, version=">=0.13,<0.15"}
-sphinx-copybutton          = {optional=true, version=">=0.3,<0.5"}
+sphinx-copybutton          = {optional=true, version=">=0.3,<0.6"}
 sphinx-inline-tabs         = {optional=true, version=">=2022.1.2b11", python=">=3.8"}
 sphinx-notfound-page       = {optional=true, version="*"}
 sphinx-panels              = {optional=true, version="^0.6"}
