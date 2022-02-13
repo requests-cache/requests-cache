@@ -77,7 +77,7 @@ class CacheMixin(MIXIN_BASE):
         self,
         method: str,
         url: str,
-        headers: Dict = None,
+        *args,
         expire_after: ExpirationTime = None,
         **kwargs,
     ) -> AnyResponse:
@@ -108,11 +108,11 @@ class CacheMixin(MIXIN_BASE):
         """
         # If present, set per-request expiration as a request header, to be handled in send()
         if expire_after is not None:
-            headers = headers or {}
-            headers['Cache-Control'] = f'max-age={get_expiration_seconds(expire_after)}'
+            kwargs.setdefault('headers', {})
+            kwargs['headers']['Cache-Control'] = f'max-age={get_expiration_seconds(expire_after)}'
 
         with patch_form_boundary(**kwargs):
-            return super().request(method, url, headers=headers, **kwargs)
+            return super().request(method, url, *args, **kwargs)
 
     def send(
         self, request: PreparedRequest, expire_after: ExpirationTime = None, **kwargs

@@ -119,6 +119,12 @@ def test_all_methods__ignored_parameters__redacted(field, method, mock_session):
     assert 'access_token' not in cached_response.request.body.decode('utf-8')
 
 
+def test_params_positional_arg(mock_session):
+    mock_session.request('GET', MOCKED_URL, {'param_1': 1})
+    response = mock_session.request('GET', MOCKED_URL, {'param_1': 1})
+    assert 'param_1=1' in response.url
+
+
 def test_https(mock_session):
     assert mock_session.get(MOCKED_URL_HTTPS, verify=True).from_cache is False
     assert mock_session.get(MOCKED_URL_HTTPS, verify=True).from_cache is True
