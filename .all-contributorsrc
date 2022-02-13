@@ -193,7 +193,8 @@
       "contributions": [
         "bug",
         "doc",
-        "ideas"
+        "ideas",
+        "code"
       ]
     },
     {
@@ -731,6 +732,15 @@
       "name": "Taher Chegini",
       "avatar_url": "https://avatars.githubusercontent.com/u/13016644?v=4",
       "profile": "https://cheginit.github.io/",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "girst",
+      "name": "girst",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11820748?v=4",
+      "profile": "https://gir.st/",
       "contributions": [
         "bug"
       ]

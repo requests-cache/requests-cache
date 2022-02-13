@@ -6,6 +6,7 @@
 *.egg-info
 build/
 dist/
+downloads/
 http_cache/
 venv/
 .venv
