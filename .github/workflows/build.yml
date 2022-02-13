@@ -8,7 +8,7 @@ on:
     branches: [master]
   workflow_dispatch:
 env:
-  LATEST_PY_VERSION: 3.9
+  LATEST_PY_VERSION: '3.10'
   COVERAGE_ARGS: '--cov --cov-report=term --cov-report=xml'
   XDIST_ARGS: '--numprocesses=auto --dist=loadfile'
 
