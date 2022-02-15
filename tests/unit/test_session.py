@@ -718,8 +718,8 @@ def test_remove_expired_responses__per_request(mock_session):
     assert len(mock_session.cache.responses) == 1
 
 
-def test_per_request__expiration(mock_session):
-    """No per-session expiration is set, but then overridden with per-request expiration"""
+def test_per_request__enable_expiration(mock_session):
+    """No per-session expiration is set, but then overridden for a single request"""
     mock_session.expire_after = None
     response = mock_session.get(MOCKED_URL, expire_after=1)
     assert response.from_cache is False
@@ -728,6 +728,15 @@ def test_per_request__expiration(mock_session):
     time.sleep(1)
     response = mock_session.get(MOCKED_URL)
     assert response.from_cache is False
+
+
+def test_per_request__disable_expiration(mock_session):
+    """A per-session expiration is set, but then disabled for a single request"""
+    mock_session.expire_after = 60
+    response = mock_session.get(MOCKED_URL, expire_after=-1)
+    response = mock_session.get(MOCKED_URL, expire_after=-1)
+    assert response.from_cache is True
+    assert response.expires is None
 
 
 def test_per_request__prepared_request(mock_session):
