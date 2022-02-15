@@ -133,3 +133,17 @@ The following scripts can also be found in the
 :lines: 1,17-
 ```
 :::
+
+
+### Backtesting with time-machine
+```{include} ../examples/time_machine_backtesting.py
+:start-line: 2
+:end-line: 4
+```
+
+:::{admonition} Example: custom_request_matcher.py
+:class: toggle
+```{literalinclude} ../examples/time_machine_backtesting.py
+:lines: 1,6-
+```
+:::
