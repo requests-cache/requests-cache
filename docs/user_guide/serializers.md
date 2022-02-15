@@ -113,10 +113,13 @@ For example, a compressed pickle serializer can be built as:
 ```python
 >>> import gzip
 >>> from requests_cache import CachedSession, SerializerPipeline, Stage, pickle_serializer
->>> compressed_serializer = SerializerPipeline([
-...     pickle_serializer,
-...     Stage(dumps=gzip.compress, loads=gzip.decompress),
-... ])
+>>> compressed_serializer = SerializerPipeline(
+...     [
+...         pickle_serializer,
+...         Stage(dumps=gzip.compress, loads=gzip.decompress),
+...     ],
+...     is_binary=True,
+... )
 >>> session = CachedSession(serializer=compressed_serializer)
 ```
 :::

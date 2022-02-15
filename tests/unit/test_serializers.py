@@ -68,7 +68,7 @@ def test_optional_dependencies():
 def test_cache_signing(tempfile_path):
     serializer = safe_pickle_serializer(secret_key=str(uuid4()))
     session = CachedSession(tempfile_path, serializer=serializer)
-    assert isinstance(session.cache.responses.serializer.steps[-1].obj, Signer)
+    assert isinstance(session.cache.responses.serializer.stages[-1].obj, Signer)
 
     # Simple serialize/deserialize round trip
     response = CachedResponse()

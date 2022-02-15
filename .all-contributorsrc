@@ -753,6 +753,15 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "rasmuse",
+      "name": "Rasmus Einarsson",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1210973?v=4",
+      "profile": "https://rasmuse.github.io/",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
