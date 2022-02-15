@@ -15,7 +15,6 @@ TEMPLATE_DIR = join(PROJECT_DIR, 'docs', '_templates')
 
 # General information about the project.
 project = 'requests-cache'
-copyright = '2021, Roman Haritonov'
 needs_sphinx = '3.0'
 master_doc = 'index'
 source_suffix = ['.rst', '.md']
@@ -106,6 +105,7 @@ html_css_files = [
     'https://use.fontawesome.com/releases/v5.15.3/css/all.css',
     'https://use.fontawesome.com/releases/v5.15.3/css/v4-shims.css',
 ]
+html_show_copyright = False
 html_show_sphinx = False
 notfound_default_version = 'stable'
 pygments_style = 'friendly'
