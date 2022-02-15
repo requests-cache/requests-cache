@@ -69,13 +69,15 @@ except ImportError as e:
 # BSON serializer
 try:
     try:
-        from bson import json_util as bson
+        from bson import decode as _bson_loads
+        from bson import encode as _bson_dumps
     except ImportError:
-        import bson
+        from bson import dumps as _bson_dumps
+        from bson import loads as _bson_loads
 
     bson_serializer = SerializerPipeline(
-        [bson_preconf_stage, bson], is_binary=False
-    )  #: Complete BSON serializer; uses pymongo's ``bson.json_util`` if installed, otherwise standalone ``bson`` codec
+        [bson_preconf_stage, Stage(dumps=_bson_dumps, loads=_bson_loads)], is_binary=True
+    )  #: Complete BSON serializer; uses pymongo's ``bson`` if installed, otherwise standalone ``bson`` codec
 except ImportError as e:
     bson_serializer = get_placeholder_class(e)
 
