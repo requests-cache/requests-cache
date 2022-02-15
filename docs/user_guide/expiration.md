@@ -75,10 +75,10 @@ retrieving a new response. If you would like to use expired response data in the
 
 For example:
 ```python
->>> # Cache a test response that will expire immediately
+>>> # Cache a test response and wait until it's expired
 >>> session = CachedSession(stale_if_error=True)
->>> session.get('https://httpbin.org/get', expire_after=0.0001)
->>> time.sleep(0.0001)
+>>> session.get('https://httpbin.org/get', expire_after=1)
+>>> time.sleep(1)
 ```
 
 Afterward, let's say the page has moved and you get a 404, or the site is experiencing downtime and

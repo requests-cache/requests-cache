@@ -27,8 +27,9 @@ if TYPE_CHECKING:
 
 __all__ = ['DO_NOT_CACHE', 'CacheActions']
 
-# May be set by either headers or expire_after param to disable caching
+# May be set by either headers or expire_after param to disable caching or disable expiration
 DO_NOT_CACHE = 0
+NEVER_EXPIRE = -1
 # Supported Cache-Control directives
 CACHE_DIRECTIVES = ['immutable', 'max-age', 'no-cache', 'no-store']
 
@@ -139,7 +140,7 @@ class CacheActions:
 
         # Check headers for expiration, validators, and other cache directives
         if directives.get('immutable'):
-            self.expire_after = -1
+            self.expire_after = NEVER_EXPIRE
         else:
             self.expire_after = coalesce(
                 directives.get('max-age'), directives.get('expires'), self.expire_after
@@ -156,7 +157,7 @@ class CacheActions:
 def get_expiration_datetime(expire_after: ExpirationTime) -> Optional[datetime]:
     """Convert an expiration value in any supported format to an absolute datetime"""
     # Never expire
-    if expire_after is None or expire_after == -1:
+    if expire_after is None or expire_after == NEVER_EXPIRE:
         return None
     # Expire immediately
     elif try_int(expire_after) == DO_NOT_CACHE:
@@ -173,10 +174,10 @@ def get_expiration_datetime(expire_after: ExpirationTime) -> Optional[datetime]:
     return datetime.utcnow() + expire_after
 
 
-def get_expiration_seconds(expire_after: ExpirationTime) -> Optional[int]:
+def get_expiration_seconds(expire_after: ExpirationTime) -> int:
     """Convert an expiration value in any supported format to an expiration time in seconds"""
     expires = get_expiration_datetime(expire_after)
-    return ceil((expires - datetime.utcnow()).total_seconds()) if expires else None
+    return ceil((expires - datetime.utcnow()).total_seconds()) if expires else NEVER_EXPIRE
 
 
 def get_cache_directives(headers: Mapping) -> Dict:
@@ -242,7 +243,10 @@ def to_utc(dt: datetime):
 
 def try_int(value: Any) -> Optional[int]:
     """Convert a value to an int, if possible, otherwise ``None``"""
-    return int(str(value)) if str(value).isnumeric() else None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def url_match(url: str, pattern: str) -> bool:

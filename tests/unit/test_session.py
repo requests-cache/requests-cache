@@ -10,7 +10,7 @@ from urllib.parse import urlencode
 
 import pytest
 import requests
-from requests import Request
+from requests import Request, RequestException
 from requests.structures import CaseInsensitiveDict
 
 from requests_cache import ALL_METHODS, CachedResponse, CachedSession
@@ -154,12 +154,12 @@ def test_response_history(mock_session):
 
 def test_repr(mock_session):
     """Test session and cache string representations"""
-    mock_session.expire_after = 10.5
+    mock_session.expire_after = 11
     mock_session.cache.responses['key'] = 'value'
     mock_session.cache.redirects['key'] = 'value'
     mock_session.cache.redirects['key_2'] = 'value'
 
-    assert mock_session.cache.cache_name in repr(mock_session) and '10.5' in repr(mock_session)
+    assert mock_session.cache.cache_name in repr(mock_session) and '11' in repr(mock_session)
     assert '2 redirects' in str(mock_session.cache) and '1 responses' in str(mock_session.cache)
 
 
@@ -515,9 +515,9 @@ def test_expired_request_error(mock_session):
     """Without stale_if_error (default), if there is an error while re-fetching an expired
     response, the request should be re-raised and the expired item deleted"""
     mock_session.stale_if_error = False
-    mock_session.expire_after = 0.01
+    mock_session.expire_after = 1
     mock_session.get(MOCKED_URL)
-    time.sleep(0.01)
+    time.sleep(1)
 
     with patch.object(mock_session.cache, 'save_response', side_effect=ValueError):
         with pytest.raises(ValueError):
@@ -528,12 +528,12 @@ def test_expired_request_error(mock_session):
 def test_stale_if_error__exception(mock_session):
     """With stale_if_error, expect to get old cache data if there is an exception during a request"""
     mock_session.stale_if_error = True
-    mock_session.expire_after = 0.2
+    mock_session.expire_after = 1
 
     assert mock_session.get(MOCKED_URL).from_cache is False
     assert mock_session.get(MOCKED_URL).from_cache is True
-    time.sleep(0.2)
-    with patch.object(mock_session.cache, 'save_response', side_effect=ValueError):
+    time.sleep(1)
+    with patch.object(mock_session.cache, 'save_response', side_effect=RequestException):
         response = mock_session.get(MOCKED_URL)
         assert response.from_cache is True and response.is_expired is True
 
@@ -541,12 +541,12 @@ def test_stale_if_error__exception(mock_session):
 def test_stale_if_error__error_code(mock_session):
     """With stale_if_error, expect to get old cache data if a response has an error status code"""
     mock_session.stale_if_error = True
-    mock_session.expire_after = 0.2
+    mock_session.expire_after = 1
     mock_session.allowable_codes = (200, 404)
 
     assert mock_session.get(MOCKED_URL_404).from_cache is False
 
-    time.sleep(0.2)
+    time.sleep(1)
     response = mock_session.get(MOCKED_URL_404)
     assert response.from_cache is True and response.is_expired is True
 
@@ -718,8 +718,8 @@ def test_remove_expired_responses__per_request(mock_session):
     assert len(mock_session.cache.responses) == 1
 
 
-def test_per_request__expiration(mock_session):
-    """No per-session expiration is set, but then overridden with per-request expiration"""
+def test_per_request__enable_expiration(mock_session):
+    """No per-session expiration is set, but then overridden for a single request"""
     mock_session.expire_after = None
     response = mock_session.get(MOCKED_URL, expire_after=1)
     assert response.from_cache is False
@@ -728,6 +728,15 @@ def test_per_request__expiration(mock_session):
     time.sleep(1)
     response = mock_session.get(MOCKED_URL)
     assert response.from_cache is False
+
+
+def test_per_request__disable_expiration(mock_session):
+    """A per-session expiration is set, but then disabled for a single request"""
+    mock_session.expire_after = 60
+    response = mock_session.get(MOCKED_URL, expire_after=-1)
+    response = mock_session.get(MOCKED_URL, expire_after=-1)
+    assert response.from_cache is True
+    assert response.expires is None
 
 
 def test_per_request__prepared_request(mock_session):
