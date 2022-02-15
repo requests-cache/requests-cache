@@ -1,9 +1,10 @@
 # History
 
 ## 0.9.2 (2022-02-15)
-Fix some regression bugs introduced in 0.9.0:
-* Add support `params` as a positional argument to `CachedSession.request()`
-* Add support for disabling expiration for a single request with `CachedSession.request(..., expire_after=-1)`
+* Fix serialization in filesystem backend with binary content that is also valid UTF-8
+* Fix some regression bugs introduced in 0.9.0:
+  * Add support for `params` as a positional argument to `CachedSession.request()`
+  * Add support for disabling expiration for a single request with `CachedSession.request(..., expire_after=-1)`
 
 ## 0.9.1 (2022-01-15)
 * Add support for python 3.10.2 and 3.9.10 (regarding resolving `ForwardRef` types during deserialization)

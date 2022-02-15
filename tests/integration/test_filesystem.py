@@ -1,4 +1,3 @@
-import pickle
 from shutil import rmtree
 from tempfile import gettempdir
 
@@ -20,7 +19,7 @@ class TestFileDict(BaseStorageTest):
         rmtree(CACHE_NAME, ignore_errors=True)
 
     def init_cache(self, index=0, clear=True, **kwargs):
-        cache = FileDict(f'{CACHE_NAME}_{index}', serializer=pickle, use_temp=True, **kwargs)
+        cache = FileDict(f'{CACHE_NAME}_{index}', serializer='pickle', use_temp=True, **kwargs)
         if clear:
             cache.clear()
         return cache

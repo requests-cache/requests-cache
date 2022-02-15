@@ -34,7 +34,9 @@ orjson_preconf_stage = CattrStage(orjson.make_converter)  #: Pre-serialization s
 yaml_preconf_stage = CattrStage(pyyaml.make_converter)  #: Pre-serialization steps for YAML
 toml_preconf_stage = CattrStage(tomlkit.make_converter)  #: Pre-serialization steps for TOML
 ujson_preconf_stage = CattrStage(ujson.make_converter)  #: Pre-serialization steps for ultrajson
-pickle_serializer = SerializerPipeline([base_stage, pickle])  #: Complete pickle serializer
+pickle_serializer = SerializerPipeline(
+    [base_stage, pickle], is_binary=True
+)  #: Complete pickle serializer
 utf8_encoder = Stage(dumps=str.encode, loads=lambda x: x.decode())  #: Encode to bytes
 
 
@@ -55,7 +57,9 @@ try:
         """Create a serializer that uses ``pickle`` + ``itsdangerous`` to add a signature to
         responses on write, and validate that signature with a secret key on read.
         """
-        return SerializerPipeline([base_stage, pickle, signer_stage(secret_key, salt)])
+        return SerializerPipeline(
+            [base_stage, pickle, signer_stage(secret_key, salt)], is_binary=True
+        )
 
 except ImportError as e:
     signer_stage = get_placeholder_class(e)
@@ -70,8 +74,8 @@ try:
         import bson
 
     bson_serializer = SerializerPipeline(
-        [bson_preconf_stage, bson]
-    )  #: Complete BSON serializer; using pymongo's ``bson.json_util`` if installed, otherwise standalone ``bson`` codec
+        [bson_preconf_stage, bson], is_binary=False
+    )  #: Complete BSON serializer; uses pymongo's ``bson.json_util`` if installed, otherwise standalone ``bson`` codec
 except ImportError as e:
     bson_serializer = get_placeholder_class(e)
 
@@ -88,7 +92,7 @@ except ImportError:
 
 _json_stage = Stage(dumps=partial(json.dumps, indent=2), loads=json.loads)
 json_serializer = SerializerPipeline(
-    [_json_preconf_stage, _json_stage]
+    [_json_preconf_stage, _json_stage], is_binary=False
 )  #: Complete JSON serializer; uses ultrajson if available
 
 
@@ -100,7 +104,8 @@ try:
         [
             yaml_preconf_stage,
             Stage(yaml, loads='safe_load', dumps='safe_dump'),
-        ]
+        ],
+        is_binary=False,
     )  #: Complete YAML serializer
 except ImportError as e:
     yaml_serializer = get_placeholder_class(e)

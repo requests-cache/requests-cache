@@ -3,7 +3,7 @@
    :classes-only:
    :nosignatures:
 """
-from typing import Any, Callable, List, Union
+from typing import Any, Callable, Sequence, Union
 
 from ..models import CachedResponse
 
@@ -29,22 +29,26 @@ class Stage:
 
 
 class SerializerPipeline:
-    """A sequence of steps used to serialize and deserialize response objects.
-    This can be initialized with :py:class:`Stage` objects, or any objects with ``dumps()`` and
-    ``loads()`` methods
+    """A pipeline of stages chained together to serialize and deserialize response objects.
+
+    Args:
+        stages: A sequence of :py:class:`Stage` objects, or any objects with ``dumps()`` and
+            ``loads()`` methods
+        is_binary: Indicates whether the serialized content is binary
     """
 
-    def __init__(self, stages: List):
-        self.steps = stages
-        self.dump_steps = [step.dumps for step in stages]
-        self.load_steps = [step.loads for step in reversed(stages)]
+    def __init__(self, stages: Sequence, is_binary: bool = False):
+        self.is_binary = is_binary
+        self.stages = stages
+        self.dump_stages = [stage.dumps for stage in stages]
+        self.load_stages = [stage.loads for stage in reversed(stages)]
 
     def dumps(self, value) -> Union[str, bytes]:
-        for step in self.dump_steps:
+        for step in self.dump_stages:
             value = step(value)
         return value
 
     def loads(self, value) -> CachedResponse:
-        for step in self.load_steps:
+        for step in self.load_stages:
             value = step(value)
         return value
