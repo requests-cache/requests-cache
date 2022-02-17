@@ -4,6 +4,7 @@ import json
 import time
 from collections import UserDict, defaultdict
 from datetime import datetime, timedelta
+from pathlib import Path
 from pickle import PickleError
 from unittest.mock import patch
 from urllib.parse import urlencode
@@ -33,6 +34,11 @@ YESTERDAY = datetime.utcnow() - timedelta(days=1)
 def test_init_unregistered_backend():
     with pytest.raises(ValueError):
         CachedSession(backend='nonexistent')
+
+
+def test_cache_path_expansion():
+    session = CachedSession('~', backend='filesystem')
+    assert session.cache.cache_dir == Path("~").expanduser()
 
 
 @patch.dict(BACKEND_CLASSES, {'mongo': get_placeholder_class()})
