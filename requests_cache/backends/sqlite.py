@@ -306,7 +306,7 @@ def get_cache_path(db_path: AnyPath, use_cache_dir: bool = False, use_temp: bool
         db_path = Path(gettempdir()) / db_path
 
     # Expand relative and user paths (~), make parent dir(s), and better error if parent is a file
-    db_path = db_path.absolute().expanduser()
+    db_path = db_path.expanduser().absolute()
     try:
         db_path.parent.mkdir(parents=True, exist_ok=True)
     except FileExistsError:
