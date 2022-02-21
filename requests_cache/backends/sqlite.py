@@ -248,10 +248,11 @@ class SQLiteDict(BaseStorage):
                 con.execute(statement, args)
 
     def clear(self):
-        with self.connection(commit=True) as con:
-            con.execute(f'DROP TABLE IF EXISTS {self.table_name}')
-        self.init_db()
-        self.vacuum()
+        with self._lock:
+            with self.connection(commit=True) as con:
+                con.execute(f'DROP TABLE IF EXISTS {self.table_name}')
+            self.init_db()
+            self.vacuum()
 
     def vacuum(self):
         with self.connection(commit=True) as con:
