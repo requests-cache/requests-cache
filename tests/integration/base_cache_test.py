@@ -1,8 +1,10 @@
 """Common tests to run for all backends (BaseCache subclasses)"""
 import json
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from io import BytesIO
-from threading import Thread
+from logging import getLogger
+from random import randint
 from time import sleep, time
 from typing import Dict, Type
 from unittest.mock import MagicMock, patch
@@ -24,11 +26,14 @@ from tests.conftest import (
     HTTPDATE_STR,
     LAST_MODIFIED,
     N_ITERATIONS,
-    N_THREADS,
+    N_REQUESTS_PER_ITERATION,
+    N_WORKERS,
     USE_PYTEST_HTTPBIN,
     assert_delta_approx_equal,
     httpbin,
 )
+
+logger = getLogger(__name__)
 
 # Handle optional dependencies if they're not installed; if so, skips will be shown in pytest output
 TEST_SERIALIZERS = SERIALIZERS.copy()
@@ -302,30 +307,31 @@ class BaseCacheTest:
 
     @pytest.mark.parametrize('iteration', range(N_ITERATIONS))
     def test_multithreaded(self, iteration):
-        """Run a multi-threaded stress test for each backend"""
+        """Run a multi-threaded stress test for each backend.
+        The number of workers (thread/processes), iterations, and requests per iteration can be
+        increased via the `STRESS_TEST_MULTIPLIER` environment variable.
+        """
         session = self.init_session()
         start = time()
         url = httpbin('anything')
 
-        def send_requests():
-            for i in range(N_ITERATIONS):
-                session.get(url, params={f'key_{i}': f'value_{i}'})
+        # Use fewer unique requests/cached responses than total iterations, so we get some cache hits
+        n_unique_responses = int(N_REQUESTS_PER_ITERATION / 4)
 
-        threads = [Thread(target=send_requests) for i in range(N_THREADS)]
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
+        def send_request(_):
+            i = randint(1, n_unique_responses)
+            return session.get(url, params={f'key_{i}': f'value_{i}'})
+
+        with ThreadPoolExecutor(max_workers=N_WORKERS) as executor:
+            _ = list(executor.map(send_request, range(N_REQUESTS_PER_ITERATION)))
 
         elapsed = time() - start
-        average = (elapsed * 1000) / (N_ITERATIONS * N_THREADS)
-        print(
-            f'{self.backend_class}: Ran {N_ITERATIONS} iterations with {N_THREADS} threads each in {elapsed} s'
+        average = (elapsed * 1000) / (N_ITERATIONS * N_WORKERS)
+        logger.info(
+            f'{self.backend_class.__name__}: Ran {N_REQUESTS_PER_ITERATION} requests with '
+            f'{N_WORKERS} threads in {elapsed} s\n'
+            f'Average time per request: {average} ms'
         )
-        print(f'Average time per request: {average} ms')
-
-        for i in range(N_ITERATIONS):
-            assert session.cache.has_url(f'{url}?key_{i}=value_{i}')
 
     @pytest.mark.parametrize('method', HTTPBIN_METHODS)
     def test_filter_request_headers(self, method):
