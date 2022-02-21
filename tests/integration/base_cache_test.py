@@ -1,7 +1,8 @@
 """Common tests to run for all backends (BaseCache subclasses)"""
 import json
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from datetime import datetime
+from functools import partial
 from io import BytesIO
 from logging import getLogger
 from random import randint
@@ -305,31 +306,28 @@ class BaseCacheTest:
         assert not session.cache.has_url(httpbin('redirect/1'))
         assert not any([session.cache.has_url(httpbin(f)) for f in HTTPBIN_FORMATS])
 
+    @pytest.mark.parametrize('executor_class', [ThreadPoolExecutor, ProcessPoolExecutor])
     @pytest.mark.parametrize('iteration', range(N_ITERATIONS))
-    def test_multithreaded(self, iteration):
-        """Run a multi-threaded stress test for each backend.
+    def test_concurrency(self, iteration, executor_class):
+        """Run multithreaded and multiprocess stress tests for each backend.
         The number of workers (thread/processes), iterations, and requests per iteration can be
         increased via the `STRESS_TEST_MULTIPLIER` environment variable.
         """
-        session = self.init_session()
         start = time()
         url = httpbin('anything')
 
-        # Use fewer unique requests/cached responses than total iterations, so we get some cache hits
-        n_unique_responses = int(N_REQUESTS_PER_ITERATION / 4)
+        session_factory = partial(self.init_session, clear=False)
+        request_func = partial(_send_request, session_factory, url)
+        with ProcessPoolExecutor(max_workers=N_WORKERS) as executor:
+            _ = list(executor.map(request_func, range(N_REQUESTS_PER_ITERATION)))
 
-        def send_request(_):
-            i = randint(1, n_unique_responses)
-            return session.get(url, params={f'key_{i}': f'value_{i}'})
-
-        with ThreadPoolExecutor(max_workers=N_WORKERS) as executor:
-            _ = list(executor.map(send_request, range(N_REQUESTS_PER_ITERATION)))
-
+        # Some logging for debug purposes
         elapsed = time() - start
         average = (elapsed * 1000) / (N_ITERATIONS * N_WORKERS)
+        worker_type = 'threads' if executor_class is ThreadPoolExecutor else 'processes'
         logger.info(
             f'{self.backend_class.__name__}: Ran {N_REQUESTS_PER_ITERATION} requests with '
-            f'{N_WORKERS} threads in {elapsed} s\n'
+            f'{N_WORKERS} {worker_type} in {elapsed} s\n'
             f'Average time per request: {average} ms'
         )
 
@@ -370,3 +368,15 @@ class BaseCacheTest:
         elif post_type == 'json':
             body = json.loads(response.request.body)
             assert "api_key" not in body
+
+
+def _send_request(session_factory, url, _=None):
+    """Concurrent request function for stress tests. Defined in module scope so it can be serialized
+    to multiple processes.
+    """
+    # Use fewer unique requests/cached responses than total iterations, so we get some cache hits
+    n_unique_responses = int(N_REQUESTS_PER_ITERATION / 4)
+    i = randint(1, n_unique_responses)
+
+    session = session_factory()
+    return session.get(url, params={f'key_{i}': f'value_{i}'})
