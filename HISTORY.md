@@ -1,10 +1,16 @@
 # History
 
-## 0.9.3 (Unreleased)
+## 0.9.3 (2022-02-22)
 * Fix handling BSON serializer differences between pymongo's `bson` and standalone `bson` codec.
+* Handle `CorruptGridFile` error in GridFS backend
 * Fix cache path expansion for user directories (`~/...`) for SQLite and filesystem backends
 * Fix request normalization for request body with a list as a JSON root
 * Skip normalizing a JSON request body if it's excessively large (>10MB) due to performance impact
+* Fix some thread safety issues:
+  * Fix race condition in SQLite backend with dropping and recreating tables in multiple threads
+  * Fix race condition in filesystem backend when one thread deletes a file after it's opened but
+    before it is read by a different thread
+  * Fix multiple race conditions in GridFS backend
 
 ## 0.9.2 (2022-02-15)
 * Fix serialization in filesystem backend with binary content that is also valid UTF-8
