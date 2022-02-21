@@ -87,7 +87,7 @@ class BaseCacheTest:
             pytest.skip(f'Dependencies not installed for {serializer}')
 
         session = self.init_session(serializer=serializer)
-        # Temporary workaround for this issue: https://github.com/kevin1024/pytest-httpbin/issues/60
+        # Workaround for this issue: https://github.com/kevin1024/pytest-httpbin/issues/60
         if response_format == 'json' and USE_PYTEST_HTTPBIN:
             session.allowable_codes = (200, 404)
 
