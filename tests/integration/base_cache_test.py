@@ -232,7 +232,7 @@ class BaseCacheTest:
         'validator_headers', [{'ETag': ETAG}, {'Last-Modified': LAST_MODIFIED}]
     )
     @pytest.mark.parametrize('cache_headers', [{'Cache-Control': 'max-age=0'}])
-    def test_conditional_request_refreshenes_expire_date(self, cache_headers, validator_headers):
+    def test_conditional_request_refreshes_expire_date(self, cache_headers, validator_headers):
         """Test that revalidation attempt with 304 responses causes stale entry to become fresh again considering
         Cache-Control header of the 304 response."""
         url = httpbin('response-headers')
@@ -306,31 +306,6 @@ class BaseCacheTest:
         assert not session.cache.has_url(httpbin('redirect/1'))
         assert not any([session.cache.has_url(httpbin(f)) for f in HTTPBIN_FORMATS])
 
-    @pytest.mark.parametrize('executor_class', [ThreadPoolExecutor, ProcessPoolExecutor])
-    @pytest.mark.parametrize('iteration', range(N_ITERATIONS))
-    def test_concurrency(self, iteration, executor_class):
-        """Run multithreaded and multiprocess stress tests for each backend.
-        The number of workers (thread/processes), iterations, and requests per iteration can be
-        increased via the `STRESS_TEST_MULTIPLIER` environment variable.
-        """
-        start = time()
-        url = httpbin('anything')
-
-        session_factory = partial(self.init_session, clear=False)
-        request_func = partial(_send_request, session_factory, url)
-        with ProcessPoolExecutor(max_workers=N_WORKERS) as executor:
-            _ = list(executor.map(request_func, range(N_REQUESTS_PER_ITERATION)))
-
-        # Some logging for debug purposes
-        elapsed = time() - start
-        average = (elapsed * 1000) / (N_ITERATIONS * N_WORKERS)
-        worker_type = 'threads' if executor_class is ThreadPoolExecutor else 'processes'
-        logger.info(
-            f'{self.backend_class.__name__}: Ran {N_REQUESTS_PER_ITERATION} requests with '
-            f'{N_WORKERS} {worker_type} in {elapsed} s\n'
-            f'Average time per request: {average} ms'
-        )
-
     @pytest.mark.parametrize('method', HTTPBIN_METHODS)
     def test_filter_request_headers(self, method):
         url = httpbin(method.lower())
@@ -368,6 +343,31 @@ class BaseCacheTest:
         elif post_type == 'json':
             body = json.loads(response.request.body)
             assert "api_key" not in body
+
+    @pytest.mark.parametrize('executor_class', [ThreadPoolExecutor, ProcessPoolExecutor])
+    @pytest.mark.parametrize('iteration', range(N_ITERATIONS))
+    def test_concurrency(self, iteration, executor_class):
+        """Run multithreaded and multiprocess stress tests for each backend.
+        The number of workers (thread/processes), iterations, and requests per iteration can be
+        increased via the `STRESS_TEST_MULTIPLIER` environment variable.
+        """
+        start = time()
+        url = httpbin('anything')
+
+        session_factory = partial(self.init_session, clear=False)
+        request_func = partial(_send_request, session_factory, url)
+        with ProcessPoolExecutor(max_workers=N_WORKERS) as executor:
+            _ = list(executor.map(request_func, range(N_REQUESTS_PER_ITERATION)))
+
+        # Some logging for debug purposes
+        elapsed = time() - start
+        average = (elapsed * 1000) / (N_ITERATIONS * N_WORKERS)
+        worker_type = 'threads' if executor_class is ThreadPoolExecutor else 'processes'
+        logger.info(
+            f'{self.backend_class.__name__}: Ran {N_REQUESTS_PER_ITERATION} requests with '
+            f'{N_WORKERS} {worker_type} in {elapsed} s\n'
+            f'Average time per request: {average} ms'
+        )
 
 
 def _send_request(session_factory, url, _=None):

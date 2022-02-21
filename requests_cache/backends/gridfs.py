@@ -45,6 +45,10 @@ class GridFSCache(BaseCache):
             db_name, collection_name='redirects', connection=self.responses.connection, **kwargs
         )
 
+    def remove_expired_responses(self, *args, **kwargs):
+        with self.responses._lock:
+            return super().remove_expired_responses(*args, **kwargs)
+
 
 class GridFSPickleDict(BaseStorage):
     """A dictionary-like interface for a GridFS database

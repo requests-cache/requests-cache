@@ -131,6 +131,10 @@ class SQLiteCache(BaseCache):
             self.responses.init_db()
             self.redirects.init_db()
 
+    def remove_expired_responses(self, *args, **kwargs):
+        with self.responses._lock, self.redirects._lock:
+            return super().remove_expired_responses(*args, **kwargs)
+
 
 class SQLiteDict(BaseStorage):
     """A dictionary-like interface for SQLite"""
