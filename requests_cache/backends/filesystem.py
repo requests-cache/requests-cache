@@ -40,6 +40,7 @@ from os import makedirs
 from pathlib import Path
 from pickle import PickleError
 from shutil import rmtree
+from threading import RLock
 from typing import Iterator
 
 from ..serializers import SERIALIZERS
@@ -97,14 +98,16 @@ class FileDict(BaseStorage):
         self.cache_dir = get_cache_path(cache_name, use_cache_dir=use_cache_dir, use_temp=use_temp)
         self.extension = _get_extension(extension, self.serializer)
         self.is_binary = getattr(self.serializer, 'is_binary', False)
+        self._lock = RLock()
         makedirs(self.cache_dir, exist_ok=True)
 
     @contextmanager
     def _try_io(self, ignore_errors: bool = False):
         """Attempt an I/O operation, and either ignore errors or re-raise them as KeyErrors"""
         try:
-            yield
-        except (IOError, OSError, PickleError) as e:
+            with self._lock:
+                yield
+        except (EOFError, IOError, OSError, PickleError) as e:
             if not ignore_errors:
                 raise KeyError(e)
 
@@ -142,7 +145,8 @@ class FileDict(BaseStorage):
 
     def paths(self) -> Iterator[Path]:
         """Get absolute file paths to all cached responses"""
-        return self.cache_dir.glob(f'*{self.extension}')
+        with self._lock:
+            return self.cache_dir.glob(f'*{self.extension}')
 
 
 def _get_extension(extension: str = None, serializer=None) -> str:
