@@ -15,7 +15,7 @@ from logging import getLogger
 from threading import RLock
 
 from gridfs import GridFS
-from gridfs.errors import FileExists
+from gridfs.errors import CorruptGridFile, FileExists
 from pymongo import MongoClient
 
 from .._utils import get_valid_kwargs
@@ -69,11 +69,15 @@ class GridFSPickleDict(BaseStorage):
         self._lock = RLock()
 
     def __getitem__(self, key):
-        with self._lock:
-            result = self.fs.find_one({'_id': key})
-            if result is None:
-                raise KeyError
-            return self.serializer.loads(result.read())
+        try:
+            with self._lock:
+                result = self.fs.find_one({'_id': key})
+                if result is None:
+                    raise KeyError
+                return self.serializer.loads(result.read())
+        except CorruptGridFile as e:
+            logger.warning(e, exc_info=True)
+            raise KeyError
 
     def __setitem__(self, key, item):
         value = self.serializer.dumps(item)
@@ -83,6 +87,7 @@ class GridFSPickleDict(BaseStorage):
             try:
                 self.fs.delete(key)
                 self.fs.put(value, encoding=encoding, **{'_id': key})
+            # This can happen because GridFS is not thread-safe for concurrent writes
             except FileExists as e:
                 logger.warning(e, exc_info=True)
 

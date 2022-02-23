@@ -353,6 +353,7 @@ class BaseCacheTest:
         """
         start = time()
         url = httpbin('anything')
+        self.init_session(clear=True)
 
         session_factory = partial(self.init_session, clear=False)
         request_func = partial(_send_request, session_factory, url)
