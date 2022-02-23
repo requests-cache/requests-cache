@@ -74,8 +74,8 @@ jobs:
         run: |
           source $VENV
           pytest -x ${{ env.XDIST_ARGS }} tests/unit
-          pytest -x ${{ env.XDIST_ARGS }} tests/integration -k 'not multithreaded'
-          STRESS_TEST_MULTIPLIER=5 pytest tests/integration -k 'multithreaded'
+          pytest -x ${{ env.XDIST_ARGS }} tests/integration -k 'not concurrency'
+          STRESS_TEST_MULTIPLIER=10 pytest tests/integration -k 'concurrency'
 
   # Deploy stable builds on tags only, and pre-release builds from manual trigger ("workflow_dispatch")
   release:

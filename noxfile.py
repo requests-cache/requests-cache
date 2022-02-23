@@ -1,7 +1,8 @@
 """Notes:
-* 'test' command: nox will use poetry.lock to determine dependency versions
+* 'test-<python version>' commands: nox will use poetry.lock to determine dependency versions
 * 'lint' command: tools and environments are managed by pre-commit
 * All other commands: the current environment will be used instead of creating new ones
+* Run `nox -l` to see all available commands
 """
 from os.path import join
 from shutil import rmtree
@@ -19,6 +20,7 @@ CLEAN_DIRS = ['dist', 'build', join('docs', '_build'), join('docs', 'modules')]
 
 UNIT_TESTS = join('tests', 'unit')
 INTEGRATION_TESTS = join('tests', 'integration')
+STRESS_TEST_MULTIPLIER = 10
 COVERAGE_ARGS = (
     '--cov --cov-report=term --cov-report=html'  # Generate HTML + stdout coverage report
 )
@@ -50,6 +52,16 @@ def coverage(session):
     cmd_2 = f'pytest {INTEGRATION_TESTS} -rs {XDIST_ARGS} {COVERAGE_ARGS} --cov-append'
     session.run(*cmd_1.split(' '))
     session.run(*cmd_2.split(' '))
+
+
+@session(python=False, name='stress')
+def stress_test(session):
+    """Run concurrency tests with a higher stress test multiplier"""
+    cmd = f'pytest {INTEGRATION_TESTS} -rs -k concurrency'
+    session.run(
+        *cmd.split(' '),
+        env={'STRESS_TEST_MULTIPLIER': str(STRESS_TEST_MULTIPLIER)},
+    )
 
 
 @session(python=False)

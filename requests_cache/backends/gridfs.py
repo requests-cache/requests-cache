@@ -11,12 +11,18 @@ API Reference
    :classes-only:
    :nosignatures:
 """
+from logging import getLogger
+from threading import RLock
+
 from gridfs import GridFS
+from gridfs.errors import CorruptGridFile, FileExists
 from pymongo import MongoClient
 
 from .._utils import get_valid_kwargs
 from .base import BaseCache, BaseStorage
 from .mongodb import MongoDict
+
+logger = getLogger(__name__)
 
 
 class GridFSCache(BaseCache):
@@ -39,6 +45,10 @@ class GridFSCache(BaseCache):
             db_name, collection_name='redirects', connection=self.responses.connection, **kwargs
         )
 
+    def remove_expired_responses(self, *args, **kwargs):
+        with self.responses._lock:
+            return super().remove_expired_responses(*args, **kwargs)
+
 
 class GridFSPickleDict(BaseStorage):
     """A dictionary-like interface for a GridFS database
@@ -56,27 +66,37 @@ class GridFSPickleDict(BaseStorage):
         self.connection = connection or MongoClient(**connection_kwargs)
         self.db = self.connection[db_name]
         self.fs = GridFS(self.db)
+        self._lock = RLock()
 
     def __getitem__(self, key):
-        result = self.fs.find_one({'_id': key})
-        if result is None:
+        try:
+            with self._lock:
+                result = self.fs.find_one({'_id': key})
+                if result is None:
+                    raise KeyError
+                return self.serializer.loads(result.read())
+        except CorruptGridFile as e:
+            logger.warning(e, exc_info=True)
             raise KeyError
-        return self.serializer.loads(result.read())
 
     def __setitem__(self, key, item):
-        try:
-            self.__delitem__(key)
-        except KeyError:
-            pass
         value = self.serializer.dumps(item)
         encoding = None if isinstance(value, bytes) else 'utf-8'
-        self.fs.put(value, encoding=encoding, **{'_id': key})
+
+        with self._lock:
+            try:
+                self.fs.delete(key)
+                self.fs.put(value, encoding=encoding, **{'_id': key})
+            # This can happen because GridFS is not thread-safe for concurrent writes
+            except FileExists as e:
+                logger.warning(e, exc_info=True)
 
     def __delitem__(self, key):
-        res = self.fs.find_one({'_id': key})
-        if res is None:
-            raise KeyError
-        self.fs.delete(res._id)
+        with self._lock:
+            res = self.fs.find_one({'_id': key})
+            if res is None:
+                raise KeyError
+            self.fs.delete(res._id)
 
     def __len__(self):
         return self.db['fs.files'].estimated_document_count()

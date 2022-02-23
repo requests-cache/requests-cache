@@ -1,6 +1,8 @@
 from unittest.mock import patch
 
 import pytest
+from gridfs import GridFS
+from gridfs.errors import CorruptGridFile, FileExists
 from pymongo import MongoClient
 
 from requests_cache._utils import get_valid_kwargs
@@ -64,6 +66,22 @@ class TestGridFSPickleDict(BaseStorageTest):
         """A spot check to make sure optional connection kwargs gets passed to connection"""
         GridFSPickleDict('test', host='http://0.0.0.0', port=1234, invalid_kwarg='???')
         mock_client.assert_called_with(host='http://0.0.0.0', port=1234)
+
+    def test_corrupt_file(self):
+        """A corrupted file should be handled and raise a KeyError instead"""
+        cache = self.init_cache()
+        cache['key'] = 'value'
+        with pytest.raises(KeyError), patch.object(GridFS, 'find_one', side_effect=CorruptGridFile):
+            cache['key']
+
+    def test_file_exists(self):
+        cache = self.init_cache()
+
+        # This write should just quiety fail
+        with patch.object(GridFS, 'put', side_effect=FileExists):
+            cache['key'] = 'value_1'
+
+        assert 'key' not in cache
 
 
 class TestGridFSCache(BaseCacheTest):
