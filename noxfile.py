@@ -20,6 +20,7 @@ CLEAN_DIRS = ['dist', 'build', join('docs', '_build'), join('docs', 'modules')]
 
 UNIT_TESTS = join('tests', 'unit')
 INTEGRATION_TESTS = join('tests', 'integration')
+STRESS_TEST_MULTIPLIER = 10
 COVERAGE_ARGS = (
     '--cov --cov-report=term --cov-report=html'  # Generate HTML + stdout coverage report
 )
@@ -56,9 +57,11 @@ def coverage(session):
 @session(python=False, name='stress')
 def stress_test(session):
     """Run concurrency tests with a higher stress test multiplier"""
-    multiplier = session.posargs[0] if session.posargs else 5
     cmd = f'pytest {INTEGRATION_TESTS} -rs -k concurrency'
-    session.run(*cmd.split(' '), env={'STRESS_TEST_MULTIPLIER': str(multiplier)})
+    session.run(
+        *cmd.split(' '),
+        env={'STRESS_TEST_MULTIPLIER': str(STRESS_TEST_MULTIPLIER)},
+    )
 
 
 @session(python=False)
