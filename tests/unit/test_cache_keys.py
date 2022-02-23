@@ -1,10 +1,12 @@
 """The cache_keys module is mostly covered indirectly via other tests.
 This just contains tests for some extra edge cases not covered elsewhere.
 """
+import json
+
 import pytest
 from requests import PreparedRequest, Request
 
-from requests_cache.cache_keys import create_key, normalize_request
+from requests_cache.cache_keys import MAX_NORM_BODY_SIZE, create_key, normalize_request
 
 CACHE_KEY = 'e8cb526891875e37'
 
@@ -92,6 +94,19 @@ def test_normalize_request__binary_body():
         headers={'Content-Type': 'application/octet-stream'},
     )
     assert normalize_request(request, ignored_parameters=['param']).body == request.data
+
+
+def test_normalize_request__ovsersized_body():
+    body = {'param': '1', 'content': '0' * MAX_NORM_BODY_SIZE}
+    encoded_body = json.dumps(body).encode('utf-8')
+
+    request = Request(
+        method='GET',
+        url='https://img.site.com/base/img.jpg',
+        json=body,
+        headers={'Content-Type': 'application/octet-stream'},
+    )
+    assert normalize_request(request, ignored_parameters=['param']).body == encoded_body
 
 
 def test_remove_ignored_headers__empty():
