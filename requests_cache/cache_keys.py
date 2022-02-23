@@ -22,8 +22,12 @@ if TYPE_CHECKING:
     from .models import AnyPreparedRequest, AnyRequest, CachedResponse
 
 __all__ = ['create_key', 'normalize_request']
+
 # Request headers that are always excluded from cache keys, but not redacted from cached responses
 DEFAULT_EXCLUDE_HEADERS = {'Cache-Control', 'If-None-Match', 'If-Modified-Since'}
+
+# Maximum JSON request body size that will be normalized
+MAX_NORM_BODY_SIZE = 10 * 1024 * 1025
 
 ParamList = Optional[Iterable[str]]
 RequestContent = Union[Mapping, str, bytes]
@@ -158,13 +162,12 @@ def normalize_body(request: AnyPreparedRequest, ignored_parameters: ParamList) -
     return encode(filtered_body)
 
 
-# TODO: Skip this for a very large response body?
 def normalize_json_body(
     original_body: Union[str, bytes], ignored_parameters: ParamList
 ) -> Union[str, bytes]:
     """Normalize and filter a request body with serialized JSON data"""
 
-    if len(original_body) == 0:
+    if len(original_body) == 0 or len(original_body) > MAX_NORM_BODY_SIZE:
         return original_body
 
     try:
