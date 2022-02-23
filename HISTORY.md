@@ -2,6 +2,7 @@
 
 ## 0.9.3 (Unreleased)
 * Fix handling BSON serializer differences between pymongo's `bson` and standalone `bson` codec.
+* Fix cache path expansion for user directories (`~/...`) for SQLite and filesystem backends
 * Fix request normalization for request body with a list as a JSON root
 * Skip normalizing a JSON request body if it's excessively large (>10MB) due to performance impact
 

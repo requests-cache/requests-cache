@@ -762,6 +762,25 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "thatguystone",
+      "name": "Andrew Stone",
+      "avatar_url": "https://avatars.githubusercontent.com/u/921573?v=4",
+      "profile": "https://github.com/thatguystone",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "pkrefta",
+      "name": "Paweł Krefta",
+      "avatar_url": "https://avatars.githubusercontent.com/u/565487?v=4",
+      "profile": "https://github.com/pkrefta",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
