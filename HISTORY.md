@@ -2,6 +2,7 @@
 
 ## 0.9.3 (Unreleased)
 * Fix handling BSON serializer differences between pymongo's `bson` and standalone `bson` codec.
+* Fix request normalization for request body with a list as a JSON root
 
 ## 0.9.2 (2022-02-15)
 * Fix serialization in filesystem backend with binary content that is also valid UTF-8

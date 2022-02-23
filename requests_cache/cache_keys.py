@@ -88,7 +88,9 @@ def get_matched_headers(
     ]
 
 
-def normalize_request(request: AnyRequest, ignored_parameters: ParamList) -> AnyPreparedRequest:
+def normalize_request(
+    request: AnyRequest, ignored_parameters: ParamList = None
+) -> AnyPreparedRequest:
     """Normalize and remove ignored parameters from request URL, body, and headers.
     This is used for both:
 
@@ -167,7 +169,7 @@ def normalize_json_body(
 
     try:
         body = json.loads(decode(original_body))
-        body = filter_sort_dict(body, ignored_parameters)
+        body = filter_sort_json(body, ignored_parameters)
         return json.dumps(body)
     # If it's invalid JSON, then don't mess with it
     except (AttributeError, TypeError, ValueError):
@@ -208,7 +210,20 @@ def encode(value, encoding='utf-8') -> bytes:
     return value if isinstance(value, bytes) else str(value).encode(encoding)
 
 
+def filter_sort_json(data: Union[List, Mapping], ignored_parameters: ParamList):
+    if isinstance(data, Mapping):
+        return filter_sort_dict(data, ignored_parameters)
+    else:
+        return filter_sort_list(data, ignored_parameters)
+
+
 def filter_sort_dict(data: Mapping[str, str], ignored_parameters: ParamList) -> Dict[str, str]:
     if not ignored_parameters:
         return dict(sorted(data.items()))
     return {k: v for k, v in sorted(data.items()) if k not in set(ignored_parameters)}
+
+
+def filter_sort_list(data: List, ignored_parameters: ParamList) -> List:
+    if not ignored_parameters:
+        return sorted(data)
+    return [k for k in sorted(data) if k not in set(ignored_parameters)]

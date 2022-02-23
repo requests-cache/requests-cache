@@ -47,12 +47,34 @@ def test_normalize_request__json_body():
         data=b'{"param_1": "value_1", "param_2": "value_2"}',
         headers={'Content-Type': 'application/json'},
     )
-    assert (
-        normalize_request(request, ignored_parameters=['param_2']).body == b'{"param_1": "value_1"}'
+    norm_request = normalize_request(request, ignored_parameters=['param_2'])
+    assert norm_request.body == b'{"param_1": "value_1"}'
+
+
+def test_normalize_request__json_body_list():
+    """Support request body with a list as a JSON root"""
+    request = Request(
+        method='GET',
+        url='https://img.site.com/base/img.jpg',
+        data=b'["param_3", "param_2", "param_1"]',
+        headers={'Content-Type': 'application/json'},
     )
+    norm_request = normalize_request(request)
+    assert norm_request.body == b'["param_1", "param_2", "param_3"]'
 
 
-def test_normalize_request__invalid_json_body():
+def test_normalize_request__json_body_list_filtered():
+    request = Request(
+        method='GET',
+        url='https://img.site.com/base/img.jpg',
+        data=b'["param_3", "param_2", "param_1"]',
+        headers={'Content-Type': 'application/json'},
+    )
+    norm_request = normalize_request(request, ignored_parameters=['param_2', 'param_1'])
+    assert norm_request.body == b'["param_3"]'
+
+
+def test_normalize_request__json_body_invalid():
     request = Request(
         method='GET',
         url='https://img.site.com/base/img.jpg',
