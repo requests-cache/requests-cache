@@ -32,12 +32,11 @@ True, True
 ```
 
 ## Cache-Control
-`Cache-Control` **request** headers will be used if present. This is mainly useful for patching an
-existing library that sets request headers.
+`Cache-Control` **request** headers will always be used if present. This is mainly useful if you are
+adding requests-cache to an existing application or library that already uses caching request headers.
 
 `Cache-Control` **response** headers are an opt-in feature. If enabled, these will take priority over
 any other `expire_after` values. See {ref}`precedence` for the full order of precedence.
-
 To enable this behavior, use the `cache_control` option:
 ```python
 >>> session = CachedSession(cache_control=True)
@@ -48,15 +47,15 @@ The following headers are currently supported:
 
 **Request headers:**
 - `Cache-Control: max-age`: Used as the expiration time in seconds
-- `Cache-Control: no-cache`: Skips reading response data from the cache
-- `Cache-Control: no-store`: Skips reading and writing response data from/to the cache
+- `Cache-Control: no-cache`: Skip reading from the cache
+- `Cache-Control: no-store`: Skip reading from and writing to the cache
 - `If-None-Match`: Automatically added if an `ETag` is available
 - `If-Modified-Since`: Automatically added if `Last-Modified` is available
 
 **Response headers:**
 - `Cache-Control: max-age`: Used as the expiration time in seconds
-- `Cache-Control: no-store` Skips writing response data to the cache
-- `Cache-Control: immutable`: Caches the response with no expiration
+- `Cache-Control: no-store` Skip writing to the cache
+- `Cache-Control: immutable`: Cache the response with no expiration
 - `Expires`: Used as an absolute expiration time
-- `ETag`: Returns expired cache data if the remote content has not changed (`304 Not Modified` response)
-- `Last-Modified`: Returns expired cache data if the remote content has not changed (`304 Not Modified` response)
+- `ETag`: Return expired cache data if the remote content has not changed (`304 Not Modified` response)
+- `Last-Modified`: Return expired cache data if the remote content has not changed (`304 Not Modified` response)
