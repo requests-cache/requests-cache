@@ -38,7 +38,7 @@ jobs:
 
     steps:
       # Set up python + poetry
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
@@ -82,7 +82,7 @@ jobs:
     needs: [test]
     runs-on: ubuntu-18.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ env.LATEST_PY_VERSION }}
