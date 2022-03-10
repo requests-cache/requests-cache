@@ -144,3 +144,6 @@ skip = [
     'tests/compat/',
 ]
 known_first_party = ['tests']
+
+[tool.mypy]
+ignore_missing_imports = true
