@@ -42,6 +42,7 @@ try:
     TEST_SERIALIZERS['safe_pickle'] = safe_pickle_serializer(secret_key='hunter2')
 except ImportError:
     TEST_SERIALIZERS['safe_pickle'] = 'safe_pickle_placeholder'
+VALIDATOR_HEADERS = [{'ETag': ETAG}, {'Last-Modified': LAST_MODIFIED}]
 
 
 class BaseCacheTest:
@@ -206,14 +207,18 @@ class BaseCacheTest:
         response = session.get(httpbin('cache'))
         assert response.from_cache == expected_from_cache
 
+    @pytest.mark.parametrize('validator_headers', VALIDATOR_HEADERS)
     @pytest.mark.parametrize(
-        'validator_headers', [{'ETag': ETAG}, {'Last-Modified': LAST_MODIFIED}]
+        'cache_headers',
+        [
+            {'Cache-Control': 'max-age=0'},
+            {'Cache-Control': 'max-age=0,must-revalidate'},
+            {'Cache-Control': 'no-cache'},
+            {'Expires': '0'},
+        ],
     )
-    @pytest.mark.parametrize('cache_headers', [{'Cache-Control': 'max-age=0'}, {'Expires': '0'}])
-    def test_conditional_request__max_age_0(self, cache_headers, validator_headers):
-        """With both max-age=0 and a validator, the response should be saved and revalidated on next
-        request
-        """
+    def test_conditional_request__response_headers(self, cache_headers, validator_headers):
+        """Test response headers that can initiate revalidation before a cached response expires"""
         url = httpbin('response-headers')
         response_headers = {**cache_headers, **validator_headers}
         session = self.init_session(cache_control=True)
@@ -226,13 +231,10 @@ class BaseCacheTest:
             response = session.get(url, params=response_headers)
 
         assert response.from_cache is True
-        assert response.is_expired is True
 
-    @pytest.mark.parametrize(
-        'validator_headers', [{'ETag': ETAG}, {'Last-Modified': LAST_MODIFIED}]
-    )
+    @pytest.mark.parametrize('validator_headers', VALIDATOR_HEADERS)
     @pytest.mark.parametrize('cache_headers', [{'Cache-Control': 'max-age=0'}])
-    def test_conditional_request_refreshes_expire_date(self, cache_headers, validator_headers):
+    def test_conditional_request__refreshes_expire_date(self, cache_headers, validator_headers):
         """Test that revalidation attempt with 304 responses causes stale entry to become fresh again considering
         Cache-Control header of the 304 response."""
         url = httpbin('response-headers')

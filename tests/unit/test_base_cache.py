@@ -6,13 +6,7 @@ import pytest
 
 from requests_cache import CachedResponse
 from requests_cache.backends import BaseCache, SQLitePickleDict
-
-from tests.conftest import (
-    MOCKED_URL,
-    MOCKED_URL_HTTPS,
-    MOCKED_URL_JSON,
-    MOCKED_URL_REDIRECT,
-)
+from tests.conftest import MOCKED_URL, MOCKED_URL_HTTPS, MOCKED_URL_JSON, MOCKED_URL_REDIRECT
 
 YESTERDAY = datetime.utcnow() - timedelta(days=1)
 

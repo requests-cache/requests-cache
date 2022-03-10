@@ -182,7 +182,7 @@ def test_update_from_cached_response(response_headers, expected_validation_heade
 
     actions.update_from_cached_response(cached_response)
     assert actions.validation_headers == expected_validation_headers
-    assert actions.revalidate is True
+    assert actions.revalidate is bool(expected_validation_headers)
 
 
 @pytest.mark.parametrize(

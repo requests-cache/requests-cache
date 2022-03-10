@@ -55,6 +55,7 @@ ETAG = '"644b5b0155e6404a9cc4bd9d8b1ae730"'
 LAST_MODIFIED = 'Thu, 05 Jul 2012 15:31:30 GMT'
 
 MOCKED_URL = 'http+mock://requests-cache.com/text'
+MOCKED_URL_ETAG = 'http+mock://requests-cache.com/etag'
 MOCKED_URL_HTTPS = 'https+mock://requests-cache.com/text'
 MOCKED_URL_JSON = 'http+mock://requests-cache.com/json'
 MOCKED_URL_REDIRECT = 'http+mock://requests-cache.com/redirect'
@@ -168,6 +169,12 @@ def get_mock_adapter() -> Adapter:
         MOCKED_URL,
         headers={'Content-Type': 'text/plain'},
         text='mock response',
+        status_code=200,
+    )
+    adapter.register_uri(
+        ANY_METHOD,
+        MOCKED_URL_ETAG,
+        headers={'ETag': ETAG},
         status_code=200,
     )
     adapter.register_uri(

@@ -21,6 +21,7 @@ from requests_cache.cache_keys import create_key
 from tests.conftest import (
     MOCKED_URL,
     MOCKED_URL_404,
+    MOCKED_URL_ETAG,
     MOCKED_URL_HTTPS,
     MOCKED_URL_JSON,
     MOCKED_URL_REDIRECT,
@@ -644,7 +645,7 @@ def test_request_expire_after__disable_expiration(mock_session):
 
 
 def test_request_expire_after__prepared_request(mock_session):
-    """The same should work for PreparedRequests with CachedSession.send()"""
+    """Pre-request expiration should also work for PreparedRequests with CachedSession.send()"""
     mock_session.expire_after = None
     request = Request(method='GET', url=MOCKED_URL, headers={}, data=None).prepare()
     response = mock_session.send(request, expire_after=1)
@@ -654,3 +655,79 @@ def test_request_expire_after__prepared_request(mock_session):
     time.sleep(1)
     response = mock_session.get(MOCKED_URL)
     assert response.from_cache is False
+
+
+def test_request_refresh(mock_session):
+    """The refresh option should send and cache a new request. Any expire_after value provided
+    should overwrite the previous value."""
+    response_1 = mock_session.get(MOCKED_URL, expire_after=-1)
+    response_2 = mock_session.get(MOCKED_URL, expire_after=360, refresh=True)
+    response_3 = mock_session.get(MOCKED_URL)
+
+    assert response_1.from_cache is False
+    assert response_2.from_cache is False
+    assert response_3.from_cache is True
+    assert response_3.expires is not None
+
+
+def test_request_refresh__prepared_request(mock_session):
+    """The refresh option should also work for PreparedRequests with CachedSession.send()"""
+    request = Request(method='GET', url=MOCKED_URL, headers={}, data=None).prepare()
+    response_1 = mock_session.send(request)
+    response_2 = mock_session.send(request, expire_after=360, refresh=True)
+    response_3 = mock_session.send(request)
+
+    assert response_1.from_cache is False
+    assert response_2.from_cache is False
+    assert response_3.from_cache is True
+    assert response_3.expires is not None
+
+
+def test_request_revalidate(mock_session):
+    """The revalidate option should immediately send a conditional request, if possible"""
+    response_1 = mock_session.get(MOCKED_URL_ETAG, expire_after=60)
+    response_2 = mock_session.get(MOCKED_URL_ETAG)
+    mock_session.mock_adapter.register_uri('GET', MOCKED_URL_ETAG, status_code=304)
+
+    response_3 = mock_session.get(MOCKED_URL_ETAG, revalidate=True, expire_after=60)
+    response_4 = mock_session.get(MOCKED_URL_ETAG)
+
+    assert response_1.from_cache is False
+    assert response_2.from_cache is True
+    assert response_3.from_cache is True
+
+    # Expect expiration to get reset after revalidation
+    assert response_2.expires < response_4.expires
+
+
+def test_request_revalidate__no_validator(mock_session):
+    """The revalidate option should have no effect if the cached response has no validator"""
+    response_1 = mock_session.get(MOCKED_URL, expire_after=60)
+    response_2 = mock_session.get(MOCKED_URL)
+    mock_session.mock_adapter.register_uri('GET', MOCKED_URL, status_code=304)
+
+    response_3 = mock_session.get(MOCKED_URL, revalidate=True, expire_after=60)
+    response_4 = mock_session.get(MOCKED_URL)
+
+    assert response_1.from_cache is False
+    assert response_2.from_cache is True
+    assert response_3.from_cache is True
+    assert response_2.expires == response_4.expires
+
+
+def test_request_revalidate__prepared_request(mock_session):
+    """The revalidate option should also work for PreparedRequests with CachedSession.send()"""
+    request = Request(method='GET', url=MOCKED_URL_ETAG, headers={}, data=None).prepare()
+    response_1 = mock_session.send(request, expire_after=60)
+    response_2 = mock_session.send(request)
+    mock_session.mock_adapter.register_uri('GET', MOCKED_URL_ETAG, status_code=304)
+
+    response_3 = mock_session.send(request, revalidate=True, expire_after=60)
+    response_4 = mock_session.send(request)
+
+    assert response_1.from_cache is False
+    assert response_2.from_cache is True
+    assert response_3.from_cache is True
+
+    # Expect expiration to get reset after revalidation
+    assert response_2.expires < response_4.expires
