@@ -15,10 +15,11 @@ from email.utils import parsedate_to_datetime
 from fnmatch import fnmatch
 from logging import getLogger
 from math import ceil
-from typing import TYPE_CHECKING, Any, Dict, Mapping, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Mapping, MutableMapping, Optional, Tuple, Union
 
 from attr import define, field
 from requests import PreparedRequest, Response
+from requests.models import CaseInsensitiveDict
 
 from ._utils import coalesce
 
@@ -152,6 +153,17 @@ class CacheActions:
         # Otherwise, skip writing to the cache if specified by expiration or other headers
         expire_immediately = try_int(self.expire_after) == DO_NOT_CACHE
         self.skip_write = (expire_immediately or no_store) and not has_validator
+
+
+def append_directive(
+    headers: Optional[MutableMapping[str, str]], directive: str
+) -> MutableMapping[str, str]:
+    """Append a Cache-Control directive to existing headers (if any)"""
+    headers = CaseInsensitiveDict(headers)
+    directives = headers['Cache-Control'].split(',') if headers.get('Cache-Control') else []
+    directives.append(directive)
+    headers['Cache-Control'] = ','.join(directives)
+    return headers
 
 
 def get_expiration_datetime(expire_after: ExpirationTime) -> Optional[datetime]:
