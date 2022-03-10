@@ -47,15 +47,17 @@ The following headers are currently supported:
 
 **Request headers:**
 - `Cache-Control: max-age`: Used as the expiration time in seconds
-- `Cache-Control: no-cache`: Skip reading from the cache
+- `Cache-Control: no-cache`: Revalidate with the server before using a cached response
 - `Cache-Control: no-store`: Skip reading from and writing to the cache
-- `If-None-Match`: Automatically added if an `ETag` is available
-- `If-Modified-Since`: Automatically added if `Last-Modified` is available
+- `If-None-Match`: Automatically added for revalidation, if an `ETag` is available
+- `If-Modified-Since`: Automatically added for revalidation, if `Last-Modified` is available
 
 **Response headers:**
 - `Cache-Control: max-age`: Used as the expiration time in seconds
+- `Cache-Control: must-revalidate`: When used in combination with `max-age=0`, revalidate immediately.
+- `Cache-Control: no-cache`: Revalidate with the server before using a cached response
 - `Cache-Control: no-store` Skip writing to the cache
 - `Cache-Control: immutable`: Cache the response with no expiration
-- `Expires`: Used as an absolute expiration time
-- `ETag`: Return expired cache data if the remote content has not changed (`304 Not Modified` response)
-- `Last-Modified`: Return expired cache data if the remote content has not changed (`304 Not Modified` response)
+- `Expires`: Used as an absolute expiration datetime
+- `ETag`: Used for revalidation; update and return stale cache data if the remote content has not changed (`304 Not Modified` response)
+- `Last-Modified`: Used for revalidation; update and return stale cache data if the remote content has not changed (`304 Not Modified` response)
