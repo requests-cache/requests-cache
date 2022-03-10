@@ -161,21 +161,21 @@ class BaseCache:
             yield key
 
     def remove_expired_responses(self, expire_after: ExpirationTime = None):
-        """Remove expired and invalid responses from the cache, optionally with revalidation
+        """Remove expired and invalid responses from the cache, and optionally reset expiration
 
         Args:
-            expire_after: A new expiration time used to revalidate the cache
+            expire_after: A new expiration time to set on existing cache items
         """
         logger.info(
             'Removing expired responses.'
-            + (f'Revalidating with: {expire_after}' if expire_after else '')
+            + (f'Resetting expiration with: {expire_after}' if expire_after else '')
         )
         keys_to_update = {}
         keys_to_delete = []
 
         for key, response in self._get_valid_responses(delete=True):
-            # If we're revalidating and it's not yet expired, update the cached item's expiration
-            if expire_after is not None and not response.revalidate(expire_after):
+            # If we're resetting expiration and it's not yet expired, update the cached item's expiration
+            if expire_after is not None and not response.reset_expiration(expire_after):
                 keys_to_update[key] = response
             if response.is_expired:
                 keys_to_delete.append(key)
@@ -184,7 +184,7 @@ class BaseCache:
         logger.debug(f'Deleting {len(keys_to_delete)} expired responses')
         self.bulk_delete(keys_to_delete)
         if expire_after is not None:
-            logger.debug(f'Updating {len(keys_to_update)} revalidated responses')
+            logger.debug(f'Updating {len(keys_to_update)} response expirations')
             for key, response in keys_to_update.items():
                 self.responses[key] = response
 

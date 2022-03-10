@@ -75,7 +75,7 @@ def test_iterator(mock_session):
         last_request_chunks = chunks
 
 
-def test_revalidate__extend_expiration(mock_session):
+def test_reset_expiration__extend_expiration(mock_session):
     # Start with an expired response
     response = CachedResponse.from_response(
         mock_session.get(MOCKED_URL),
@@ -83,14 +83,14 @@ def test_revalidate__extend_expiration(mock_session):
     )
     assert response.is_expired is True
 
-    # Set expiration in the future and revalidate
-    is_expired = response.revalidate(datetime.utcnow() + timedelta(seconds=0.01))
+    # Set expiration in the future
+    is_expired = response.reset_expiration(datetime.utcnow() + timedelta(seconds=0.01))
     assert is_expired is response.is_expired is False
     sleep(0.1)
     assert response.is_expired is True
 
 
-def test_revalidate__shorten_expiration(mock_session):
+def test_reset_expiration__shorten_expiration(mock_session):
     # Start with a non-expired response
     response = CachedResponse.from_response(
         mock_session.get(MOCKED_URL),
@@ -98,8 +98,8 @@ def test_revalidate__shorten_expiration(mock_session):
     )
     assert response.is_expired is False
 
-    # Set expiration in the past and revalidate
-    is_expired = response.revalidate(datetime.utcnow() - timedelta(seconds=1))
+    # Set expiration in the past
+    is_expired = response.reset_expiration(datetime.utcnow() - timedelta(seconds=1))
     assert is_expired is response.is_expired is True
 
 

@@ -680,7 +680,7 @@ def test_remove_expired_responses__extend_expiration(mock_session):
     mock_session.expire_after = datetime.utcnow() - timedelta(seconds=0.01)
     mock_session.get(MOCKED_URL)
 
-    # Set expiration in the future and revalidate
+    # Set expiration in the future
     mock_session.remove_expired_responses(expire_after=datetime.utcnow() + timedelta(seconds=1))
     assert len(mock_session.cache.responses) == 1
     response = mock_session.get(MOCKED_URL)
@@ -692,7 +692,7 @@ def test_remove_expired_responses__shorten_expiration(mock_session):
     mock_session.expire_after = datetime.utcnow() + timedelta(seconds=1)
     mock_session.get(MOCKED_URL)
 
-    # Set expiration in the past and revalidate
+    # Set expiration in the past
     mock_session.remove_expired_responses(expire_after=datetime.utcnow() - timedelta(seconds=0.01))
     assert len(mock_session.cache.responses) == 0
     response = mock_session.get(MOCKED_URL)
