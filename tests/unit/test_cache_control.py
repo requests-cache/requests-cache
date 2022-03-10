@@ -14,7 +14,6 @@ from requests_cache.models.response import CachedResponse
 from tests.conftest import ETAG, HTTPDATE_DATETIME, HTTPDATE_STR, LAST_MODIFIED
 
 IGNORED_DIRECTIVES = [
-    'must-revalidate',
     'no-transform',
     'private',
     'proxy-revalidate',
@@ -133,7 +132,7 @@ def test_init_from_settings(url, request_expire_after, expected_expiration):
         (True, {'Cache-Control': 'max-age=60'}, 1, 60, False),
         (True, {'Cache-Control': 'max-age=0'}, 1, 0, True),
         (True, {'Cache-Control': 'no-store'}, 1, 1, True),
-        (True, {'Cache-Control': 'no-cache'}, 1, 1, True),
+        (True, {'Cache-Control': 'no-cache'}, 1, 1, False),
         (True, {}, 1, 1, False),
         (True, {}, 0, 0, False),
     ],
@@ -172,10 +171,10 @@ def test_init_from_settings_and_headers(
     ],
 )
 def test_update_from_cached_response(response_headers, expected_validation_headers):
-    """Test that conditional request headers are added if the cached response is expired"""
+    """Conditional request headers should be added if the cached response is expired"""
     actions = CacheActions.from_request(
         cache_key='key',
-        request=MagicMock(url='https://img.site.com/base/img.jpg'),
+        request=MagicMock(url='https://img.site.com/base/img.jpg', headers={}),
     )
     cached_response = CachedResponse(
         headers=response_headers, expires=datetime.now() - timedelta(1)
@@ -183,13 +182,37 @@ def test_update_from_cached_response(response_headers, expected_validation_heade
 
     actions.update_from_cached_response(cached_response)
     assert actions.validation_headers == expected_validation_headers
+    assert actions.revalidate is True
+
+
+@pytest.mark.parametrize(
+    'request_headers, response_headers',
+    [
+        ({'Cache-Control': 'no-cache'}, {}),
+        ({}, {'Cache-Control': 'no-cache'}),
+        ({}, {'Cache-Control': 'max-age=0,must-revalidate'}),
+    ],
+)
+def test_update_from_cached_response__revalidate_headers(request_headers, response_headers):
+    """Conditional request headers should be added if requested by headers (even if the response
+    is not expired)"""
+    actions = CacheActions.from_request(
+        cache_key='key',
+        request=MagicMock(url='https://img.site.com/base/img.jpg', headers=request_headers),
+    )
+    cached_response = CachedResponse(headers={'ETag': ETAG, **response_headers}, expires=None)
+
+    actions.update_from_cached_response(cached_response)
+    assert actions.revalidate is True
+    assert actions.validation_headers == {'If-None-Match': ETAG}
 
 
 def test_update_from_cached_response__ignored():
-    """Test that conditional request headers are NOT applied if the cached response is not expired"""
+    """Conditional request headers should NOT be added if the cached response is not expired and
+    revalidation is not requested by headers"""
     actions = CacheActions.from_request(
         cache_key='key',
-        request=MagicMock(url='https://img.site.com/base/img.jpg'),
+        request=MagicMock(url='https://img.site.com/base/img.jpg', headers={}),
     )
     cached_response = CachedResponse(
         headers={'ETag': ETAG, 'Last-Modified': LAST_MODIFIED}, expires=None
@@ -197,6 +220,7 @@ def test_update_from_cached_response__ignored():
 
     actions.update_from_cached_response(cached_response)
     assert actions.validation_headers == {}
+    assert actions.revalidate is False
 
 
 @pytest.mark.parametrize(
@@ -271,6 +295,9 @@ def test_ignored_headers(directive):
         cache_control=True,
     )
     assert actions.expire_after == 1
+    assert actions.revalidate is False
+    assert actions.skip_read is False
+    assert actions.skip_write is False
 
 
 @patch('requests_cache.cache_control.datetime')
