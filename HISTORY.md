@@ -1,6 +1,15 @@
 # History
 
-## 0.9.3 (2022-02-22)
+## 0.10.0 (Unreleased)
+[See all issues and PRs for 0.10](https://github.com/reclosedev/requests-cache/milestone/5?closed=1)
+
+**Expiration & Headers:**
+* Add `refresh` option to `CachedSession.request()` and `send()` to make (and cache) an new request regardless of existing cache contents
+* Add `revalidate` option to `CachedSession.request()` and `send()` to send conditional request (if possible) before using a cached response
+* Revalidate for `Cache-Control: no-cache` request or response header
+* Revalidate for `Cache-Control: max-age=0, must-revalidate` response headers
+
+### 0.9.3 (2022-02-22)
 * Fix handling BSON serializer differences between pymongo's `bson` and standalone `bson` codec.
 * Handle `CorruptGridFile` error in GridFS backend
 * Fix cache path expansion for user directories (`~/...`) for SQLite and filesystem backends
@@ -12,13 +21,13 @@
     before it is read by a different thread
   * Fix multiple race conditions in GridFS backend
 
-## 0.9.2 (2022-02-15)
+### 0.9.2 (2022-02-15)
 * Fix serialization in filesystem backend with binary content that is also valid UTF-8
 * Fix some regression bugs introduced in 0.9.0:
   * Add support for `params` as a positional argument to `CachedSession.request()`
   * Add support for disabling expiration for a single request with `CachedSession.request(..., expire_after=-1)`
 
-## 0.9.1 (2022-01-15)
+### 0.9.1 (2022-01-15)
 * Add support for python 3.10.2 and 3.9.10 (regarding resolving `ForwardRef` types during deserialization)
 * Add support for key-only request parameters (regarding hashing request data for cache key creation)
 * Reduce verbosity of log messages when encountering an invalid JSON request body
@@ -53,7 +62,7 @@
 * Fix license metadata as shown on PyPI
 * Fix `CachedResponse` serialization behavior when using stdlib `pickle` in a custom serializer
 
-## 0.8.1 (2021-09-15)
+### 0.8.1 (2021-09-15)
 * Redact `ingored_parameters` from `CachedResponse.url` (if used for credentials or other sensitive info)
 * Fix an incorrect debug log message about skipping cache write
 * Add some additional aliases for `DbDict`, etc. so fully qualified imports don't break
@@ -248,8 +257,9 @@ Thanks to [Code Shelter](https://www.codeshelter.co) and [contributors](https://
 * Make default table names consistent across backends (`'http_cache'`)
 
 **Expiration:**
-* Cached responses are now stored with an absolute expiration time, so `CachedSession.expire_after` no longer applies retroactively. To revalidate previously cached items with a new expiration time see below:
-* Add support for overriding original expiration (i.e., revalidating) in `CachedSession.remove_expired_responses()`
+* Cached responses are now stored with an absolute expiration time, so `CachedSession.expire_after`
+  no longer applies retroactively. To reset expiration for previously cached items, see below:
+* Add support for overriding original expiration in `CachedSession.remove_expired_responses()`
 * Add support for setting expiration for individual requests
 * Add support for setting expiration based on URL glob patterns
 * Add support for setting expiration as a `datetime`

@@ -1,5 +1,4 @@
-"""CachedSession + BaseCache tests that use mocked responses only"""
-# TODO: This could be split up into some smaller test modules
+"""CachedSession tests that use mocked responses only"""
 import json
 import time
 from collections import UserDict, defaultdict
@@ -14,7 +13,7 @@ import requests
 from requests import Request, RequestException
 from requests.structures import CaseInsensitiveDict
 
-from requests_cache import ALL_METHODS, CachedResponse, CachedSession
+from requests_cache import ALL_METHODS, CachedSession
 from requests_cache._utils import get_placeholder_class
 from requests_cache.backends import BACKEND_CLASSES, BaseCache, SQLiteDict, SQLitePickleDict
 from requests_cache.backends.base import DESERIALIZE_ERRORS
@@ -22,13 +21,12 @@ from requests_cache.cache_keys import create_key
 from tests.conftest import (
     MOCKED_URL,
     MOCKED_URL_404,
+    MOCKED_URL_ETAG,
     MOCKED_URL_HTTPS,
     MOCKED_URL_JSON,
     MOCKED_URL_REDIRECT,
     MOCKED_URL_REDIRECT_TARGET,
 )
-
-YESTERDAY = datetime.utcnow() - timedelta(days=1)
 
 
 def test_init_unregistered_backend():
@@ -50,6 +48,10 @@ def test_init_missing_backend_dependency():
 
 class MyCache(BaseCache):
     pass
+
+
+# Basic initialization
+# -----------------------------------------------------
 
 
 def test_init_backend_instance():
@@ -76,6 +78,44 @@ def test_init_backend_class():
     session = CachedSession('test_cache', backend=MyCache)
     assert isinstance(session.cache, MyCache)
     assert session.cache.cache_name == 'test_cache'
+
+
+def test_repr(mock_session):
+    """Test session and cache string representations"""
+    mock_session.expire_after = 11
+    mock_session.cache.responses['key'] = 'value'
+    mock_session.cache.redirects['key'] = 'value'
+    mock_session.cache.redirects['key_2'] = 'value'
+
+    assert mock_session.cache.cache_name in repr(mock_session) and '11' in repr(mock_session)
+    assert '2 redirects' in str(mock_session.cache) and '1 responses' in str(mock_session.cache)
+
+
+def test_response_defaults(mock_session):
+    """Both cached and new responses should always have the following attributes"""
+    mock_session.expire_after = datetime.utcnow() + timedelta(days=1)
+    response_1 = mock_session.get(MOCKED_URL)
+    response_2 = mock_session.get(MOCKED_URL)
+    response_3 = mock_session.get(MOCKED_URL)
+    cache_key = 'd7fa9fb7317b7412'
+
+    assert response_1.cache_key == cache_key
+    assert response_1.created_at is None
+    assert response_1.expires is None
+    assert response_1.from_cache is False
+    assert response_1.is_expired is False
+
+    assert isinstance(response_2.created_at, datetime)
+    assert isinstance(response_2.expires, datetime)
+    assert response_2.cache_key == cache_key
+    assert response_2.created_at == response_3.created_at
+    assert response_2.expires == response_3.expires
+    assert response_2.from_cache is response_3.from_cache is True
+    assert response_2.is_expired is response_3.is_expired is False
+
+
+# Main combinations of request methods and data fields
+# -----------------------------------------------------
 
 
 @pytest.mark.parametrize('method', ALL_METHODS)
@@ -125,6 +165,10 @@ def test_all_methods__ignored_parameters__redacted(field, method, mock_session):
     assert 'access_token' not in cached_response.request.body.decode('utf-8')
 
 
+# Variations of relevant request arguments
+# -----------------------------------------------------
+
+
 def test_params_positional_arg(mock_session):
     mock_session.request('GET', MOCKED_URL, {'param_1': 1})
     response = mock_session.request('GET', MOCKED_URL, {'param_1': 1})
@@ -158,17 +202,6 @@ def test_response_history(mock_session):
     assert len(mock_session.cache.redirects) == 1
 
 
-def test_repr(mock_session):
-    """Test session and cache string representations"""
-    mock_session.expire_after = 11
-    mock_session.cache.responses['key'] = 'value'
-    mock_session.cache.redirects['key'] = 'value'
-    mock_session.cache.redirects['key_2'] = 'value'
-
-    assert mock_session.cache.cache_name in repr(mock_session) and '11' in repr(mock_session)
-    assert '2 redirects' in str(mock_session.cache) and '1 responses' in str(mock_session.cache)
-
-
 def test_urls(mock_session):
     for url in [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_HTTPS]:
         mock_session.get(url)
@@ -177,124 +210,8 @@ def test_urls(mock_session):
     assert set(mock_session.cache.urls) == set(expected_urls)
 
 
-def test_urls__with_invalid_response(mock_session):
-    responses = [mock_session.get(url) for url in [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_HTTPS]]
-    responses[2] = AttributeError
-    with patch.object(SQLitePickleDict, '__getitem__', side_effect=responses):
-        expected_urls = [MOCKED_URL, MOCKED_URL_JSON]
-        assert set(mock_session.cache.urls) == set(expected_urls)
-
-    # The invalid response should be skipped, but remain in the cache for now
-    assert len(mock_session.cache.responses.keys()) == 3
-
-
-def test_keys(mock_session):
-    for url in [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_REDIRECT]:
-        mock_session.get(url)
-
-    all_keys = set(mock_session.cache.responses.keys()) | set(mock_session.cache.redirects.keys())
-    assert set(mock_session.cache.keys()) == all_keys
-
-
-def test_update(mock_session):
-    src_cache = BaseCache()
-    for i in range(20):
-        src_cache.responses[f'key_{i}'] = f'value_{i}'
-        src_cache.redirects[f'key_{i}'] = f'value_{i}'
-
-    mock_session.cache.update(src_cache)
-    assert len(mock_session.cache.responses) == 20
-    assert len(mock_session.cache.redirects) == 20
-
-
-def test_values(mock_session):
-    for url in [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_HTTPS]:
-        mock_session.get(url)
-
-    responses = list(mock_session.cache.values())
-    assert len(responses) == 3
-    assert all([isinstance(response, CachedResponse) for response in responses])
-
-
-@pytest.mark.parametrize('check_expiry, expected_count', [(True, 1), (False, 2)])
-def test_values__with_invalid_responses(check_expiry, expected_count, mock_session):
-    """values() should always exclude invalid responses, and optionally exclude expired responses"""
-    responses = [mock_session.get(url) for url in [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_HTTPS]]
-    responses[1] = AttributeError
-    responses[2] = CachedResponse(expires=YESTERDAY, url='test')
-
-    with patch.object(SQLitePickleDict, '__getitem__', side_effect=responses):
-        values = mock_session.cache.values(check_expiry=check_expiry)
-        assert len(list(values)) == expected_count
-
-    # The invalid response should be skipped, but remain in the cache for now
-    assert len(mock_session.cache.responses.keys()) == 3
-
-
-class TimeBomb:
-    """Class that will raise an error when unpickled"""
-
-    def __init__(self):
-        self.foo = 'bar'
-
-    def __setstate__(self, value):
-        raise ValueError('Invalid response!')
-
-
-@pytest.mark.parametrize('check_expiry, expected_count', [(True, 2), (False, 3)])
-def test_response_count(check_expiry, expected_count, mock_session):
-    """response_count() should always exclude invalid responses, and optionally exclude expired responses"""
-    mock_session.get(MOCKED_URL)
-    mock_session.get(MOCKED_URL_JSON)
-
-    mock_session.cache.responses['expired_response'] = CachedResponse(expires=YESTERDAY)
-    mock_session.cache.responses['invalid_response'] = TimeBomb()
-    assert mock_session.cache.response_count(check_expiry=check_expiry) == expected_count
-
-
-def test_filter_fn(mock_session):
-    mock_session.filter_fn = lambda r: r.request.url != MOCKED_URL_JSON
-    mock_session.get(MOCKED_URL)
-    mock_session.get(MOCKED_URL_JSON)
-
-    assert mock_session.cache.has_url(MOCKED_URL)
-    assert not mock_session.cache.has_url(MOCKED_URL_JSON)
-
-
-def test_filter_fn__retroactive(mock_session):
-    """filter_fn should also apply to previously cached responses"""
-    mock_session.get(MOCKED_URL_JSON)
-    mock_session.filter_fn = lambda r: r.request.url != MOCKED_URL_JSON
-    mock_session.get(MOCKED_URL_JSON)
-
-    assert not mock_session.cache.has_url(MOCKED_URL_JSON)
-
-
-# def test_key_fn(mock_session):
-#     def create_key(request, **kwargs):
-#         """Create a key based on only the request URL (without params)"""
-#         return request.url.split('?')[0]
-
-#     mock_session.cache.key_fn = create_key
-#     mock_session.get(MOCKED_URL)
-#     response = mock_session.get(MOCKED_URL, params={'k': 'v'})
-#     assert response.from_cache is True
-
-
-def test_hooks(mock_session):
-    state = defaultdict(int)
-    mock_session.get(MOCKED_URL)
-
-    for hook in ('response',):
-
-        def hook_func(r, *args, **kwargs):
-            state[hook] += 1
-            assert r.from_cache is True
-            return r
-
-        for i in range(5):
-            mock_session.get(MOCKED_URL, hooks={hook: hook_func})
-        assert state[hook] == 5
+# Request matching
+# -----------------------------------------------------
 
 
 @pytest.mark.parametrize('method', ['POST', 'PUT'])
@@ -378,95 +295,6 @@ def test_normalize_params__url(mock_session):
     assert len(set(keys)) == 1
 
 
-def test_clear(mock_session):
-    mock_session.get(MOCKED_URL)
-    mock_session.get(MOCKED_URL_REDIRECT)
-    mock_session.cache.clear()
-    assert not mock_session.cache.has_url(MOCKED_URL)
-    assert not mock_session.cache.has_url(MOCKED_URL_REDIRECT)
-
-
-def test_has_url(mock_session):
-    mock_session.get(MOCKED_URL)
-    assert mock_session.cache.has_url(MOCKED_URL)
-    assert not mock_session.cache.has_url(MOCKED_URL_REDIRECT)
-
-
-def test_has_url__request_args(mock_session):
-    mock_session.get(MOCKED_URL, params={'foo': 'bar'})
-    assert mock_session.cache.has_url(MOCKED_URL, params={'foo': 'bar'})
-    assert not mock_session.cache.has_url(MOCKED_URL)
-
-
-def test_delete_url(mock_session):
-    mock_session.get(MOCKED_URL)
-    mock_session.cache.delete_url(MOCKED_URL)
-    assert not mock_session.cache.has_url(MOCKED_URL)
-
-
-def test_delete_url__request_args(mock_session):
-    mock_session.get(MOCKED_URL, params={'foo': 'bar'})
-    mock_session.cache.delete_url(MOCKED_URL, params={'foo': 'bar'})
-    assert not mock_session.cache.has_url(MOCKED_URL, params={'foo': 'bar'})
-
-
-def test_delete_url__nonexistent_response(mock_session):
-    """Deleting a response that was either already deleted (or never added) should fail silently"""
-    mock_session.cache.delete_url(MOCKED_URL)
-
-    mock_session.get(MOCKED_URL)
-    mock_session.cache.delete_url(MOCKED_URL)
-    assert not mock_session.cache.has_url(MOCKED_URL)
-    mock_session.cache.delete_url(MOCKED_URL)  # Should fail silently
-
-
-def test_delete_url__redirect(mock_session):
-    mock_session.get(MOCKED_URL_REDIRECT)
-    assert mock_session.cache.has_url(MOCKED_URL_REDIRECT)
-
-    mock_session.cache.delete_url(MOCKED_URL_REDIRECT)
-    assert not mock_session.cache.has_url(MOCKED_URL_REDIRECT)
-
-
-def test_delete_urls(mock_session):
-    urls = [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_REDIRECT]
-    for url in urls:
-        mock_session.get(url)
-
-    mock_session.cache.delete_urls(urls)
-    for url in urls:
-        assert not mock_session.cache.has_url(MOCKED_URL_REDIRECT)
-
-
-def test_save_response_manual(mock_session):
-    response = mock_session.get(MOCKED_URL)
-    mock_session.cache.clear()
-    mock_session.cache.save_response(response)
-
-
-def test_response_defaults(mock_session):
-    """Both cached and new responses should always have the following attributes"""
-    mock_session.expire_after = datetime.utcnow() + timedelta(days=1)
-    response_1 = mock_session.get(MOCKED_URL)
-    response_2 = mock_session.get(MOCKED_URL)
-    response_3 = mock_session.get(MOCKED_URL)
-    cache_key = 'd7fa9fb7317b7412'
-
-    assert response_1.cache_key == cache_key
-    assert response_1.created_at is None
-    assert response_1.expires is None
-    assert response_1.from_cache is False
-    assert response_1.is_expired is False
-
-    assert isinstance(response_2.created_at, datetime)
-    assert isinstance(response_2.expires, datetime)
-    assert response_2.cache_key == cache_key
-    assert response_2.created_at == response_3.created_at
-    assert response_2.expires == response_3.expires
-    assert response_2.from_cache is response_3.from_cache is True
-    assert response_2.is_expired is response_3.is_expired is False
-
-
 def test_match_headers(mock_session):
     """With match_headers, requests with different headers should have different cache keys"""
     mock_session.cache.match_headers = True
@@ -507,6 +335,10 @@ def test_include_get_headers():
     """include_get_headers is aliased to match_headers for backwards-compatibility"""
     session = CachedSession(include_get_headers=True, backend='memory')
     assert session.cache.match_headers is True
+
+
+# Error handling
+# -----------------------------------------------------
 
 
 @pytest.mark.parametrize('exception_cls', DESERIALIZE_ERRORS)
@@ -579,6 +411,69 @@ def test_cache_disabled__nested(mock_session):
             for i in range(2):
                 assert mock_session.get(MOCKED_URL).from_cache is False
     assert mock_session.get(MOCKED_URL).from_cache is True
+
+
+def test_unpickle_errors(mock_session):
+    """If there is an error during deserialization, the request should be made again"""
+    assert mock_session.get(MOCKED_URL_JSON).from_cache is False
+
+    with patch.object(SQLitePickleDict, '__getitem__', side_effect=PickleError):
+        resp = mock_session.get(MOCKED_URL_JSON)
+        assert resp.from_cache is False
+        assert resp.json()['message'] == 'mock json response'
+
+    resp = mock_session.get(MOCKED_URL_JSON)
+    assert resp.from_cache is True
+    assert resp.json()['message'] == 'mock json response'
+
+
+# Additional CachedSession settings and methods
+# -----------------------------------------------------
+
+
+def test_filter_fn(mock_session):
+    mock_session.filter_fn = lambda r: r.request.url != MOCKED_URL_JSON
+    mock_session.get(MOCKED_URL)
+    mock_session.get(MOCKED_URL_JSON)
+
+    assert mock_session.cache.has_url(MOCKED_URL)
+    assert not mock_session.cache.has_url(MOCKED_URL_JSON)
+
+
+def test_filter_fn__retroactive(mock_session):
+    """filter_fn should also apply to previously cached responses"""
+    mock_session.get(MOCKED_URL_JSON)
+    mock_session.filter_fn = lambda r: r.request.url != MOCKED_URL_JSON
+    mock_session.get(MOCKED_URL_JSON)
+
+    assert not mock_session.cache.has_url(MOCKED_URL_JSON)
+
+
+def test_key_fn(mock_session):
+    def create_key(request, **kwargs):
+        """Create a key based on only the request URL (without params)"""
+        return request.url.split('?')[0]
+
+    mock_session.cache.key_fn = create_key
+    mock_session.get(MOCKED_URL)
+    response = mock_session.get(MOCKED_URL, params={'k': 'v'})
+    assert response.from_cache is True
+
+
+def test_hooks(mock_session):
+    state = defaultdict(int)
+    mock_session.get(MOCKED_URL)
+
+    for hook in ('response',):
+
+        def hook_func(r, *args, **kwargs):
+            state[hook] += 1
+            assert r.from_cache is True
+            return r
+
+        for i in range(5):
+            mock_session.get(MOCKED_URL, hooks={hook: hook_func})
+        assert state[hook] == 5
 
 
 def test_do_not_cache(mock_session):
@@ -680,7 +575,7 @@ def test_remove_expired_responses__extend_expiration(mock_session):
     mock_session.expire_after = datetime.utcnow() - timedelta(seconds=0.01)
     mock_session.get(MOCKED_URL)
 
-    # Set expiration in the future and revalidate
+    # Set expiration in the future
     mock_session.remove_expired_responses(expire_after=datetime.utcnow() + timedelta(seconds=1))
     assert len(mock_session.cache.responses) == 1
     response = mock_session.get(MOCKED_URL)
@@ -692,7 +587,7 @@ def test_remove_expired_responses__shorten_expiration(mock_session):
     mock_session.expire_after = datetime.utcnow() + timedelta(seconds=1)
     mock_session.get(MOCKED_URL)
 
-    # Set expiration in the past and revalidate
+    # Set expiration in the past
     mock_session.remove_expired_responses(expire_after=datetime.utcnow() - timedelta(seconds=0.01))
     assert len(mock_session.cache.responses) == 0
     response = mock_session.get(MOCKED_URL)
@@ -724,7 +619,11 @@ def test_remove_expired_responses__per_request(mock_session):
     assert len(mock_session.cache.responses) == 1
 
 
-def test_per_request__enable_expiration(mock_session):
+# Additional request() and send() options
+# -----------------------------------------------------
+
+
+def test_request_expire_after__enable_expiration(mock_session):
     """No per-session expiration is set, but then overridden for a single request"""
     mock_session.expire_after = None
     response = mock_session.get(MOCKED_URL, expire_after=1)
@@ -736,7 +635,7 @@ def test_per_request__enable_expiration(mock_session):
     assert response.from_cache is False
 
 
-def test_per_request__disable_expiration(mock_session):
+def test_request_expire_after__disable_expiration(mock_session):
     """A per-session expiration is set, but then disabled for a single request"""
     mock_session.expire_after = 60
     response = mock_session.get(MOCKED_URL, expire_after=-1)
@@ -745,8 +644,8 @@ def test_per_request__disable_expiration(mock_session):
     assert response.expires is None
 
 
-def test_per_request__prepared_request(mock_session):
-    """The same should work for PreparedRequests with CachedSession.send()"""
+def test_request_expire_after__prepared_request(mock_session):
+    """Pre-request expiration should also work for PreparedRequests with CachedSession.send()"""
     mock_session.expire_after = None
     request = Request(method='GET', url=MOCKED_URL, headers={}, data=None).prepare()
     response = mock_session.send(request, expire_after=1)
@@ -758,23 +657,77 @@ def test_per_request__prepared_request(mock_session):
     assert response.from_cache is False
 
 
-def test_per_request__no_expiration(mock_session):
-    """A per-session expiration is set, but then overridden with no per-request expiration"""
-    mock_session.expire_after = 1
-    response = mock_session.get(MOCKED_URL, expire_after=-1)
-    assert response.from_cache is False
-    assert response.expires is None
+def test_request_refresh(mock_session):
+    """The refresh option should send and cache a new request. Any expire_after value provided
+    should overwrite the previous value."""
+    response_1 = mock_session.get(MOCKED_URL, expire_after=-1)
+    response_2 = mock_session.get(MOCKED_URL, expire_after=360, refresh=True)
+    response_3 = mock_session.get(MOCKED_URL)
+
+    assert response_1.from_cache is False
+    assert response_2.from_cache is False
+    assert response_3.from_cache is True
+    assert response_3.expires is not None
 
 
-def test_unpickle_errors(mock_session):
-    """If there is an error during deserialization, the request should be made again"""
-    assert mock_session.get(MOCKED_URL_JSON).from_cache is False
+def test_request_refresh__prepared_request(mock_session):
+    """The refresh option should also work for PreparedRequests with CachedSession.send()"""
+    request = Request(method='GET', url=MOCKED_URL, headers={}, data=None).prepare()
+    response_1 = mock_session.send(request)
+    response_2 = mock_session.send(request, expire_after=360, refresh=True)
+    response_3 = mock_session.send(request)
 
-    with patch.object(SQLitePickleDict, '__getitem__', side_effect=PickleError):
-        resp = mock_session.get(MOCKED_URL_JSON)
-        assert resp.from_cache is False
-        assert resp.json()['message'] == 'mock json response'
+    assert response_1.from_cache is False
+    assert response_2.from_cache is False
+    assert response_3.from_cache is True
+    assert response_3.expires is not None
 
-    resp = mock_session.get(MOCKED_URL_JSON)
-    assert resp.from_cache is True
-    assert resp.json()['message'] == 'mock json response'
+
+def test_request_revalidate(mock_session):
+    """The revalidate option should immediately send a conditional request, if possible"""
+    response_1 = mock_session.get(MOCKED_URL_ETAG, expire_after=60)
+    response_2 = mock_session.get(MOCKED_URL_ETAG)
+    mock_session.mock_adapter.register_uri('GET', MOCKED_URL_ETAG, status_code=304)
+
+    response_3 = mock_session.get(MOCKED_URL_ETAG, revalidate=True, expire_after=60)
+    response_4 = mock_session.get(MOCKED_URL_ETAG)
+
+    assert response_1.from_cache is False
+    assert response_2.from_cache is True
+    assert response_3.from_cache is True
+
+    # Expect expiration to get reset after revalidation
+    assert response_2.expires < response_4.expires
+
+
+def test_request_revalidate__no_validator(mock_session):
+    """The revalidate option should have no effect if the cached response has no validator"""
+    response_1 = mock_session.get(MOCKED_URL, expire_after=60)
+    response_2 = mock_session.get(MOCKED_URL)
+    mock_session.mock_adapter.register_uri('GET', MOCKED_URL, status_code=304)
+
+    response_3 = mock_session.get(MOCKED_URL, revalidate=True, expire_after=60)
+    response_4 = mock_session.get(MOCKED_URL)
+
+    assert response_1.from_cache is False
+    assert response_2.from_cache is True
+    assert response_3.from_cache is True
+    assert response_2.expires == response_4.expires
+
+
+def test_request_revalidate__prepared_request(mock_session):
+    """The revalidate option should also work for PreparedRequests with CachedSession.send()"""
+    request = Request(method='GET', url=MOCKED_URL_ETAG, headers={}, data=None).prepare()
+    response_1 = mock_session.send(request, expire_after=60)
+    response_2 = mock_session.send(request)
+    mock_session.mock_adapter.register_uri('GET', MOCKED_URL_ETAG, status_code=304)
+
+    response_3 = mock_session.send(request, revalidate=True, expire_after=60)
+    response_4 = mock_session.send(request)
+
+    assert response_1.from_cache is False
+    assert response_2.from_cache is True
+    assert response_3.from_cache is True
+
+    # Expect expiration to get reset after revalidation
+    assert response_2.expires < response_4.expires

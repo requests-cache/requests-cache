@@ -7,7 +7,6 @@ from requests_cache.backends import BaseStorage
 from tests.conftest import CACHE_NAME
 
 
-# TODO: Parameterize tests for all serializers?
 class BaseStorageTest:
     """Base class for testing cache storage dict-like interfaces"""
 

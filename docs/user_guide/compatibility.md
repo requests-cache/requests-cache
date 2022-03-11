@@ -1,4 +1,3 @@
-<!-- TODO: Fix relative links -->
 (compatibility)=
 # {fa}`plus-square` Usage with other requests-based libraries
 This library works by patching and/or extending {py:class}`requests.Session`. Many other libraries

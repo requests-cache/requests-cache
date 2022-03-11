@@ -124,10 +124,10 @@ def clear():
 
 
 def remove_expired_responses(expire_after: ExpirationTime = None):
-    """Remove expired responses from the cache, optionally with revalidation
+    """Remove expired responses from the cache, and optionally reset expiration
 
     Args:
-        expire_after: A new expiration time used to revalidate the cache
+        expire_after: A new expiration time to set on existing cache items
     """
     session = requests.Session()
     if isinstance(session, CachedSession):

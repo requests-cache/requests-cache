@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "requests-cache"
-version = "0.9.3"
+version = "0.10.0"
 description = "A transparent persistent cache for the requests library"
 authors = ["Roman Haritonov"]
 maintainers = ["Jordan Cook"]
@@ -144,3 +144,6 @@ skip = [
     'tests/compat/',
 ]
 known_first_party = ['tests']
+
+[tool.mypy]
+ignore_missing_imports = true

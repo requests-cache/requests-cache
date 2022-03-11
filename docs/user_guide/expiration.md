@@ -113,8 +113,7 @@ Or, when using patching:
 >>> requests_cache.remove_expired_responses()
 ```
 
-You can also apply a different `expire_after` to previously cached responses, which will
-revalidate the cache with the new expiration time:
+You can also apply a new `expire_after` value to previously cached responses:
 ```python
 >>> session.remove_expired_responses(expire_after=timedelta(days=30))
 ```

@@ -16,7 +16,7 @@
 from contextlib import contextmanager
 from logging import getLogger
 from threading import RLock
-from typing import TYPE_CHECKING, Callable, Dict, Iterable, Optional
+from typing import TYPE_CHECKING, Callable, Dict, Iterable, MutableMapping, Optional
 
 from requests import PreparedRequest, Response
 from requests import Session as OriginalSession
@@ -25,7 +25,7 @@ from urllib3 import filepost
 
 from ._utils import get_valid_kwargs
 from .backends import BackendSpecifier, init_backend
-from .cache_control import CacheActions, ExpirationTime, get_expiration_seconds
+from .cache_control import CacheActions, ExpirationTime, append_directive, get_expiration_seconds
 from .models import AnyResponse, CachedResponse, set_response_defaults
 
 __all__ = ['ALL_METHODS', 'CachedSession', 'CacheMixin']
@@ -73,18 +73,21 @@ class CacheMixin(MIXIN_BASE):
         session_kwargs = get_valid_kwargs(super().__init__, kwargs)
         super().__init__(**session_kwargs)  # type: ignore
 
-    def request(  # type: ignore  # Note: An extra param (expire_after) is added here
+    def request(  # type: ignore
         self,
         method: str,
         url: str,
         *args,
         expire_after: ExpirationTime = None,
+        headers: MutableMapping[str, str] = None,
+        refresh: bool = False,
+        revalidate: bool = False,
         **kwargs,
     ) -> AnyResponse:
         """This method prepares and sends a request while automatically performing any necessary
         caching operations. This will be called by any other method-specific ``requests`` functions
-        (get, post, etc.). This does not include prepared requests, which will still be cached via
-        ``send()``.
+        (get, post, etc.). This is not used by :py:class:`~requests.PreparedRequest` objects, which
+        are handled by :py:meth:`send()`.
 
         See :py:meth:`requests.Session.request` for parameters. Additional parameters:
 
@@ -92,6 +95,8 @@ class CacheMixin(MIXIN_BASE):
             expire_after: Expiration time to set only for this request; see details below.
                 Overrides ``CachedSession.expire_after``. Accepts all the same values as
                 ``CachedSession.expire_after``. Use ``-1`` to disable expiration.
+            refresh: Always make a new request, and overwrite any previously cached response
+            revalidate: Revalidate with the server before using a cached response (e.g., a "soft refresh")
 
         Returns:
             Either a new or cached response
@@ -106,22 +111,34 @@ class CacheMixin(MIXIN_BASE):
         6. :py:meth:`requests.Session.send` (if not previously cached)
         7. :py:meth:`.BaseCache.save_response` (if not previously cached)
         """
-        # If present, set per-request expiration as a request header, to be handled in send()
+        # Set extra options as headers to be handled in send(), since we can't pass args directly
+        headers = headers or {}
         if expire_after is not None:
-            kwargs.setdefault('headers', {})
-            kwargs['headers']['Cache-Control'] = f'max-age={get_expiration_seconds(expire_after)}'
+            headers = append_directive(headers, f'max-age={get_expiration_seconds(expire_after)}')
+        if revalidate:
+            headers = append_directive(headers, 'no-cache')
+        if refresh:
+            headers['requests-cache-refresh'] = 'true'
+        kwargs['headers'] = headers
 
         with patch_form_boundary(**kwargs):
             return super().request(method, url, *args, **kwargs)
 
     def send(
-        self, request: PreparedRequest, expire_after: ExpirationTime = None, **kwargs
+        self,
+        request: PreparedRequest,
+        expire_after: ExpirationTime = None,
+        refresh: bool = False,
+        revalidate: bool = False,
+        **kwargs,
     ) -> AnyResponse:
         """Send a prepared request, with caching. See :py:meth:`.request` for notes on behavior, and
         see :py:meth:`requests.Session.send` for parameters. Additional parameters:
 
         Args:
             expire_after: Expiration time to set only for this request
+            refresh: Always make a new request, and overwrite any previously cached response
+            revalidate: Revalidate with the server before using a cached response (e.g., a "soft refresh")
         """
         # Determine which actions to take based on request info and cache settings
         cache_key = self.cache.create_key(request, **kwargs)
@@ -132,6 +149,8 @@ class CacheMixin(MIXIN_BASE):
             session_expire_after=self.expire_after,
             urls_expire_after=self.urls_expire_after,
             cache_control=self.cache_control,
+            refresh=refresh,
+            revalidate=revalidate,
             **kwargs,
         )
 
@@ -143,8 +162,8 @@ class CacheMixin(MIXIN_BASE):
         is_expired = getattr(cached_response, 'is_expired', False)
 
         # If the response is expired or missing, or the cache is disabled, then fetch a new response
-        if cached_response is None:
-            response = self._send_and_cache(request, actions, **kwargs)
+        if cached_response is None or actions.revalidate:
+            response = self._send_and_cache(request, actions, cached_response, **kwargs)
         elif is_expired and self.stale_if_error:
             response = self._resend_and_ignore(request, actions, cached_response, **kwargs)
         elif is_expired:
@@ -185,7 +204,8 @@ class CacheMixin(MIXIN_BASE):
         If applicable, also add headers to make a conditional request. If we get a 304 Not Modified
         response, return the stale cache item.
         """
-        request.headers.update(actions.validation_headers)
+        if actions.revalidate:
+            request.headers.update(actions.validation_headers)
         response = super().send(request, **kwargs)
         actions.update_from_response(response)
 

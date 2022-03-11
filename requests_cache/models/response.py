@@ -111,7 +111,7 @@ class CachedResponse(Response):
         """Returns a PreparedRequest for the next request in a redirect chain, if there is one."""
         return self._next.prepare() if self._next else None
 
-    def revalidate(self, expire_after: ExpirationTime) -> bool:
+    def reset_expiration(self, expire_after: ExpirationTime) -> bool:
         """Set a new expiration for this response, and determine if it is now expired"""
         self.expires = get_expiration_datetime(expire_after)
         return self.is_expired
