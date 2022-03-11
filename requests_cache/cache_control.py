@@ -1,5 +1,6 @@
 """Internal utilities for determining cache expiration and other cache actions. This module defines
-the caching policy, and resulting actions are applied in the :py:mod:`requests_cache.session` module.
+the majority of the caching policy, and resulting actions are handled in
+:py:meth:`CachedSession.send`.
 
 .. automodsumm:: requests_cache.cache_control
    :classes-only:
@@ -65,6 +66,7 @@ class CacheActions:
     cache_control: bool = field(default=False)
     cache_key: str = field(default=None)
     expire_after: ExpirationTime = field(default=None)
+    only_if_cached: bool = field(default=False)
     request_directives: Dict[str, CacheDirective] = field(factory=dict)
     revalidate: bool = field(default=False)
     skip_read: bool = field(default=False)
@@ -80,6 +82,7 @@ class CacheActions:
         session_expire_after: ExpirationTime = None,
         urls_expire_after: ExpirationPatterns = None,
         request_expire_after: ExpirationTime = None,
+        only_if_cached: bool = False,
         refresh: bool = False,
         revalidate: bool = False,
         **kwargs,
@@ -107,17 +110,22 @@ class CacheActions:
         )
 
         # Check conditions for cache read and write based on args and request headers
-        check_expiration = directives.get('max-age') if cache_control else expire_after
         refresh_temp_header = request.headers.pop('requests-cache-refresh', False)
+        check_expiration = directives.get('max-age') if cache_control else expire_after
         skip_write = check_expiration == DO_NOT_CACHE or 'no-store' in directives
+
+        # These behaviors may be set by either request headers or keyword arguments
+        only_if_cached = only_if_cached or 'only-if-cached' in directives
+        revalidate = revalidate or 'no-cache' in directives
         skip_read = skip_write or refresh or bool(refresh_temp_header)
 
         return cls(
             cache_control=cache_control,
             cache_key=cache_key,
             expire_after=expire_after,
+            only_if_cached=only_if_cached,
             request_directives=directives,
-            revalidate=revalidate or 'no-cache' in directives,
+            revalidate=revalidate,
             skip_read=skip_read,
             skip_write=skip_write,
         )
@@ -230,6 +238,17 @@ def get_cache_directives(headers: MutableMapping) -> Dict[str, CacheDirective]:
     if 'Expires' in headers:
         kv_directives['expires'] = headers['Expires']
     return kv_directives
+
+
+def get_504_response(request: PreparedRequest) -> Response:
+    from .models import CachedResponse
+
+    return CachedResponse(
+        url=request.url or '',
+        status_code=504,
+        reason='Not Cached',
+        request=request,  # type: ignore
+    )
 
 
 def get_url_expiration(

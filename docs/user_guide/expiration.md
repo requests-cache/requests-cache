@@ -117,3 +117,57 @@ You can also apply a new `expire_after` value to previously cached responses:
 ```python
 >>> session.remove_expired_responses(expire_after=timedelta(days=30))
 ```
+
+## Request Options
+In addition to the base arguments for {py:func}`requests.request`, requests-cache adds some extra
+cache-related arguments. These apply to {py:meth}`.CachedSession.request`,
+{py:meth}`.CachedSession.send`, and all HTTP method-specific functions (`get()`, `post()`, etc.).
+
+### Per-Request Expiration
+The `expire_after` argument can be used to override the session's expiration for a single request.
+```python
+>>> session = CachedSession(expire_after=300)
+>>> # This request will be cached for 60 seconds, not 300
+>>> session.get('http://httpbin.org/get', expire_after=60)
+```
+
+### Manual Refresh
+If you want to manually refresh a response before it expires, you can use the `refresh` argument.
+This will always send a new request, and ignore and overwrite any previously cached response. The
+response will be saved with a new expiration time, according to the normal expiration rules described above.
+```python
+>>> response = session.get('http://httpbin.org/get')
+>>> response = session.get('http://httpbin.org/get', refresh=True)
+>>> assert response.from_cache is False
+```
+
+A related argument is `revalidate`, which is basically a "soft refresh." It will send a quick
+{ref}`conditional request <conditional-requests>` to the server, and use the cached response if the
+remote content has not changed. If the cached response does not contain validation headers, this
+option will have no effect.
+
+### Cache-Only Requests
+If you want to only use cached responses without making any real requests, you can use the
+`only_if_cached` option. This essentially uses your cache in "offline mode". If a response isn't
+cached or is expired, you will get a `504 Not Cached` response instead.
+```python
+>>> session = CachedSession()
+>>> session.cache.clear()
+>>> response = session.get('http://httpbin.org/get', only_if_cached=True)
+>>> print(response.status_code)
+504
+>>> response.raise_for_status()
+HTTPError: 504 Server Error: Not Cached for url: http://httpbin.org/get
+```
+
+You can also combine this with `stale_if_error` to return cached responses even if they are expired.
+```python
+>>> session = CachedSession(expire_after=1, stale_if_error=True)
+>>> session.get('http://httpbin.org/get')
+>>> time.sleep(1)
+
+>>> # The response will be cached but expired by this point
+>>> response = session.get('http://httpbin.org/get', only_if_cached=True)
+>>> print(response.status_code)
+200
+```

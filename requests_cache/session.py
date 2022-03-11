@@ -25,7 +25,13 @@ from urllib3 import filepost
 
 from ._utils import get_valid_kwargs
 from .backends import BackendSpecifier, init_backend
-from .cache_control import CacheActions, ExpirationTime, append_directive, get_expiration_seconds
+from .cache_control import (
+    CacheActions,
+    ExpirationTime,
+    append_directive,
+    get_504_response,
+    get_expiration_seconds,
+)
 from .models import AnyResponse, CachedResponse, set_response_defaults
 
 __all__ = ['ALL_METHODS', 'CachedSession', 'CacheMixin']
@@ -78,8 +84,9 @@ class CacheMixin(MIXIN_BASE):
         method: str,
         url: str,
         *args,
-        expire_after: ExpirationTime = None,
         headers: MutableMapping[str, str] = None,
+        expire_after: ExpirationTime = None,
+        only_if_cached: bool = False,
         refresh: bool = False,
         revalidate: bool = False,
         **kwargs,
@@ -95,6 +102,8 @@ class CacheMixin(MIXIN_BASE):
             expire_after: Expiration time to set only for this request; see details below.
                 Overrides ``CachedSession.expire_after``. Accepts all the same values as
                 ``CachedSession.expire_after``. Use ``-1`` to disable expiration.
+            only_if_cached: Only return results from the cache. If not cached, return a 504 response
+                instead of sending a new request.
             refresh: Always make a new request, and overwrite any previously cached response
             revalidate: Revalidate with the server before using a cached response (e.g., a "soft refresh")
 
@@ -115,6 +124,8 @@ class CacheMixin(MIXIN_BASE):
         headers = headers or {}
         if expire_after is not None:
             headers = append_directive(headers, f'max-age={get_expiration_seconds(expire_after)}')
+        if only_if_cached:
+            headers = append_directive(headers, 'only-if-cached')
         if revalidate:
             headers = append_directive(headers, 'no-cache')
         if refresh:
@@ -128,6 +139,7 @@ class CacheMixin(MIXIN_BASE):
         self,
         request: PreparedRequest,
         expire_after: ExpirationTime = None,
+        only_if_cached: bool = False,
         refresh: bool = False,
         revalidate: bool = False,
         **kwargs,
@@ -137,6 +149,8 @@ class CacheMixin(MIXIN_BASE):
 
         Args:
             expire_after: Expiration time to set only for this request
+            only_if_cached: Only return results from the cache. If not cached, return a 504 response
+                instead of sending a new request.
             refresh: Always make a new request, and overwrite any previously cached response
             revalidate: Revalidate with the server before using a cached response (e.g., a "soft refresh")
         """
@@ -149,6 +163,7 @@ class CacheMixin(MIXIN_BASE):
             session_expire_after=self.expire_after,
             urls_expire_after=self.urls_expire_after,
             cache_control=self.cache_control,
+            only_if_cached=only_if_cached,
             refresh=refresh,
             revalidate=revalidate,
             **kwargs,
@@ -161,9 +176,13 @@ class CacheMixin(MIXIN_BASE):
             actions.update_from_cached_response(cached_response)
         is_expired = getattr(cached_response, 'is_expired', False)
 
-        # If the response is expired or missing, or the cache is disabled, then fetch a new response
-        if cached_response is None or actions.revalidate:
+        # Handle missing and expired responses based on settings and headers
+        if (cached_response is None or is_expired) and actions.only_if_cached:
+            response: AnyResponse = get_504_response(request)
+        elif cached_response is None or actions.revalidate:
             response = self._send_and_cache(request, actions, cached_response, **kwargs)
+        elif is_expired and self.stale_if_error and actions.only_if_cached:
+            response = cached_response
         elif is_expired and self.stale_if_error:
             response = self._resend_and_ignore(request, actions, cached_response, **kwargs)
         elif is_expired:

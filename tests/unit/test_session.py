@@ -10,7 +10,7 @@ from urllib.parse import urlencode
 
 import pytest
 import requests
-from requests import Request, RequestException
+from requests import HTTPError, Request, RequestException
 from requests.structures import CaseInsensitiveDict
 
 from requests_cache import ALL_METHODS, CachedSession
@@ -28,30 +28,12 @@ from tests.conftest import (
     MOCKED_URL_REDIRECT_TARGET,
 )
 
-
-def test_init_unregistered_backend():
-    with pytest.raises(ValueError):
-        CachedSession(backend='nonexistent')
-
-
-def test_cache_path_expansion():
-    session = CachedSession('~', backend='filesystem')
-    assert session.cache.cache_dir == Path("~").expanduser()
-
-
-@patch.dict(BACKEND_CLASSES, {'mongo': get_placeholder_class()})
-def test_init_missing_backend_dependency():
-    """Test that the correct error is thrown when a user does not have a dependency installed"""
-    with pytest.raises(ImportError):
-        CachedSession(backend='mongo')
+# Basic initialization
+# -----------------------------------------------------
 
 
 class MyCache(BaseCache):
     pass
-
-
-# Basic initialization
-# -----------------------------------------------------
 
 
 def test_init_backend_instance():
@@ -78,6 +60,23 @@ def test_init_backend_class():
     session = CachedSession('test_cache', backend=MyCache)
     assert isinstance(session.cache, MyCache)
     assert session.cache.cache_name == 'test_cache'
+
+
+def test_init_unregistered_backend():
+    with pytest.raises(ValueError):
+        CachedSession(backend='nonexistent')
+
+
+def test_init_cache_path_expansion():
+    session = CachedSession('~', backend='filesystem')
+    assert session.cache.cache_dir == Path("~").expanduser()
+
+
+@patch.dict(BACKEND_CLASSES, {'mongo': get_placeholder_class()})
+def test_init_missing_backend_dependency():
+    """Test that the correct error is thrown when a user does not have a dependency installed"""
+    with pytest.raises(ImportError):
+        CachedSession(backend='mongo')
 
 
 def test_repr(mock_session):
@@ -534,10 +533,10 @@ def test_remove_expired_responses(mock_session):
     mock_session.mock_adapter.register_uri(
         'GET', unexpired_url, status_code=200, text='mock response'
     )
-    mock_session.expire_after = timedelta(seconds=0.2)
+    mock_session.expire_after = 1
     mock_session.get(MOCKED_URL)
     mock_session.get(MOCKED_URL_JSON)
-    time.sleep(0.2)
+    time.sleep(1)
     mock_session.get(unexpired_url)
 
     # At this point we should have 1 unexpired response and 2 expired responses
@@ -548,7 +547,7 @@ def test_remove_expired_responses(mock_session):
     assert cached_response.url == unexpired_url
 
     # Now the last response should be expired as well
-    time.sleep(0.2)
+    time.sleep(1)
     mock_session.remove_expired_responses()
     assert len(mock_session.cache.responses) == 0
 
@@ -655,6 +654,51 @@ def test_request_expire_after__prepared_request(mock_session):
     time.sleep(1)
     response = mock_session.get(MOCKED_URL)
     assert response.from_cache is False
+
+
+def test_request_only_if_cached__cached(mock_session):
+    """only_if_cached has no effect if the response is already cached"""
+    mock_session.get(MOCKED_URL)
+    response = mock_session.get(MOCKED_URL, only_if_cached=True)
+    assert response.from_cache is True
+    assert response.is_expired is False
+
+
+def test_request_only_if_cached__uncached(mock_session):
+    """only_if_cached should return a 504 response if it is not already cached"""
+    response = mock_session.get(MOCKED_URL, only_if_cached=True)
+    assert response.status_code == 504
+    with pytest.raises(HTTPError):
+        response.raise_for_status()
+
+
+def test_request_only_if_cached__expired(mock_session):
+    """By default, only_if_cached will not return an expired response"""
+    mock_session.get(MOCKED_URL, expire_after=1)
+    time.sleep(1)
+
+    response = mock_session.get(MOCKED_URL, only_if_cached=True)
+    assert response.status_code == 504
+
+
+def test_request_only_if_cached__stale_if_error__expired(mock_session):
+    """only_if_cached *will* return an expired response if stale_if_error is also set"""
+    mock_session.get(MOCKED_URL, expire_after=1)
+    mock_session.stale_if_error = True
+    time.sleep(1)
+
+    response = mock_session.get(MOCKED_URL, only_if_cached=True)
+    assert response.from_cache is True
+    assert response.is_expired is False
+
+
+def test_request_only_if_cached__prepared_request(mock_session):
+    """The only_if_cached option should also work for PreparedRequests with CachedSession.send()"""
+    request = Request(method='GET', url=MOCKED_URL, headers={}).prepare()
+    response = mock_session.send(request, only_if_cached=True)
+    assert response.status_code == 504
+    with pytest.raises(HTTPError):
+        response.raise_for_status()
 
 
 def test_request_refresh(mock_session):
