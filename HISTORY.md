@@ -4,10 +4,12 @@
 [See all issues and PRs for 0.10](https://github.com/reclosedev/requests-cache/milestone/5?closed=1)
 
 **Expiration & Headers:**
-* Add `refresh` option to `CachedSession.request()` and `send()` to make (and cache) an new request regardless of existing cache contents
-* Add `revalidate` option to `CachedSession.request()` and `send()` to send conditional request (if possible) before using a cached response
+* Add support for `Cache-Control: only-if-cached`
 * Revalidate for `Cache-Control: no-cache` request or response header
 * Revalidate for `Cache-Control: max-age=0, must-revalidate` response headers
+* Add `only_if_cached` option to `CachedSession.request()` and `send()` to return only cached results without sending real requests
+* Add `refresh` option to `CachedSession.request()` and `send()` to make (and cache) an new request regardless of existing cache contents
+* Add `revalidate` option to `CachedSession.request()` and `send()` to send conditional request (if possible) before using a cached response
 
 ### 0.9.3 (2022-02-22)
 * Fix handling BSON serializer differences between pymongo's `bson` and standalone `bson` codec.
