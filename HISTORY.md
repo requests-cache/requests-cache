@@ -11,6 +11,9 @@
 * Add `refresh` option to `CachedSession.request()` and `send()` to make (and cache) an new request regardless of existing cache contents
 * Add `revalidate` option to `CachedSession.request()` and `send()` to send conditional request (if possible) before using a cached response
 
+**Dependencies:**
+* Replace `appdirs` with `platformdirs`
+
 ### 0.9.3 (2022-02-22)
 * Fix handling BSON serializer differences between pymongo's `bson` and standalone `bson` codec.
 * Handle `CorruptGridFile` error in GridFS backend

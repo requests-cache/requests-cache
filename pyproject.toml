@@ -30,10 +30,10 @@ python        = "^3.7"
 
 # Required dependencies
 requests      = "^2.22"    # Needs no introduction
-urllib3       = "^1.25.5"  # Use a slightly newer version than required by requests (for bugfixes)
-appdirs       = "^1.4.4"   # For options that use platform-specific user cache dirs
-attrs         = "^21.2"    # For response data models
+urllib3       = ">=1.25.5" # Use a slightly newer version than required by requests (for bugfixes)
+attrs         = ">=21.2"   # For response data models
 cattrs        = "^1.8"     # For response serialization
+platformdirs  = "^2.5"     # For options that use platform-specific user cache dirs
 url-normalize = "^1.4"     # For improved request matching
 
 # Optional backend dependencies
@@ -92,7 +92,7 @@ pytest-cov            = ">=3.0"
 pytest-rerunfailures  = "^10.1"
 pytest-xdist          = ">=2.2"
 requests-mock         = "^1.8"
-responses             = "0.16.0"
+responses             = "0.19.0"
 timeout-decorator     = "^0.5"
 
 # Tools for linting, type checking, etc. are managed with pre-commit

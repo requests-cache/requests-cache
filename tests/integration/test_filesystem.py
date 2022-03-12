@@ -2,7 +2,7 @@ from shutil import rmtree
 from tempfile import gettempdir
 
 import pytest
-from appdirs import user_cache_dir
+from platformdirs import user_cache_dir
 
 from requests_cache.backends import FileCache, FileDict
 from requests_cache.serializers import SERIALIZERS, SerializerPipeline

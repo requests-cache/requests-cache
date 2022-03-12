@@ -75,7 +75,7 @@ from pathlib import Path
 from tempfile import gettempdir
 from typing import Collection, Iterable, Iterator, List, Tuple, Type, Union
 
-from appdirs import user_cache_dir
+from platformdirs import user_cache_dir
 
 from .._utils import chunkify, get_valid_kwargs
 from . import BaseCache, BaseStorage

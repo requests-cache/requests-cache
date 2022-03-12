@@ -5,7 +5,7 @@ from threading import Thread
 from unittest.mock import patch
 
 import pytest
-from appdirs import user_cache_dir
+from platformdirs import user_cache_dir
 
 from requests_cache.backends.base import BaseCache
 from requests_cache.backends.sqlite import MEMORY_URI, SQLiteCache, SQLiteDict, SQLitePickleDict

@@ -89,5 +89,5 @@ If it's a relative path, it will be relative to the temp or cache directory, res
 ```
 
 There are a number of other system default locations that might be appropriate for a cache file. See
-the [appdirs](https://github.com/ActiveState/appdirs) library for an easy cross-platform way to get
-the most commonly used ones.
+the [platformdirs](https://github.com/platformdirs/platformdirs) library for an easy cross-platform
+way to get the most commonly used ones.
