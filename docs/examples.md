@@ -11,6 +11,7 @@ Some articles and blog posts that discuss requests-cache:
 * Tim O'Hearn: [Pragmatic Usage of requests-cache](https://www.tjohearn.com/2018/02/12/pragmatic-usage-of-requests-cache/)
 * Valdir Stumm Jr: [Tips for boosting your Python scripts](https://stummjr.org/post/building-scripts-in-python/)
 * Python Web Scraping (2nd Edition): [Exploring requests-cache](https://learning.oreilly.com/library/view/python-web-scraping/9781786462589/3fad0dcc-445b-49a4-8d5e-ba5e1ff8e3bb.xhtml)
+* Cui Qingcai: [一个神器，大幅提升爬取效率](https://cuiqingcai.com/36052.html) (A package that greatly improves crawling efficiency)
 
 ## Scripts
 The following scripts can also be found in the
