@@ -27,7 +27,7 @@ __all__ = ['create_key', 'normalize_request']
 DEFAULT_EXCLUDE_HEADERS = {'Cache-Control', 'If-None-Match', 'If-Modified-Since'}
 
 # Maximum JSON request body size that will be normalized
-MAX_NORM_BODY_SIZE = 10 * 1024 * 1025
+MAX_NORM_BODY_SIZE = 10 * 1024 * 1024
 
 ParamList = Optional[Iterable[str]]
 RequestContent = Union[Mapping, str, bytes]

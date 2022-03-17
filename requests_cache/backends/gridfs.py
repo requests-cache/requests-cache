@@ -3,7 +3,12 @@
     ../_static/mongodb.png
 
 `GridFS <https://docs.mongodb.com/manual/core/gridfs/>`_ is a specification for storing large files
-(>16 MB) in MongoDB. See :py:mod:`~requests_cache.backends.mongodb` for more general info on MongoDB.
+in MongoDB.
+
+Use Cases
+^^^^^^^^^
+Use this backend if you are using MongoDB and expect to store responses **larger than 16MB**. See
+:py:mod:`~requests_cache.backends.mongodb` for more general info.
 
 API Reference
 ^^^^^^^^^^^^^
