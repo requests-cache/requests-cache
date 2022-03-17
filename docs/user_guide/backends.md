@@ -6,10 +6,11 @@
 ![](../_static/dynamodb_32px.png)
 ![](../_static/files-json_32px.png)
 
-Several cache backends are included. The default is SQLite, since it's generally the simplest to
-use, and requires no extra dependencies or configuration.
+This page contains general information about the cache backends supported by requests-cache.
+See {py:mod}`.requests_cache.backends` for additional details on each individual backend.
 
-See {py:mod}`.requests_cache.backends` for usage details for specific backends.
+The default backend is SQLite, since it's simple to use, requires no extra dependencies or
+configuration, and has the best all-around performance for the majority of use cases.
 
 ```{note}
 In the rare case that SQLite is not available
@@ -29,6 +30,25 @@ Backend                                                | Class                  
 [DynamoDB](https://aws.amazon.com/dynamodb)            | {py:class}`.DynamoDbCache` | `'dynamodb'`   | [boto3](https://github.com/boto/boto3)
 Filesystem                                             | {py:class}`.FileCache`     | `'filesystem'` |
 Memory                                                 | {py:class}`.BaseCache`     | `'memory'`     |
+
+## Choosing a Backend
+Here are some general notes on choosing a backend:
+* All of the backends perform well enough that they usually won't become a bottleneck until you
+  start hitting around **700-1000 requests per second**.
+* It's recommended to start with SQLite until you have a specific reason to switch.
+* If/when you outgrow SQLite, the next logical choice would usually be Redis.
+
+Here are some specific situations where you may want to choose one of the other backends:
+* Your application is distributed across multiple machines, without access to a common filesystem
+* Your application will make large volumes of concurrent writes (i.e., many nodes/threads/processes caching many different URLs)
+* Your application environment only has slower file storage options (like a magnetic drive, or NFS with high latency)
+* Your application environment has little or no local storage (like some cloud computing services)
+* Your application is already using one of the other backends
+* You want to reuse your cached response data outside of requests-cache
+* You want to use a specific feature available in one of the other backends
+
+Docs for {py:mod}`backend modules <requests_cache.backends>` contain more details on use cases
+for each one.
 
 ## Specifying a Backend
 You can specify which backend to use with the `backend` parameter for either {py:class}`.CachedSession`
