@@ -3,9 +3,14 @@
     ../_static/dynamodb.png
 
 `DynamoDB <https://aws.amazon.com/dynamodb>`_ is a NoSQL document database hosted on `Amazon Web
-Services <https://aws.amazon.com>`_. In terms of features and use cases, it is roughly comparable to
-MongoDB and other NoSQL databases. It is an especially good fit for serverless applications running
-on `AWS Lambda <https://aws.amazon.com/lambda>`_.
+Services <https://aws.amazon.com>`_.
+
+Use Cases
+^^^^^^^^^
+In terms of features, DynamoDB is roughly comparable to MongoDB and other NoSQL databases. It is a
+fully managed service, making it very convenient to use if you are already on AWS. It is an
+especially good fit for serverless applications running on
+`AWS Lambda <https://aws.amazon.com/lambda>`_.
 
 .. warning::
     DynamoDB binary item sizes are limited to 400KB. If you need to cache larger responses, consider

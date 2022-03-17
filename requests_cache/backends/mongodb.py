@@ -6,6 +6,12 @@
 of documents, which are more flexible and less strictly structured than tables in a relational
 database.
 
+Use Cases
+^^^^^^^^^
+MongoDB scales well and is a good option for larger applications. For raw caching performance,
+it is not quite as fast as :py:mod:`~requests_cache.backends.redis`, but may be preferable if you
+already have a MongoDB instance you're using for other purposes, or if you find it easier to use.
+
 Connection Options
 ^^^^^^^^^^^^^^^^^^
 The MongoDB backend accepts any keyword arguments for :py:class:`pymongo.mongo_client.MongoClient`.

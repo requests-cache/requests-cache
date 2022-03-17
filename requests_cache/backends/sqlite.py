@@ -5,6 +5,8 @@
 `SQLite <https://www.sqlite.org/>`_ is a fast and lightweight SQL database engine that stores data
 either in memory or in a single file on disk.
 
+Use Cases
+^^^^^^^^^
 Despite its simplicity, SQLite is a powerful tool. For example, it's the primary storage system for
 a number of common applications including Dropbox, Firefox, and Chrome. It's well suited for
 caching, and requires no extra configuration or dependencies, which is why it's the default backend
