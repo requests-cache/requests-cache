@@ -46,7 +46,7 @@ class CacheSettings:
     allowable_methods: Iterable[str] = field(default=('GET', 'HEAD'))
     cache_control: bool = field(default=False)
     disabled: bool = field(default=False)
-    expire_after: ExpirationTime = field(default=-1)
+    expire_after: ExpirationTime = field(default=None)
     filter_fn: FilterCallback = field(default=None)
     ignored_parameters: Iterable[str] = field(default=None)
     key_fn: KeyCallback = field(default=None)
@@ -73,10 +73,11 @@ class RequestSettings(CacheSettings):
 
     refresh: bool = field(default=False)
     revalidate: bool = field(default=False)
-    request_expire_after: ExpirationTime = field(default=-1)
+    request_expire_after: ExpirationTime = field(default=None)
 
-    def __init__(self, session_settings: CacheSettings, **kwargs):
+    def __init__(self, session_settings: CacheSettings = None, **kwargs):
         # Start with session-level cache settings and add/override with request-level settings
+        session_kwargs = asdict(session_settings) if session_settings else {}
         kwargs['request_expire_after'] = kwargs.pop('expire_after', None)
-        kwargs = {**asdict(session_settings), **kwargs}
+        kwargs = {**session_kwargs, **kwargs}
         super().__init__(**kwargs)

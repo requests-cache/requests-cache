@@ -116,23 +116,23 @@ class CacheActions:
         """Convert the user/header-provided expiration value to a datetime"""
         return get_expiration_datetime(self.expire_after)
 
-    def update_from_cached_response(self, response: CachedResponse):
+    def update_from_cached_response(self, cached_response: CachedResponse):
         """Check for relevant cache headers from a cached response, and set headers for a
         conditional request, if possible.
 
         Used after fetching a cached response, but before potentially sending a new request.
         """
         # Determine if we need to send a new request or respond with an error
-        is_expired = getattr(response, 'is_expired', False)
-        if self.settings.only_if_cached and (response is None or is_expired):
+        is_expired = getattr(cached_response, 'is_expired', False)
+        if self.settings.only_if_cached and (cached_response is None or is_expired):
             self.error_504 = True
-        elif response is None:
+        elif cached_response is None:
             self.send_request = True
         elif is_expired and not (self.settings.only_if_cached and self.settings.stale_if_error):
             self.resend_request = True
 
-        if response is not None:
-            self._update_validation_headers(response)
+        if cached_response is not None:
+            self._update_validation_headers(cached_response)
 
     def _update_validation_headers(self, response: CachedResponse):
         # Revalidation may be triggered by either stale response or request/cached response headers

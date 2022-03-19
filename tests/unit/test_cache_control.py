@@ -6,7 +6,7 @@ from requests import PreparedRequest
 
 from requests_cache.cache_control import DO_NOT_CACHE, CacheActions
 from requests_cache.models import CachedResponse, CacheSettings, RequestSettings
-from tests.conftest import ETAG, HTTPDATE_STR, LAST_MODIFIED
+from tests.conftest import ETAG, HTTPDATE_STR, LAST_MODIFIED, get_mock_response
 
 IGNORED_DIRECTIVES = [
     'no-transform',
@@ -47,7 +47,7 @@ def test_init(
     actions = CacheActions.from_request(
         cache_key='key',
         request=request,
-        settings=RequestSettings(settings, expire_after=request_expire_after),
+        settings=settings,
     )
     assert actions.expire_after == expected_expiration
 
@@ -135,13 +135,10 @@ def test_init_from_settings_and_headers(
     """Test behavior with both cache settings and request headers. The only variation in behavior
     with cache_control=True is that expire_after=0 should *not* cause the cache read to be skipped.
     """
-    request = MagicMock(
-        url='https://img.site.com/base/img.jpg',
-        headers=headers,
-    )
-
+    request = get_mock_response(headers=headers)
     settings = CacheSettings(cache_control=cache_control, expire_after=expire_after)
     actions = CacheActions.from_request('key', request, RequestSettings(settings))
+
     assert actions.expire_after == expected_expiration
     assert actions.skip_read == expected_skip_read
 
@@ -235,7 +232,7 @@ def test_update_from_response(headers, expected_expiration):
     actions = CacheActions.from_request(
         'key', MagicMock(url=url), RequestSettings(cache_control=True)
     )
-    actions.update_from_response(MagicMock(url=url, headers=headers))
+    actions.update_from_response(get_mock_response(headers=headers))
 
     if expected_expiration == DO_NOT_CACHE:
         assert not actions.expire_after  # May be either 0 or None
@@ -250,7 +247,7 @@ def test_update_from_response__ignored():
     actions = CacheActions.from_request(
         'key', MagicMock(url=url), RequestSettings(cache_control=False)
     )
-    actions.update_from_response(MagicMock(url=url, headers={'Cache-Control': 'max-age=5'}))
+    actions.update_from_response(get_mock_response(headers={'Cache-Control': 'max-age=5'}))
     assert actions.expire_after is None
 
 
@@ -262,11 +259,12 @@ def test_update_from_response__revalidate(mock_datetime, cache_headers, validato
     expiration
     """
     url = 'https://img.site.com/base/img.jpg'
-    headers = {**cache_headers, **validator_headers}
     actions = CacheActions.from_request(
         'key', MagicMock(url=url), RequestSettings(cache_control=True)
     )
-    actions.update_from_response(MagicMock(url=url, headers=headers))
+    response = get_mock_response(headers={**cache_headers, **validator_headers})
+    actions.update_from_response(response)
+
     assert actions.expires == mock_datetime.utcnow()
     assert actions.skip_write is False
 

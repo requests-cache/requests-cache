@@ -359,7 +359,7 @@ class BaseCacheTest:
 
         session_factory = partial(self.init_session, clear=False)
         request_func = partial(_send_request, session_factory, url)
-        with ProcessPoolExecutor(max_workers=N_WORKERS) as executor:
+        with executor_class(max_workers=N_WORKERS) as executor:
             _ = list(executor.map(request_func, range(N_REQUESTS_PER_ITERATION)))
 
         # Some logging for debug purposes

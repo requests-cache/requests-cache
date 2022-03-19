@@ -139,17 +139,15 @@ class CacheMixin(MIXIN_BASE):
         cached_response: Optional[CachedResponse] = None
         if not actions.skip_read:
             cached_response = self.cache.get_response(actions.cache_key)
-            actions.update_from_cached_response(cached_response)
+        actions.update_from_cached_response(cached_response)
 
         # Handle missing and expired responses based on settings and headers
-        if actions.send_request:
-            response: AnyResponse = self._send_and_cache(
-                request, actions, cached_response, **kwargs
-            )
+        if actions.error_504:
+            response: AnyResponse = get_504_response(request)
+        elif actions.send_request:
+            response = self._send_and_cache(request, actions, cached_response, **kwargs)
         elif actions.resend_request:
             response = self._resend(request, actions, cached_response, **kwargs)  # type: ignore
-        elif actions.error_504:
-            response = get_504_response(request)
         else:
             response = cached_response  # type: ignore  # Guaranteed to be non-None by this point
 
@@ -260,7 +258,7 @@ class CacheMixin(MIXIN_BASE):
         self.cache.remove_expired_responses(expire_after)
 
     def __repr__(self):
-        return f'<CachedSession(cache={self.cache}, settings={self.settings})>'
+        return f'<CachedSession(cache={repr(self.cache)}, settings={self.settings})>'
 
 
 class CachedSession(CacheMixin, OriginalSession):
