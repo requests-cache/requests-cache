@@ -185,6 +185,18 @@ class CacheActions:
         expire_immediately = try_int(self.expire_after) == DO_NOT_CACHE
         self.skip_write = (expire_immediately or no_store) and not _has_validator(response.headers)
 
+    def update_revalidated_response(
+        self, response: Response, cached_response: CachedResponse
+    ) -> CachedResponse:
+        """After revalidation, update the cached response's headers and reset its expiration"""
+        logger.debug(
+            f'Response for URL {response.request.url} has not been modified; updating and using cached response'
+        )
+        cached_response.expires = self.expires
+        cached_response.headers.update(response.headers)
+        self.update_from_response(cached_response)
+        return cached_response
+
 
 def append_directive(
     headers: Optional[MutableMapping[str, str]], directive: str

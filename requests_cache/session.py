@@ -231,7 +231,9 @@ class CacheMixin(MIXIN_BASE):
         if self._is_cacheable(response, actions):
             self.cache.save_response(response, actions.cache_key, actions.expires)
         elif cached_response and response.status_code == 304:
-            return self._update_revalidated_response(actions, response, cached_response)
+            cached_response = actions.update_revalidated_response(response, cached_response)
+            self.cache.save_response(cached_response, actions.cache_key, actions.expires)
+            return cached_response
         else:
             logger.debug(f'Skipping cache write for URL: {request.url}')
         return set_response_defaults(response, actions.cache_key)
@@ -274,19 +276,6 @@ class CacheMixin(MIXIN_BASE):
                 f'Request for URL {request.url} failed; using cached response', exc_info=True
             )
             return cached_response
-
-    def _update_revalidated_response(
-        self, actions: CacheActions, response: Response, cached_response: CachedResponse
-    ) -> CachedResponse:
-        """After revalidation, update the cached response's headers and reset its expiration"""
-        logger.debug(
-            f'Response for URL {response.request.url} has not been modified; updating and using cached response'
-        )
-        cached_response.headers.update(response.headers)
-        actions.update_from_response(cached_response)
-        cached_response.expires = actions.expires
-        self.cache.save_response(cached_response, actions.cache_key, actions.expires)
-        return cached_response
 
     @contextmanager
     def cache_disabled(self):
