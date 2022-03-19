@@ -25,13 +25,8 @@ from urllib3 import filepost
 
 from ._utils import get_valid_kwargs
 from .backends import BackendSpecifier, init_backend
-from .cache_control import (
-    CacheActions,
-    ExpirationTime,
-    append_directive,
-    get_504_response,
-    get_expiration_seconds,
-)
+from .cache_control import CacheActions, append_directive
+from .expiration import ExpirationTime, get_expiration_seconds
 from .models import (
     AnyResponse,
     CachedResponse,
@@ -283,6 +278,16 @@ class CachedSession(CacheMixin, OriginalSession):
             ``['pickle', 'json', 'yaml', 'bson']``.
         kwargs: Additional keyword arguments for :py:class:`.CacheSettings` or the selected backend
     """
+
+
+def get_504_response(request: PreparedRequest) -> CachedResponse:
+    """Get a 504: Not Cached error response, for use with only-if-cached option"""
+    return CachedResponse(
+        url=request.url or '',
+        status_code=504,
+        reason='Not Cached',
+        request=request,  # type: ignore
+    )
 
 
 @contextmanager

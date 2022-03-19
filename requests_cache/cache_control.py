@@ -12,30 +12,29 @@ the majority of the caching policy, and resulting actions are handled in
 """
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
-from email.utils import parsedate_to_datetime
-from fnmatch import fnmatch
+from datetime import datetime
 from logging import getLogger
-from math import ceil
-from typing import TYPE_CHECKING, Any, Dict, MutableMapping, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, MutableMapping, Optional, Tuple, Union
 
 from attr import define, field
 from requests import PreparedRequest, Response
 from requests.models import CaseInsensitiveDict
 
-from ._utils import coalesce
+from ._utils import coalesce, try_int
+from .expiration import (
+    DO_NOT_CACHE,
+    NEVER_EXPIRE,
+    ExpirationTime,
+    get_expiration_datetime,
+    get_url_expiration,
+)
 
-__all__ = ['DO_NOT_CACHE', 'CacheActions']
+__all__ = ['CacheActions']
 if TYPE_CHECKING:
     from .models import CachedResponse, CacheSettings, RequestSettings
 
-# May be set by either headers or expire_after param to disable caching or disable expiration
-DO_NOT_CACHE = 0
-NEVER_EXPIRE = -1
 
 CacheDirective = Union[None, int, bool]
-ExpirationTime = Union[None, int, float, str, datetime, timedelta]
-ExpirationPatterns = Dict[str, ExpirationTime]
 
 logger = getLogger(__name__)
 
@@ -132,9 +131,10 @@ class CacheActions:
         elif is_expired and not (self.settings.only_if_cached and self.settings.stale_if_error):
             self.resend_request = True
 
-        if response is None:
-            return
+        if response is not None:
+            self._update_validation_headers(response)
 
+    def _update_validation_headers(self, response: CachedResponse):
         # Revalidation may be triggered by either stale response or request/cached response headers
         directives = get_cache_directives(response.headers)
         self.revalidate = _has_validator(response.headers) and any(
@@ -146,6 +146,7 @@ class CacheActions:
             ]
         )
 
+        # Add the appropriate validation headers, if needed
         if self.revalidate:
             self.send_request = True
             if response.headers.get('ETag'):
@@ -156,7 +157,7 @@ class CacheActions:
     def update_from_response(self, response: Response):
         """Update expiration + actions based on headers from a new response.
 
-        Used after receiving a new response but before saving it to the cache.
+        Used after receiving a new response, but before saving it to the cache.
         """
         if not response or not self.settings.cache_control:
             return
@@ -222,32 +223,6 @@ def append_directive(
     return headers
 
 
-def get_expiration_datetime(expire_after: ExpirationTime) -> Optional[datetime]:
-    """Convert an expiration value in any supported format to an absolute datetime"""
-    # Never expire
-    if expire_after is None or expire_after == NEVER_EXPIRE:
-        return None
-    # Expire immediately
-    elif try_int(expire_after) == DO_NOT_CACHE:
-        return datetime.utcnow()
-    # Already a datetime or datetime str
-    if isinstance(expire_after, str):
-        return parse_http_date(expire_after)
-    elif isinstance(expire_after, datetime):
-        return to_utc(expire_after)
-
-    # Otherwise, it must be a timedelta or time in seconds
-    if not isinstance(expire_after, timedelta):
-        expire_after = timedelta(seconds=expire_after)
-    return datetime.utcnow() + expire_after
-
-
-def get_expiration_seconds(expire_after: ExpirationTime) -> int:
-    """Convert an expiration value in any supported format to an expiration time in seconds"""
-    expires = get_expiration_datetime(expire_after)
-    return ceil((expires - datetime.utcnow()).total_seconds()) if expires else NEVER_EXPIRE
-
-
 def get_cache_directives(headers: MutableMapping) -> Dict[str, CacheDirective]:
     """Get all Cache-Control directives as a dict. Handle duplicate headers and comma-separated
     lists. Key-only directives are returned as ``{key: True}``.
@@ -265,41 +240,6 @@ def get_cache_directives(headers: MutableMapping) -> Dict[str, CacheDirective]:
     return kv_directives
 
 
-def get_504_response(request: PreparedRequest) -> Response:
-    from .models import CachedResponse
-
-    return CachedResponse(
-        url=request.url or '',
-        status_code=504,
-        reason='Not Cached',
-        request=request,  # type: ignore
-    )
-
-
-def get_url_expiration(
-    url: Optional[str], urls_expire_after: ExpirationPatterns = None
-) -> ExpirationTime:
-    """Check for a matching per-URL expiration, if any"""
-    if not url:
-        return None
-
-    for pattern, expire_after in (urls_expire_after or {}).items():
-        if url_match(url, pattern):
-            logger.debug(f'URL {url} matched pattern "{pattern}": {expire_after}')
-            return expire_after
-    return None
-
-
-def parse_http_date(value: str) -> Optional[datetime]:
-    """Attempt to parse an HTTP (RFC 5322-compatible) timestamp"""
-    try:
-        expire_after = parsedate_to_datetime(value)
-        return to_utc(expire_after)
-    except (TypeError, ValueError):
-        logger.debug(f'Failed to parse timestamp: {value}')
-        return None
-
-
 def split_kv_directive(header_value: str) -> Tuple[str, CacheDirective]:
     """Split a cache directive into a ``(key, int)`` pair, if possible; otherwise just
     ``(key, True)``.
@@ -310,44 +250,6 @@ def split_kv_directive(header_value: str) -> Tuple[str, CacheDirective]:
         return k, try_int(v)
     else:
         return header_value, True
-
-
-def to_utc(dt: datetime):
-    """All internal datetimes are UTC and timezone-naive. Convert any user/header-provided
-    datetimes to the same format.
-    """
-    if dt.tzinfo:
-        dt = dt.astimezone(timezone.utc)
-        dt = dt.replace(tzinfo=None)
-    return dt
-
-
-def try_int(value: Any) -> Optional[int]:
-    """Convert a value to an int, if possible, otherwise ``None``"""
-    try:
-        return int(value)
-    except (TypeError, ValueError):
-        return None
-
-
-def url_match(url: str, pattern: str) -> bool:
-    """Determine if a URL matches a pattern
-
-    Args:
-        url: URL to test. Its base URL (without protocol) will be used.
-        pattern: Glob pattern to match against. A recursive wildcard will be added if not present
-
-    Example:
-        >>> url_match('https://httpbin.org/delay/1', 'httpbin.org/delay')
-        True
-        >>> url_match('https://httpbin.org/stream/1', 'httpbin.org/*/1')
-        True
-        >>> url_match('https://httpbin.org/stream/2', 'httpbin.org/*/1')
-        False
-    """
-    url = url.split('://')[-1]
-    pattern = pattern.split('://')[-1].rstrip('*') + '**'
-    return fnmatch(url, pattern)
 
 
 def _has_validator(headers: MutableMapping) -> bool:

@@ -12,8 +12,8 @@ from datetime import datetime
 from logging import getLogger
 from typing import Iterable, Iterator, Optional, Tuple, Union
 
-from ..cache_control import ExpirationTime
 from ..cache_keys import create_key, redact_response
+from ..expiration import ExpirationTime
 from ..models import AnyRequest, AnyResponse, CachedResponse, CacheSettings
 from ..serializers import init_serializer
 

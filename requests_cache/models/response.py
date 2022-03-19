@@ -9,7 +9,7 @@ from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
 from urllib3._collections import HTTPHeaderDict
 
-from ..cache_control import ExpirationTime, get_expiration_datetime
+from ..expiration import ExpirationTime, get_expiration_datetime
 from . import CachedHTTPResponse, CachedRequest
 
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S %Z'  # Format used for __str__ only

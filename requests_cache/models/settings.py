@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Callable, Dict, Iterable, Union
 from attr import asdict, define, field
 
 from .._utils import get_valid_kwargs
-from ..cache_control import ExpirationTime
+from ..expiration import ExpirationTime
 
 if TYPE_CHECKING:
     from . import AnyResponse

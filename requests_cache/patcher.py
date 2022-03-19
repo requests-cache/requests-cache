@@ -14,7 +14,7 @@ from typing import Callable, Dict, Iterable, Optional, Type
 import requests
 
 from .backends import BackendSpecifier, BaseCache
-from .cache_control import ExpirationTime
+from .expiration import ExpirationTime
 from .session import CachedSession, OriginalSession
 
 logger = getLogger(__name__)
