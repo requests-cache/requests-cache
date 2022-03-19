@@ -4,6 +4,7 @@ from logging import getLogger
 from typing import Callable, Dict, Iterable, Optional, Type, Union
 
 from .._utils import get_placeholder_class, get_valid_kwargs
+from ..models.settings import CacheSettings
 from .base import BaseCache, BaseStorage, DictStorage
 
 # Backend-specific keyword arguments equivalent to 'cache_name'
@@ -71,9 +72,14 @@ BACKEND_CLASSES = {
 }
 
 
-def init_backend(cache_name: str, backend: Optional[BackendSpecifier], **kwargs) -> BaseCache:
+# TODO: Make this less of a mess
+# TODO: Backend instance: Handle both settings already on instance, and settings passed via kwargs
+def init_backend(
+    cache_name: str, backend: Optional[BackendSpecifier], settings: CacheSettings = None, **kwargs
+) -> BaseCache:
     """Initialize a backend from a name, class, or instance"""
     logger.debug(f'Initializing backend: {backend} {cache_name}')
+    settings = settings or CacheSettings(**kwargs)
 
     # The 'cache_name' arg has a different purpose depending on the backend. If an equivalent
     # backend-specific keyword arg is specified, handle that here to avoid conflicts. A consistent
@@ -83,9 +89,12 @@ def init_backend(cache_name: str, backend: Optional[BackendSpecifier], **kwargs)
 
     # Determine backend class
     if isinstance(backend, BaseCache):
-        return _set_backend_kwargs(cache_name, backend, **kwargs)
+        if cache_name:
+            backend.cache_name = cache_name
+        backend.settings = settings
+        return backend
     elif isinstance(backend, type):
-        return backend(cache_name, **kwargs)
+        return backend(cache_name, settings=settings, **kwargs)
     elif not backend:
         sqlite_supported = issubclass(BACKEND_CLASSES['sqlite'], BaseCache)
         backend = 'sqlite' if sqlite_supported else 'memory'
@@ -94,15 +103,5 @@ def init_backend(cache_name: str, backend: Optional[BackendSpecifier], **kwargs)
     if backend not in BACKEND_CLASSES:
         raise ValueError(f'Invalid backend: {backend}. Choose from: {BACKEND_CLASSES.keys()}')
 
-    return BACKEND_CLASSES[backend](cache_name, **kwargs)
-
-
-def _set_backend_kwargs(cache_name, backend, **kwargs):
-    """Set any backend arguments if they are passed along with a backend instance"""
-    backend_kwargs = get_valid_kwargs(BaseCache.__init__, kwargs)
-    backend_kwargs.setdefault('match_headers', kwargs.pop('include_get_headers', False))
-    for k, v in backend_kwargs.items():
-        setattr(backend, k, v)
-    if cache_name:
-        backend.cache_name = cache_name
-    return backend
+    cls = BACKEND_CLASSES[backend]
+    return cls(cache_name, settings=settings, **kwargs)

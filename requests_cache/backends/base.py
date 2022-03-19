@@ -10,18 +10,15 @@ from collections import UserDict
 from collections.abc import MutableMapping
 from datetime import datetime
 from logging import getLogger
-from typing import Callable, Iterable, Iterator, Optional, Tuple, Union
+from typing import Iterable, Iterator, Optional, Tuple, Union
 
 from ..cache_control import ExpirationTime
 from ..cache_keys import create_key, redact_response
-from ..models import AnyRequest, AnyResponse, CachedResponse
+from ..models import AnyRequest, AnyResponse, CachedResponse, CacheSettings
 from ..serializers import init_serializer
 
 # Specific exceptions that may be raised during deserialization
 DESERIALIZE_ERRORS = (AttributeError, ImportError, TypeError, ValueError, pickle.PickleError)
-
-# Signature for user-provided callback
-KEY_FN = Callable[..., str]
 
 ResponseOrKey = Union[CachedResponse, str]
 logger = getLogger(__name__)
@@ -45,17 +42,13 @@ class BaseCache:
     def __init__(
         self,
         cache_name: str = 'http_cache',
-        match_headers: Union[Iterable[str], bool] = False,
-        ignored_parameters: Iterable[str] = None,
-        key_fn: KEY_FN = None,
+        settings: CacheSettings = None,
         **kwargs,
     ):
+        self.cache_name = cache_name
         self.responses: BaseStorage = DictStorage()
         self.redirects: BaseStorage = DictStorage()
-        self.cache_name = cache_name
-        self.ignored_parameters = ignored_parameters
-        self.key_fn = key_fn or create_key
-        self.match_headers = match_headers or kwargs.pop('include_get_headers', False)
+        self.settings = settings or CacheSettings(**kwargs)
 
     @property
     def urls(self) -> Iterator[str]:
@@ -93,7 +86,7 @@ class BaseCache:
         """
         cache_key = cache_key or self.create_key(response.request)
         cached_response = CachedResponse.from_response(response, expires=expires)
-        cached_response = redact_response(cached_response, self.ignored_parameters)
+        cached_response = redact_response(cached_response, self.settings.ignored_parameters)
         self.responses[cache_key] = cached_response
         for r in response.history:
             self.redirects[self.create_key(r.request)] = cache_key
@@ -113,10 +106,11 @@ class BaseCache:
 
     def create_key(self, request: AnyRequest = None, **kwargs) -> str:
         """Create a normalized cache key from a request object"""
-        return self.key_fn(
+        key_fn = self.settings.key_fn or create_key
+        return key_fn(
             request=request,
-            ignored_parameters=self.ignored_parameters,
-            match_headers=self.match_headers,
+            ignored_parameters=self.settings.ignored_parameters,
+            match_headers=self.settings.match_headers,
             **kwargs,
         )
 
@@ -125,7 +119,7 @@ class BaseCache:
         # If it's a response key, first delete any associated redirect history
         try:
             for r in self.responses[key].history:
-                del self.redirects[create_key(r.request, self.ignored_parameters)]
+                del self.redirects[create_key(r.request, self.settings.ignored_parameters)]
         except (KeyError, *DESERIALIZE_ERRORS):
             pass
         # Then delete the response itself, or just the redirect if it's a redirect key
@@ -256,21 +250,9 @@ class BaseStorage(MutableMapping, ABC):
         kwargs: Additional serializer or backend-specific keyword arguments
     """
 
-    def __init__(
-        self,
-        serializer=None,
-        **kwargs,
-    ):
-        self._serializer = init_serializer(serializer, **kwargs)
+    def __init__(self, serializer=None, **kwargs):
+        self.serializer = init_serializer(serializer, **kwargs)
         logger.debug(f'Initializing {type(self).__name__} with serializer: {self.serializer}')
-
-    @property
-    def serializer(self):
-        return self._serializer
-
-    @serializer.setter
-    def serializer(self, value):
-        self._serializer = init_serializer(value)
 
     def bulk_delete(self, keys: Iterable[str]):
         """Delete multiple keys from the cache, without raising errors for missing keys. This is a
