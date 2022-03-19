@@ -27,7 +27,7 @@ from ._utils import coalesce
 
 __all__ = ['DO_NOT_CACHE', 'CacheActions']
 if TYPE_CHECKING:
-    from .models import CachedResponse, CacheSettings
+    from .models import CachedResponse, CacheSettings, RequestSettings
 
 # May be set by either headers or expire_after param to disable caching or disable expiration
 DO_NOT_CACHE = 0
@@ -42,32 +42,19 @@ logger = getLogger(__name__)
 
 @define
 class CacheActions:
-    """A class that translates cache settings and headers into specific actions to take for a
-    given cache item. Actions include:
+    """Translates cache settings and headers into specific actions to take for a given cache item.
 
-    * Read from the cache
-    * Write to the cache
-    * Revalidate cache item (if it exists)
-    * Set cache expiration
-    * Add headers for conditional requests
-
-    If multiple sources provide an expiration time, they will be used in the following order of
-    precedence:
-
-    1. Cache-Control request headers
-    2. Cache-Control response headers (if enabled)
-    3. Per-request expiration
-    4. Per-URL expiration
-    5. Per-session expiration
-
-    See :ref:`headers` for more details about behavior.
+    * See :ref:`precedence` for behavior if multiple sources provide an expiration
+    * See :ref:`headers` for more details about header behavior
     """
 
     cache_key: str = field(default=None)
     expire_after: ExpirationTime = field(default=None)
-    only_if_cached: bool = field(default=False)
     request_directives: Dict[str, CacheDirective] = field(factory=dict)
+    resend_request: bool = field(default=False)
     revalidate: bool = field(default=False)
+    error_504: bool = field(default=False)
+    send_request: bool = field(default=False)
     settings: CacheSettings = field(default=None)
     skip_read: bool = field(default=False)
     skip_write: bool = field(default=False)
@@ -77,12 +64,8 @@ class CacheActions:
     def from_request(
         cls,
         cache_key: str,
-        settings: 'CacheSettings',
         request: PreparedRequest,
-        request_expire_after: ExpirationTime = None,
-        only_if_cached: bool = False,
-        refresh: bool = False,
-        revalidate: bool = False,
+        settings: 'RequestSettings',
         **kwargs,
     ):
         """Initialize from request info and cache settings.
@@ -102,7 +85,7 @@ class CacheActions:
         # Check expiration values in order of precedence
         expire_after = coalesce(
             directives.get('max-age'),
-            request_expire_after,
+            settings.request_expire_after,
             get_url_expiration(request.url, settings.urls_expire_after),
             settings.expire_after,
         )
@@ -113,14 +96,15 @@ class CacheActions:
         skip_write = check_expiration == DO_NOT_CACHE or 'no-store' in directives
 
         # These behaviors may be set by either request headers or keyword arguments
-        only_if_cached = only_if_cached or 'only-if-cached' in directives
-        revalidate = revalidate or 'no-cache' in directives
-        skip_read = skip_write or refresh or bool(refresh_temp_header)
+        settings.only_if_cached = settings.only_if_cached or 'only-if-cached' in directives
+        revalidate = settings.revalidate or 'no-cache' in directives
+        skip_read = any(
+            [settings.refresh, skip_write, bool(refresh_temp_header), settings.disabled]
+        )
 
         return cls(
             cache_key=cache_key,
             expire_after=expire_after,
-            only_if_cached=only_if_cached,
             request_directives=directives,
             revalidate=revalidate,
             skip_read=skip_read,
@@ -139,7 +123,16 @@ class CacheActions:
 
         Used after fetching a cached response, but before potentially sending a new request.
         """
-        if not response:
+        # Determine if we need to send a new request or respond with an error
+        is_expired = getattr(response, 'is_expired', False)
+        if self.settings.only_if_cached and (response is None or is_expired):
+            self.error_504 = True
+        elif response is None:
+            self.send_request = True
+        elif is_expired and not (self.settings.only_if_cached and self.settings.stale_if_error):
+            self.resend_request = True
+
+        if response is None:
             return
 
         # Revalidation may be triggered by either stale response or request/cached response headers
@@ -154,16 +147,13 @@ class CacheActions:
         )
 
         if self.revalidate:
+            self.send_request = True
             if response.headers.get('ETag'):
                 self.validation_headers['If-None-Match'] = response.headers['ETag']
             if response.headers.get('Last-Modified'):
                 self.validation_headers['If-Modified-Since'] = response.headers['Last-Modified']
 
-    def update_from_response(
-        self,
-        response: Response,
-        cache_disabled: bool = False,
-    ):
+    def update_from_response(self, response: Response):
         """Update expiration + actions based on headers from a new response.
 
         Used after receiving a new response but before saving it to the cache.
@@ -191,9 +181,9 @@ class CacheActions:
         # Apply filter callback, if any
         filtered_out = self.settings.filter_fn is not None and not self.settings.filter_fn(response)
 
-        # Perform remaining checks needed to determine if the given response should be cached
+        # Apply and log remaining checks needed to determine if the response should be cached
         cache_criteria = {
-            'disabled cache': cache_disabled,
+            'disabled cache': self.settings.disabled,
             'disabled method': str(response.request.method) not in self.settings.allowable_methods,
             'disabled status': response.status_code not in self.settings.allowable_codes,
             'disabled by filter': filtered_out,
@@ -201,6 +191,12 @@ class CacheActions:
         }
         logger.debug(f'Pre-cache checks for response from {response.url}: {cache_criteria}')
         self.skip_write = any(cache_criteria.values())
+
+    def update_request(self, request: PreparedRequest) -> PreparedRequest:
+        """Apply validation headers (if any) before sending a request"""
+        # if self.revalidate:
+        request.headers.update(self.validation_headers)
+        return request
 
     def update_revalidated_response(
         self, response: Response, cached_response: CachedResponse

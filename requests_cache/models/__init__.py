@@ -7,7 +7,7 @@ from requests import PreparedRequest, Request, Response
 from .raw_response import CachedHTTPResponse
 from .request import CachedRequest
 from .response import CachedResponse, set_response_defaults
-from .settings import CacheSettings
+from .settings import CacheSettings, RequestSettings
 
 AnyResponse = Union[Response, CachedResponse]
 AnyRequest = Union[Request, PreparedRequest, CachedRequest]

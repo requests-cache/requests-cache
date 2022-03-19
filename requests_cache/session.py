@@ -32,7 +32,13 @@ from .cache_control import (
     get_504_response,
     get_expiration_seconds,
 )
-from .models import AnyResponse, CachedResponse, CacheSettings, set_response_defaults
+from .models import (
+    AnyResponse,
+    CachedResponse,
+    CacheSettings,
+    RequestSettings,
+    set_response_defaults,
+)
 
 __all__ = ['ALL_METHODS', 'CachedSession', 'CacheMixin']
 ALL_METHODS = ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
@@ -45,6 +51,10 @@ else:
     MIXIN_BASE = object
 
 
+# TODO: Better docs for __init__
+# TODO: Better function signatures (due to passing around **kwargs instead of explicit keyword args)
+
+
 class CacheMixin(MIXIN_BASE):
     """Mixin class that extends :py:class:`requests.Session` with caching features.
     See :py:class:`.CachedSession` for usage details.
@@ -54,17 +64,13 @@ class CacheMixin(MIXIN_BASE):
         self,
         cache_name: str = 'http_cache',
         backend: BackendSpecifier = None,
-        settings: CacheSettings = None,
         **kwargs,
     ):
-        settings = settings or CacheSettings(**kwargs)
-        self.cache = init_backend(cache_name, backend, settings=settings, **kwargs)
-        self._disabled = False
+        self.cache = init_backend(cache_name, backend, **kwargs)
         self._lock = RLock()
 
-        # If the superclass is custom Session, pass along any valid kwargs
-        session_kwargs = get_valid_kwargs(super().__init__, kwargs)
-        super().__init__(**session_kwargs)  # type: ignore
+        # If the mixin superclass is custom Session, pass along any valid kwargs
+        super().__init__(**get_valid_kwargs(super().__init__, kwargs))  # type: ignore
 
     def request(  # type: ignore
         self,
@@ -122,65 +128,43 @@ class CacheMixin(MIXIN_BASE):
         with patch_form_boundary(**kwargs):
             return super().request(method, url, *args, **kwargs)
 
-    def send(
-        self,
-        request: PreparedRequest,
-        expire_after: ExpirationTime = None,
-        only_if_cached: bool = False,
-        refresh: bool = False,
-        revalidate: bool = False,
-        **kwargs,
-    ) -> AnyResponse:
+    def send(self, request: PreparedRequest, **kwargs) -> AnyResponse:
         """Send a prepared request, with caching. See :py:meth:`.request` for notes on behavior, and
-        see :py:meth:`requests.Session.send` for parameters. Additional parameters:
-
-        Args:
-            expire_after: Expiration time to set only for this request
-            only_if_cached: Only return results from the cache. If not cached, return a 504 response
-                instead of sending a new request.
-            refresh: Always make a new request, and overwrite any previously cached response
-            revalidate: Revalidate with the server before using a cached response (e.g., a "soft refresh")
+        see :py:meth:`requests.Session.send` for parameters.
         """
-        # Determine which actions to take based on request info and cache settings
-        cache_key = self.cache.create_key(request, **kwargs)
+        # Determine which actions to take based on settings and request info
         actions = CacheActions.from_request(
-            cache_key=cache_key,
-            request=request,
-            request_expire_after=expire_after,
-            only_if_cached=only_if_cached,
-            refresh=refresh,
-            revalidate=revalidate,
-            settings=self.cache.settings,
+            self.cache.create_key(request, **kwargs),
+            request,
+            RequestSettings(self.settings, **kwargs),
             **kwargs,
         )
 
         # Attempt to fetch a cached response
         cached_response: Optional[CachedResponse] = None
-        if not (self._disabled or actions.skip_read):
-            cached_response = self.cache.get_response(cache_key)
+        if not actions.skip_read:
+            cached_response = self.cache.get_response(actions.cache_key)
             actions.update_from_cached_response(cached_response)
-        is_expired = getattr(cached_response, 'is_expired', False)
 
         # Handle missing and expired responses based on settings and headers
-        if (cached_response is None or is_expired) and actions.only_if_cached:
-            response: AnyResponse = get_504_response(request)
-        elif cached_response is None or actions.revalidate:
-            response = self._send_and_cache(request, actions, cached_response, **kwargs)
-        elif is_expired and self.cache.settings.stale_if_error and actions.only_if_cached:
-            response = cached_response
-        elif is_expired:
-            response = self._resend(request, actions, cached_response, **kwargs)
+        if actions.send_request:
+            response: AnyResponse = self._send_and_cache(
+                request, actions, cached_response, **kwargs
+            )
+        elif actions.resend_request:
+            response = self._resend(request, actions, cached_response, **kwargs)  # type: ignore
+        elif actions.error_504:
+            response = get_504_response(request)
         else:
-            response = cached_response
+            response = cached_response  # type: ignore  # Guaranteed to be non-None by this point
 
         # If the request has been filtered out and was previously cached, delete it
-        filter_fn = self.cache.settings.filter_fn
-        if filter_fn is not None and not filter_fn(response):
+        if self.settings.filter_fn is not None and not self.settings.filter_fn(response):
             logger.debug(f'Deleting filtered response for URL: {response.url}')
-            self.cache.delete(cache_key)
+            self.cache.delete(actions.cache_key)
             return response
 
-        # Dispatch any hooks here, because they are removed before pickling
+        # Dispatch any hooks here, because they are removed during serialization
         return dispatch_hook('response', request.hooks, response, **kwargs)
 
     def _send_and_cache(
@@ -190,19 +174,16 @@ class CacheMixin(MIXIN_BASE):
         cached_response: CachedResponse = None,
         **kwargs,
     ) -> AnyResponse:
-        """Send the request and cache the response, unless disabled by settings or headers.
-
-        If applicable, also add headers to make a conditional request. If we get a 304 Not Modified
-        response, return the stale cache item.
+        """Send a request and cache the response, unless disabled by settings or headers.
+        If applicable, also handle conditional requests.
         """
-        if actions.revalidate:
-            request.headers.update(actions.validation_headers)
+        request = actions.update_request(request)
         response = super().send(request, **kwargs)
         actions.update_from_response(response)
 
         if not actions.skip_write:
             self.cache.save_response(response, actions.cache_key, actions.expires)
-        elif cached_response and response.status_code == 304:
+        elif cached_response is not None and response.status_code == 304:
             cached_response = actions.update_revalidated_response(response, cached_response)
             self.cache.save_response(cached_response, actions.cache_key, actions.expires)
             return cached_response
@@ -217,31 +198,31 @@ class CacheMixin(MIXIN_BASE):
         cached_response: CachedResponse,
         **kwargs,
     ) -> AnyResponse:
-        """Attempt to resend the request and cache the new response."""
+        """Handle a stale cached response by attempting to resend the request and cache a fresh
+        response
+        """
         logger.debug('Stale response; attempting to re-send request')
         try:
-            # Attempt to send the request and cache the new response
             response = self._send_and_cache(request, actions, cached_response, **kwargs)
-            if self.cache.settings.stale_if_error:
+            if self.settings.stale_if_error:
                 response.raise_for_status()
             return response
         except Exception:
-            return self._handle_error(cached_response)
+            return self._handle_error(cached_response, actions)
 
-    def _handle_error(self, cached_response: CachedResponse) -> AnyResponse:
+    def _handle_error(self, cached_response: CachedResponse, actions: CacheActions) -> AnyResponse:
         """Handle a request error based on settings:
         * Default behavior: delete the stale cache item and re-raise the error
         * stale-if-error: Ignore the error and and return the stale cache item
         """
-        if self.cache.settings.stale_if_error:
+        if self.settings.stale_if_error:
             logger.warning(
                 f'Request for URL {cached_response.request.url} failed; using cached response',
                 exc_info=True,
             )
             return cached_response
         else:
-            # TODO: Ensure cache_key is always populated
-            self.cache.delete(cached_response.cache_key or '')
+            self.cache.delete(actions.cache_key)
             raise
 
     @contextmanager
@@ -258,14 +239,22 @@ class CacheMixin(MIXIN_BASE):
             ...     s.get('http://httpbin.org/ip')
 
         """
-        if self._disabled:
+        if self.settings.disabled:
             yield
         else:
-            self._disabled = True
+            self.settings.disabled = True
             try:
                 yield
             finally:
-                self._disabled = False
+                self.settings.disabled = False
+
+    @property
+    def settings(self) -> CacheSettings:
+        return self.cache.settings
+
+    @settings.setter
+    def settings(self, value: CacheSettings):
+        self.cache.settings = value
 
     def remove_expired_responses(self, expire_after: ExpirationTime = None):
         """Remove expired responses from the cache, optionally with revalidation
@@ -276,25 +265,15 @@ class CacheMixin(MIXIN_BASE):
         self.cache.remove_expired_responses(expire_after)
 
     def __repr__(self):
-        repr_attrs = [
-            'cache',
-            'expire_after',
-            'urls_expire_after',
-            'allowable_codes',
-            'allowable_methods',
-            'stale_if_error',
-            'cache_control',
-        ]
-        attr_strs = [f'{k}={repr(getattr(self, k))}' for k in repr_attrs]
-        return f'<CachedSession({", ".join(attr_strs)})>'
+        return f'<CachedSession(cache={self.cache}, settings={self.settings})>'
 
 
 class CachedSession(CacheMixin, OriginalSession):
     """Session class that extends :py:class:`requests.Session` with caching features.
 
-    See individual :py:mod:`backend classes <requests_cache.backends>` for additional backend-specific arguments.
-    Also see :ref:`user-guide` for more details and examples on how the following arguments
-    affect cache behavior.
+    See individual :py:mod:`backend classes <requests_cache.backends>` for additional
+    backend-specific arguments. Also see :ref:`user-guide` for more details and examples on how the
+    following arguments affect cache behavior.
 
     Args:
         cache_name: Cache prefix or namespace, depending on backend
@@ -302,6 +281,7 @@ class CachedSession(CacheMixin, OriginalSession):
             ``['sqlite', 'filesystem', 'mongodb', 'gridfs', 'redis', 'dynamodb', 'memory']``
         serializer: Serializer name or instance; name may be one of
             ``['pickle', 'json', 'yaml', 'bson']``.
+        kwargs: Additional keyword arguments for :py:class:`.CacheSettings` or the selected backend
     """
 
 
