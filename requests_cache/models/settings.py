@@ -18,6 +18,12 @@ class CacheSettings:
     """Settings that affect caching behavior, used by :py:class:`.CachedSession` and
     :py:class:`.BaseCache`.
 
+    This is used internally, but may also be instantiated directly and passed to
+    :py:class:`.CachedSession`::
+
+        >>> settings = CacheSettings(cache_control=True, expire_after=360)
+        >>> session = CachedSession(settings=settings)
+
     Args:
         allowable_codes: Only cache responses with one of these status codes
         allowable_methods: Cache only responses for one of these HTTP methods

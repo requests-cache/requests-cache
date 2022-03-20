@@ -37,7 +37,7 @@ Examples:
 >>> session = CachedSession(expire_after=timedelta(days=30))
 
 >>> # Update an existing session to disable expiration (i.e., store indefinitely)
->>> session.expire_after = -1
+>>> session.settings.expire_after = -1
 
 >>> # Disable caching by default, unless enabled by other settings
 >>> session = CachedSession(expire_after=0)
@@ -61,11 +61,11 @@ frequently, another that changes infrequently, and another that never changes. E
 
 **Notes:**
 - `urls_expire_after` should be a dict in the format `{'pattern': expire_after}`
-- `expire_after` accepts the same types as `CachedSession.expire_after`
+- `expire_after` accepts the same types as `CachedSession.settings.expire_after`
 - Patterns will match request **base URLs without the protocol**, so the pattern `site.com/resource/`
   is equivalent to `http*://site.com/resource/**`
 - If there is more than one match, the first match will be used in the order they are defined
-- If no patterns match a request, `CachedSession.expire_after` will be used as a default
+- If no patterns match a request, `CachedSession.settings.expire_after` will be used as a default
 
 (request-errors)=
 ## Expiration and Error Handling

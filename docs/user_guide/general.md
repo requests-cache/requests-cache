@@ -9,7 +9,7 @@ There are two main ways of using requests-cache:
 Basic usage looks like this:
 ```python
 >>> from requests_cache import CachedSession
->>>
+
 >>> session = CachedSession()
 >>> session.get('http://httpbin.org/get')
 ```
@@ -41,7 +41,7 @@ cases, you can use {py:func}`.install_cache` to add caching to all `requests` fu
 ```python
 >>> import requests
 >>> import requests_cache
->>>
+
 >>> requests_cache.install_cache()
 >>> requests.get('http://httpbin.org/get')
 ```
@@ -81,13 +81,31 @@ requests-cache is currently installed with {py:func}`.is_installed`.
 
 (monkeypatch-issues)=
 ### Patching Limitations & Potential Issues
-Like any other utility that uses monkey-patching, there are some scenarios where you won't want to
-use {py:func}`.install_cache`:
+There are some scenarios where patching `requests` with {py:func}`.install_cache` is not ideal:
 - When using other libraries that patch {py:class}`requests.Session`
 - In a multi-threaded or multiprocess application
 - In a library that will be imported by other libraries or applications
 - In a larger application that makes requests in several different modules, where it may not be
   obvious what is and isn't being cached
 
-In any of these cases, consider using {py:class}`.CachedSession`, the {py:func}`.enabled`
-contextmanager, or {ref}`selective-caching`.
+In these cases, consider using {py:class}`.CachedSession` instead.
+
+(settings)=
+## Settings
+There are a number of settings that affect cache behavior, which are covered in more detail in the following sections:
+* {ref}`expiration`
+* {ref}`filtering`
+* {ref}`matching`
+
+These can all be passed as keyword arguments to {py:class}`.CachedSession` or
+{py:func}`.install_cache`. When using a session object, these can also be safely modified at any
+time via {py:attr}`.CachedSession.settings`. For example:
+```python
+>>> from requests_cache import CachedSession
+
+>>> session = CachedSession()
+>>> session.settings.expire_after = 360
+>>> session.settings.stale_if_error = True
+```
+
+Note that this does **not** include backend and serializer settings, which cannot be changed after initialization.

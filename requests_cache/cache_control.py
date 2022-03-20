@@ -1,6 +1,4 @@
-"""Internal utilities for determining cache expiration and other cache actions. This module defines
-the majority of the caching policy, and resulting actions are handled in
-:py:meth:`CachedSession.send`.
+"""Internal utilities for determining cache expiration and other cache actions.
 
 .. automodsumm:: requests_cache.cache_control
    :classes-only:
@@ -42,6 +40,10 @@ logger = getLogger(__name__)
 @define
 class CacheActions:
     """Translates cache settings and headers into specific actions to take for a given cache item.
+     This class defines the caching policy, and resulting actions are handled in
+     :py:meth:`CachedSession.send`.
+
+    .. rubric:: Notes
 
     * See :ref:`precedence` for behavior if multiple sources provide an expiration
     * See :ref:`headers` for more details about header behavior
@@ -56,7 +58,6 @@ class CacheActions:
         skip_write: Skip writing to the cache
         _settings: Merged session-level and request-level cache settings
         _validation_headers: Headers to send with conditional requests
-
     """
 
     # Outputs

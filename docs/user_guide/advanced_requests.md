@@ -14,7 +14,7 @@ It can be used, for example, for request throttling:
 >>> import time
 >>> import requests
 >>> from requests_cache import CachedSession
->>>
+
 >>> def make_throttle_hook(timeout=1.0):
 >>>     """Make a request hook function that adds a custom delay for non-cached requests"""
 >>>     def hook(response, *args, **kwargs):
@@ -23,7 +23,7 @@ It can be used, for example, for request throttling:
 >>>             time.sleep(timeout)
 >>>         return response
 >>>     return hook
->>>
+
 >>> session = CachedSession()
 >>> session.hooks['response'].append(make_throttle_hook(0.1))
 >>> # The first (real) request will have an added delay
@@ -42,7 +42,7 @@ the original streamed response:
 :class: toggle
 ```python
 >>> from requests_cache import CachedSession
->>>
+
 >>> session = CachedSession()
 >>> for i in range(2):
 ...     response = session.get('https://httpbin.org/stream/20', stream=True)
