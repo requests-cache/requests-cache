@@ -13,15 +13,6 @@ FilterCallback = Callable[['AnyResponse'], bool]
 KeyCallback = Callable[..., str]
 
 
-# TODO: RequestSettings subclass?
-#   This would work by merging settings for an individual request on top of session settings
-#   This would also allow for *any* session setting to be passed as a per-request setting
-#   ...But only for send(), not request()
-# TODO: HeaderSettings class?
-#   This would encapsulate settings from Cache-Control directives and other cache headers
-#   Downside: that logic would then live in this moduel instead of in cache_control (which may be a better fit)
-
-
 @define(init=False)
 class CacheSettings:
     """Settings that affect caching behavior, used by :py:class:`.CachedSession` and
@@ -55,29 +46,38 @@ class CacheSettings:
     stale_if_error: bool = field(default=False)
     urls_expire_after: Dict[str, ExpirationTime] = field(factory=dict)
 
-    def __init__(self, **kwargs):
-        # Backwards-compatibility for old argument names
-        if 'old_data_on_error' in kwargs:
-            kwargs['stale_if_error'] = kwargs.pop('old_data_on_error')
-        if 'include_get_headers' in kwargs:
-            kwargs['match_headers'] = kwargs.pop('include_get_headers')
-
-        # Ignore invalid kwargs for easier initialization from mixed **kwargs
-        kwargs = get_valid_kwargs(self.__attrs_init__, kwargs)
-        self.__attrs_init__(**kwargs)
-
-
-@define(init=False)
-class RequestSettings(CacheSettings):
-    """Cache settings that may be set for an individual request"""
-
+    # Additional settings that may be set for an individual request; not used at session level
     refresh: bool = field(default=False)
     revalidate: bool = field(default=False)
     request_expire_after: ExpirationTime = field(default=None)
 
+    def __init__(self, **kwargs):
+        """Ignore invalid kwargs for easier initialization from mixed ``**kwargs``"""
+        kwargs = self._rename_kwargs(kwargs)
+        kwargs = get_valid_kwargs(self.__attrs_init__, kwargs)
+        self.__attrs_init__(**kwargs)
+
+    def update(self, **kwargs):
+        """Update settings with new values"""
+        for k, v in self._rename_kwargs(kwargs).items():
+            if hasattr(self, k):
+                setattr(self, k, v)
+
+    @staticmethod
+    def _rename_kwargs(kwargs):
+        """Handle some deprecated argument names"""
+        kwargs.setdefault('stale_if_error', kwargs.pop('old_data_on_error', False))
+        kwargs.setdefault('match_headers', kwargs.pop('include_get_headers', False))
+        return kwargs
+
+
+@define(init=False)
+class RequestSettings(CacheSettings):
+    """Cache settings that may be set for an individual request. Starts with session-level cache
+    settings and adds/overrides with request-level settings"""
+
     def __init__(self, session_settings: CacheSettings = None, **kwargs):
-        # Start with session-level cache settings and add/override with request-level settings
         session_kwargs = asdict(session_settings) if session_settings else {}
+        # request-level expiration needs to be stored separately
         kwargs['request_expire_after'] = kwargs.pop('expire_after', None)
-        kwargs = {**session_kwargs, **kwargs}
-        super().__init__(**kwargs)
+        super().__init__(**{**session_kwargs, **kwargs})

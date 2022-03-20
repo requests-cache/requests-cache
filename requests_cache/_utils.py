@@ -34,9 +34,9 @@ def get_placeholder_class(original_exception: Exception = None):
     """Create a placeholder type for a class that does not have dependencies installed.
     This allows delaying ImportErrors until init time, rather than at import time.
     """
-    msg = 'Dependencies are not installed for this feature'
 
     def _log_error():
+        msg = 'Dependencies are not installed for this feature'
         logger.error(msg)
         raise original_exception or ImportError(msg)
 

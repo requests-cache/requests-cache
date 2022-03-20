@@ -4,26 +4,10 @@ from logging import getLogger
 from typing import Callable, Dict, Iterable, Optional, Type, Union
 
 from .._utils import get_placeholder_class, get_valid_kwargs
-from ..models.settings import CacheSettings
 from .base import BaseCache, BaseStorage, DictStorage
 
 # Backend-specific keyword arguments equivalent to 'cache_name'
 CACHE_NAME_KWARGS = ['db_path', 'db_name', 'namespace', 'table_name']
-
-# All backend-specific keyword arguments
-BACKEND_KWARGS = CACHE_NAME_KWARGS + [
-    'connection',
-    'endpoint_url',
-    'fast_save',
-    'ignored_parameters',
-    'match_headers',
-    'name',
-    'read_capacity_units',
-    'region_name',
-    'salt',
-    'secret_key',
-    'write_capacity_units',
-]
 
 BackendSpecifier = Union[str, BaseCache, Type[BaseCache]]
 logger = getLogger(__name__)
@@ -72,18 +56,14 @@ BACKEND_CLASSES = {
 }
 
 
-# TODO: Make this less of a mess
-# TODO: Backend instance: Handle both settings already on instance, and settings passed via kwargs
-def init_backend(
-    cache_name: str, backend: Optional[BackendSpecifier], settings: CacheSettings = None, **kwargs
-) -> BaseCache:
+def init_backend(cache_name: str, backend: BackendSpecifier = None, **kwargs) -> BaseCache:
     """Initialize a backend from a name, class, or instance"""
     logger.debug(f'Initializing backend: {backend} {cache_name}')
-    settings = settings or CacheSettings(**kwargs)
 
     # The 'cache_name' arg has a different purpose depending on the backend. If an equivalent
-    # backend-specific keyword arg is specified, handle that here to avoid conflicts. A consistent
-    # positional-only or keyword-only arg would be better, but probably not worth a breaking change.
+    # backend-specific keyword arg is specified, handle that here to avoid conflicts with the
+    # 'cache_name' positional-or-keyword arg. In hindsight, a consistent positional-only or
+    # keyword-only arg would have been better, but probably not worth a breaking change.
     cache_name_kwargs = [kwargs.pop(k) for k in CACHE_NAME_KWARGS if k in kwargs]
     cache_name = cache_name or cache_name_kwargs[0]
 
@@ -91,17 +71,17 @@ def init_backend(
     if isinstance(backend, BaseCache):
         if cache_name:
             backend.cache_name = cache_name
-        backend.settings = settings
+        backend.settings.update(**kwargs)
         return backend
+    # TODO: Initializing a backend by class instead of instance seems superfluous. Deprecate this?
     elif isinstance(backend, type):
-        return backend(cache_name, settings=settings, **kwargs)
+        return backend(cache_name, **kwargs)
     elif not backend:
         sqlite_supported = issubclass(BACKEND_CLASSES['sqlite'], BaseCache)
         backend = 'sqlite' if sqlite_supported else 'memory'
 
+    # Get backend class by name
     backend = str(backend).lower()
     if backend not in BACKEND_CLASSES:
         raise ValueError(f'Invalid backend: {backend}. Choose from: {BACKEND_CLASSES.keys()}')
-
-    cls = BACKEND_CLASSES[backend]
-    return cls(cache_name, settings=settings, **kwargs)
+    return BACKEND_CLASSES[backend](cache_name, **kwargs)

@@ -60,7 +60,6 @@ def test_init(
         ({'Cache-Control': 'max-age=60'}, 60),
         ({'Cache-Control': 'public, max-age=60'}, 60),
         ({'Cache-Control': 'max-age=0'}, DO_NOT_CACHE),
-        ({'Cache-Control': 'no-store'}, DO_NOT_CACHE),
     ],
 )
 def test_init_from_headers(headers, expected_expiration):
@@ -71,11 +70,21 @@ def test_init_from_headers(headers, expected_expiration):
     assert actions.cache_key == 'key'
     if expected_expiration == DO_NOT_CACHE:
         assert actions.skip_read is True
-        assert actions.skip_write is True
     else:
         assert actions.expire_after == expected_expiration
         assert actions.skip_read is False
         assert actions.skip_write is False
+
+
+def test_init_from_headers__no_store():
+    """Test with Cache-Control request headers"""
+    settings = RequestSettings(cache_control=True)
+    actions = CacheActions.from_request(
+        'key', MagicMock(headers={'Cache-Control': 'no-store'}), settings
+    )
+
+    assert actions.skip_read is True
+    assert actions.skip_write is True
 
 
 @pytest.mark.parametrize(
@@ -116,27 +125,23 @@ def test_init_from_settings(url, request_expire_after, expected_expiration):
 
 
 @pytest.mark.parametrize(
-    'cache_control, headers, expire_after, expected_expiration, expected_skip_read',
+    'headers, expire_after, expected_expiration, expected_skip_read',
     [
-        (False, {'Cache-Control': 'max-age=60'}, 1, 60, False),
-        (False, {}, 1, 1, False),
-        (False, {}, 0, 0, True),
-        (True, {'Cache-Control': 'max-age=60'}, 1, 60, False),
-        (True, {'Cache-Control': 'max-age=0'}, 1, 0, True),
-        (True, {'Cache-Control': 'no-store'}, 1, 1, True),
-        (True, {'Cache-Control': 'no-cache'}, 1, 1, False),
-        (True, {}, 1, 1, False),
-        (True, {}, 0, 0, False),
+        ({'Cache-Control': 'max-age=60'}, 1, 60, False),
+        ({}, 1, 1, False),
+        ({}, 0, 0, True),
+        ({'Cache-Control': 'max-age=60'}, 1, 60, False),
+        ({'Cache-Control': 'max-age=0'}, 1, 0, True),
+        ({'Cache-Control': 'no-store'}, 1, 1, True),
+        ({'Cache-Control': 'no-cache'}, 1, 1, False),
     ],
 )
 def test_init_from_settings_and_headers(
-    cache_control, headers, expire_after, expected_expiration, expected_skip_read
+    headers, expire_after, expected_expiration, expected_skip_read
 ):
-    """Test behavior with both cache settings and request headers. The only variation in behavior
-    with cache_control=True is that expire_after=0 should *not* cause the cache read to be skipped.
-    """
+    """Test behavior with both cache settings and request headers."""
     request = get_mock_response(headers=headers)
-    settings = CacheSettings(cache_control=cache_control, expire_after=expire_after)
+    settings = CacheSettings(expire_after=expire_after)
     actions = CacheActions.from_request('key', request, RequestSettings(settings))
 
     assert actions.expire_after == expected_expiration
@@ -167,8 +172,7 @@ def test_update_from_cached_response(response_headers, expected_validation_heade
     )
 
     actions.update_from_cached_response(cached_response)
-    assert actions.validation_headers == expected_validation_headers
-    assert actions.revalidate is bool(expected_validation_headers)
+    assert actions._validation_headers == expected_validation_headers
 
 
 @pytest.mark.parametrize(
@@ -190,13 +194,12 @@ def test_update_from_cached_response__revalidate_headers(request_headers, respon
     cached_response = CachedResponse(headers={'ETag': ETAG, **response_headers}, expires=None)
 
     actions.update_from_cached_response(cached_response)
-    assert actions.revalidate is True
-    assert actions.validation_headers == {'If-None-Match': ETAG}
+    assert actions._validation_headers == {'If-None-Match': ETAG}
 
 
 def test_update_from_cached_response__ignored():
     """Conditional request headers should NOT be added if the cached response is not expired and
-    revalidation is not requested by headers"""
+    revalidation is otherwise not requested"""
     actions = CacheActions.from_request(
         'key',
         MagicMock(url='https://img.site.com/base/img.jpg', headers={}),
@@ -207,19 +210,18 @@ def test_update_from_cached_response__ignored():
     )
 
     actions.update_from_cached_response(cached_response)
-    assert actions.validation_headers == {}
-    assert actions.revalidate is False
+    assert actions._validation_headers == {}
 
 
 @pytest.mark.parametrize(
     'headers, expected_expiration',
     [
         ({}, None),
-        ({'Cache-Control': 'no-cache'}, None),  # Only valid for request headers
+        ({'Cache-Control': 'no-cache'}, None),  # Forces revalidation, but no effect on expiration
+        ({'Cache-Control': 'max-age=0'}, 0),
         ({'Cache-Control': 'max-age=60'}, 60),
         ({'Cache-Control': 'public, max-age=60'}, 60),
-        ({'Cache-Control': 'max-age=0'}, DO_NOT_CACHE),
-        ({'Cache-Control': 'no-store'}, DO_NOT_CACHE),
+        ({'Cache-Control': 'max-age=0'}, 0),
         ({'Cache-Control': 'immutable'}, -1),
         ({'Cache-Control': 'immutable, max-age=60'}, -1),  # Immutable should take precedence
         ({'Expires': HTTPDATE_STR}, HTTPDATE_STR),
@@ -234,12 +236,17 @@ def test_update_from_response(headers, expected_expiration):
     )
     actions.update_from_response(get_mock_response(headers=headers))
 
-    if expected_expiration == DO_NOT_CACHE:
-        assert not actions.expire_after  # May be either 0 or None
-        assert actions.skip_write is True
-    else:
-        assert actions.expire_after == expected_expiration
-        assert actions.skip_write is False
+    assert actions.expire_after == expected_expiration
+    assert actions.skip_write is (expected_expiration == DO_NOT_CACHE)
+
+
+def test_update_from_response__no_store():
+    url = 'https://img.site.com/base/img.jpg'
+    actions = CacheActions.from_request(
+        'key', MagicMock(url=url), RequestSettings(cache_control=True)
+    )
+    actions.update_from_response(get_mock_response(headers={'Cache-Control': 'no-store'}))
+    assert actions.skip_write is True
 
 
 def test_update_from_response__ignored():
@@ -279,6 +286,5 @@ def test_ignored_headers(directive):
     actions = CacheActions.from_request('key', request, RequestSettings(settings))
 
     assert actions.expire_after == 1
-    assert actions.revalidate is False
     assert actions.skip_read is False
     assert actions.skip_write is False

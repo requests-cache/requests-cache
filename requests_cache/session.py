@@ -25,15 +25,9 @@ from urllib3 import filepost
 
 from ._utils import get_valid_kwargs
 from .backends import BackendSpecifier, init_backend
-from .cache_control import CacheActions, append_directive
+from .cache_control import REFRESH_TEMP_HEADER, CacheActions, append_directive
 from .expiration import ExpirationTime, get_expiration_seconds
-from .models import (
-    AnyResponse,
-    CachedResponse,
-    CacheSettings,
-    RequestSettings,
-    set_response_defaults,
-)
+from .models import AnyResponse, CachedResponse, CacheSettings, set_response_defaults
 
 __all__ = ['ALL_METHODS', 'CachedSession', 'CacheMixin']
 ALL_METHODS = ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
@@ -48,8 +42,6 @@ else:
 
 # TODO: Better docs for __init__
 # TODO: Better function signatures (due to passing around **kwargs instead of explicit keyword args)
-
-
 class CacheMixin(MIXIN_BASE):
     """Mixin class that extends :py:class:`requests.Session` with caching features.
     See :py:class:`.CachedSession` for usage details.
@@ -84,7 +76,7 @@ class CacheMixin(MIXIN_BASE):
         (get, post, etc.). This is not used by :py:class:`~requests.PreparedRequest` objects, which
         are handled by :py:meth:`send()`.
 
-        See :py:meth:`requests.Session.request` for parameters. Additional parameters:
+        See :py:meth:`requests.Session.request` for base parameters. Additional parameters:
 
         Args:
             expire_after: Expiration time to set only for this request; see details below.
@@ -97,6 +89,25 @@ class CacheMixin(MIXIN_BASE):
 
         Returns:
             Either a new or cached response
+        """
+        # Set extra options as headers to be handled in send(), since we can't pass args directly
+        headers = headers or {}
+        if expire_after is not None:
+            headers = append_directive(headers, f'max-age={get_expiration_seconds(expire_after)}')
+        if only_if_cached:
+            headers = append_directive(headers, 'only-if-cached')
+        if revalidate:
+            headers = append_directive(headers, 'no-cache')
+        if refresh:
+            headers[REFRESH_TEMP_HEADER] = 'true'
+        kwargs['headers'] = headers
+
+        with patch_form_boundary(**kwargs):
+            return super().request(method, url, *args, **kwargs)
+
+    def send(self, request: PreparedRequest, **kwargs) -> AnyResponse:
+        """Send a prepared request, with caching. See :py:meth:`requests.Session.send` for base
+        parameters, and see :py:meth:`.request` for extra parameters.
 
         **Order of operations:** For reference, a request will pass through the following methods:
 
@@ -108,31 +119,9 @@ class CacheMixin(MIXIN_BASE):
         6. :py:meth:`requests.Session.send` (if not previously cached)
         7. :py:meth:`.BaseCache.save_response` (if not previously cached)
         """
-        # Set extra options as headers to be handled in send(), since we can't pass args directly
-        headers = headers or {}
-        if expire_after is not None:
-            headers = append_directive(headers, f'max-age={get_expiration_seconds(expire_after)}')
-        if only_if_cached:
-            headers = append_directive(headers, 'only-if-cached')
-        if revalidate:
-            headers = append_directive(headers, 'no-cache')
-        if refresh:
-            headers['requests-cache-refresh'] = 'true'
-        kwargs['headers'] = headers
-
-        with patch_form_boundary(**kwargs):
-            return super().request(method, url, *args, **kwargs)
-
-    def send(self, request: PreparedRequest, **kwargs) -> AnyResponse:
-        """Send a prepared request, with caching. See :py:meth:`.request` for notes on behavior, and
-        see :py:meth:`requests.Session.send` for parameters.
-        """
         # Determine which actions to take based on settings and request info
         actions = CacheActions.from_request(
-            self.cache.create_key(request, **kwargs),
-            request,
-            RequestSettings(self.settings, **kwargs),
-            **kwargs,
+            self.cache.create_key(request, **kwargs), request, self.settings, **kwargs
         )
 
         # Attempt to fetch a cached response
