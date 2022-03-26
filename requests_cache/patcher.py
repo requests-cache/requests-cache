@@ -9,7 +9,7 @@
 """
 from contextlib import contextmanager
 from logging import getLogger
-from typing import Callable, Dict, Iterable, Optional, Type
+from typing import Optional, Type
 
 import requests
 
@@ -23,12 +23,6 @@ logger = getLogger(__name__)
 def install_cache(
     cache_name: str = 'http_cache',
     backend: BackendSpecifier = None,
-    expire_after: ExpirationTime = -1,
-    urls_expire_after: Dict[str, ExpirationTime] = None,
-    allowable_codes: Iterable[int] = (200,),
-    allowable_methods: Iterable['str'] = ('GET', 'HEAD'),
-    filter_fn: Callable = None,
-    stale_if_error: bool = False,
     session_factory: Type[OriginalSession] = CachedSession,
     **kwargs,
 ):
@@ -48,17 +42,7 @@ def install_cache(
 
     class _ConfiguredCachedSession(session_factory):  # type: ignore  # See mypy issue #5865
         def __init__(self):
-            super().__init__(
-                cache_name=cache_name,
-                backend=backend,
-                expire_after=expire_after,
-                urls_expire_after=urls_expire_after,
-                allowable_codes=allowable_codes,
-                allowable_methods=allowable_methods,
-                filter_fn=filter_fn,
-                stale_if_error=stale_if_error,
-                **kwargs,
-            )
+            super().__init__(cache_name=cache_name, backend=backend, **kwargs)
 
     _patch_session_factory(_ConfiguredCachedSession)
 
@@ -92,13 +76,12 @@ def enabled(*args, **kwargs):
     """
     Context manager for temporarily enabling caching for all ``requests`` functions
 
-    Accepts the same arguments as :py:func:`.install_cache`.
-
     Example:
 
-        >>> with requests_cache.enabled('cache_db'):
+        >>> with requests_cache.enabled('cache.db'):
         ...     requests.get('http://httpbin.org/get')
 
+    Accepts the same arguments as :py:class:`.CachedSession` and :py:func:`.install_cache`.
     """
     install_cache(*args, **kwargs)
     try:
