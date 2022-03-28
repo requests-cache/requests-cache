@@ -47,6 +47,7 @@ class CacheActions:
 
     * See :ref:`precedence` for behavior if multiple sources provide an expiration
     * See :ref:`headers` for more details about header behavior
+    * The following arguments/properties are the outputs of this class:
 
     Args:
         cache_key: The cache key created based on the initial request
@@ -56,8 +57,6 @@ class CacheActions:
         resend_request: Send a new request to refresh a stale cache item
         skip_read: Skip reading from the cache
         skip_write: Skip writing to the cache
-        _settings: Merged session-level and request-level cache settings
-        _validation_headers: Headers to send with conditional requests
     """
 
     # Outputs
@@ -70,8 +69,8 @@ class CacheActions:
     skip_write: bool = field(default=False)
 
     # Inputs/internal attributes
-    _settings: CacheSettings = field(default=None)
-    _validation_headers: Dict[str, str] = field(factory=dict)
+    _settings: CacheSettings = field(default=None, repr=False, init=False)
+    _validation_headers: Dict[str, str] = field(factory=dict, repr=False, init=False)
 
     @classmethod
     def from_request(
@@ -86,7 +85,7 @@ class CacheActions:
         directives = get_cache_directives(request.headers)
         logger.debug(f'Cache directives from request headers: {directives}')
 
-        # Merge session settings, request settings
+        # Merge session settings and request settings
         settings = RequestSettings(settings, **kwargs)
         settings.only_if_cached = settings.only_if_cached or 'only-if-cached' in directives
         settings.refresh = settings.refresh or bool(request.headers.pop(REFRESH_TEMP_HEADER, False))
@@ -110,13 +109,15 @@ class CacheActions:
             ]
         )
 
-        return cls(
+        actions = cls(
             cache_key=cache_key,
             expire_after=expire_after,
             skip_read=skip_read,
             skip_write='no-store' in directives,
-            settings=settings,
         )
+        actions._settings = settings
+        actions._validation_headers = {}
+        return actions
 
     @property
     def expires(self) -> Optional[datetime]:

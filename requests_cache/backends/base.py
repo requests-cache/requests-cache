@@ -14,7 +14,8 @@ from typing import Iterable, Iterator, Optional, Tuple, Union
 
 from ..cache_keys import create_key, redact_response
 from ..expiration import ExpirationTime
-from ..models import AnyRequest, AnyResponse, CachedResponse, CacheSettings
+from ..models import AnyRequest, AnyResponse, CachedResponse
+from ..models.settings import DEFAULT_CACHE_NAME, CacheSettings
 from ..serializers import init_serializer
 
 # Specific exceptions that may be raised during deserialization
@@ -37,18 +38,18 @@ class BaseCache:
     Lower-level storage operations are handled by :py:class:`.BaseStorage`.
 
     To extend this with your own custom backend, see :ref:`custom-backends`.
+
+    Args:
+        cache_name: Cache prefix or namespace, depending on backend
+        serializer: Serializer name or instance
+        kwargs: Additional backend-specific keyword arguments
     """
 
-    def __init__(
-        self,
-        cache_name: str = 'http_cache',
-        settings: CacheSettings = None,
-        **kwargs,
-    ):
+    def __init__(self, cache_name: str = DEFAULT_CACHE_NAME, **kwargs):
         self.cache_name = cache_name
         self.responses: BaseStorage = DictStorage()
         self.redirects: BaseStorage = DictStorage()
-        self.settings = settings or CacheSettings(**kwargs)
+        self._settings = CacheSettings()  # Init and public access is done in CachedSession
 
     @property
     def urls(self) -> Iterator[str]:
@@ -86,7 +87,7 @@ class BaseCache:
         """
         cache_key = cache_key or self.create_key(response.request)
         cached_response = CachedResponse.from_response(response, expires=expires)
-        cached_response = redact_response(cached_response, self.settings.ignored_parameters)
+        cached_response = redact_response(cached_response, self._settings.ignored_parameters)
         self.responses[cache_key] = cached_response
         for r in response.history:
             self.redirects[self.create_key(r.request)] = cache_key
@@ -106,11 +107,11 @@ class BaseCache:
 
     def create_key(self, request: AnyRequest = None, **kwargs) -> str:
         """Create a normalized cache key from a request object"""
-        key_fn = self.settings.key_fn or create_key
+        key_fn = self._settings.key_fn or create_key
         return key_fn(
             request=request,
-            ignored_parameters=self.settings.ignored_parameters,
-            match_headers=self.settings.match_headers,
+            ignored_parameters=self._settings.ignored_parameters,
+            match_headers=self._settings.match_headers,
             **kwargs,
         )
 
@@ -119,7 +120,7 @@ class BaseCache:
         # If it's a response key, first delete any associated redirect history
         try:
             for r in self.responses[key].history:
-                del self.redirects[create_key(r.request, self.settings.ignored_parameters)]
+                del self.redirects[create_key(r.request, self._settings.ignored_parameters)]
         except (KeyError, *DESERIALIZE_ERRORS):
             pass
         # Then delete the response itself, or just the redirect if it's a redirect key

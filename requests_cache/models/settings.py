@@ -8,6 +8,11 @@ from ..expiration import ExpirationTime
 if TYPE_CHECKING:
     from . import AnyResponse
 
+ALL_METHODS = ('GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE')
+DEFAULT_CACHE_NAME = 'http_cache'
+DEFAULT_METHODS = ('GET', 'HEAD')
+DEFAULT_STATUS_CODES = (200,)
+
 # Signatures for user-provided callbacks
 FilterCallback = Callable[['AnyResponse'], bool]
 KeyCallback = Callable[..., str]
@@ -15,32 +20,14 @@ KeyCallback = Callable[..., str]
 
 @define(init=False)
 class CacheSettings:
-    """Settings that affect caching behavior, used by :py:class:`.CachedSession` and
-    :py:class:`.BaseCache`.
-
-    This is used internally, but may also be instantiated directly and passed to
-    :py:class:`.CachedSession`::
-
-        >>> settings = CacheSettings(cache_control=True, expire_after=360)
-        >>> session = CachedSession(settings=settings)
-
-    Args:
-        allowable_codes: Only cache responses with one of these status codes
-        allowable_methods: Cache only responses for one of these HTTP methods
-        cache_control: Use Cache-Control and other response headers to set expiration
-        expire_after: Time after which cached items will expire
-        filter_fn: Response filtering function that indicates whether or not a given response should
-            be cached.
-        ignored_parameters: List of request parameters to not match against, and exclude from the cache
-        key_fn: Request matching function for generating custom cache keys
-        match_headers: Match request headers when reading from the cache; may be either ``True`` or
-            a list of specific headers to match
-        stale_if_error: Return stale cache data if a new request raises an exception
-        urls_expire_after: Expiration times to apply for different URL patterns
+    """Class used internally to store settings that affect caching behavior. This allows settings
+    to be used across multiple modules but exposed to the user in a single property
+    (``CachedSession.settings``). These values can safely be modified after initialization. See
+    :py:class:`.CachedSession` for usage details.
     """
 
-    allowable_codes: Iterable[int] = field(default=(200,))
-    allowable_methods: Iterable[str] = field(default=('GET', 'HEAD'))
+    allowable_codes: Iterable[int] = field(default=DEFAULT_STATUS_CODES)
+    allowable_methods: Iterable[str] = field(default=DEFAULT_METHODS)
     cache_control: bool = field(default=False)
     disabled: bool = field(default=False)
     expire_after: ExpirationTime = field(default=None)
@@ -63,17 +50,13 @@ class CacheSettings:
         kwargs = get_valid_kwargs(self.__attrs_init__, kwargs)
         self.__attrs_init__(**kwargs)
 
-    def update(self, **kwargs):
-        """Update settings with new values"""
-        for k, v in self._rename_kwargs(kwargs).items():
-            if hasattr(self, k):
-                setattr(self, k, v)
-
     @staticmethod
     def _rename_kwargs(kwargs):
         """Handle some deprecated argument names"""
-        kwargs.setdefault('stale_if_error', kwargs.pop('old_data_on_error', False))
-        kwargs.setdefault('match_headers', kwargs.pop('include_get_headers', False))
+        if 'old_data_on_error' in kwargs:
+            kwargs['stale_if_error'] = kwargs.pop('old_data_on_error')
+        if 'include_get_headers' in kwargs:
+            kwargs['match_headers'] = kwargs.pop('include_get_headers')
         return kwargs
 
 

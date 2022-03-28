@@ -16,7 +16,7 @@
 from contextlib import contextmanager
 from logging import getLogger
 from threading import RLock
-from typing import TYPE_CHECKING, Callable, MutableMapping, Optional
+from typing import TYPE_CHECKING, Dict, Iterable, MutableMapping, Optional, Union
 
 from requests import PreparedRequest
 from requests import Session as OriginalSession
@@ -27,11 +27,18 @@ from ._utils import get_valid_kwargs
 from .backends import BackendSpecifier, init_backend
 from .cache_control import REFRESH_TEMP_HEADER, CacheActions, append_directive
 from .expiration import ExpirationTime, get_expiration_seconds
-from .models import AnyResponse, CachedResponse, CacheSettings, set_response_defaults
+from .models import AnyResponse, CachedResponse, set_response_defaults
+from .models.settings import (
+    DEFAULT_CACHE_NAME,
+    DEFAULT_METHODS,
+    DEFAULT_STATUS_CODES,
+    CacheSettings,
+    FilterCallback,
+    KeyCallback,
+)
+from .serializers import SerializerPipeline
 
-__all__ = ['ALL_METHODS', 'CachedSession', 'CacheMixin']
-ALL_METHODS = ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
-FILTER_FN = Callable[[AnyResponse], bool]
+__all__ = ['CachedSession', 'CacheMixin']
 
 logger = getLogger(__name__)
 if TYPE_CHECKING:
@@ -40,8 +47,8 @@ else:
     MIXIN_BASE = object
 
 
-# TODO: Better docs for __init__
-# TODO: Better function signatures (due to passing around **kwargs instead of explicit keyword args)
+# TODO: Some settings could previously be modified directly on CachedSession, e.g.
+# session.expire_after. Should backwards-compatibility for this be maintained?
 class CacheMixin(MIXIN_BASE):
     """Mixin class that extends :py:class:`requests.Session` with caching features.
     See :py:class:`.CachedSession` for usage details.
@@ -49,15 +56,47 @@ class CacheMixin(MIXIN_BASE):
 
     def __init__(
         self,
-        cache_name: str = 'http_cache',
+        cache_name: str = DEFAULT_CACHE_NAME,
         backend: BackendSpecifier = None,
+        serializer: Union[str, SerializerPipeline] = None,
+        expire_after: ExpirationTime = -1,
+        urls_expire_after: Dict[str, ExpirationTime] = None,
+        cache_control: bool = False,
+        allowable_codes: Iterable[int] = DEFAULT_STATUS_CODES,
+        allowable_methods: Iterable[str] = DEFAULT_METHODS,
+        ignored_parameters: Iterable[str] = None,
+        match_headers: Union[Iterable[str], bool] = False,
+        filter_fn: FilterCallback = None,
+        key_fn: KeyCallback = None,
+        stale_if_error: bool = False,
         **kwargs,
     ):
-        self.cache = init_backend(cache_name, backend, **kwargs)
+        self.cache = init_backend(cache_name, backend, serializer=serializer, **kwargs)
+        self.settings = CacheSettings(
+            expire_after=expire_after,
+            urls_expire_after=urls_expire_after,
+            cache_control=cache_control,
+            allowable_codes=allowable_codes,
+            allowable_methods=allowable_methods,
+            ignored_parameters=ignored_parameters,
+            match_headers=match_headers,
+            filter_fn=filter_fn,
+            key_fn=key_fn,
+            stale_if_error=stale_if_error,
+            **kwargs,
+        )
         self._lock = RLock()
 
         # If the mixin superclass is custom Session, pass along any valid kwargs
         super().__init__(**get_valid_kwargs(super().__init__, kwargs))  # type: ignore
+
+    @property
+    def settings(self) -> CacheSettings:
+        return self.cache._settings
+
+    @settings.setter
+    def settings(self, value: CacheSettings):
+        self.cache._settings = value
 
     def request(  # type: ignore
         self,
@@ -230,14 +269,6 @@ class CacheMixin(MIXIN_BASE):
             finally:
                 self.settings.disabled = False
 
-    @property
-    def settings(self) -> CacheSettings:
-        return self.cache.settings
-
-    @settings.setter
-    def settings(self, value: CacheSettings):
-        self.cache.settings = value
-
     def remove_expired_responses(self, expire_after: ExpirationTime = None):
         """Remove expired responses from the cache, optionally with revalidation
 
@@ -263,7 +294,18 @@ class CachedSession(CacheMixin, OriginalSession):
             ``['sqlite', 'filesystem', 'mongodb', 'gridfs', 'redis', 'dynamodb', 'memory']``
         serializer: Serializer name or instance; name may be one of
             ``['pickle', 'json', 'yaml', 'bson']``.
-        kwargs: Additional keyword arguments for :py:class:`.CacheSettings` or the selected backend
+        expire_after: Time after which cached items will expire
+        urls_expire_after: Expiration times to apply for different URL patterns
+        cache_control: Use Cache-Control and other response headers to set expiration
+        allowable_codes: Only cache responses with one of these status codes
+        allowable_methods: Cache only responses for one of these HTTP methods
+        match_headers: Match request headers when reading from the cache; may be either ``True`` or
+            a list of specific headers to match
+        ignored_parameters: List of request parameters to not match against, and exclude from the cache
+        stale_if_error: Return stale cache data if a new request raises an exception
+        filter_fn: Response filtering function that indicates whether or not a given response should
+            be cached.
+        key_fn: Request matching function for generating custom cache keys
     """
 
 
