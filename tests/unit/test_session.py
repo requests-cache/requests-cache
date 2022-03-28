@@ -42,26 +42,6 @@ def test_init_backend_instance():
     assert session.cache is backend
 
 
-def test_init_backend_instance__kwargs():
-    backend = MyCache()
-    session = CachedSession(
-        'test_cache',
-        backend=backend,
-        ignored_parameters=['foo'],
-        include_get_headers=True,
-    )
-
-    assert session.cache.cache_name == 'test_cache'
-    assert session.settings.ignored_parameters == ['foo']
-    assert session.settings.match_headers is True
-
-
-def test_init_backend_class():
-    session = CachedSession('test_cache', backend=MyCache)
-    assert isinstance(session.cache, MyCache)
-    assert session.cache.cache_name == 'test_cache'
-
-
 def test_init_unregistered_backend():
     with pytest.raises(ValueError):
         CachedSession(backend='nonexistent')

@@ -9,7 +9,7 @@ from .base import BaseCache, BaseStorage, DictStorage
 # Backend-specific keyword arguments equivalent to 'cache_name'
 CACHE_NAME_KWARGS = ['db_path', 'db_name', 'namespace', 'table_name']
 
-BackendSpecifier = Union[str, BaseCache, Type[BaseCache]]
+BackendSpecifier = Union[str, BaseCache]
 logger = getLogger(__name__)
 
 
@@ -67,15 +67,12 @@ def init_backend(cache_name: str, backend: BackendSpecifier = None, **kwargs) ->
     cache_name_kwargs = [kwargs.pop(k) for k in CACHE_NAME_KWARGS if k in kwargs]
     cache_name = cache_name or cache_name_kwargs[0]
 
-    # Determine backend class
+    # Already a backend instance
     if isinstance(backend, BaseCache):
         if cache_name:
             backend.cache_name = cache_name
-        backend.settings.update(**kwargs)
         return backend
-    # TODO: Initializing a backend by class instead of instance seems superfluous. Deprecate this?
-    elif isinstance(backend, type):
-        return backend(cache_name, **kwargs)
+    # If no backend is specified, use SQLite as default, unless the environment doesn't support it
     elif not backend:
         sqlite_supported = issubclass(BACKEND_CLASSES['sqlite'], BaseCache)
         backend = 'sqlite' if sqlite_supported else 'memory'
@@ -83,5 +80,8 @@ def init_backend(cache_name: str, backend: BackendSpecifier = None, **kwargs) ->
     # Get backend class by name
     backend = str(backend).lower()
     if backend not in BACKEND_CLASSES:
-        raise ValueError(f'Invalid backend: {backend}. Choose from: {BACKEND_CLASSES.keys()}')
+        raise ValueError(
+            f'Invalid backend: {backend}. Provide a backend instance, or choose from one of the '
+            f'following aliases: {list(BACKEND_CLASSES.keys())}'
+        )
     return BACKEND_CLASSES[backend](cache_name, **kwargs)
