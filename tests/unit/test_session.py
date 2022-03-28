@@ -686,12 +686,13 @@ def test_request_only_if_cached__expired(mock_session):
 def test_request_only_if_cached__stale_if_error__expired(mock_session):
     """only_if_cached *will* return an expired response if stale_if_error is also set"""
     mock_session.get(MOCKED_URL, expire_after=1)
-    mock_session.stale_if_error = True
     time.sleep(1)
 
+    mock_session.settings.stale_if_error = True
     response = mock_session.get(MOCKED_URL, only_if_cached=True)
+    assert response.status_code == 200
     assert response.from_cache is True
-    assert response.is_expired is False
+    assert response.is_expired is True
 
 
 def test_request_only_if_cached__prepared_request(mock_session):

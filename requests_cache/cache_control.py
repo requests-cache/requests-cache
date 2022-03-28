@@ -130,7 +130,8 @@ class CacheActions:
         """
         # Determine if we need to send a new request or respond with an error
         is_expired = getattr(cached_response, 'is_expired', False)
-        if self._settings.only_if_cached and (cached_response is None or is_expired):
+        invalid_response = cached_response is None or is_expired
+        if invalid_response and self._settings.only_if_cached and not self._settings.stale_if_error:
             self.error_504 = True
         elif cached_response is None:
             self.send_request = True
