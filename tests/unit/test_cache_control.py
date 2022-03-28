@@ -5,7 +5,8 @@ import pytest
 from requests import PreparedRequest
 
 from requests_cache.cache_control import DO_NOT_CACHE, CacheActions
-from requests_cache.models import CachedResponse, CacheSettings, RequestSettings
+from requests_cache.models import CachedResponse
+from requests_cache.settings import CacheSettings, RequestSettings
 from tests.conftest import ETAG, HTTPDATE_STR, LAST_MODIFIED, get_mock_response
 
 IGNORED_DIRECTIVES = [

@@ -28,7 +28,8 @@ from .backends import BackendSpecifier, init_backend
 from .cache_control import REFRESH_TEMP_HEADER, CacheActions, append_directive
 from .expiration import ExpirationTime, get_expiration_seconds
 from .models import AnyResponse, CachedResponse, set_response_defaults
-from .models.settings import (
+from .serializers import SerializerPipeline
+from .settings import (
     DEFAULT_CACHE_NAME,
     DEFAULT_METHODS,
     DEFAULT_STATUS_CODES,
@@ -36,7 +37,6 @@ from .models.settings import (
     FilterCallback,
     KeyCallback,
 )
-from .serializers import SerializerPipeline
 
 __all__ = ['CachedSession', 'CacheMixin']
 
@@ -47,8 +47,6 @@ else:
     MIXIN_BASE = object
 
 
-# TODO: Some settings could previously be modified directly on CachedSession, e.g.
-# session.expire_after. Should backwards-compatibility for this be maintained?
 class CacheMixin(MIXIN_BASE):
     """Mixin class that extends :py:class:`requests.Session` with caching features.
     See :py:class:`.CachedSession` for usage details.
@@ -92,11 +90,21 @@ class CacheMixin(MIXIN_BASE):
 
     @property
     def settings(self) -> CacheSettings:
+        """Settings that affect cache behavior, and can be changed at any time"""
         return self.cache._settings
 
     @settings.setter
     def settings(self, value: CacheSettings):
         self.cache._settings = value
+
+    # For backwards-compatibility
+    @property
+    def expire_after(self) -> ExpirationTime:
+        return self.settings.expire_after
+
+    @expire_after.setter
+    def expire_after(self, value: ExpirationTime):
+        self.settings.expire_after = value
 
     def request(  # type: ignore
         self,
@@ -289,7 +297,7 @@ class CachedSession(CacheMixin, OriginalSession):
     following arguments affect cache behavior.
 
     Args:
-        cache_name: Cache prefix or namespace, depending on backend
+        cache_name: Used as a cache path, prefix, or namespace, depending on the backend
         backend: Cache backend name or instance; name may be one of
             ``['sqlite', 'filesystem', 'mongodb', 'gridfs', 'redis', 'dynamodb', 'memory']``
         serializer: Serializer name or instance; name may be one of

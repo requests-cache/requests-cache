@@ -26,7 +26,8 @@ from .expiration import (
     get_expiration_datetime,
     get_url_expiration,
 )
-from .models import CachedResponse, CacheSettings, RequestSettings
+from .models import CachedResponse
+from .settings import CacheSettings, RequestSettings
 
 __all__ = ['CacheActions']
 

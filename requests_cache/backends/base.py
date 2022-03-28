@@ -15,8 +15,8 @@ from typing import Iterable, Iterator, Optional, Tuple, Union
 from ..cache_keys import create_key, redact_response
 from ..expiration import ExpirationTime
 from ..models import AnyRequest, AnyResponse, CachedResponse
-from ..models.settings import DEFAULT_CACHE_NAME, CacheSettings
 from ..serializers import init_serializer
+from ..settings import DEFAULT_CACHE_NAME, CacheSettings
 
 # Specific exceptions that may be raised during deserialization
 DESERIALIZE_ERRORS = (AttributeError, ImportError, TypeError, ValueError, pickle.PickleError)

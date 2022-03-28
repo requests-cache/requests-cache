@@ -2,11 +2,11 @@ from typing import TYPE_CHECKING, Callable, Dict, Iterable, Union
 
 from attr import asdict, define, field
 
-from .._utils import get_valid_kwargs
-from ..expiration import ExpirationTime
+from ._utils import get_valid_kwargs
+from .expiration import ExpirationTime
 
 if TYPE_CHECKING:
-    from . import AnyResponse
+    from .models import AnyResponse
 
 ALL_METHODS = ('GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE')
 DEFAULT_CACHE_NAME = 'http_cache'
@@ -21,9 +21,9 @@ KeyCallback = Callable[..., str]
 @define(init=False)
 class CacheSettings:
     """Class used internally to store settings that affect caching behavior. This allows settings
-    to be used across multiple modules but exposed to the user in a single property
-    (``CachedSession.settings``). These values can safely be modified after initialization. See
-    :py:class:`.CachedSession` for usage details.
+    to be used across multiple modules, but exposed to the user in a single property
+    (:py:attr:`.CachedSession.settings`). These values can safely be modified after initialization. See
+    :py:class:`.CachedSession` and :ref:`user-guide` for usage details.
     """
 
     allowable_codes: Iterable[int] = field(default=DEFAULT_STATUS_CODES)
@@ -62,10 +62,10 @@ class CacheSettings:
 
 @define(init=False)
 class RequestSettings(CacheSettings):
-    """Cache settings that may be set for an individual request. Starts with session-level cache
-    settings and adds/overrides with request-level settings"""
+    """Cache settings that may be set for an individual request"""
 
     def __init__(self, session_settings: CacheSettings = None, **kwargs):
+        """Start with session-level cache settings and append/override with request-level settings"""
         session_kwargs = asdict(session_settings) if session_settings else {}
         # request-level expiration needs to be stored separately
         kwargs['request_expire_after'] = kwargs.pop('expire_after', None)
