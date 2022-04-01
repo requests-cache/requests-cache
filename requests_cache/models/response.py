@@ -47,35 +47,28 @@ class CachedResponse(Response):
             self.raw.headers = HTTPHeaderDict(self.headers)
 
     @classmethod
-    def from_response(
-        cls,
-        original_response: Union[Response, 'CachedResponse'],
-        expires: datetime = None,
-        **kwargs,
-    ):
+    def from_response(cls, response: Response, **kwargs):
         """Create a CachedResponse based on an original Response or another CachedResponse object"""
-        if isinstance(original_response, CachedResponse):
-            return attr.evolve(original_response, expires=expires)
-        obj = cls(expires=expires, **kwargs)
+        if isinstance(response, CachedResponse):
+            return attr.evolve(response, **kwargs)
+        obj = cls(**kwargs)
 
         # Copy basic attributes
         for k in Response.__attrs__:
-            setattr(obj, k, getattr(original_response, k, None))
+            setattr(obj, k, getattr(response, k, None))
 
         # Store request, raw response, and next response (if it's a redirect response)
-        obj.request = CachedRequest.from_request(original_response.request)
-        obj.raw = CachedHTTPResponse.from_response(original_response)
-        obj._next = (
-            CachedRequest.from_request(original_response.next) if original_response.next else None
-        )
+        obj.request = CachedRequest.from_request(response.request)
+        obj.raw = CachedHTTPResponse.from_response(response)
+        obj._next = CachedRequest.from_request(response.next) if response.next else None
 
         # Store response body, which will have been read & decoded by requests.Response by now
-        obj._content = original_response.content
+        obj._content = response.content
 
         # Copy redirect history, if any; avoid recursion by not copying redirects of redirects
         obj.history = []
         if not obj.is_redirect:
-            for redirect in original_response.history:
+            for redirect in response.history:
                 obj.history.append(cls.from_response(redirect))
 
         return obj
@@ -132,9 +125,10 @@ class CachedResponse(Response):
 
     def __str__(self):
         return (
-            f'request: {self.request}, response: {self.status_code} '
-            f'({format_file_size(self.size)}), created: {format_datetime(self.created_at)}, '
-            f'expires: {format_datetime(self.expires)} ({"stale" if self.is_expired else "fresh"})'
+            f'<CachedResponse [{self.status_code}]: '
+            f'created: {format_datetime(self.created_at)}, '
+            f'expires: {format_datetime(self.expires)} ({"stale" if self.is_expired else "fresh"}), '
+            f'size: {format_file_size(self.size)}, request: {self.request}>'
         )
 
 
