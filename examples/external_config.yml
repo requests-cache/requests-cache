@@ -1,0 +1,16 @@
+# See external_config.py for usage example
+cache_settings:
+  expire_after: 360
+  cache_control: True
+  stale_if_error: True
+  allowable_methods:
+    - GET
+    - HEAD
+    - POST
+  allowable_codes:
+    - 200
+    - 400
+  ignored_parameters:
+    - api_key
+  match_headers:
+    - Accept-Language

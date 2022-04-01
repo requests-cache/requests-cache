@@ -13,6 +13,11 @@ Some articles and blog posts that discuss requests-cache:
 * Python Web Scraping (2nd Edition): [Exploring requests-cache](https://learning.oreilly.com/library/view/python-web-scraping/9781786462589/3fad0dcc-445b-49a4-8d5e-ba5e1ff8e3bb.xhtml)
 * Cui Qingcai: [一个神器，大幅提升爬取效率](https://cuiqingcai.com/36052.html) (A package that greatly improves crawling efficiency)
 
+<!--
+Explicit line numbers are added below to include the module docstring in the main doc, and put the
+rest of the module contents in a dropdown box.
+TODO: It might be nice to have a custom extension to do this automatically.
+-->
 ## Scripts
 The following scripts can also be found in the
 [examples/](https://github.com/reclosedev/requests-cache/tree/master/examples) folder on GitHub.
@@ -23,10 +28,10 @@ The following scripts can also be found in the
 :end-line: 4
 ```
 
-:::{admonition} Example: basic_sessions.py
+:::{admonition} Example: `basic_sessions.py`
 :class: toggle
 ```{literalinclude} ../examples/basic_sessions.py
-:lines: 1,6-
+:lines: 6-
 ```
 :::
 
@@ -36,10 +41,10 @@ The following scripts can also be found in the
 :end-line: 4
 ```
 
-:::{admonition} Example: basic_patching.py
+:::{admonition} Example: `basic_patching.py`
 :class: toggle
 ```{literalinclude} ../examples/basic_patching.py
-:lines: 1,6-
+:lines: 6-
 ```
 :::
 
@@ -49,10 +54,10 @@ The following scripts can also be found in the
 :end-line: 3
 ```
 
-:::{admonition} Example: expiration.py
+:::{admonition} Example: `expiration.py`
 :class: toggle
 ```{literalinclude} ../examples/expiration.py
-:lines: 1,5-
+:lines: 5-
 ```
 :::
 
@@ -62,10 +67,10 @@ The following scripts can also be found in the
 :end-line: 4
 ```
 
-:::{admonition} Example: /url_patterns.py
+:::{admonition} Example: `url_patterns.py`
 :class: toggle
 ```{literalinclude} ../examples/url_patterns.py
-:lines: 1,6-
+:lines: 6-
 ```
 :::
 
@@ -75,10 +80,10 @@ The following scripts can also be found in the
 :end-line: 4
 ```
 
-:::{admonition} Example: threads.py
+:::{admonition} Example: `threads.py`
 :class: toggle
 ```{literalinclude} ../examples/threads.py
-:lines: 1,6-
+:lines: 6-
 ```
 :::
 
@@ -88,10 +93,23 @@ The following scripts can also be found in the
 :end-line: 3
 ```
 
-:::{admonition} Example: log_requests.py
+:::{admonition} Example: `log_requests.py`
 :class: toggle
 ```{literalinclude} ../examples/log_requests.py
-:lines: 1,5-
+:lines: 5-
+```
+:::
+
+### External configuration
+```{include} ../examples/external_config.py
+:start-line: 2
+:end-line: 8
+```
+
+:::{admonition} Example: `external_config.py`
+:class: toggle
+```{literalinclude} ../examples/external_config.py
+:lines: 10-
 ```
 :::
 
@@ -101,10 +119,10 @@ The following scripts can also be found in the
 :end-line: 8
 ```
 
-:::{admonition} Example: benchmark.py
+:::{admonition} Example: `benchmark.py`
 :class: toggle
 ```{literalinclude} ../examples/benchmark.py
-:lines: 1,10-
+:lines: 10-
 ```
 :::
 
@@ -114,10 +132,10 @@ The following scripts can also be found in the
 :end-line: 4
 ```
 
-:::{admonition} Example: convert_cache.py
+:::{admonition} Example: `convert_cache.py`
 :class: toggle
 ```{literalinclude} ../examples/convert_cache.py
-:lines: 1,6-
+:lines: 6-
 ```
 :::
 
@@ -128,10 +146,10 @@ The following scripts can also be found in the
 :end-line: 15
 ```
 
-:::{admonition} Example: custom_request_matcher.py
+:::{admonition} Example: `custom_request_matcher.py`
 :class: toggle
 ```{literalinclude} ../examples/custom_request_matcher.py
-:lines: 1,17-
+:lines: 17-
 ```
 :::
 
@@ -142,9 +160,9 @@ The following scripts can also be found in the
 :end-line: 4
 ```
 
-:::{admonition} Example: custom_request_matcher.py
+:::{admonition} Example: `time_machine_backtesting.py`
 :class: toggle
 ```{literalinclude} ../examples/time_machine_backtesting.py
-:lines: 1,6-
+:lines: 6-
 ```
 :::
