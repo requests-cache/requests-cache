@@ -19,7 +19,6 @@ on:
 
 env:
   LATEST_PY_VERSION: '3.10'
-  XDIST_ARGS: '--numprocesses=auto --dist=loadfile'
 
 jobs:
   # Run tests for all supported requests versions
@@ -44,7 +43,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - uses: snok/install-poetry@v1.3
         with:
-          version: 1.2.0a2
+          version: 1.2.0b1
           virtualenvs-in-project: true
 
       # Start integration test databases
@@ -73,9 +72,8 @@ jobs:
       - name: Run tests
         run: |
           source $VENV
-          pytest -x ${{ env.XDIST_ARGS }} tests/unit
-          pytest -x ${{ env.XDIST_ARGS }} tests/integration -k 'not concurrency'
-          STRESS_TEST_MULTIPLIER=10 pytest tests/integration -k 'concurrency'
+          nox -e test-current
+          nox -e stress
 
   # Deploy stable builds on tags only, and pre-release builds from manual trigger ("workflow_dispatch")
   release:
@@ -88,7 +86,7 @@ jobs:
           python-version: ${{ env.LATEST_PY_VERSION }}
       - uses: snok/install-poetry@v1.3
         with:
-          version: 1.2.0a2
+          version: 1.2.0b1
           virtualenvs-in-project: true
 
       - name: Set pre-release version

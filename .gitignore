@@ -4,7 +4,6 @@
 *.sqlite-journal
 *.egg
 *.egg-info
-.COVERAGE.*
 build/
 dist/
 downloads/
@@ -25,8 +24,9 @@ package.json
 
 # Test / coverage reports
 .coverage
-.tox
+.COVERAGE.*
 .mypy_cache/
+.nox/
 test-reports/
 
 # Sphinx
