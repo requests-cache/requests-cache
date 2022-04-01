@@ -19,12 +19,12 @@ from tests.integration.base_storage_test import BaseStorageTest
 
 
 @pytest.fixture(scope='module', autouse=True)
-@fail_if_no_connection()
+@fail_if_no_connection(connect_timeout=2)
 def ensure_connection():
     """Fail all tests in this module if MongoDB is not running"""
     from pymongo import MongoClient
 
-    client = MongoClient(serverSelectionTimeoutMS=200)
+    client = MongoClient(serverSelectionTimeoutMS=2000)
     client.server_info()
 
 
