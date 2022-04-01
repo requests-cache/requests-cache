@@ -12,9 +12,11 @@ from datetime import datetime
 from logging import getLogger
 from typing import Iterable, Iterator, Optional, Tuple, Union
 
+from requests import PreparedRequest, Response
+
 from ..cache_keys import create_key, redact_response
 from ..expiration import ExpirationTime
-from ..models import AnyRequest, AnyResponse, CachedResponse
+from ..models import CachedResponse
 from ..serializers import init_serializer
 from ..settings import DEFAULT_CACHE_NAME, CacheSettings
 
@@ -77,7 +79,7 @@ class BaseCache:
             logger.debug(e, exc_info=True)
             return default
 
-    def save_response(self, response: AnyResponse, cache_key: str = None, expires: datetime = None):
+    def save_response(self, response: Response, cache_key: str = None, expires: datetime = None):
         """Save a response to the cache
 
         Args:
@@ -105,7 +107,7 @@ class BaseCache:
         self.responses.clear()
         self.redirects.clear()
 
-    def create_key(self, request: AnyRequest = None, **kwargs) -> str:
+    def create_key(self, request: PreparedRequest = None, **kwargs) -> str:
         """Create a normalized cache key from a request object"""
         key_fn = self._settings.key_fn or create_key
         return key_fn(

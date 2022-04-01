@@ -27,7 +27,7 @@ from ._utils import get_valid_kwargs
 from .backends import BackendSpecifier, init_backend
 from .cache_control import REFRESH_TEMP_HEADER, CacheActions, append_directive
 from .expiration import ExpirationTime, get_expiration_seconds
-from .models import AnyResponse, CachedResponse, set_response_defaults
+from .models import AnyResponse, CachedResponse, OriginalResponse
 from .serializers import SerializerPipeline
 from .settings import (
     DEFAULT_CACHE_NAME,
@@ -107,6 +107,31 @@ class CacheMixin(MIXIN_BASE):
     def expire_after(self, value: ExpirationTime):
         self.settings.expire_after = value
 
+    # Wrapper methods to add return type hints
+    def get(self, url: str, **kwargs) -> AnyResponse:  # type: ignore
+        kwargs.setdefault('allow_redirects', True)
+        return self.request('GET', url, **kwargs)
+
+    def options(self, url: str, **kwargs) -> AnyResponse:  # type: ignore
+        kwargs.setdefault('allow_redirects', True)
+        return self.request('OPTIONS', url, **kwargs)
+
+    def head(self, url: str, **kwargs) -> AnyResponse:  # type: ignore
+        kwargs.setdefault('allow_redirects', False)
+        return self.request('HEAD', url, **kwargs)
+
+    def post(self, url: str, **kwargs) -> AnyResponse:  # type: ignore
+        return self.request('POST', url, **kwargs)
+
+    def put(self, url: str, **kwargs) -> AnyResponse:  # type: ignore
+        return self.request('PUT', url, **kwargs)
+
+    def patch(self, url: str, **kwargs) -> AnyResponse:  # type: ignore
+        return self.request('PATCH', url, **kwargs)
+
+    def delete(self, url: str, **kwargs) -> AnyResponse:  # type: ignore
+        return self.request('DELETE', url, **kwargs)
+
     def request(  # type: ignore
         self,
         method: str,
@@ -151,7 +176,7 @@ class CacheMixin(MIXIN_BASE):
         kwargs['headers'] = headers
 
         with patch_form_boundary(**kwargs):
-            return super().request(method, url, *args, **kwargs)
+            return super().request(method, url, *args, **kwargs)  # type: ignore
 
     def send(self, request: PreparedRequest, **kwargs) -> AnyResponse:
         """Send a prepared request, with caching. See :py:meth:`requests.Session.send` for base
@@ -219,7 +244,7 @@ class CacheMixin(MIXIN_BASE):
             return cached_response
         else:
             logger.debug(f'Skipping cache write for URL: {request.url}')
-        return set_response_defaults(response, actions.cache_key)
+        return OriginalResponse.wrap_response(response, actions)
 
     def _resend(
         self,

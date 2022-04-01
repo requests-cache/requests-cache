@@ -6,8 +6,8 @@ from requests import PreparedRequest, Request, Response
 
 from .raw_response import CachedHTTPResponse
 from .request import CachedRequest
-from .response import CachedResponse, set_response_defaults
+from .response import CachedResponse, OriginalResponse
 
-AnyResponse = Union[Response, CachedResponse]
+AnyResponse = Union[OriginalResponse, CachedResponse]
 AnyRequest = Union[Request, PreparedRequest, CachedRequest]
 AnyPreparedRequest = Union[PreparedRequest, CachedRequest]
