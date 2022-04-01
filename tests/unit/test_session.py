@@ -81,8 +81,8 @@ def test_response_defaults(mock_session):
     cache_key = 'd7fa9fb7317b7412'
 
     assert response_1.cache_key == cache_key
-    assert response_1.created_at is None
-    assert response_1.expires is None
+    assert isinstance(response_1.created_at, datetime)
+    assert isinstance(response_1.expires, datetime)
     assert response_1.from_cache is False
     assert response_1.is_expired is False
 

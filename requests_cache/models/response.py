@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from logging import getLogger
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, List, Optional, Tuple
 
 import attr
 from attr import define, field
@@ -12,16 +12,52 @@ from urllib3._collections import HTTPHeaderDict
 from ..expiration import ExpirationTime, get_expiration_datetime
 from . import CachedHTTPResponse, CachedRequest
 
+if TYPE_CHECKING:
+    from ..cache_control import CacheActions
+
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S %Z'  # Format used for __str__ only
 HeaderList = List[Tuple[str, str]]
 logger = getLogger(__name__)
 
 
 @define(auto_attribs=False, slots=False)
-class CachedResponse(Response):
-    """A class that emulates :py:class:`requests.Response`, with some additional optimizations
-    for serialization.
+class BaseResponse(Response):
+    """Wrapper class for responses returned by :py:class:`.CachedSession`. This mainly exists to
+    provide type hints for extra cache-related attributes that are added to non-cached responses.
     """
+
+    cache_key: Optional[str] = None
+    created_at: datetime = field(factory=datetime.utcnow)
+    expires: Optional[datetime] = field(default=None)
+
+    @property
+    def from_cache(self) -> bool:
+        return False
+
+    @property
+    def is_expired(self) -> bool:
+        return False
+
+
+@define(auto_attribs=False, repr=False, slots=False)
+class OriginalResponse(BaseResponse):
+    """Wrapper class for non-cached responses returned by :py:class:`.CachedSession`"""
+
+    @classmethod
+    def wrap_response(cls, response: Response, actions: 'CacheActions'):
+        """Modify a response object in-place and add extra cache-related attributes"""
+        if not isinstance(response, cls):
+            response.__class__ = cls
+            # Add expires and cache_key only if the response was written to the cache
+            response.expires = None if actions.skip_write else actions.expires  # type: ignore
+            response.cache_key = None if actions.skip_write else actions.cache_key  # type: ignore
+            response.created_at = datetime.utcnow()  # type: ignore
+        return response
+
+
+@define(auto_attribs=False, slots=False)
+class CachedResponse(BaseResponse):
+    """A class that emulates :py:class:`requests.Response`, optimized for serialization"""
 
     _content: bytes = field(default=None)
     _next: Optional[CachedRequest] = field(default=None)
@@ -155,18 +191,3 @@ def format_file_size(n_bytes: int) -> str:
 
     if TYPE_CHECKING:
         return _format(unit)
-
-
-def set_response_defaults(
-    response: Union[Response, CachedResponse], cache_key: str = None
-) -> Union[Response, CachedResponse]:
-    """Set some default CachedResponse values on a requests.Response object, so they can be
-    expected to always be present
-    """
-    if not isinstance(response, CachedResponse):
-        response.cache_key = cache_key  # type: ignore
-        response.created_at = None  # type: ignore
-        response.expires = None  # type: ignore
-        response.from_cache = False  # type: ignore
-        response.is_expired = False  # type: ignore
-    return response
