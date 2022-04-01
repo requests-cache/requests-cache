@@ -40,7 +40,7 @@ url-normalize = "^1.4"     # For improved request matching
 boto3                      = {optional=true, version="^1.15"}
 botocore                   = {optional=true, version="^1.18"}
 pymongo                    = {optional=true, version=">=3,<5"}
-redis                      = {optional=true, version=">=3,<5"}
+redis                      = {optional=true, version=">=3,<4.2"}
 
 # Optional serialization dependencies
 bson                       = {optional=true, version=">=0.5"}
@@ -48,17 +48,17 @@ itsdangerous               = {optional=true, version="^2.0"}
 pyyaml                     = {optional=true, version=">=5.4"}
 ujson                      = {optional=true, version=">=4.0"}
 
-# All the bells and whistles for building documentation;
+# Dependencies for building documentation;
 # defined here because readthedocs doesn't (yet?) support poetry.dev-dependencies
-furo                       = {optional=true, version=">=2021.9.8"}
-linkify-it-py              = {optional=true, version="^1.0.1"}
-myst-parser                = {optional=true, version="^0.15.1"}
-sphinx                     = {optional=true, version="4.3.0"}
-sphinx-autodoc-typehints   = {optional=true, version="^1.11"}
-sphinx-automodapi          = {optional=true, version=">=0.13,<0.15"}
-sphinx-copybutton          = {optional=true, version=">=0.3,<0.5"}
+furo                       = {optional=true, version="^2022.3.4"}
+linkify-it-py              = {optional=true, version="^1.0"}
+myst-parser                = {optional=true, version=">=0.17"}
+sphinx                     = {optional=true, version="^4.5.0"}
+sphinx-autodoc-typehints   = {optional=true, version="^1.17"}
+sphinx-automodapi          = {optional=true, version=">=0.14"}
+sphinx-copybutton          = {optional=true, version=">=0.5"}
 sphinx-inline-tabs         = {optional=true, version=">=2022.1.2b11", python=">=3.8"}
-sphinx-notfound-page       = {optional=true, version="*"}
+sphinx-notfound-page       = {optional=true, version=">=0.8"}
 sphinx-panels              = {optional=true, version="^0.6"}
 sphinxcontrib-apidoc       = {optional=true, version="^0.3"}
 

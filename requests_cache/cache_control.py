@@ -1,6 +1,4 @@
-"""Internal utilities for determining cache expiration and other cache actions. This module defines
-the majority of the caching policy, and resulting actions are handled in
-:py:meth:`CachedSession.send`.
+"""Internal utilities for determining cache expiration and other cache actions.
 
 .. automodsumm:: requests_cache.cache_control
    :classes-only:
@@ -12,178 +10,219 @@ the majority of the caching policy, and resulting actions are handled in
 """
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
-from email.utils import parsedate_to_datetime
-from fnmatch import fnmatch
+from datetime import datetime
 from logging import getLogger
-from math import ceil
-from typing import TYPE_CHECKING, Any, Dict, MutableMapping, Optional, Tuple, Union
+from typing import Dict, MutableMapping, Optional, Tuple, Union
 
 from attr import define, field
 from requests import PreparedRequest, Response
 from requests.models import CaseInsensitiveDict
 
-from ._utils import coalesce
+from ._utils import coalesce, try_int
+from .expiration import (
+    DO_NOT_CACHE,
+    NEVER_EXPIRE,
+    ExpirationTime,
+    get_expiration_datetime,
+    get_url_expiration,
+)
+from .models import CachedResponse
+from .settings import CacheSettings, RequestSettings
 
-__all__ = ['DO_NOT_CACHE', 'CacheActions']
-if TYPE_CHECKING:
-    from .models import CachedResponse
+__all__ = ['CacheActions']
 
-# May be set by either headers or expire_after param to disable caching or disable expiration
-DO_NOT_CACHE = 0
-NEVER_EXPIRE = -1
+# Temporary header only used to support the 'refresh' option in CachedSession.request()
+REFRESH_TEMP_HEADER = 'requests-cache-refresh'
 
 CacheDirective = Union[None, int, bool]
-ExpirationTime = Union[None, int, float, str, datetime, timedelta]
-ExpirationPatterns = Dict[str, ExpirationTime]
-
 logger = getLogger(__name__)
 
 
 @define
 class CacheActions:
-    """A class that translates cache settings and headers into specific actions to take for a
-    given cache item. Actions include:
+    """Translates cache settings and headers into specific actions to take for a given cache item.
+     This class defines the caching policy, and resulting actions are handled in
+     :py:meth:`CachedSession.send`.
 
-    * Read from the cache
-    * Write to the cache
-    * Revalidate cache item (if it exists)
-    * Set cache expiration
-    * Add headers for conditional requests
+    .. rubric:: Notes
 
-    If multiple sources provide an expiration time, they will be used in the following order of
-    precedence:
+    * See :ref:`precedence` for behavior if multiple sources provide an expiration
+    * See :ref:`headers` for more details about header behavior
+    * The following arguments/properties are the outputs of this class:
 
-    1. Cache-Control request headers
-    2. Cache-Control response headers (if enabled)
-    3. Per-request expiration
-    4. Per-URL expiration
-    5. Per-session expiration
-
-    See :ref:`headers` for more details about behavior.
+    Args:
+        cache_key: The cache key created based on the initial request
+        error_504: Indicates the request cannot be fulfilled based on cache settings
+        expire_after: User or header-provided expiration value
+        send_request: Send a new request
+        resend_request: Send a new request to refresh a stale cache item
+        skip_read: Skip reading from the cache
+        skip_write: Skip writing to the cache
     """
 
-    cache_control: bool = field(default=False)
+    # Outputs
     cache_key: str = field(default=None)
+    error_504: bool = field(default=False)
     expire_after: ExpirationTime = field(default=None)
-    only_if_cached: bool = field(default=False)
-    request_directives: Dict[str, CacheDirective] = field(factory=dict)
-    revalidate: bool = field(default=False)
+    resend_request: bool = field(default=False)
+    send_request: bool = field(default=False)
     skip_read: bool = field(default=False)
     skip_write: bool = field(default=False)
-    validation_headers: Dict[str, str] = field(factory=dict)
+
+    # Inputs/internal attributes
+    _settings: RequestSettings = field(default=None, repr=False, init=False)
+    _validation_headers: Dict[str, str] = field(factory=dict, repr=False, init=False)
 
     @classmethod
     def from_request(
         cls,
         cache_key: str,
         request: PreparedRequest,
-        cache_control: bool = False,
-        session_expire_after: ExpirationTime = None,
-        urls_expire_after: ExpirationPatterns = None,
-        request_expire_after: ExpirationTime = None,
-        only_if_cached: bool = False,
-        refresh: bool = False,
-        revalidate: bool = False,
+        settings: CacheSettings,
         **kwargs,
     ):
-        """Initialize from request info and cache settings.
-
-        Notes:
-
-        * If ``cache_control=True``, ``expire_after`` will be handled in
-          :py:meth:`update_from_response()` since it may be overridden by response headers.
-        * The ``requests-cache-refresh`` temporary header is used solely to support the ``refresh``
-          option in :py:meth:`CachedSession.request`; see notes there on interactions between
-          ``request()`` and ``send()``.
-        """
+        """Initialize from request info and cache settings"""
         request.headers = request.headers or CaseInsensitiveDict()
         directives = get_cache_directives(request.headers)
         logger.debug(f'Cache directives from request headers: {directives}')
 
+        # Merge session settings and request settings
+        settings = RequestSettings(settings, skip_invalid=True, **kwargs)
+        settings.only_if_cached = settings.only_if_cached or 'only-if-cached' in directives
+        settings.refresh = settings.refresh or bool(request.headers.pop(REFRESH_TEMP_HEADER, False))
+        settings.revalidate = settings.revalidate or 'no-cache' in directives
+
         # Check expiration values in order of precedence
         expire_after = coalesce(
             directives.get('max-age'),
-            request_expire_after,
-            get_url_expiration(request.url, urls_expire_after),
-            session_expire_after,
+            settings.request_expire_after,
+            get_url_expiration(request.url, settings.urls_expire_after),
+            settings.expire_after,
         )
 
-        # Check conditions for cache read and write based on args and request headers
-        refresh_temp_header = request.headers.pop('requests-cache-refresh', False)
-        check_expiration = directives.get('max-age') if cache_control else expire_after
-        skip_write = check_expiration == DO_NOT_CACHE or 'no-store' in directives
+        # Check conditions for reading from the cache
+        skip_read = any(
+            [
+                settings.refresh,
+                settings.disabled,
+                'no-store' in directives,
+                try_int(expire_after) == DO_NOT_CACHE,
+            ]
+        )
 
-        # These behaviors may be set by either request headers or keyword arguments
-        only_if_cached = only_if_cached or 'only-if-cached' in directives
-        revalidate = revalidate or 'no-cache' in directives
-        skip_read = skip_write or refresh or bool(refresh_temp_header)
-
-        return cls(
-            cache_control=cache_control,
+        actions = cls(
             cache_key=cache_key,
             expire_after=expire_after,
-            only_if_cached=only_if_cached,
-            request_directives=directives,
-            revalidate=revalidate,
             skip_read=skip_read,
-            skip_write=skip_write,
+            skip_write='no-store' in directives,
         )
+        actions._settings = settings
+        actions._validation_headers = {}
+        return actions
 
     @property
     def expires(self) -> Optional[datetime]:
         """Convert the user/header-provided expiration value to a datetime"""
         return get_expiration_datetime(self.expire_after)
 
-    def update_from_cached_response(self, response: CachedResponse):
+    def update_from_cached_response(self, cached_response: CachedResponse):
         """Check for relevant cache headers from a cached response, and set headers for a
         conditional request, if possible.
 
         Used after fetching a cached response, but before potentially sending a new request.
         """
-        if not response:
-            return
+        # Determine if we need to send a new request or respond with an error
+        is_expired = getattr(cached_response, 'is_expired', False)
+        invalid_response = cached_response is None or is_expired
+        if invalid_response and self._settings.only_if_cached and not self._settings.stale_if_error:
+            self.error_504 = True
+        elif cached_response is None:
+            self.send_request = True
+        elif is_expired and not (self._settings.only_if_cached and self._settings.stale_if_error):
+            self.resend_request = True
 
+        if cached_response is not None:
+            self._update_validation_headers(cached_response)
+
+    def _update_validation_headers(self, response: CachedResponse):
         # Revalidation may be triggered by either stale response or request/cached response headers
         directives = get_cache_directives(response.headers)
-        self.revalidate = _has_validator(response.headers) and any(
+        revalidate = _has_validator(response.headers) and any(
             [
                 response.is_expired,
-                self.revalidate,
+                self._settings.revalidate,
                 'no-cache' in directives,
                 'must-revalidate' in directives and directives.get('max-age') == 0,
             ]
         )
 
-        if self.revalidate and response.headers.get('ETag'):
-            self.validation_headers['If-None-Match'] = response.headers['ETag']
-        if self.revalidate and response.headers.get('Last-Modified'):
-            self.validation_headers['If-Modified-Since'] = response.headers['Last-Modified']
+        # Add the appropriate validation headers, if needed
+        if revalidate:
+            self.send_request = True
+            if response.headers.get('ETag'):
+                self._validation_headers['If-None-Match'] = response.headers['ETag']
+            if response.headers.get('Last-Modified'):
+                self._validation_headers['If-Modified-Since'] = response.headers['Last-Modified']
 
     def update_from_response(self, response: Response):
-        """Update expiration + actions based on headers from a new response.
+        """Update expiration + actions based on headers and other details from a new response.
 
-        Used after receiving a new response but before saving it to the cache.
+        Used after receiving a new response, but before saving it to the cache.
         """
-        if not response or not self.cache_control:
-            return
+        if self._settings.cache_control:
+            self._update_from_response_headers(response)
 
+        # If "expired" but there's a validator, save it to the cache and revalidate on use
+        expire_immediately = try_int(self.expire_after) == DO_NOT_CACHE
+        has_validator = _has_validator(response.headers)
+        self.skip_write = self.skip_write or (expire_immediately and not has_validator)
+
+        # Apply filter callback, if any
+        callback = self._settings.filter_fn
+        filtered_out = callback is not None and not callback(response)
+
+        # Apply and log remaining checks needed to determine if the response should be cached
+        cache_criteria = {
+            'disabled cache': self._settings.disabled,
+            'disabled method': str(response.request.method) not in self._settings.allowable_methods,
+            'disabled status': response.status_code not in self._settings.allowable_codes,
+            'disabled by filter': filtered_out,
+            'disabled by headers or expiration params': self.skip_write,
+        }
+        logger.debug(f'Pre-cache checks for response from {response.url}: {cache_criteria}')
+        self.skip_write = any(cache_criteria.values())
+
+    def _update_from_response_headers(self, response: Response):
+        """Check response headers for expiration and other cache directives"""
         directives = get_cache_directives(response.headers)
         logger.debug(f'Cache directives from response headers: {directives}')
 
-        # Check headers for expiration, validators, and other cache directives
         if directives.get('immutable'):
             self.expire_after = NEVER_EXPIRE
         else:
             self.expire_after = coalesce(
-                directives.get('max-age'), directives.get('expires'), self.expire_after
+                directives.get('max-age'),
+                directives.get('expires'),
+                self.expire_after,
             )
-        no_store = 'no-store' in directives or 'no-store' in self.request_directives
+        self.skip_write = self.skip_write or 'no-store' in directives
 
-        # If expiration is 0 and there's a validator, save it to the cache and revalidate on use
-        # Otherwise, skip writing to the cache if specified by expiration or other headers
-        expire_immediately = try_int(self.expire_after) == DO_NOT_CACHE
-        self.skip_write = (expire_immediately or no_store) and not _has_validator(response.headers)
+    def update_request(self, request: PreparedRequest) -> PreparedRequest:
+        """Apply validation headers (if any) before sending a request"""
+        request.headers.update(self._validation_headers)
+        return request
+
+    def update_revalidated_response(
+        self, response: Response, cached_response: CachedResponse
+    ) -> CachedResponse:
+        """After revalidation, update the cached response's headers and reset its expiration"""
+        logger.debug(
+            f'Response for URL {response.request.url} has not been modified; updating and using cached response'
+        )
+        cached_response.expires = self.expires
+        cached_response.headers.update(response.headers)
+        self.update_from_response(cached_response)
+        return cached_response
 
 
 def append_directive(
@@ -197,32 +236,6 @@ def append_directive(
     return headers
 
 
-def get_expiration_datetime(expire_after: ExpirationTime) -> Optional[datetime]:
-    """Convert an expiration value in any supported format to an absolute datetime"""
-    # Never expire
-    if expire_after is None or expire_after == NEVER_EXPIRE:
-        return None
-    # Expire immediately
-    elif try_int(expire_after) == DO_NOT_CACHE:
-        return datetime.utcnow()
-    # Already a datetime or datetime str
-    if isinstance(expire_after, str):
-        return parse_http_date(expire_after)
-    elif isinstance(expire_after, datetime):
-        return to_utc(expire_after)
-
-    # Otherwise, it must be a timedelta or time in seconds
-    if not isinstance(expire_after, timedelta):
-        expire_after = timedelta(seconds=expire_after)
-    return datetime.utcnow() + expire_after
-
-
-def get_expiration_seconds(expire_after: ExpirationTime) -> int:
-    """Convert an expiration value in any supported format to an expiration time in seconds"""
-    expires = get_expiration_datetime(expire_after)
-    return ceil((expires - datetime.utcnow()).total_seconds()) if expires else NEVER_EXPIRE
-
-
 def get_cache_directives(headers: MutableMapping) -> Dict[str, CacheDirective]:
     """Get all Cache-Control directives as a dict. Handle duplicate headers and comma-separated
     lists. Key-only directives are returned as ``{key: True}``.
@@ -233,49 +246,14 @@ def get_cache_directives(headers: MutableMapping) -> Dict[str, CacheDirective]:
     kv_directives = {}
     if headers.get('Cache-Control'):
         cache_directives = headers['Cache-Control'].split(',')
-        kv_directives = dict([split_kv_directive(value) for value in cache_directives])
+        kv_directives = dict([_split_kv_directive(value) for value in cache_directives])
 
     if 'Expires' in headers:
         kv_directives['expires'] = headers['Expires']
     return kv_directives
 
 
-def get_504_response(request: PreparedRequest) -> Response:
-    from .models import CachedResponse
-
-    return CachedResponse(
-        url=request.url or '',
-        status_code=504,
-        reason='Not Cached',
-        request=request,  # type: ignore
-    )
-
-
-def get_url_expiration(
-    url: Optional[str], urls_expire_after: ExpirationPatterns = None
-) -> ExpirationTime:
-    """Check for a matching per-URL expiration, if any"""
-    if not url:
-        return None
-
-    for pattern, expire_after in (urls_expire_after or {}).items():
-        if url_match(url, pattern):
-            logger.debug(f'URL {url} matched pattern "{pattern}": {expire_after}')
-            return expire_after
-    return None
-
-
-def parse_http_date(value: str) -> Optional[datetime]:
-    """Attempt to parse an HTTP (RFC 5322-compatible) timestamp"""
-    try:
-        expire_after = parsedate_to_datetime(value)
-        return to_utc(expire_after)
-    except (TypeError, ValueError):
-        logger.debug(f'Failed to parse timestamp: {value}')
-        return None
-
-
-def split_kv_directive(header_value: str) -> Tuple[str, CacheDirective]:
+def _split_kv_directive(header_value: str) -> Tuple[str, CacheDirective]:
     """Split a cache directive into a ``(key, int)`` pair, if possible; otherwise just
     ``(key, True)``.
     """
@@ -285,44 +263,6 @@ def split_kv_directive(header_value: str) -> Tuple[str, CacheDirective]:
         return k, try_int(v)
     else:
         return header_value, True
-
-
-def to_utc(dt: datetime):
-    """All internal datetimes are UTC and timezone-naive. Convert any user/header-provided
-    datetimes to the same format.
-    """
-    if dt.tzinfo:
-        dt = dt.astimezone(timezone.utc)
-        dt = dt.replace(tzinfo=None)
-    return dt
-
-
-def try_int(value: Any) -> Optional[int]:
-    """Convert a value to an int, if possible, otherwise ``None``"""
-    try:
-        return int(value)
-    except (TypeError, ValueError):
-        return None
-
-
-def url_match(url: str, pattern: str) -> bool:
-    """Determine if a URL matches a pattern
-
-    Args:
-        url: URL to test. Its base URL (without protocol) will be used.
-        pattern: Glob pattern to match against. A recursive wildcard will be added if not present
-
-    Example:
-        >>> url_match('https://httpbin.org/delay/1', 'httpbin.org/delay')
-        True
-        >>> url_match('https://httpbin.org/stream/1', 'httpbin.org/*/1')
-        True
-        >>> url_match('https://httpbin.org/stream/2', 'httpbin.org/*/1')
-        False
-    """
-    url = url.split('://')[-1]
-    pattern = pattern.split('://')[-1].rstrip('*') + '**'
-    return fnmatch(url, pattern)
 
 
 def _has_validator(headers: MutableMapping) -> bool:

@@ -11,8 +11,21 @@
 * Add `refresh` option to `CachedSession.request()` and `send()` to make (and cache) an new request regardless of existing cache contents
 * Add `revalidate` option to `CachedSession.request()` and `send()` to send conditional request (if possible) before using a cached response
 
+**Other features:**
+* All settings that affect cache behavior can now be accessed and modified via `CachedSession.settings`
+
 **Dependencies:**
 * Replace `appdirs` with `platformdirs`
+
+**Potentially breaking changes:**
+The following undocumented behaviors have been removed:
+* The arguments `match_headers` and `ignored_parameters` must be passed to `CachedSession`.
+  * Previously, these could also be passed to a `BaseCache` instance.
+* The `CachedSession` `backend` argument must be either an instance or string alias.
+  * Previously it would also accept a backend class.
+* After initialization, cache settings can only be accesed and modified via
+  `CachedSession.settings`.
+  * Previously, some settings could be modified by setting them on either `CachedSession` or `BaseCache`. In some cases this could silently fail or otherwise have undefined behavior.
 
 ### 0.9.3 (2022-02-22)
 * Fix handling BSON serializer differences between pymongo's `bson` and standalone `bson` codec.

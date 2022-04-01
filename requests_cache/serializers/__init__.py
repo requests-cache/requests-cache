@@ -36,7 +36,7 @@ SERIALIZERS = {
 
 
 def init_serializer(serializer=None, **kwargs):
-    """Initialize a serializer from a name, class, or instance"""
+    """Initialize a serializer from a name or instance"""
     serializer = serializer or 'pickle'
     if isinstance(serializer, str):
         serializer = SERIALIZERS[serializer]

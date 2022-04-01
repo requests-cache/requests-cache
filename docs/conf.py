@@ -1,5 +1,4 @@
 # requests-cache documentation build configuration file
-import logging
 import os
 import sys
 from os.path import abspath, dirname, join
@@ -15,7 +14,7 @@ TEMPLATE_DIR = join(PROJECT_DIR, 'docs', '_templates')
 
 # General information about the project.
 project = 'requests-cache'
-needs_sphinx = '3.0'
+needs_sphinx = '4.0'
 master_doc = 'index'
 source_suffix = ['.rst', '.md']
 version = release = __version__
@@ -83,8 +82,8 @@ copybutton_prompt_is_regexp = True
 # Generate labels in the format <page>:<section>
 autosectionlabel_prefix_document = True
 
-# Use sphinx_autodoc_typehints extension instead of autodoc's built-in type hints
-autodoc_typehints = 'none'
+# Move type hint info to function description instead of signature
+autodoc_typehints = 'description'
 always_document_param_types = True
 
 # Use apidoc to auto-generate rst sources
@@ -137,13 +136,8 @@ def setup(app):
 def patch_automodapi(app):
     """Monkey-patch the automodapi extension to exclude imported members:
     https://github.com/astropy/sphinx-automodapi/blob/master/sphinx_automodapi/automodsumm.py#L135
-
-    Also patches an unreleased fix for Sphinx 4 compatibility:
-    https://github.com/astropy/sphinx-automodapi/pull/129
     """
     from sphinx_automodapi import automodsumm
-    from sphinx_automodapi.automodsumm import Automodsumm
     from sphinx_automodapi.utils import find_mod_objs
 
     automodsumm.find_mod_objs = lambda *args: find_mod_objs(args[0], onlylocals=True)
-    Automodsumm.warn = lambda *args: logging.getLogger('sphinx_automodapi').warn(*args)

@@ -4,6 +4,7 @@
 *.sqlite-journal
 *.egg
 *.egg-info
+.COVERAGE.*
 build/
 dist/
 downloads/

@@ -62,5 +62,5 @@ The following headers are currently supported:
 - `Cache-Control: no-store` Skip writing to the cache
 - `Cache-Control: immutable`: Cache the response with no expiration
 - `Expires`: Used as an absolute expiration datetime
-- `ETag`: Used for revalidation; update and return stale cache data if the remote content has not changed (`304 Not Modified` response)
-- `Last-Modified`: Used for revalidation; update and return stale cache data if the remote content has not changed (`304 Not Modified` response)
+- `ETag`: Validator used for conditional requests
+- `Last-Modified`: Validator used for conditional requests

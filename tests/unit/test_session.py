@@ -42,26 +42,6 @@ def test_init_backend_instance():
     assert session.cache is backend
 
 
-def test_init_backend_instance__kwargs():
-    backend = MyCache()
-    session = CachedSession(
-        'test_cache',
-        backend=backend,
-        ignored_parameters=['foo'],
-        include_get_headers=True,
-    )
-
-    assert session.cache.cache_name == 'test_cache'
-    assert session.cache.ignored_parameters == ['foo']
-    assert session.cache.match_headers is True
-
-
-def test_init_backend_class():
-    session = CachedSession('test_cache', backend=MyCache)
-    assert isinstance(session.cache, MyCache)
-    assert session.cache.cache_name == 'test_cache'
-
-
 def test_init_unregistered_backend():
     with pytest.raises(ValueError):
         CachedSession(backend='nonexistent')
@@ -81,18 +61,20 @@ def test_init_missing_backend_dependency():
 
 def test_repr(mock_session):
     """Test session and cache string representations"""
-    mock_session.expire_after = 11
+    mock_session.settings.expire_after = 11
     mock_session.cache.responses['key'] = 'value'
     mock_session.cache.redirects['key'] = 'value'
     mock_session.cache.redirects['key_2'] = 'value'
 
-    assert mock_session.cache.cache_name in repr(mock_session) and '11' in repr(mock_session)
-    assert '2 redirects' in str(mock_session.cache) and '1 responses' in str(mock_session.cache)
+    assert mock_session.cache.cache_name in repr(mock_session)
+    assert '11' in repr(mock_session)
+    assert '2 redirects' in str(mock_session.cache)
+    assert '1 responses' in str(mock_session.cache)
 
 
 def test_response_defaults(mock_session):
     """Both cached and new responses should always have the following attributes"""
-    mock_session.expire_after = datetime.utcnow() + timedelta(days=1)
+    mock_session.settings.expire_after = datetime.utcnow() + timedelta(days=1)
     response_1 = mock_session.get(MOCKED_URL)
     response_2 = mock_session.get(MOCKED_URL)
     response_3 = mock_session.get(MOCKED_URL)
@@ -134,8 +116,8 @@ def test_all_methods__ignored_parameters__not_matched(field, method, mock_sessio
     """Test all relevant combinations of methods and data fields. Requests with different request
     params, data, or json should not be cached under different keys based on an ignored param.
     """
-    mock_session.cache.ignored_parameters = ['ignored']
-    mock_session.cache.match_headers = True
+    mock_session.settings.ignored_parameters = ['ignored']
+    mock_session.settings.match_headers = True
     params_1 = {'ignored': 'value_1', 'not_ignored': 'value_1'}
     params_2 = {'ignored': 'value_2', 'not_ignored': 'value_1'}
     params_3 = {'ignored': 'value_2', 'not_ignored': 'value_2'}
@@ -153,7 +135,7 @@ def test_all_methods__ignored_parameters__redacted(field, method, mock_session):
     """Test all relevant combinations of methods and data fields. Requests with ignored params
     should have those values redacted from the cached response.
     """
-    mock_session.cache.ignored_parameters = ['access_token']
+    mock_session.settings.ignored_parameters = ['access_token']
     params_1 = {'access_token': 'asdf', 'not_ignored': 'value_1'}
 
     mock_session.request(method, MOCKED_URL, **{field: params_1})
@@ -296,7 +278,7 @@ def test_normalize_params__url(mock_session):
 
 def test_match_headers(mock_session):
     """With match_headers, requests with different headers should have different cache keys"""
-    mock_session.cache.match_headers = True
+    mock_session.settings.match_headers = True
     headers_list = [
         {'Accept': 'application/json'},
         {'Accept': 'text/xml'},
@@ -310,7 +292,7 @@ def test_match_headers(mock_session):
 
 def test_match_headers__normalize(mock_session):
     """With match_headers, the same headers (in any order) should have the same cache key"""
-    mock_session.cache.match_headers = True
+    mock_session.settings.match_headers = True
     headers = {'Accept': 'application/json', 'Custom': 'abc'}
     reversed_headers = {'Custom': 'abc', 'Accept': 'application/json'}
     assert mock_session.get(MOCKED_URL, headers=headers).from_cache is False
@@ -319,7 +301,7 @@ def test_match_headers__normalize(mock_session):
 
 def test_match_headers__list(mock_session):
     """match_headers can optionally be a list of specific headers to include"""
-    mock_session.cache.match_headers = ['Accept']
+    mock_session.settings.match_headers = ['Accept']
     headers_1 = {'Accept': 'application/json', 'User-Agent': 'qutebrowser'}
     headers_2 = {'Accept': 'application/json', 'User-Agent': 'Firefox'}
     headers_3 = {'Accept': 'text/plain', 'User-Agent': 'qutebrowser'}
@@ -333,7 +315,7 @@ def test_match_headers__list(mock_session):
 def test_include_get_headers():
     """include_get_headers is aliased to match_headers for backwards-compatibility"""
     session = CachedSession(include_get_headers=True, backend='memory')
-    assert session.cache.match_headers is True
+    assert session.settings.match_headers is True
 
 
 # Error handling
@@ -351,8 +333,8 @@ def test_cache_error(exception_cls, mock_session):
 def test_expired_request_error(mock_session):
     """Without stale_if_error (default), if there is an error while re-fetching an expired
     response, the request should be re-raised and the expired item deleted"""
-    mock_session.stale_if_error = False
-    mock_session.expire_after = 1
+    mock_session.settings.stale_if_error = False
+    mock_session.settings.expire_after = 1
     mock_session.get(MOCKED_URL)
     time.sleep(1)
 
@@ -364,8 +346,8 @@ def test_expired_request_error(mock_session):
 
 def test_stale_if_error__exception(mock_session):
     """With stale_if_error, expect to get old cache data if there is an exception during a request"""
-    mock_session.stale_if_error = True
-    mock_session.expire_after = 1
+    mock_session.settings.stale_if_error = True
+    mock_session.settings.expire_after = 1
 
     assert mock_session.get(MOCKED_URL).from_cache is False
     assert mock_session.get(MOCKED_URL).from_cache is True
@@ -377,9 +359,9 @@ def test_stale_if_error__exception(mock_session):
 
 def test_stale_if_error__error_code(mock_session):
     """With stale_if_error, expect to get old cache data if a response has an error status code"""
-    mock_session.stale_if_error = True
-    mock_session.expire_after = 1
-    mock_session.allowable_codes = (200, 404)
+    mock_session.settings.stale_if_error = True
+    mock_session.settings.expire_after = 1
+    mock_session.settings.allowable_codes = (200, 404)
 
     assert mock_session.get(MOCKED_URL_404).from_cache is False
 
@@ -391,7 +373,7 @@ def test_stale_if_error__error_code(mock_session):
 def test_old_data_on_error():
     """stale_if_error is aliased to old_data_on_error for backwards-compatibility"""
     session = CachedSession(old_data_on_error=True, backend='memory')
-    assert session.stale_if_error is True
+    assert session.settings.stale_if_error is True
 
 
 def test_cache_disabled(mock_session):
@@ -431,7 +413,7 @@ def test_unpickle_errors(mock_session):
 
 
 def test_filter_fn(mock_session):
-    mock_session.filter_fn = lambda r: r.request.url != MOCKED_URL_JSON
+    mock_session.settings.filter_fn = lambda r: r.request.url != MOCKED_URL_JSON
     mock_session.get(MOCKED_URL)
     mock_session.get(MOCKED_URL_JSON)
 
@@ -442,7 +424,7 @@ def test_filter_fn(mock_session):
 def test_filter_fn__retroactive(mock_session):
     """filter_fn should also apply to previously cached responses"""
     mock_session.get(MOCKED_URL_JSON)
-    mock_session.filter_fn = lambda r: r.request.url != MOCKED_URL_JSON
+    mock_session.settings.filter_fn = lambda r: r.request.url != MOCKED_URL_JSON
     mock_session.get(MOCKED_URL_JSON)
 
     assert not mock_session.cache.has_url(MOCKED_URL_JSON)
@@ -453,7 +435,7 @@ def test_key_fn(mock_session):
         """Create a key based on only the request URL (without params)"""
         return request.url.split('?')[0]
 
-    mock_session.cache.key_fn = create_key
+    mock_session.settings.key_fn = create_key
     mock_session.get(MOCKED_URL)
     response = mock_session.get(MOCKED_URL, params={'k': 'v'})
     assert response.from_cache is True
@@ -477,13 +459,13 @@ def test_hooks(mock_session):
 
 def test_do_not_cache(mock_session):
     """expire_after=0 should bypass the cache on both read and write"""
-    # Bypass read
+    # Skip read
     mock_session.get(MOCKED_URL)
     assert mock_session.cache.has_url(MOCKED_URL)
     assert mock_session.get(MOCKED_URL, expire_after=0).from_cache is False
 
-    # Bypass write
-    mock_session.expire_after = 0
+    # Skip write
+    mock_session.settings.expire_after = 0
     mock_session.get(MOCKED_URL_JSON)
     assert not mock_session.cache.has_url(MOCKED_URL_JSON)
 
@@ -506,7 +488,7 @@ def test_304_not_modified(
 ):
     url = f'{MOCKED_URL}/endpoint_2'
     if cache_expired:
-        mock_session.expire_after = datetime.now() - timedelta(1)
+        mock_session.settings.expire_after = datetime.now() - timedelta(1)
     if cache_hit:
         mock_session.mock_adapter.register_uri('GET', url, status_code=200)
         mock_session.get(url)
@@ -518,7 +500,7 @@ def test_304_not_modified(
 
 def test_url_allowlist(mock_session):
     """If the default is 0, only URLs matching patterns in urls_expire_after should be cached"""
-    mock_session.urls_expire_after = {
+    mock_session.settings.urls_expire_after = {
         MOCKED_URL_JSON: 60,
         '*': 0,
     }
@@ -533,7 +515,7 @@ def test_remove_expired_responses(mock_session):
     mock_session.mock_adapter.register_uri(
         'GET', unexpired_url, status_code=200, text='mock response'
     )
-    mock_session.expire_after = 1
+    mock_session.settings.expire_after = 1
     mock_session.get(MOCKED_URL)
     mock_session.get(MOCKED_URL_JSON)
     time.sleep(1)
@@ -571,7 +553,7 @@ def test_remove_expired_responses__error(mock_session):
 
 def test_remove_expired_responses__extend_expiration(mock_session):
     # Start with an expired response
-    mock_session.expire_after = datetime.utcnow() - timedelta(seconds=0.01)
+    mock_session.settings.expire_after = datetime.utcnow() - timedelta(seconds=0.01)
     mock_session.get(MOCKED_URL)
 
     # Set expiration in the future
@@ -583,7 +565,7 @@ def test_remove_expired_responses__extend_expiration(mock_session):
 
 def test_remove_expired_responses__shorten_expiration(mock_session):
     # Start with a non-expired response
-    mock_session.expire_after = datetime.utcnow() + timedelta(seconds=1)
+    mock_session.settings.expire_after = datetime.utcnow() + timedelta(seconds=1)
     mock_session.get(MOCKED_URL)
 
     # Set expiration in the past
@@ -624,7 +606,7 @@ def test_remove_expired_responses__per_request(mock_session):
 
 def test_request_expire_after__enable_expiration(mock_session):
     """No per-session expiration is set, but then overridden for a single request"""
-    mock_session.expire_after = None
+    mock_session.settings.expire_after = None
     response = mock_session.get(MOCKED_URL, expire_after=1)
     assert response.from_cache is False
     assert mock_session.get(MOCKED_URL).from_cache is True
@@ -636,7 +618,7 @@ def test_request_expire_after__enable_expiration(mock_session):
 
 def test_request_expire_after__disable_expiration(mock_session):
     """A per-session expiration is set, but then disabled for a single request"""
-    mock_session.expire_after = 60
+    mock_session.settings.expire_after = 60
     response = mock_session.get(MOCKED_URL, expire_after=-1)
     response = mock_session.get(MOCKED_URL, expire_after=-1)
     assert response.from_cache is True
@@ -645,7 +627,7 @@ def test_request_expire_after__disable_expiration(mock_session):
 
 def test_request_expire_after__prepared_request(mock_session):
     """Pre-request expiration should also work for PreparedRequests with CachedSession.send()"""
-    mock_session.expire_after = None
+    mock_session.settings.expire_after = None
     request = Request(method='GET', url=MOCKED_URL, headers={}, data=None).prepare()
     response = mock_session.send(request, expire_after=1)
     assert response.from_cache is False
@@ -684,12 +666,13 @@ def test_request_only_if_cached__expired(mock_session):
 def test_request_only_if_cached__stale_if_error__expired(mock_session):
     """only_if_cached *will* return an expired response if stale_if_error is also set"""
     mock_session.get(MOCKED_URL, expire_after=1)
-    mock_session.stale_if_error = True
     time.sleep(1)
 
+    mock_session.settings.stale_if_error = True
     response = mock_session.get(MOCKED_URL, only_if_cached=True)
+    assert response.status_code == 200
     assert response.from_cache is True
-    assert response.is_expired is False
+    assert response.is_expired is True
 
 
 def test_request_only_if_cached__prepared_request(mock_session):

@@ -11,19 +11,24 @@ from requests_cache import CachedSession, RedisCache, json_serializer
 ```
 :::
 
-```{toctree}
-:maxdepth: 1
-session
-modules/requests_cache.patcher
-```
+## Primary Modules
+The following modules include the majority of the API relevant for most users:
+
 ```{toctree}
 :maxdepth: 2
+session
+modules/requests_cache.patcher
 modules/requests_cache.backends
 modules/requests_cache.models
-modules/requests_cache.serializers
+modules/requests_cache.settings
 ```
+
+## Secondary Modules
+The following modules are mainly for internal use, and are relevant for contributors and advanced users:
 ```{toctree}
-:maxdepth: 1
+:maxdepth: 2
 modules/requests_cache.cache_keys
 modules/requests_cache.cache_control
+modules/requests_cache.expiration
+modules/requests_cache.serializers
 ```

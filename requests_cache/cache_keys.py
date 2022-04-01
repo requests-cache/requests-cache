@@ -16,12 +16,11 @@ from requests import Request, Session
 from requests.models import CaseInsensitiveDict
 from url_normalize import url_normalize
 
-from ._utils import get_valid_kwargs
-
-if TYPE_CHECKING:
-    from .models import AnyPreparedRequest, AnyRequest, CachedResponse
+from ._utils import decode, encode, get_valid_kwargs
 
 __all__ = ['create_key', 'normalize_request']
+if TYPE_CHECKING:
+    from .models import AnyPreparedRequest, AnyRequest, CachedResponse
 
 # Request headers that are always excluded from cache keys, but not redacted from cached responses
 DEFAULT_EXCLUDE_HEADERS = {'Cache-Control', 'If-None-Match', 'If-Modified-Since'}
@@ -199,18 +198,6 @@ def redact_response(response: CachedResponse, ignored_parameters: ParamList) -> 
         response.url = normalize_url(response.url, ignored_parameters)
         response.request = normalize_request(response.request, ignored_parameters)  # type: ignore
     return response
-
-
-def decode(value, encoding='utf-8') -> str:
-    """Decode a value from bytes, if hasn't already been.
-    Note: ``PreparedRequest.body`` is always encoded in utf-8.
-    """
-    return value.decode(encoding) if isinstance(value, bytes) else value
-
-
-def encode(value, encoding='utf-8') -> bytes:
-    """Encode a value to bytes, if it hasn't already been"""
-    return value if isinstance(value, bytes) else str(value).encode(encoding)
 
 
 def filter_sort_json(data: Union[List, Mapping], ignored_parameters: ParamList):

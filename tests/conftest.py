@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from functools import wraps
 from logging import basicConfig, getLogger
 from os.path import abspath, dirname, join
+from unittest.mock import MagicMock
 from uuid import uuid4
 
 import pytest
@@ -211,6 +212,21 @@ def get_mock_adapter() -> Adapter:
         status_code=404,
     )
     return adapter
+
+
+def get_mock_response(
+    method='GET',
+    url='https://img.site.com/base/img.jpg',
+    status_code=200,
+    headers={},
+    request_headers={},
+):
+    return MagicMock(
+        url=url,
+        status_code=status_code,
+        headers=headers,
+        request=MagicMock(method=method, url=url, headers=request_headers),
+    )
 
 
 def fail_if_no_connection(connect_timeout: float = 1.0) -> bool:
