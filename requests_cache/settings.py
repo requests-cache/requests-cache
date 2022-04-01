@@ -1,12 +1,10 @@
-from typing import TYPE_CHECKING, Callable, Dict, Iterable, Union
+from typing import Callable, Dict, Iterable, Union
 
 from attr import asdict, define, field
+from requests import Response
 
 from ._utils import get_valid_kwargs
 from .expiration import ExpirationTime
-
-if TYPE_CHECKING:
-    from .models import AnyResponse
 
 ALL_METHODS = ('GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE')
 DEFAULT_CACHE_NAME = 'http_cache'
@@ -14,7 +12,7 @@ DEFAULT_METHODS = ('GET', 'HEAD')
 DEFAULT_STATUS_CODES = (200,)
 
 # Signatures for user-provided callbacks
-FilterCallback = Callable[['AnyResponse'], bool]
+FilterCallback = Callable[[Response], bool]
 KeyCallback = Callable[..., str]
 
 

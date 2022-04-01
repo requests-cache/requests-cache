@@ -13,6 +13,14 @@
 
 **Other features:**
 * All settings that affect cache behavior can now be accessed and modified via `CachedSession.settings`
+* Add `OriginalResponse` class, which wraps `requests.Response` objects and adds type hints for extra cache attributes set on non-cached responses:
+  * `cache_key`
+  * `created_at`
+  * `expires`
+  * `from_cache`
+  * `is_expired`
+* Populate `cache_key` and `expires` for new (non-cached) responses, if it was written to the cache
+* Add return type hints for all `CachedSession` request methods (`get()`, `post()`, etc.)
 
 **Dependencies:**
 * Replace `appdirs` with `platformdirs`
