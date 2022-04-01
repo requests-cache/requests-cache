@@ -9,8 +9,6 @@ on:
   workflow_dispatch:
 env:
   LATEST_PY_VERSION: '3.10'
-  COVERAGE_ARGS: '--cov --cov-report=term --cov-report=xml'
-  XDIST_ARGS: '--numprocesses=auto --dist=loadfile'
 
 jobs:
   # Run tests for each supported python version
@@ -34,7 +32,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - uses: snok/install-poetry@v1.3
         with:
-          version: 1.2.0a2
+          version: 1.2.0b1
           virtualenvs-in-project: true
 
       # Start integration test databases
@@ -61,8 +59,7 @@ jobs:
       - name: Run tests
         run: |
           source $VENV
-          pytest -rs -x tests/unit ${{ env.XDIST_ARGS }} ${{ env.COVERAGE_ARGS }}
-          pytest -rs -x tests/integration --cov-append ${{ env.XDIST_ARGS }} ${{ env.COVERAGE_ARGS }}
+          nox -e cov
 
       # Latest python version: send coverage report to codecov
       - name: "Upload coverage report to Codecov"
