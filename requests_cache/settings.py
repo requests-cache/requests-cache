@@ -24,6 +24,9 @@ class CacheSettings:
     to be used across multiple modules, but exposed to the user in a single property
     (:py:attr:`.CachedSession.settings`). These values can safely be modified after initialization. See
     :py:class:`.CachedSession` and :ref:`user-guide` for usage details.
+
+    Args:
+        skip_invalid: Ignore invalid settings for easier initialization from mixed ``**kwargs``
     """
 
     allowable_codes: Iterable[int] = field(default=DEFAULT_STATUS_CODES)
@@ -39,15 +42,10 @@ class CacheSettings:
     stale_if_error: bool = field(default=False)
     urls_expire_after: Dict[str, ExpirationTime] = field(factory=dict)
 
-    # Additional settings that may be set for an individual request; not used at session level
-    refresh: bool = field(default=False)
-    revalidate: bool = field(default=False)
-    request_expire_after: ExpirationTime = field(default=None)
-
     def __init__(self, **kwargs):
-        """Ignore invalid kwargs for easier initialization from mixed ``**kwargs``"""
         kwargs = self._rename_kwargs(kwargs)
-        kwargs = get_valid_kwargs(self.__attrs_init__, kwargs)
+        if kwargs.pop('skip_invalid', False) is True:
+            kwargs = get_valid_kwargs(self.__attrs_init__, kwargs)
         self.__attrs_init__(**kwargs)
 
     @staticmethod
@@ -63,6 +61,11 @@ class CacheSettings:
 @define(init=False)
 class RequestSettings(CacheSettings):
     """Cache settings that may be set for an individual request"""
+
+    # Additional settings that may be set for an individual request; not used at session level
+    refresh: bool = field(default=False)
+    revalidate: bool = field(default=False)
+    request_expire_after: ExpirationTime = field(default=None)
 
     def __init__(self, session_settings: CacheSettings = None, **kwargs):
         """Start with session-level cache settings and append/override with request-level settings"""

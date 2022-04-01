@@ -81,6 +81,7 @@ class CacheMixin(MIXIN_BASE):
             filter_fn=filter_fn,
             key_fn=key_fn,
             stale_if_error=stale_if_error,
+            skip_invalid=True,
             **kwargs,
         )
         self._lock = RLock()

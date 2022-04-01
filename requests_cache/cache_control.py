@@ -70,7 +70,7 @@ class CacheActions:
     skip_write: bool = field(default=False)
 
     # Inputs/internal attributes
-    _settings: CacheSettings = field(default=None, repr=False, init=False)
+    _settings: RequestSettings = field(default=None, repr=False, init=False)
     _validation_headers: Dict[str, str] = field(factory=dict, repr=False, init=False)
 
     @classmethod
@@ -87,7 +87,7 @@ class CacheActions:
         logger.debug(f'Cache directives from request headers: {directives}')
 
         # Merge session settings and request settings
-        settings = RequestSettings(settings, **kwargs)
+        settings = RequestSettings(settings, skip_invalid=True, **kwargs)
         settings.only_if_cached = settings.only_if_cached or 'only-if-cached' in directives
         settings.refresh = settings.refresh or bool(request.headers.pop(REFRESH_TEMP_HEADER, False))
         settings.revalidate = settings.revalidate or 'no-cache' in directives
