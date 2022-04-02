@@ -40,7 +40,7 @@ url-normalize = "^1.4"     # For improved request matching
 boto3                      = {optional=true, version="^1.15"}
 botocore                   = {optional=true, version="^1.18"}
 pymongo                    = {optional=true, version=">=3,<5"}
-redis                      = {optional=true, version=">=3,<4.2"}
+redis                      = {optional=true, version=">=3,<4.3"}
 
 # Optional serialization dependencies
 bson                       = {optional=true, version=">=0.5"}
