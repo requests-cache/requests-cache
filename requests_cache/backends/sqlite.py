@@ -99,6 +99,7 @@ class SQLiteCache(BaseCache):
         fast_save: Significantly increases cache write performance, but with the possibility of data
             loss. See `pragma: synchronous <http://www.sqlite.org/pragma.html#pragma_synchronous>`_
             for details.
+        wal: Use PRAGMA journal_mode=wal; so readers do not block writers.
         kwargs: Additional keyword arguments for :py:func:`sqlite3.connect`
     """
 
@@ -149,6 +150,7 @@ class SQLiteDict(BaseStorage):
         use_cache_dir: bool = False,
         use_memory: bool = False,
         use_temp: bool = False,
+        wal: bool = False,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -159,6 +161,7 @@ class SQLiteDict(BaseStorage):
         self.db_path = _get_sqlite_cache_path(db_path, use_cache_dir, use_temp, use_memory)
         self.fast_save = fast_save
         self.table_name = table_name
+        self.wal = wal
         self.init_db()
 
     def init_db(self):
@@ -166,6 +169,8 @@ class SQLiteDict(BaseStorage):
         self.close()
         with self._lock, self.connection() as con:
             con.execute(f'CREATE TABLE IF NOT EXISTS {self.table_name} (key PRIMARY KEY, value)')
+            if self.wal:
+                con.execute('PRAGMA journal_mode=wal')
 
     @contextmanager
     def connection(self, commit=False) -> Iterator[sqlite3.Connection]:
