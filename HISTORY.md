@@ -11,6 +11,9 @@
 * Add `refresh` option to `CachedSession.request()` and `send()` to make (and cache) an new request regardless of existing cache contents
 * Add `revalidate` option to `CachedSession.request()` and `send()` to send conditional request (if possible) before using a cached response
 
+**Backends:**
+* Add `wal` parameter for SQLite backend to enable write-ahead logging
+
 **Other features:**
 * All settings that affect cache behavior can now be accessed and modified via `CachedSession.settings`
 * Add `OriginalResponse` class, which wraps `requests.Response` objects and adds type hints for extra cache attributes set on non-cached responses:

@@ -790,6 +790,15 @@
       "contributions": [
         "ideas"
       ]
+    },
+    {
+      "login": "dholth",
+      "name": "Daniel Holth",
+      "avatar_url": "https://avatars.githubusercontent.com/u/208018?v=4",
+      "profile": "https://monotreme.club/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

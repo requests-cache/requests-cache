@@ -108,9 +108,11 @@ class SQLiteTestCase(BaseStorageTest):
         assert 2 not in cache
         assert cache._can_commit is True
 
-    def test_fast_save(self):
-        cache_1 = self.init_cache(1, fast_save=True)
-        cache_2 = self.init_cache(2, fast_save=True)
+    @pytest.mark.parametrize('kwargs', [{'fast_save': True}, {'wal': True}])
+    def test_pragma(self, kwargs):
+        """Test settings that make additional PRAGMA statements"""
+        cache_1 = self.init_cache(1, **kwargs)
+        cache_2 = self.init_cache(2, **kwargs)
 
         n = 1000
         for i in range(n):
