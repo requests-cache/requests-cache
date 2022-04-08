@@ -1,8 +1,9 @@
 """Minor internal utility functions that don't really belong anywhere else"""
 from inspect import signature
 from logging import getLogger
-from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional
+from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional, Tuple
 
+KwargDict = Dict[str, Any]
 logger = getLogger('requests_cache')
 
 
@@ -53,11 +54,23 @@ def get_placeholder_class(original_exception: Exception = None):
     return Placeholder
 
 
-def get_valid_kwargs(func: Callable, kwargs: Dict, extras: Iterable[str] = None) -> Dict:
-    """Get the subset of non-None ``kwargs`` that are valid params for ``func``"""
+def get_valid_kwargs(func: Callable, kwargs: Dict, extras: Iterable[str] = None) -> KwargDict:
+    """Get the subset of non-None ``kwargs`` that are valid arguments for ``func``"""
+    kwargs, _ = split_kwargs(func, kwargs, extras)
+    return {k: v for k, v in kwargs.items() if v is not None}
+
+
+def split_kwargs(
+    func: Callable, kwargs: Dict, extras: Iterable[str] = None
+) -> Tuple[KwargDict, KwargDict]:
+    """Split ``kwargs`` into two dicts: those that are valid arguments for ``func``,  and those that
+    are not
+    """
     params = list(signature(func).parameters)
     params.extend(extras or [])
-    return {k: v for k, v in kwargs.items() if k in params and v is not None}
+    valid_kwargs = {k: v for k, v in kwargs.items() if k in params}
+    invalid_kwargs = {k: v for k, v in kwargs.items() if k not in params}
+    return valid_kwargs, invalid_kwargs
 
 
 def try_int(value: Any) -> Optional[int]:

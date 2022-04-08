@@ -44,7 +44,7 @@ def test_init(
     get_url_expiration.return_value = url_expire_after
 
     settings = CacheSettings(cache_control=True, expire_after=1)
-    settings = RequestSettings(settings, expire_after=request_expire_after)
+    settings = RequestSettings.merge(settings, expire_after=request_expire_after)
     actions = CacheActions.from_request(
         cache_key='key',
         request=request,
@@ -121,7 +121,7 @@ def test_init_from_settings(url, request_expire_after, expected_expiration):
     if request_expire_after:
         request.headers = {'Cache-Control': f'max-age={request_expire_after}'}
 
-    actions = CacheActions.from_request('key', request, RequestSettings(settings))
+    actions = CacheActions.from_request('key', request, RequestSettings.merge(settings))
     assert actions.expire_after == expected_expiration
 
 
@@ -143,7 +143,7 @@ def test_init_from_settings_and_headers(
     """Test behavior with both cache settings and request headers."""
     request = get_mock_response(headers=headers)
     settings = CacheSettings(expire_after=expire_after)
-    actions = CacheActions.from_request('key', request, RequestSettings(settings))
+    actions = CacheActions.from_request('key', request, RequestSettings.merge(settings))
 
     assert actions.expire_after == expected_expiration
     assert actions.skip_read == expected_skip_read
@@ -284,7 +284,7 @@ def test_ignored_headers(directive):
     request.url = 'https://img.site.com/base/img.jpg'
     request.headers = {'Cache-Control': directive}
     settings = CacheSettings(expire_after=1, cache_control=True)
-    actions = CacheActions.from_request('key', request, RequestSettings(settings))
+    actions = CacheActions.from_request('key', request, RequestSettings.merge(settings))
 
     assert actions.expire_after == 1
     assert actions.skip_read is False

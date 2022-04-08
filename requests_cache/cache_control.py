@@ -27,7 +27,7 @@ from .expiration import (
     get_url_expiration,
 )
 from .models import CachedResponse
-from .settings import CacheSettings, RequestSettings
+from .settings import RequestSettings
 
 __all__ = ['CacheActions']
 
@@ -75,19 +75,15 @@ class CacheActions:
 
     @classmethod
     def from_request(
-        cls,
-        cache_key: str,
-        request: PreparedRequest,
-        settings: CacheSettings,
-        **kwargs,
+        cls, cache_key: str, request: PreparedRequest, settings: RequestSettings = None
     ):
         """Initialize from request info and cache settings"""
         request.headers = request.headers or CaseInsensitiveDict()
         directives = get_cache_directives(request.headers)
         logger.debug(f'Cache directives from request headers: {directives}')
 
-        # Merge session settings and request settings
-        settings = RequestSettings(settings, skip_invalid=True, **kwargs)
+        # Merge relevant headers with session + request settings
+        settings = settings or RequestSettings()
         settings.only_if_cached = settings.only_if_cached or 'only-if-cached' in directives
         settings.refresh = settings.refresh or bool(request.headers.pop(REFRESH_TEMP_HEADER, False))
         settings.revalidate = settings.revalidate or 'no-cache' in directives

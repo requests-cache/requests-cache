@@ -36,6 +36,7 @@ from .settings import (
     CacheSettings,
     FilterCallback,
     KeyCallback,
+    RequestSettings,
 )
 
 __all__ = ['CachedSession', 'CacheMixin']
@@ -70,7 +71,7 @@ class CacheMixin(MIXIN_BASE):
         **kwargs,
     ):
         self.cache = init_backend(cache_name, backend, serializer=serializer, **kwargs)
-        self.settings = CacheSettings(
+        self.settings = CacheSettings.from_kwargs(
             expire_after=expire_after,
             urls_expire_after=urls_expire_after,
             cache_control=cache_control,
@@ -81,7 +82,6 @@ class CacheMixin(MIXIN_BASE):
             filter_fn=filter_fn,
             key_fn=key_fn,
             stale_if_error=stale_if_error,
-            skip_invalid=True,
             **kwargs,
         )
         self._lock = RLock()
@@ -178,7 +178,15 @@ class CacheMixin(MIXIN_BASE):
         with patch_form_boundary(**kwargs):
             return super().request(method, url, *args, **kwargs)  # type: ignore
 
-    def send(self, request: PreparedRequest, **kwargs) -> AnyResponse:
+    def send(
+        self,
+        request: PreparedRequest,
+        expire_after: ExpirationTime = None,
+        only_if_cached: bool = False,
+        refresh: bool = False,
+        revalidate: bool = False,
+        **kwargs,
+    ) -> AnyResponse:
         """Send a prepared request, with caching. See :py:meth:`requests.Session.send` for base
         parameters, and see :py:meth:`.request` for extra parameters.
 
@@ -192,10 +200,18 @@ class CacheMixin(MIXIN_BASE):
         6. :py:meth:`requests.Session.send` (if not previously cached)
         7. :py:meth:`.BaseCache.save_response` (if not previously cached)
         """
-        # Determine which actions to take based on settings and request info
-        actions = CacheActions.from_request(
-            self.cache.create_key(request, **kwargs), request, self.settings, **kwargs
+        # Merge session and request settings
+        settings = RequestSettings.merge(
+            self.settings,
+            request_expire_after=expire_after,
+            only_if_cached=only_if_cached,
+            refresh=refresh,
+            revalidate=revalidate,
         )
+
+        # Determine which actions to take based on settings and request info
+        cache_key = self.cache.create_key(request, **kwargs)
+        actions = CacheActions.from_request(cache_key, request, settings)
 
         # Attempt to fetch a cached response
         cached_response: Optional[CachedResponse] = None
