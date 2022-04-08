@@ -25,7 +25,7 @@ from urllib3 import filepost
 
 from ._utils import get_valid_kwargs
 from .backends import BackendSpecifier, init_backend
-from .cache_control import REFRESH_TEMP_HEADER, CacheActions, append_directive
+from .cache_control import CacheActions, append_directive
 from .expiration import ExpirationTime, get_expiration_seconds
 from .models import AnyResponse, CachedResponse, OriginalResponse
 from .serializers import SerializerPipeline
@@ -70,7 +70,7 @@ class CacheMixin(MIXIN_BASE):
         **kwargs,
     ):
         self.cache = init_backend(cache_name, backend, serializer=serializer, **kwargs)
-        self.settings = CacheSettings(
+        self.settings = CacheSettings.from_kwargs(
             expire_after=expire_after,
             urls_expire_after=urls_expire_after,
             cache_control=cache_control,
@@ -81,17 +81,16 @@ class CacheMixin(MIXIN_BASE):
             filter_fn=filter_fn,
             key_fn=key_fn,
             stale_if_error=stale_if_error,
-            skip_invalid=True,
             **kwargs,
         )
         self._lock = RLock()
 
-        # If the mixin superclass is custom Session, pass along any valid kwargs
+        # If the mixin superclass is a custom Session, pass along any valid kwargs
         super().__init__(**get_valid_kwargs(super().__init__, kwargs))  # type: ignore
 
     @property
     def settings(self) -> CacheSettings:
-        """Settings that affect cache behavior, and can be changed at any time"""
+        """Settings that affect cache behavior"""
         return self.cache._settings
 
     @settings.setter
@@ -141,7 +140,7 @@ class CacheMixin(MIXIN_BASE):
         expire_after: ExpirationTime = None,
         only_if_cached: bool = False,
         refresh: bool = False,
-        revalidate: bool = False,
+        force_refresh: bool = False,
         **kwargs,
     ) -> AnyResponse:
         """This method prepares and sends a request while automatically performing any necessary
@@ -152,49 +151,64 @@ class CacheMixin(MIXIN_BASE):
         See :py:meth:`requests.Session.request` for base parameters. Additional parameters:
 
         Args:
-            expire_after: Expiration time to set only for this request; see details below.
-                Overrides ``CachedSession.expire_after``. Accepts all the same values as
-                ``CachedSession.expire_after``. Use ``-1`` to disable expiration.
+            expire_after: Expiration time to set only for this request. See :ref:`expiration` for
+                details.
             only_if_cached: Only return results from the cache. If not cached, return a 504 response
                 instead of sending a new request.
-            refresh: Always make a new request, and overwrite any previously cached response
-            revalidate: Revalidate with the server before using a cached response (e.g., a "soft refresh")
+            refresh: Revalidate with the server before using a cached response, and refresh if needed
+                (e.g., a "soft refresh," like F5 in a browser)
+            force_refresh: Always make a new request, and overwrite any previously cached response
+                (e.g., a "hard refresh", like Ctrl-F5 in a browser))
 
         Returns:
             Either a new or cached response
         """
-        # Set extra options as headers to be handled in send(), since we can't pass args directly
+        # Set options as headers to be handled in CacheActions, since we can't pass args directly
         headers = headers or {}
         if expire_after is not None:
             headers = append_directive(headers, f'max-age={get_expiration_seconds(expire_after)}')
         if only_if_cached:
             headers = append_directive(headers, 'only-if-cached')
-        if revalidate:
-            headers = append_directive(headers, 'no-cache')
         if refresh:
-            headers[REFRESH_TEMP_HEADER] = 'true'
+            headers = append_directive(headers, 'must-revalidate')
+        if force_refresh:
+            headers = append_directive(headers, 'no-cache')
         kwargs['headers'] = headers
 
         with patch_form_boundary(**kwargs):
             return super().request(method, url, *args, **kwargs)  # type: ignore
 
-    def send(self, request: PreparedRequest, **kwargs) -> AnyResponse:
+    def send(
+        self,
+        request: PreparedRequest,
+        expire_after: ExpirationTime = None,
+        only_if_cached: bool = False,
+        refresh: bool = False,
+        force_refresh: bool = False,
+        **kwargs,
+    ) -> AnyResponse:
         """Send a prepared request, with caching. See :py:meth:`requests.Session.send` for base
         parameters, and see :py:meth:`.request` for extra parameters.
 
         **Order of operations:** For reference, a request will pass through the following methods:
 
-        1. :py:func:`requests.get`/:py:meth:`requests.Session.get` or other method-specific functions (optional)
+        1. :py:func:`requests.get`, :py:meth:`CachedSession.get`, etc. (optional)
         2. :py:meth:`.CachedSession.request`
         3. :py:meth:`requests.Session.request`
         4. :py:meth:`.CachedSession.send`
         5. :py:meth:`.BaseCache.get_response`
-        6. :py:meth:`requests.Session.send` (if not previously cached)
-        7. :py:meth:`.BaseCache.save_response` (if not previously cached)
+        6. :py:meth:`requests.Session.send` (if not using a cached response)
+        7. :py:meth:`.BaseCache.save_response` (if not using a cached response)
         """
         # Determine which actions to take based on settings and request info
         actions = CacheActions.from_request(
-            self.cache.create_key(request, **kwargs), request, self.settings, **kwargs
+            self.cache.create_key(request, **kwargs),
+            request,
+            self.settings,
+            request_expire_after=expire_after,
+            only_if_cached=only_if_cached,
+            refresh=refresh,
+            force_refresh=force_refresh,
         )
 
         # Attempt to fetch a cached response
@@ -328,7 +342,7 @@ class CachedSession(CacheMixin, OriginalSession):
             ``['sqlite', 'filesystem', 'mongodb', 'gridfs', 'redis', 'dynamodb', 'memory']``
         serializer: Serializer name or instance; name may be one of
             ``['pickle', 'json', 'yaml', 'bson']``.
-        expire_after: Time after which cached items will expire
+        expire_after: Time after which cached items will expire. See :ref:`expiration` for details.
         urls_expire_after: Expiration times to apply for different URL patterns
         cache_control: Use Cache-Control and other response headers to set expiration
         allowable_codes: Only cache responses with one of these status codes
@@ -338,8 +352,9 @@ class CachedSession(CacheMixin, OriginalSession):
         ignored_parameters: List of request parameters to not match against, and exclude from the cache
         stale_if_error: Return stale cache data if a new request raises an exception
         filter_fn: Response filtering function that indicates whether or not a given response should
-            be cached.
-        key_fn: Request matching function for generating custom cache keys
+            be cached. See :ref:`custom-filtering` for details.
+        key_fn: Request matching function for generating custom cache keys. See
+            :ref:`custom-matching` for details.
     """
 
 

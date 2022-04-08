@@ -20,6 +20,7 @@ import pytest
 import requests
 from requests_mock import ANY as ANY_METHOD
 from requests_mock import Adapter
+from rich.logging import RichHandler
 from timeout_decorator import timeout
 
 from requests_cache import ALL_METHODS, CachedSession, install_cache, uninstall_cache
@@ -77,7 +78,12 @@ AWS_OPTIONS = {
 
 
 # Configure logging to show log output when tests fail (or with pytest -s)
-basicConfig(level='INFO')
+basicConfig(
+    level='INFO',
+    format='%(message)s',
+    datefmt='[%m-%d %H:%M:%S]',
+    handlers=[RichHandler(rich_tracebacks=True, markup=True)],
+)
 # getLogger('requests_cache').setLevel('DEBUG')
 logger = getLogger(__name__)
 

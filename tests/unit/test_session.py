@@ -18,6 +18,7 @@ from requests_cache._utils import get_placeholder_class
 from requests_cache.backends import BACKEND_CLASSES, BaseCache, SQLiteDict, SQLitePickleDict
 from requests_cache.backends.base import DESERIALIZE_ERRORS
 from requests_cache.cache_keys import create_key
+from requests_cache.expiration import DO_NOT_CACHE, EXPIRE_IMMEDIATELY
 from tests.conftest import (
     MOCKED_URL,
     MOCKED_URL_404,
@@ -458,16 +459,30 @@ def test_hooks(mock_session):
 
 
 def test_do_not_cache(mock_session):
-    """expire_after=0 should bypass the cache on both read and write"""
+    """DO_NOT_CACHE should bypass the cache on both read and write"""
     # Skip read
     mock_session.get(MOCKED_URL)
     assert mock_session.cache.has_url(MOCKED_URL)
-    assert mock_session.get(MOCKED_URL, expire_after=0).from_cache is False
+    assert mock_session.get(MOCKED_URL, expire_after=DO_NOT_CACHE).from_cache is False
 
     # Skip write
-    mock_session.settings.expire_after = 0
+    mock_session.settings.expire_after = DO_NOT_CACHE
     mock_session.get(MOCKED_URL_JSON)
     assert not mock_session.cache.has_url(MOCKED_URL_JSON)
+
+
+def test_expire_immediately(mock_session):
+    """EXPIRE_IMMEDIATELY should save a response only if it has a validator"""
+    # Without validator
+    mock_session.settings.expire_after = EXPIRE_IMMEDIATELY
+    mock_session.get(MOCKED_URL)
+    response = mock_session.get(MOCKED_URL)
+    assert not mock_session.cache.has_url(MOCKED_URL)
+    assert response.from_cache is False
+
+    # With validator
+    mock_session.get(MOCKED_URL_ETAG)
+    response = mock_session.get(MOCKED_URL_ETAG)
 
 
 @pytest.mark.parametrize(
@@ -685,55 +700,32 @@ def test_request_only_if_cached__prepared_request(mock_session):
 
 
 def test_request_refresh(mock_session):
-    """The refresh option should send and cache a new request. Any expire_after value provided
-    should overwrite the previous value."""
-    response_1 = mock_session.get(MOCKED_URL, expire_after=-1)
-    response_2 = mock_session.get(MOCKED_URL, expire_after=360, refresh=True)
-    response_3 = mock_session.get(MOCKED_URL)
-
-    assert response_1.from_cache is False
-    assert response_2.from_cache is False
-    assert response_3.from_cache is True
-    assert response_3.expires is not None
-
-
-def test_request_refresh__prepared_request(mock_session):
-    """The refresh option should also work for PreparedRequests with CachedSession.send()"""
-    request = Request(method='GET', url=MOCKED_URL, headers={}, data=None).prepare()
-    response_1 = mock_session.send(request)
-    response_2 = mock_session.send(request, expire_after=360, refresh=True)
-    response_3 = mock_session.send(request)
-
-    assert response_1.from_cache is False
-    assert response_2.from_cache is False
-    assert response_3.from_cache is True
-    assert response_3.expires is not None
-
-
-def test_request_revalidate(mock_session):
-    """The revalidate option should immediately send a conditional request, if possible"""
+    """The refresh option should send a conditional request, if possible"""
     response_1 = mock_session.get(MOCKED_URL_ETAG, expire_after=60)
     response_2 = mock_session.get(MOCKED_URL_ETAG)
     mock_session.mock_adapter.register_uri('GET', MOCKED_URL_ETAG, status_code=304)
 
-    response_3 = mock_session.get(MOCKED_URL_ETAG, revalidate=True, expire_after=60)
+    response_3 = mock_session.get(MOCKED_URL_ETAG, refresh=True, expire_after=60)
     response_4 = mock_session.get(MOCKED_URL_ETAG)
 
     assert response_1.from_cache is False
     assert response_2.from_cache is True
     assert response_3.from_cache is True
+    assert response_4.from_cache is True
 
     # Expect expiration to get reset after revalidation
     assert response_2.expires < response_4.expires
 
 
-def test_request_revalidate__no_validator(mock_session):
-    """The revalidate option should have no effect if the cached response has no validator"""
+def test_request_refresh__no_validator(mock_session):
+    """The refresh option should result in a new (unconditional) request if the cached response has
+    no validator
+    """
     response_1 = mock_session.get(MOCKED_URL, expire_after=60)
     response_2 = mock_session.get(MOCKED_URL)
     mock_session.mock_adapter.register_uri('GET', MOCKED_URL, status_code=304)
 
-    response_3 = mock_session.get(MOCKED_URL, revalidate=True, expire_after=60)
+    response_3 = mock_session.get(MOCKED_URL, refresh=True, expire_after=60)
     response_4 = mock_session.get(MOCKED_URL)
 
     assert response_1.from_cache is False
@@ -742,14 +734,14 @@ def test_request_revalidate__no_validator(mock_session):
     assert response_2.expires == response_4.expires
 
 
-def test_request_revalidate__prepared_request(mock_session):
-    """The revalidate option should also work for PreparedRequests with CachedSession.send()"""
+def test_request_refresh__prepared_request(mock_session):
+    """The refresh option should also work for PreparedRequests with CachedSession.send()"""
     request = Request(method='GET', url=MOCKED_URL_ETAG, headers={}, data=None).prepare()
     response_1 = mock_session.send(request, expire_after=60)
     response_2 = mock_session.send(request)
     mock_session.mock_adapter.register_uri('GET', MOCKED_URL_ETAG, status_code=304)
 
-    response_3 = mock_session.send(request, revalidate=True, expire_after=60)
+    response_3 = mock_session.send(request, refresh=True, expire_after=60)
     response_4 = mock_session.send(request)
 
     assert response_1.from_cache is False
@@ -758,3 +750,29 @@ def test_request_revalidate__prepared_request(mock_session):
 
     # Expect expiration to get reset after revalidation
     assert response_2.expires < response_4.expires
+
+
+def test_request_force_refresh(mock_session):
+    """The force_refresh option should send and cache a new request. Any expire_after value provided
+    should overwrite the previous value."""
+    response_1 = mock_session.get(MOCKED_URL, expire_after=-1)
+    response_2 = mock_session.get(MOCKED_URL, expire_after=360, force_refresh=True)
+    response_3 = mock_session.get(MOCKED_URL)
+
+    assert response_1.from_cache is False
+    assert response_2.from_cache is False
+    assert response_3.from_cache is True
+    assert response_3.expires is not None
+
+
+def test_request_force_refresh__prepared_request(mock_session):
+    """The force_refresh option should also work for PreparedRequests with CachedSession.send()"""
+    request = Request(method='GET', url=MOCKED_URL, headers={}, data=None).prepare()
+    response_1 = mock_session.send(request)
+    response_2 = mock_session.send(request, expire_after=360, force_refresh=True)
+    response_3 = mock_session.send(request)
+
+    assert response_1.from_cache is False
+    assert response_2.from_cache is False
+    assert response_3.from_cache is True
+    assert response_3.expires is not None

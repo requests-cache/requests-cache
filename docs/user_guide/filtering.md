@@ -11,7 +11,7 @@ with a regular {py:class}`requests.Session` object, or wrapper functions like
 ```
 
 (http-methods)=
-## Cached HTTP Methods
+## Filter by HTTP Methods
 To cache additional HTTP methods, specify them with `allowable_methods`:
 ```python
 >>> session = CachedSession(allowable_methods=('GET', 'POST'))
@@ -22,7 +22,7 @@ For example, some APIs use the `POST` method to request data via a JSON-formatte
 requests that may exceed the max size of a `GET` request. You may also want to cache `POST` requests
 to ensure you don't send the exact same data multiple times.
 
-## Cached Status Codes
+## Filter by Status Codes
 To cache additional status codes, specify them with `allowable_codes`
 ```python
 >>> session = CachedSession(allowable_codes=(200, 418))
@@ -30,15 +30,14 @@ To cache additional status codes, specify them with `allowable_codes`
 ```
 
 (selective-caching)=
-## Cached URLs
+## Filter by URLs
 You can use {ref}`URL patterns <url-patterns>` to define an allowlist for selective caching, by
-using a expiration value of `0` (or `requests_cache.DO_NOT_CACHE`, to be more explicit) for
-non-matching request URLs:
+using a expiration value of `requests_cache.DO_NOT_CACHE` for non-matching request URLs:
 ```python
->>> from requests_cache import DO_NOT_CACHE, CachedSession
+>>> from requests_cache import DO_NOT_CACHE, NEVER_EXPIRE, CachedSession
 >>> urls_expire_after = {
 ...     '*.site_1.com': 30,
-...     'site_2.com/static': -1,
+...     'site_2.com/static': NEVER_EXPIRE,
 ...     '*': DO_NOT_CACHE,
 ... }
 >>> session = CachedSession(urls_expire_after=urls_expire_after)
@@ -51,6 +50,7 @@ expiration to `0`:
 >>> session = CachedSession(urls_expire_after=urls_expire_after, expire_after=0)
 ```
 
+(custom-filtering)=
 ## Custom Cache Filtering
 If you need more advanced behavior for choosing what to cache, you can provide a custom filtering
 function via the `filter_fn` param. This can by any function that takes a

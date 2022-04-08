@@ -1,15 +1,17 @@
 # History
 
-## 0.10.0 (Unreleased)
-[See all issues and PRs for 0.10](https://github.com/reclosedev/requests-cache/milestone/5?closed=1)
+## Unreleased
+[See all unreleased issues and PRs](https://github.com/reclosedev/requests-cache/milestone/5?closed=1)
 
 **Expiration & Headers:**
 * Add support for `Cache-Control: only-if-cached`
 * Revalidate for `Cache-Control: no-cache` request or response header
 * Revalidate for `Cache-Control: max-age=0, must-revalidate` response headers
 * Add `only_if_cached` option to `CachedSession.request()` and `send()` to return only cached results without sending real requests
-* Add `refresh` option to `CachedSession.request()` and `send()` to make (and cache) an new request regardless of existing cache contents
-* Add `revalidate` option to `CachedSession.request()` and `send()` to send conditional request (if possible) before using a cached response
+* Add `refresh` option to `CachedSession.request()` and `send()` to revalidate with the server before using a cached response
+* Add `force_refresh` option to `CachedSession.request()` and `send()` to awlays make and cache a new request regardless of existing cache contents
+* Make behavior for `expire_after=0` consistent with `Cache-Control: max-age=0`: if the response has a validator, save it to the cache but revalidate on use.
+* The constant `requests_cache.DO_NOT_CACHE` may be used to completely disable caching for a request
 
 **Backends:**
 * Add `wal` parameter for SQLite backend to enable write-ahead logging

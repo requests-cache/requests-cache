@@ -8,11 +8,12 @@ from typing import Dict, Optional, Union
 
 from ._utils import try_int
 
-__all__ = ['DO_NOT_CACHE', 'NEVER_EXPIRE', 'get_expiration_datetime']
+__all__ = ['DO_NOT_CACHE', 'EXPIRE_IMMEDIATELY', 'NEVER_EXPIRE', 'get_expiration_datetime']
 
 # May be set by either headers or expire_after param to disable caching or disable expiration
-DO_NOT_CACHE = 0
+EXPIRE_IMMEDIATELY = 0
 NEVER_EXPIRE = -1
+DO_NOT_CACHE = -2
 
 ExpirationTime = Union[None, int, float, str, datetime, timedelta]
 ExpirationPatterns = Dict[str, ExpirationTime]
@@ -26,7 +27,7 @@ def get_expiration_datetime(expire_after: ExpirationTime) -> Optional[datetime]:
     if expire_after is None or expire_after == NEVER_EXPIRE:
         return None
     # Expire immediately
-    elif try_int(expire_after) == DO_NOT_CACHE:
+    elif try_int(expire_after) == EXPIRE_IMMEDIATELY:
         return datetime.utcnow()
     # Already a datetime or datetime str
     if isinstance(expire_after, str):

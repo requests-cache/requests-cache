@@ -5,13 +5,13 @@ An example of {ref}`url-patterns`
 """
 from datetime import timedelta
 
-from requests_cache import CachedSession
+from requests_cache import DO_NOT_CACHE, NEVER_EXPIRE, CachedSession
 
 default_expire_after = 60 * 60               # By default, cached responses expire in an hour
 urls_expire_after = {
     'httpbin.org/image': timedelta(days=7),  # Requests for this base URL will expire in a week
-    '*.fillmurray.com': -1,                  # Requests matching this pattern will never expire
-    '*.placeholder.com/*': 0,                # Requests matching this pattern will not be cached
+    '*.fillmurray.com': NEVER_EXPIRE,        # Requests matching this pattern will never expire
+    '*.placeholder.com/*': DO_NOT_CACHE,     # Requests matching this pattern will not be cached
 }
 urls = [
     'https://httpbin.org/get',               # Will expire in an hour
