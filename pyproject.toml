@@ -32,7 +32,7 @@ python        = "^3.7"
 requests      = "^2.22"    # Needs no introduction
 urllib3       = ">=1.25.5" # Use a slightly newer version than required by requests (for bugfixes)
 attrs         = ">=21.2"   # For response data models
-cattrs        = "^1.8"     # For response serialization
+cattrs        = ">=1.8,<23.0"     # For response serialization
 platformdirs  = "^2.5"     # For options that use platform-specific user cache dirs
 url-normalize = "^1.4"     # For improved request matching
 
