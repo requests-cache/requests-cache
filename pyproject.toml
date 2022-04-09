@@ -32,7 +32,7 @@ python        = "^3.7"
 requests      = "^2.22"    # Needs no introduction
 urllib3       = ">=1.25.5" # Use a slightly newer version than required by requests (for bugfixes)
 attrs         = ">=21.2"   # For response data models
-cattrs        = "^1.8"     # For response serialization
+cattrs        = ">=22.0"   # For response serialization
 platformdirs  = "^2.5"     # For options that use platform-specific user cache dirs
 url-normalize = "^1.4"     # For improved request matching
 
@@ -92,6 +92,7 @@ docs     = ["furo", "linkify-it-py", "myst-parser", "sphinx", "sphinx-autodoc-ty
 [tool.poetry.dev-dependencies]
 # For unit + integration tests
 coverage              = "^6.3"
+exceptiongroup        = "*"
 psutil                = "^5.0"
 pytest                = "^7.1"
 pytest-clarity        = "^1.0.1"

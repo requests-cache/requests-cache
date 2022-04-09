@@ -18,4 +18,4 @@ try:
     from .settings import *
 # Log and ignore ImportErrors, if imported outside a virtualenv (e.g., just to check __version__)
 except ImportError as e:
-    logger.warning(e)
+    logger.warning(e, exc_info=True)
