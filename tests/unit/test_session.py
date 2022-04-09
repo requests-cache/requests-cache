@@ -22,6 +22,7 @@ from requests_cache.expiration import DO_NOT_CACHE, EXPIRE_IMMEDIATELY
 from tests.conftest import (
     MOCKED_URL,
     MOCKED_URL_404,
+    MOCKED_URL_500,
     MOCKED_URL_ETAG,
     MOCKED_URL_HTTPS,
     MOCKED_URL_JSON,
@@ -53,11 +54,11 @@ def test_init_cache_path_expansion():
     assert session.cache.cache_dir == Path("~").expanduser()
 
 
-@patch.dict(BACKEND_CLASSES, {'mongo': get_placeholder_class()})
+@patch.dict(BACKEND_CLASSES, {'mongodb': get_placeholder_class()})
 def test_init_missing_backend_dependency():
     """Test that the correct error is thrown when a user does not have a dependency installed"""
     with pytest.raises(ImportError):
-        CachedSession(backend='mongo')
+        CachedSession(backend='mongodb')
 
 
 def test_repr(mock_session):
@@ -413,13 +414,46 @@ def test_unpickle_errors(mock_session):
 # -----------------------------------------------------
 
 
+def test_allowable_codes(mock_session):
+    mock_session.settings.allowable_codes = (200, 404)
+
+    # This request should be cached
+    mock_session.get(MOCKED_URL_404)
+    assert mock_session.cache.has_url(MOCKED_URL_404)
+    assert mock_session.get(MOCKED_URL_404).from_cache is True
+
+    # This request should be filtered out on both read and write
+    mock_session.get(MOCKED_URL_500)
+    assert not mock_session.cache.has_url(MOCKED_URL_500)
+    assert mock_session.get(MOCKED_URL_500).from_cache is False
+
+
+def test_allowable_methods(mock_session):
+    mock_session.settings.allowable_methods = ['GET', 'OPTIONS']
+
+    # This request should be cached
+    mock_session.options(MOCKED_URL)
+    assert mock_session.cache.has_url(MOCKED_URL, method='OPTIONS')
+    assert mock_session.options(MOCKED_URL).from_cache is True
+
+    # This request should be filtered out on both read and write
+    mock_session.put(MOCKED_URL)
+    assert not mock_session.cache.has_url(MOCKED_URL, method='PUT')
+    assert mock_session.put(MOCKED_URL).from_cache is False
+
+
 def test_filter_fn(mock_session):
     mock_session.settings.filter_fn = lambda r: r.request.url != MOCKED_URL_JSON
-    mock_session.get(MOCKED_URL)
-    mock_session.get(MOCKED_URL_JSON)
 
+    # This request should be cached
+    mock_session.get(MOCKED_URL)
     assert mock_session.cache.has_url(MOCKED_URL)
+    assert mock_session.get(MOCKED_URL).from_cache is True
+
+    # This request should be filtered out on both read and write
+    mock_session.get(MOCKED_URL_JSON)
     assert not mock_session.cache.has_url(MOCKED_URL_JSON)
+    assert mock_session.get(MOCKED_URL_JSON).from_cache is False
 
 
 def test_filter_fn__retroactive(mock_session):
@@ -427,7 +461,6 @@ def test_filter_fn__retroactive(mock_session):
     mock_session.get(MOCKED_URL_JSON)
     mock_session.settings.filter_fn = lambda r: r.request.url != MOCKED_URL_JSON
     mock_session.get(MOCKED_URL_JSON)
-
     assert not mock_session.cache.has_url(MOCKED_URL_JSON)
 
 
@@ -456,6 +489,12 @@ def test_hooks(mock_session):
         for i in range(5):
             mock_session.get(MOCKED_URL, hooks={hook: hook_func})
         assert state[hook] == 5
+
+
+def test_expire_after_alias(mock_session):
+    """CachedSession has an `expire_after` property for backwards-compatibility"""
+    mock_session.expire_after = 60
+    assert mock_session.expire_after == mock_session.settings.expire_after == 60
 
 
 def test_do_not_cache(mock_session):
@@ -519,12 +558,13 @@ def test_url_allowlist(mock_session):
     """If the default is 0, only URLs matching patterns in urls_expire_after should be cached"""
     mock_session.settings.urls_expire_after = {
         MOCKED_URL_JSON: 60,
-        '*': 0,
+        '*': DO_NOT_CACHE,
     }
     mock_session.get(MOCKED_URL_JSON)
     assert mock_session.get(MOCKED_URL_JSON).from_cache is True
     mock_session.get(MOCKED_URL)
     assert mock_session.get(MOCKED_URL).from_cache is False
+    assert not mock_session.cache.has_url(MOCKED_URL)
 
 
 def test_remove_expired_responses(mock_session):

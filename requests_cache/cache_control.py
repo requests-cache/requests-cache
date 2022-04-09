@@ -107,6 +107,7 @@ class CacheActions:
             or force_refresh
             or settings.disabled
             or expire_after == DO_NOT_CACHE
+            or str(request.method) not in settings.allowable_methods
         )
 
         actions = cls(

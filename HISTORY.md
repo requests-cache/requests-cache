@@ -26,6 +26,7 @@
   * `is_expired`
 * Populate `cache_key` and `expires` for new (non-cached) responses, if it was written to the cache
 * Add return type hints for all `CachedSession` request methods (`get()`, `post()`, etc.)
+* Always skip both cache read and write for requests excluded by `allowable_methods` (previously only skipped write)
 
 **Dependencies:**
 * Replace `appdirs` with `platformdirs`

@@ -63,6 +63,7 @@ MOCKED_URL_JSON = 'http+mock://requests-cache.com/json'
 MOCKED_URL_REDIRECT = 'http+mock://requests-cache.com/redirect'
 MOCKED_URL_REDIRECT_TARGET = 'http+mock://requests-cache.com/redirect_target'
 MOCKED_URL_404 = 'http+mock://requests-cache.com/nonexistent'
+MOCKED_URL_500 = 'http+mock://requests-cache.com/answer?q=this-statement-is-false'
 MOCK_PROTOCOLS = ['mock://', 'http+mock://', 'https+mock://']
 
 PROJECT_DIR = abspath(dirname(dirname(__file__)))
@@ -212,11 +213,8 @@ def get_mock_adapter() -> Adapter:
         text='mock redirected response',
         status_code=200,
     )
-    adapter.register_uri(
-        ANY_METHOD,
-        MOCKED_URL_404,
-        status_code=404,
-    )
+    adapter.register_uri(ANY_METHOD, MOCKED_URL_404, status_code=404)
+    adapter.register_uri(ANY_METHOD, MOCKED_URL_500, status_code=500)
     return adapter
 
 
