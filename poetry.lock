@@ -1271,7 +1271,7 @@ yaml = ["pyyaml"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "5cb2e245d8e7642d221b6fb33465920b316e2e8e318db4c833a7ba919ee145d3"
+content-hash = "0a9be18bc1a350d51c71a9fcc6af213992e763bc3ae23e7e469357a334b82485"
 
 [metadata.files]
 alabaster = [
