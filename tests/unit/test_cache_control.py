@@ -44,12 +44,7 @@ def test_init(
     get_url_expiration.return_value = url_expire_after
 
     settings = CacheSettings(cache_control=True, expire_after=1)
-    actions = CacheActions.from_request(
-        cache_key='key',
-        request=request,
-        settings=settings,
-        request_expire_after=request_expire_after,
-    )
+    actions = CacheActions.from_request(cache_key='key', request=request, settings=settings)
     assert actions.expire_after == expected_expiration
 
 
@@ -83,7 +78,7 @@ def test_init_from_headers__no_store():
     )
 
     assert actions.skip_read is True
-    assert actions._no_store is True
+    assert actions.skip_write is True
 
 
 @pytest.mark.parametrize(

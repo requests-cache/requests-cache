@@ -13,7 +13,7 @@
 
 .. autoclass:: requests_cache.session.CacheMixin
 """
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from logging import getLogger
 from threading import RLock
 from typing import TYPE_CHECKING, Dict, Iterable, MutableMapping, Optional, Union
@@ -25,8 +25,8 @@ from urllib3 import filepost
 
 from ._utils import get_valid_kwargs
 from .backends import BackendSpecifier, init_backend
-from .cache_control import CacheActions, append_directive
-from .expiration import ExpirationTime, get_expiration_seconds
+from .cache_control import CacheActions, set_request_headers
+from .expiration import ExpirationTime
 from .models import AnyResponse, CachedResponse, OriginalResponse
 from .serializers import SerializerPipeline
 from .settings import (
@@ -163,20 +163,9 @@ class CacheMixin(MIXIN_BASE):
         Returns:
             Either a new or cached response
         """
-        # Set options as headers to be handled in CacheActions, since we can't pass args directly
-        headers = headers or {}
-        if expire_after is not None:
-            headers = append_directive(headers, f'max-age={get_expiration_seconds(expire_after)}')
-        if only_if_cached:
-            headers = append_directive(headers, 'only-if-cached')
-        if refresh:
-            headers = append_directive(headers, 'must-revalidate')
-        if force_refresh:
-            headers = append_directive(headers, 'no-cache')
-        kwargs['headers'] = headers
-
-        with patch_form_boundary(**kwargs):
-            return super().request(method, url, *args, **kwargs)  # type: ignore
+        headers = set_request_headers(headers, expire_after, only_if_cached, refresh, force_refresh)
+        with patch_form_boundary() if kwargs.get('files') else nullcontext():
+            return super().request(method, url, *args, headers=headers, **kwargs)  # type: ignore
 
     def send(
         self,
@@ -201,14 +190,11 @@ class CacheMixin(MIXIN_BASE):
         7. :py:meth:`.BaseCache.save_response` (if not using a cached response)
         """
         # Determine which actions to take based on settings and request info
+        request.headers = set_request_headers(
+            request.headers, expire_after, only_if_cached, refresh, force_refresh
+        )
         actions = CacheActions.from_request(
-            self.cache.create_key(request, **kwargs),
-            request,
-            self.settings,
-            request_expire_after=expire_after,
-            only_if_cached=only_if_cached,
-            refresh=refresh,
-            force_refresh=force_refresh,
+            self.cache.create_key(request, **kwargs), request, self.settings
         )
 
         # Attempt to fetch a cached response
@@ -369,15 +355,12 @@ def get_504_response(request: PreparedRequest) -> CachedResponse:
 
 
 @contextmanager
-def patch_form_boundary(**request_kwargs):
+def patch_form_boundary():
     """If the ``files`` param is present, patch the form boundary used to separate multipart
     uploads. ``requests`` does not provide a way to pass a custom boundary to urllib3, so this just
     monkey-patches it instead.
     """
-    if request_kwargs.get('files'):
-        original_boundary = filepost.choose_boundary
-        filepost.choose_boundary = lambda: '##requests-cache-form-boundary##'
-        yield
-        filepost.choose_boundary = original_boundary
-    else:
-        yield
+    original_boundary = filepost.choose_boundary
+    filepost.choose_boundary = lambda: '##requests-cache-form-boundary##'
+    yield
+    filepost.choose_boundary = original_boundary

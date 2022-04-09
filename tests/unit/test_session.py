@@ -460,10 +460,12 @@ def test_hooks(mock_session):
 
 def test_do_not_cache(mock_session):
     """DO_NOT_CACHE should bypass the cache on both read and write"""
-    # Skip read
     mock_session.get(MOCKED_URL)
     assert mock_session.cache.has_url(MOCKED_URL)
-    assert mock_session.get(MOCKED_URL, expire_after=DO_NOT_CACHE).from_cache is False
+
+    # Skip read
+    response = mock_session.get(MOCKED_URL, expire_after=DO_NOT_CACHE)
+    assert response.from_cache is False
 
     # Skip write
     mock_session.settings.expire_after = DO_NOT_CACHE
@@ -736,12 +738,13 @@ def test_request_refresh__no_validator(mock_session):
 
 def test_request_refresh__prepared_request(mock_session):
     """The refresh option should also work for PreparedRequests with CachedSession.send()"""
+    mock_session.settings.expire_after = 60
     request = Request(method='GET', url=MOCKED_URL_ETAG, headers={}, data=None).prepare()
-    response_1 = mock_session.send(request, expire_after=60)
+    response_1 = mock_session.send(request)
     response_2 = mock_session.send(request)
     mock_session.mock_adapter.register_uri('GET', MOCKED_URL_ETAG, status_code=304)
 
-    response_3 = mock_session.send(request, refresh=True, expire_after=60)
+    response_3 = mock_session.send(request, refresh=True)
     response_4 = mock_session.send(request)
 
     assert response_1.from_cache is False
@@ -767,10 +770,11 @@ def test_request_force_refresh(mock_session):
 
 def test_request_force_refresh__prepared_request(mock_session):
     """The force_refresh option should also work for PreparedRequests with CachedSession.send()"""
-    request = Request(method='GET', url=MOCKED_URL, headers={}, data=None).prepare()
-    response_1 = mock_session.send(request)
-    response_2 = mock_session.send(request, expire_after=360, force_refresh=True)
-    response_3 = mock_session.send(request)
+    mock_session.settings.expire_after = 60
+    request = Request(method='GET', url=MOCKED_URL, headers={}, data=None)
+    response_1 = mock_session.send(request.prepare())
+    response_2 = mock_session.send(request.prepare(), force_refresh=True)
+    response_3 = mock_session.send(request.prepare())
 
     assert response_1.from_cache is False
     assert response_2.from_cache is False

@@ -10,7 +10,7 @@ from ._utils import try_int
 
 __all__ = ['DO_NOT_CACHE', 'EXPIRE_IMMEDIATELY', 'NEVER_EXPIRE', 'get_expiration_datetime']
 
-# May be set by either headers or expire_after param to disable caching or disable expiration
+# Special expiration values that may be set by either headers or keyword args
 EXPIRE_IMMEDIATELY = 0
 NEVER_EXPIRE = -1
 DO_NOT_CACHE = -2
@@ -23,8 +23,8 @@ logger = getLogger(__name__)
 
 def get_expiration_datetime(expire_after: ExpirationTime) -> Optional[datetime]:
     """Convert an expiration value in any supported format to an absolute datetime"""
-    # Never expire
-    if expire_after is None or expire_after == NEVER_EXPIRE:
+    # Never expire (or do not cache, in which case expiration won't be used)
+    if expire_after is None or expire_after in [NEVER_EXPIRE, DO_NOT_CACHE]:
         return None
     # Expire immediately
     elif try_int(expire_after) == EXPIRE_IMMEDIATELY:
@@ -43,6 +43,8 @@ def get_expiration_datetime(expire_after: ExpirationTime) -> Optional[datetime]:
 
 def get_expiration_seconds(expire_after: ExpirationTime) -> int:
     """Convert an expiration value in any supported format to an expiration time in seconds"""
+    if expire_after == DO_NOT_CACHE:
+        return DO_NOT_CACHE
     expires = get_expiration_datetime(expire_after)
     return ceil((expires - datetime.utcnow()).total_seconds()) if expires else NEVER_EXPIRE
 
