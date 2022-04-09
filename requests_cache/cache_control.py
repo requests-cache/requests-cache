@@ -101,21 +101,22 @@ class CacheActions:
             settings.expire_after,
         )
 
-        # Check conditions for reading from the cache
-        skip_read = (
-            'no-store' in directives
-            or force_refresh
-            or settings.disabled
-            or expire_after == DO_NOT_CACHE
-            or str(request.method) not in settings.allowable_methods
-        )
+        # Check and log conditions for reading from the cache
+        read_criteria = {
+            'disabled cache': settings.disabled,
+            'disabled method': str(request.method) not in settings.allowable_methods,
+            'disabled by headers': 'no-store' in directives,
+            'disabled by refresh': force_refresh,
+            'disabled by expiration': expire_after == DO_NOT_CACHE,
+        }
+        _log_cache_criteria('read', read_criteria)
 
         actions = cls(
             cache_key=cache_key,
             expire_after=expire_after,
             only_if_cached=only_if_cached,
             refresh=refresh,
-            skip_read=skip_read,
+            skip_read=any(read_criteria.values()),
             skip_write='no-store' in directives,
         )
         actions._settings = settings
@@ -147,7 +148,9 @@ class CacheActions:
         logger.debug(f'Post-read cache actions: {self}')
 
     def _update_validation_headers(self, response: CachedResponse):
-        # May be triggered by either stale response, request headers, or cached response headers
+        """If needed, get validation headers based on a cached response. Revalidation may be
+        triggered by a stale response, request headers, or cached response headers.
+        """
         directives = get_cache_directives(response.headers)
         revalidate = _has_validator(response.headers) and (
             response.is_expired
@@ -183,8 +186,8 @@ class CacheActions:
         callback = self._settings.filter_fn
         filtered_out = callback is not None and not callback(response)
 
-        # Apply remaining checks needed to determine if the response should be cached
-        cache_criteria = {
+        # Check and log conditions for writing to the cache
+        write_criteria = {
             'disabled cache': self._settings.disabled,
             'disabled method': str(response.request.method) not in self._settings.allowable_methods,
             'disabled status': response.status_code not in self._settings.allowable_codes,
@@ -192,14 +195,8 @@ class CacheActions:
             'disabled by headers': self.skip_write,
             'disabled by expiration': do_not_cache or (expire_immediately and not has_validator),
         }
-        self.skip_write = any(cache_criteria.values())
-
-        # Log details on any failed checks
-        if self.skip_write:
-            status = ', '.join([k for k, v in cache_criteria.items() if v])
-        else:
-            status = 'Passed'
-        logger.debug(f'Pre-write cache checks for response from {response.url}: {status}')
+        self.skip_write = any(write_criteria.values())
+        _log_cache_criteria('write', write_criteria)
 
     def _update_from_response_headers(self, response: Response):
         """Check response headers for expiration and other cache directives"""
@@ -291,3 +288,12 @@ def set_request_headers(
 
 def _has_validator(headers: HeaderDict) -> bool:
     return bool(headers.get('ETag') or headers.get('Last-Modified'))
+
+
+def _log_cache_criteria(operation: str, criteria: Dict):
+    """Log details on any failed checks for cache read or write"""
+    if any(criteria.values()):
+        status = ', '.join([k for k, v in criteria.items() if v])
+    else:
+        status = 'Passed'
+    logger.debug(f'Pre-{operation} cache checks: {status}')
