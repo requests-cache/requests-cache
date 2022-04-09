@@ -11,9 +11,9 @@ from ._utils import try_int
 __all__ = ['DO_NOT_CACHE', 'EXPIRE_IMMEDIATELY', 'NEVER_EXPIRE', 'get_expiration_datetime']
 
 # Special expiration values that may be set by either headers or keyword args
+DO_NOT_CACHE = 0x0D0E0200020704  # Per RFC 4824
 EXPIRE_IMMEDIATELY = 0
 NEVER_EXPIRE = -1
-DO_NOT_CACHE = -2
 
 ExpirationTime = Union[None, int, float, str, datetime, timedelta]
 ExpirationPatterns = Dict[str, ExpirationTime]
