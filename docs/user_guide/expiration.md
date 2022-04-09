@@ -23,38 +23,56 @@ request, the following order of precedence is used:
 5. Per-session expiration (`expire_after` argument for {py:class}`.CacheBackend`)
 
 ## Expiration Values
-`expire_after` can be any of the following:
-- `-1` (to never expire)
-- `0` (to "expire immediately," e.g. bypass the cache)
+`expire_after` can be any of the following time values:
 - A positive number (in seconds)
 - A {py:class}`~datetime.timedelta`
 - A {py:class}`~datetime.datetime`
 
+Or one of the following special values:
+- `DO_NOT_CACHE`: Skip both reading from and writing to the cache
+- `EXPIRE_IMMEDIATELY`: Consider the response already expired, but potentially usable
+- `NEVER_EXPIRE`: Store responses indefinitely
+
+```{note}
+A value of 0 or `EXPIRE_IMMEDIATELY` will behave the same as
+[`Cache-Control: max-age=0`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control#response_directives).
+Depending on other settings and headers, an expired response may either be cached and require
+revalidation for each use, or not be cached at all. See {ref}`conditional-requests` for more details.
+```
+
 Examples:
 ```python
->>> # To specify a unit of time other than seconds, use a timedelta
 >>> from datetime import timedelta
+>>> from requests_cache import DO_NOT_CACHE, NEVER_EXPIRE, EXPIRE_IMMEDIATELY, CachedSession
+
+>>> # Specify a simple expiration value in seconds
+>>> session = CachedSession(expire_after=60)
+
+>>> # To specify a unit of time other than seconds, use a timedelta
 >>> session = CachedSession(expire_after=timedelta(days=30))
 
->>> # Update an existing session to disable expiration (i.e., store indefinitely)
->>> session.settings.expire_after = -1
+>>> # Or expire on a specific date and time
+>>> session = CachedSession(expire_after=datetime(2023, 1, 1, 0, 0))
+
+>>> # Update an existing session to store new responses indefinitely
+>>> session.settings.expire_after = NEVER_EXPIRE
 
 >>> # Disable caching by default, unless enabled by other settings
->>> session = CachedSession(expire_after=0)
+>>> session = CachedSession(expire_after=DO_NOT_CACHE)
+
+>>> # Override for a single request: cache the response if it can be revalidated
+>>> session.request(expire_after=EXPIRE_IMMEDIATELY)
 ```
 
 (url-patterns)=
 ## Expiration With URL Patterns
-You can use `urls_expire_after` to set different expiration values based on URL glob patterns.
-This allows you to customize caching based on what you know about the resources you're requesting
-or how you intend to use them. For example, you might request one resource that gets updated
-frequently, another that changes infrequently, and another that never changes. Example:
+You can use `urls_expire_after` to set different expiration values based on URL glob patterns:
 ```python
 >>> urls_expire_after = {
 ...     '*.site_1.com': 30,
 ...     'site_2.com/resource_1': 60 * 2,
 ...     'site_2.com/resource_2': 60 * 60 * 24,
-...     'site_2.com/static': -1,
+...     'site_2.com/static': NEVER_EXPIRE,
 ... }
 >>> session = CachedSession(urls_expire_after=urls_expire_after)
 ```
@@ -66,6 +84,7 @@ frequently, another that changes infrequently, and another that never changes. E
   is equivalent to `http*://site.com/resource/**`
 - If there is more than one match, the first match will be used in the order they are defined
 - If no patterns match a request, `CachedSession.settings.expire_after` will be used as a default
+- See {ref}`selective-caching` for an example of using `urls_expire_after` as an allowlist
 
 (request-errors)=
 ## Expiration and Error Handling
@@ -133,18 +152,21 @@ The `expire_after` argument can be used to override the session's expiration for
 
 ### Manual Refresh
 If you want to manually refresh a response before it expires, you can use the `refresh` argument.
-This will always send a new request, and ignore and overwrite any previously cached response. The
-response will be saved with a new expiration time, according to the normal expiration rules described above.
-```python
->>> response = session.get('http://httpbin.org/get')
->>> response = session.get('http://httpbin.org/get', refresh=True)
->>> assert response.from_cache is False
-```
 
-A related argument is `revalidate`, which is basically a "soft refresh." It will send a quick
-{ref}`conditional request <conditional-requests>` to the server, and use the cached response if the
-remote content has not changed. If the cached response does not contain validation headers, this
-option will have no effect.
+* This is equivalent to **F5** in most browsers.
+* The response will be saved with a new expiration time, according to the normal expiration rules
+described above.
+* If possible, this will {ref}`revalidate <conditional-requests>` with the server to potentially
+  avoid re-downloading an unchanged response.
+* To force a refresh (e.g., skip revalidation and always send a new request), use the
+  `force_refresh` argument. This is equivalent to **Ctrl-F5** in most browsers.
+
+Example:
+```python
+>>> response_1 = session.get('http://httpbin.org/get')
+>>> response_2 = session.get('http://httpbin.org/get', refresh=True)
+>>> assert response_2.from_cache is False
+```
 
 ### Cache-Only Requests
 If you want to only use cached responses without making any real requests, you can use the

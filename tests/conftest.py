@@ -20,6 +20,7 @@ import pytest
 import requests
 from requests_mock import ANY as ANY_METHOD
 from requests_mock import Adapter
+from rich.logging import RichHandler
 from timeout_decorator import timeout
 
 from requests_cache import ALL_METHODS, CachedSession, install_cache, uninstall_cache
@@ -62,6 +63,7 @@ MOCKED_URL_JSON = 'http+mock://requests-cache.com/json'
 MOCKED_URL_REDIRECT = 'http+mock://requests-cache.com/redirect'
 MOCKED_URL_REDIRECT_TARGET = 'http+mock://requests-cache.com/redirect_target'
 MOCKED_URL_404 = 'http+mock://requests-cache.com/nonexistent'
+MOCKED_URL_500 = 'http+mock://requests-cache.com/answer?q=this-statement-is-false'
 MOCK_PROTOCOLS = ['mock://', 'http+mock://', 'https+mock://']
 
 PROJECT_DIR = abspath(dirname(dirname(__file__)))
@@ -77,7 +79,12 @@ AWS_OPTIONS = {
 
 
 # Configure logging to show log output when tests fail (or with pytest -s)
-basicConfig(level='INFO')
+basicConfig(
+    level='INFO',
+    format='%(message)s',
+    datefmt='[%m-%d %H:%M:%S]',
+    handlers=[RichHandler(rich_tracebacks=True, markup=True)],
+)
 # getLogger('requests_cache').setLevel('DEBUG')
 logger = getLogger(__name__)
 
@@ -206,11 +213,8 @@ def get_mock_adapter() -> Adapter:
         text='mock redirected response',
         status_code=200,
     )
-    adapter.register_uri(
-        ANY_METHOD,
-        MOCKED_URL_404,
-        status_code=404,
-    )
+    adapter.register_uri(ANY_METHOD, MOCKED_URL_404, status_code=404)
+    adapter.register_uri(ANY_METHOD, MOCKED_URL_500, status_code=500)
     return adapter
 
 

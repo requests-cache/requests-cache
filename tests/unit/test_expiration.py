@@ -3,7 +3,11 @@ from unittest.mock import patch
 
 import pytest
 
-from requests_cache.expiration import DO_NOT_CACHE, get_expiration_datetime, get_url_expiration
+from requests_cache.expiration import (
+    EXPIRE_IMMEDIATELY,
+    get_expiration_datetime,
+    get_url_expiration,
+)
 from tests.conftest import HTTPDATE_DATETIME, HTTPDATE_STR
 
 
@@ -11,7 +15,7 @@ from tests.conftest import HTTPDATE_DATETIME, HTTPDATE_STR
 def test_get_expiration_datetime__no_expiration(mock_datetime):
     assert get_expiration_datetime(None) is None
     assert get_expiration_datetime(-1) is None
-    assert get_expiration_datetime(DO_NOT_CACHE) == mock_datetime.utcnow()
+    assert get_expiration_datetime(EXPIRE_IMMEDIATELY) == mock_datetime.utcnow()
 
 
 @pytest.mark.parametrize(

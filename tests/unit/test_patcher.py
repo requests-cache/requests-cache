@@ -73,6 +73,14 @@ def test_enabled(cached_request, original_request, tempfile_path):
     assert original_request.call_count == 0
 
 
+def test_is_installed():
+    assert requests_cache.is_installed() is False
+    requests_cache.install_cache(name=CACHE_NAME, use_temp=True)
+    assert requests_cache.is_installed() is True
+    requests_cache.uninstall_cache()
+    assert requests_cache.is_installed() is False
+
+
 @patch.object(BaseCache, 'remove_expired_responses')
 def test_remove_expired_responses(remove_expired_responses, tempfile_path):
     requests_cache.install_cache(tempfile_path, expire_after=360)

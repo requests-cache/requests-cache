@@ -4,12 +4,14 @@
    :classes-only:
    :nosignatures:
 """
-import pickle
+from __future__ import annotations
+
 from abc import ABC
 from collections import UserDict
 from collections.abc import MutableMapping
 from datetime import datetime
 from logging import getLogger
+from pickle import PickleError
 from typing import Iterable, Iterator, Optional, Tuple, Union
 
 from requests import PreparedRequest, Response
@@ -21,7 +23,7 @@ from ..serializers import init_serializer
 from ..settings import DEFAULT_CACHE_NAME, CacheSettings
 
 # Specific exceptions that may be raised during deserialization
-DESERIALIZE_ERRORS = (AttributeError, ImportError, TypeError, ValueError, pickle.PickleError)
+DESERIALIZE_ERRORS = (AttributeError, ImportError, PickleError, TypeError, ValueError)
 
 ResponseOrKey = Union[CachedResponse, str]
 logger = getLogger(__name__)

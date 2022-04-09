@@ -8,10 +8,11 @@ from typing import Dict, Optional, Union
 
 from ._utils import try_int
 
-__all__ = ['DO_NOT_CACHE', 'NEVER_EXPIRE', 'get_expiration_datetime']
+__all__ = ['DO_NOT_CACHE', 'EXPIRE_IMMEDIATELY', 'NEVER_EXPIRE', 'get_expiration_datetime']
 
-# May be set by either headers or expire_after param to disable caching or disable expiration
-DO_NOT_CACHE = 0
+# Special expiration values that may be set by either headers or keyword args
+DO_NOT_CACHE = 0x0D0E0200020704  # Per RFC 4824
+EXPIRE_IMMEDIATELY = 0
 NEVER_EXPIRE = -1
 
 ExpirationTime = Union[None, int, float, str, datetime, timedelta]
@@ -22,11 +23,11 @@ logger = getLogger(__name__)
 
 def get_expiration_datetime(expire_after: ExpirationTime) -> Optional[datetime]:
     """Convert an expiration value in any supported format to an absolute datetime"""
-    # Never expire
-    if expire_after is None or expire_after == NEVER_EXPIRE:
+    # Never expire (or do not cache, in which case expiration won't be used)
+    if expire_after is None or expire_after in [NEVER_EXPIRE, DO_NOT_CACHE]:
         return None
     # Expire immediately
-    elif try_int(expire_after) == DO_NOT_CACHE:
+    elif try_int(expire_after) == EXPIRE_IMMEDIATELY:
         return datetime.utcnow()
     # Already a datetime or datetime str
     if isinstance(expire_after, str):
@@ -42,6 +43,8 @@ def get_expiration_datetime(expire_after: ExpirationTime) -> Optional[datetime]:
 
 def get_expiration_seconds(expire_after: ExpirationTime) -> int:
     """Convert an expiration value in any supported format to an expiration time in seconds"""
+    if expire_after == DO_NOT_CACHE:
+        return DO_NOT_CACHE
     expires = get_expiration_datetime(expire_after)
     return ceil((expires - datetime.utcnow()).total_seconds()) if expires else NEVER_EXPIRE
 
