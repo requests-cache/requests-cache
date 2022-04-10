@@ -157,6 +157,23 @@ class SQLiteCache(BaseCache):
                 ')'
             )
 
+    def sorted(
+        self,
+        key: str = 'expires',
+        reversed: bool = False,
+        limit: int = None,
+        exclude_expired=False,
+    ):
+        """Get cached responses, with sorting and other query options.
+
+        Args:
+            key: Key to sort by; either 'expires', 'size', or 'key'
+            reversed: Sort in descending order
+            limit: Maximum number of responses to return
+            exclude_expired: Only return unexpired responses
+        """
+        return self.responses.sorted(key, reversed, limit, exclude_expired)
+
 
 class SQLiteDict(BaseStorage):
     """A dictionary-like interface for SQLite"""
@@ -308,6 +325,34 @@ class SQLiteDict(BaseStorage):
             con.execute(f"DELETE FROM {self.table_name} WHERE expires <= ?", (posix_now,))
         self.vacuum()
 
+    def sorted(
+        self, key: str = 'expires', reversed: bool = False, limit: int = None, exclude_expired=False
+    ):
+        """Get cache values in sorted order; see :py:meth:`.SQLiteCache.sorted` for usage details"""
+        # Get sort key, direction, and limit
+        if key not in ['expires', 'size', 'key']:
+            raise ValueError(f'Invalid sort key: {key}')
+        if key == 'size':
+            key = 'LENGTH(value)'
+        direction = 'DESC' if reversed else 'ASC'
+        limit_expr = f'LIMIT {limit}' if limit else ''
+
+        # Filter out expired items, if specified
+        filter_expr = ''
+        params: Tuple = ()
+        if exclude_expired:
+            posix_now = round(datetime.utcnow().timestamp())
+            filter_expr = 'WHERE expires is null or expires > ?'
+            params = (posix_now,)
+
+        with self.connection(commit=True) as con:
+            for row in con.execute(
+                f'SELECT value FROM {self.table_name} {filter_expr}'
+                f'  ORDER BY {key} {direction} {limit_expr}',
+                params,
+            ):
+                yield row[0]
+
     def vacuum(self):
         with self.connection(commit=True) as con:
             con.execute('VACUUM')
@@ -324,6 +369,16 @@ class SQLitePickleDict(SQLiteDict):
 
     def __getitem__(self, key):
         return self.serializer.loads(super().__getitem__(key))
+
+    def sorted(
+        self,
+        key: str = 'expires',
+        reversed: bool = False,
+        limit: int = None,
+        exclude_expired: bool = False,
+    ):
+        for value in super().sorted(key, reversed, limit, exclude_expired):
+            yield self.serializer.loads(value)
 
 
 def _format_sequence(values: Collection) -> Tuple[str, List]:
