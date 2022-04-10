@@ -146,25 +146,16 @@ class SQLiteCache(BaseCache):
             self.remove_invalid_redirects()
 
     def remove_invalid_redirects(self):
-        # TODO: Benchmark these 2 statements
         with self.redirects.connection(commit=True) as conn:
             t1 = self.redirects.table_name
             t2 = self.responses.table_name
-            # Option 1
-            stmt = (
-                f'DELETE FROM {t1} WHERE NOT EXISTS '
-                f'    (SELECT * FROM {t2} WHERE {t1}.key = {t2}.value)'
-            )
-
-            # Option 2
-            stmt = (
+            conn.execute(
                 f'DELETE FROM {t1} WHERE key IN ('
                 f'    SELECT {t1}.key FROM {t1}'
                 f'    LEFT JOIN {t2} ON {t2}.key = {t1}.value'
                 f'    WHERE {t2}.key IS NULL'
                 ')'
             )
-            conn.execute(stmt)
 
 
 class SQLiteDict(BaseStorage):
