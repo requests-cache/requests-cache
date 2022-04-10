@@ -22,9 +22,6 @@ __all__ = ['create_key', 'normalize_request']
 if TYPE_CHECKING:
     from .models import AnyPreparedRequest, AnyRequest, CachedResponse
 
-# Request headers that are always excluded from cache keys, but not redacted from cached responses
-DEFAULT_EXCLUDE_HEADERS = {'Cache-Control', 'If-None-Match', 'If-Modified-Since'}
-
 # Maximum JSON request body size that will be normalized
 MAX_NORM_BODY_SIZE = 10 * 1024 * 1024
 
@@ -78,15 +75,11 @@ def get_matched_headers(
     """
     if not match_headers:
         return []
-
-    if isinstance(match_headers, Iterable):
-        included = set(match_headers) - DEFAULT_EXCLUDE_HEADERS
-    else:
-        included = set(headers) - DEFAULT_EXCLUDE_HEADERS
-
+    if match_headers is True:
+        match_headers = headers
     return [
         f'{k.lower()}={headers[k]}'
-        for k in sorted(included, key=lambda x: x.lower())
+        for k in sorted(match_headers, key=lambda x: x.lower())
         if k in headers
     ]
 
