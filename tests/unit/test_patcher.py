@@ -82,8 +82,8 @@ def test_is_installed():
 
 
 @patch.object(BaseCache, 'remove_expired_responses')
-def test_remove_expired_responses(remove_expired_responses, tempfile_path):
-    requests_cache.install_cache(tempfile_path, expire_after=360)
+def test_remove_expired_responses(remove_expired_responses):
+    requests_cache.install_cache(backend='memory', expire_after=360)
     requests_cache.remove_expired_responses()
     assert remove_expired_responses.called is True
     requests_cache.uninstall_cache()
@@ -93,9 +93,3 @@ def test_remove_expired_responses(remove_expired_responses, tempfile_path):
 def test_remove_expired_responses__cache_not_installed(remove_expired_responses):
     requests_cache.remove_expired_responses()
     assert remove_expired_responses.called is False
-
-
-@patch.object(BaseCache, 'remove_expired_responses')
-def test_remove_expired_responses__no_expiration(remove_expired_responses, installed_session):
-    requests_cache.remove_expired_responses()
-    assert remove_expired_responses.called is True

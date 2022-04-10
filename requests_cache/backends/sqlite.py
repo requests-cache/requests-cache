@@ -70,6 +70,7 @@ API Reference
 import sqlite3
 import threading
 from contextlib import contextmanager
+from datetime import datetime
 from logging import getLogger
 from os import unlink
 from os.path import isfile
@@ -80,6 +81,8 @@ from typing import Collection, Iterable, Iterator, List, Tuple, Type, Union
 from platformdirs import user_cache_dir
 
 from .._utils import chunkify, get_valid_kwargs
+from ..expiration import ExpirationTime
+from ..models import CachedResponse
 from . import BaseCache, BaseStorage
 
 MEMORY_URI = 'file::memory:?cache=shared'
@@ -106,7 +109,7 @@ class SQLiteCache(BaseCache):
     def __init__(self, db_path: AnyPath = 'http_cache', **kwargs):
         super().__init__(**kwargs)
         self.responses: SQLiteDict = SQLitePickleDict(db_path, table_name='responses', **kwargs)
-        self.redirects = SQLiteDict(db_path, table_name='redirects', **kwargs)
+        self.redirects: SQLiteDict = SQLiteDict(db_path, table_name='redirects', **kwargs)
 
     @property
     def db_path(self) -> AnyPath:
@@ -134,9 +137,12 @@ class SQLiteCache(BaseCache):
             self.responses.init_db()
             self.redirects.init_db()
 
-    def remove_expired_responses(self, *args, **kwargs):
-        with self.responses._lock, self.redirects._lock:
-            return super().remove_expired_responses(*args, **kwargs)
+    def remove_expired_responses(self, expire_after: ExpirationTime = None):
+        if expire_after is not None:
+            with self.responses._lock, self.redirects._lock:
+                return super().remove_expired_responses(expire_after=expire_after)
+        else:
+            self.responses.clear_expired()
 
 
 class SQLiteDict(BaseStorage):
@@ -168,7 +174,20 @@ class SQLiteDict(BaseStorage):
         """Initialize the database, if it hasn't already been"""
         self.close()
         with self._lock, self.connection() as con:
-            con.execute(f'CREATE TABLE IF NOT EXISTS {self.table_name} (key PRIMARY KEY, value)')
+            # Add new column to tables created before 0.10
+            try:
+                con.execute(f'ALTER TABLE {self.table_name} ADD COLUMN expires TEXT')
+            except sqlite3.OperationalError:
+                pass
+
+            con.execute(
+                f'CREATE TABLE IF NOT EXISTS {self.table_name} ('
+                '    key TEXT PRIMARY KEY,'
+                '    value BLOB, '
+                '    expires TEXT'
+                ')'
+            )
+            con.execute(f'CREATE INDEX IF NOT EXISTS expires_idx ON {self.table_name}(expires)')
 
     @contextmanager
     def connection(self, commit=False) -> Iterator[sqlite3.Connection]:
@@ -228,10 +247,13 @@ class SQLiteDict(BaseStorage):
         return row[0]
 
     def __setitem__(self, key, value):
+        self._insert(key, value)
+
+    def _insert(self, key, value, expires: datetime = None):
         with self.connection(commit=True) as con:
             con.execute(
-                f'INSERT OR REPLACE INTO {self.table_name} (key,value) VALUES (?,?)',
-                (key, value),
+                f'INSERT OR REPLACE INTO {self.table_name} (key,value,expires) VALUES (?,?,?)',
+                (key, value, expires.isoformat() if expires else None),
             )
 
     def __iter__(self):
@@ -241,11 +263,11 @@ class SQLiteDict(BaseStorage):
 
     def __len__(self):
         with self.connection() as con:
-            return con.execute(f'SELECT COUNT(key) FROM  {self.table_name}').fetchone()[0]
+            return con.execute(f'SELECT COUNT(key) FROM {self.table_name}').fetchone()[0]
 
     def bulk_delete(self, keys=None, values=None):
-        """Delete multiple keys from the cache, without raising errors for any missing keys.
-        Also supports deleting by value.
+        """Delete multiple items from the cache, without raising errors for any missing items.
+        Supports deleting by either key or by value.
         """
         if not keys and not values:
             return
@@ -265,6 +287,12 @@ class SQLiteDict(BaseStorage):
             self.init_db()
             self.vacuum()
 
+    def clear_expired(self):
+        """Remove expired items from the cache"""
+        with self._lock, self.connection(commit=True) as con:
+            con.execute(f"DELETE FROM {self.table_name} WHERE expires < datetime('now', 'utc')")
+        self.vacuum()
+
     def vacuum(self):
         with self.connection(commit=True) as con:
             con.execute('VACUUM')
@@ -273,11 +301,11 @@ class SQLiteDict(BaseStorage):
 class SQLitePickleDict(SQLiteDict):
     """Same as :class:`SQLiteDict`, but serializes values before saving"""
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value: CachedResponse):
         serialized_value = self.serializer.dumps(value)
         if isinstance(serialized_value, bytes):
             serialized_value = sqlite3.Binary(serialized_value)
-        super().__setitem__(key, serialized_value)
+        super()._insert(key, serialized_value, getattr(value, 'expires', None))
 
     def __getitem__(self, key):
         return self.serializer.loads(super().__getitem__(key))
@@ -293,7 +321,7 @@ def _format_sequence(values: Collection) -> Tuple[str, List]:
 def _get_sqlite_cache_path(
     db_path: AnyPath, use_cache_dir: bool, use_temp: bool, use_memory: bool = False
 ) -> AnyPath:
-    """Get a resolved path for a SQLite database file (or memory URI("""
+    """Get a resolved path for a SQLite database file (or memory URI)"""
     # Use an in-memory database, if specified
     db_path = str(db_path)
     if use_memory:

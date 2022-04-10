@@ -23,6 +23,12 @@ class SQLiteTestCase(BaseStorageTest):
         except Exception:
             pass
 
+    @patch('requests_cache.backends.sqlite.sqlite3')
+    def test_connection_kwargs(self, mock_sqlite):
+        """A spot check to make sure optional connection kwargs gets passed to connection"""
+        cache = self.storage_class('test', use_temp=True, timeout=0.5, invalid_kwarg='???')
+        mock_sqlite.connect.assert_called_with(cache.db_path, timeout=0.5)
+
     def test_use_cache_dir(self):
         relative_path = self.storage_class(CACHE_NAME).db_path
         cache_dir_path = self.storage_class(CACHE_NAME, use_cache_dir=True).db_path
@@ -72,7 +78,7 @@ class SQLiteTestCase(BaseStorageTest):
         assert set(cache.keys()) == {f'key_{i}' for i in range(n_items)}
         assert set(cache.values()) == {f'value_{i}' for i in range(n_items)}
 
-    def test_chunked_bulk_delete(self):
+    def test_bulk_delete__chunked(self):
         """When deleting more items than SQLite can handle in a single statement, it should be
         chunked into multiple smaller statements
         """
@@ -93,6 +99,21 @@ class SQLiteTestCase(BaseStorageTest):
         # Second pass to actually delete keys and make sure it doesn't explode
         cache.bulk_delete(keys)
         assert len(cache) == 0
+
+    def test_bulk_commit__noop(self):
+        def do_noop_bulk(cache):
+            with cache.bulk_commit():
+                pass
+            del cache
+
+        cache = self.init_cache()
+        thread = Thread(target=do_noop_bulk, args=(cache,))
+        thread.start()
+        thread.join()
+
+        # make sure connection is not closed by the thread
+        cache['key_1'] = 'value_1'
+        assert list(cache.keys()) == ['key_1']
 
     def test_switch_commit(self):
         cache = self.init_cache()
@@ -116,32 +137,11 @@ class SQLiteTestCase(BaseStorageTest):
 
         n = 1000
         for i in range(n):
-            cache_1[i] = i
-            cache_2[i * 2] = i
+            cache_1[f'key_{i}'] = f'value_{i}'
+            cache_2[f'key_{i*2}'] = f'value_{i}'
 
-        assert set(cache_1.keys()) == set(range(n))
-        assert set(cache_2.values()) == set(range(n))
-
-    def test_noop(self):
-        def do_noop_bulk(cache):
-            with cache.bulk_commit():
-                pass
-            del cache
-
-        cache = self.init_cache()
-        thread = Thread(target=do_noop_bulk, args=(cache,))
-        thread.start()
-        thread.join()
-
-        # make sure connection is not closed by the thread
-        cache['key_1'] = 'value_1'
-        assert list(cache.keys()) == ['key_1']
-
-    @patch('requests_cache.backends.sqlite.sqlite3')
-    def test_connection_kwargs(self, mock_sqlite):
-        """A spot check to make sure optional connection kwargs gets passed to connection"""
-        cache = self.storage_class('test', use_temp=True, timeout=0.5, invalid_kwarg='???')
-        mock_sqlite.connect.assert_called_with(cache.db_path, timeout=0.5)
+        assert set(cache_1.keys()) == {f'key_{i}' for i in range(n)}
+        assert set(cache_2.values()) == {f'value_{i}' for i in range(n)}
 
 
 class TestSQLiteDict(SQLiteTestCase):
