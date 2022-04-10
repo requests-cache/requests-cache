@@ -197,7 +197,7 @@ class SQLiteDict(BaseStorage):
                 f'CREATE TABLE IF NOT EXISTS {self.table_name} ('
                 '    key TEXT PRIMARY KEY,'
                 '    value BLOB, '
-                '    expires TEXT'
+                '    expires INTEGER'
                 ')'
             )
             con.execute(f'CREATE INDEX IF NOT EXISTS expires_idx ON {self.table_name}(expires)')
@@ -263,10 +263,11 @@ class SQLiteDict(BaseStorage):
         self._insert(key, value)
 
     def _insert(self, key, value, expires: datetime = None):
+        posix_expires = round(expires.timestamp()) if expires else None
         with self.connection(commit=True) as con:
             con.execute(
                 f'INSERT OR REPLACE INTO {self.table_name} (key,value,expires) VALUES (?,?,?)',
-                (key, value, expires.isoformat() if expires else None),
+                (key, value, posix_expires),
             )
 
     def __iter__(self):
@@ -302,8 +303,9 @@ class SQLiteDict(BaseStorage):
 
     def clear_expired(self):
         """Remove expired items from the cache"""
+        posix_now = round(datetime.utcnow().timestamp())
         with self._lock, self.connection(commit=True) as con:
-            con.execute(f"DELETE FROM {self.table_name} WHERE expires < datetime('now', 'utc')")
+            con.execute(f"DELETE FROM {self.table_name} WHERE expires <= ?", (posix_now,))
         self.vacuum()
 
     def vacuum(self):
