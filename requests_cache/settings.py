@@ -11,6 +11,9 @@ DEFAULT_CACHE_NAME = 'http_cache'
 DEFAULT_METHODS = ('GET', 'HEAD')
 DEFAULT_STATUS_CODES = (200,)
 
+# Default params and/or headers that are excluded from cache keys and redacted from cached responses
+DEFAULT_IGNORED_PARAMS = ('Authorization', 'X-API-KEY', 'access_token', 'api_key')
+
 # Signatures for user-provided callbacks
 FilterCallback = Callable[[Response], bool]
 KeyCallback = Callable[..., str]
@@ -30,7 +33,7 @@ class CacheSettings:
     disabled: bool = field(default=False)
     expire_after: ExpirationTime = field(default=None)
     filter_fn: FilterCallback = field(default=None)
-    ignored_parameters: Iterable[str] = field(default=None)
+    ignored_parameters: Iterable[str] = field(default=DEFAULT_IGNORED_PARAMS)
     key_fn: KeyCallback = field(default=None)
     match_headers: Union[Iterable[str], bool] = field(default=False)
     only_if_cached: bool = field(default=False)

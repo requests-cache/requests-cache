@@ -22,9 +22,6 @@ __all__ = ['create_key', 'normalize_request']
 if TYPE_CHECKING:
     from .models import AnyPreparedRequest, AnyRequest, CachedResponse
 
-# Request headers that are always excluded from cache keys, but not redacted from cached responses
-DEFAULT_EXCLUDE_HEADERS = {'Cache-Control', 'If-None-Match', 'If-Modified-Since'}
-
 # Maximum JSON request body size that will be normalized
 MAX_NORM_BODY_SIZE = 10 * 1024 * 1024
 
@@ -45,7 +42,7 @@ def create_key(
 
     Args:
         request: Request object to generate a cache key from
-        ignored_parameters: Request parames, headers, and/or body params to not match against
+        ignored_parameters: Request paramters, headers, and/or JSON body params to exclude
         match_headers: Match only the specified headers, or ``True`` to match all headers
         request_kwargs: Request arguments to generate a cache key from
     """
@@ -78,15 +75,11 @@ def get_matched_headers(
     """
     if not match_headers:
         return []
-
-    if isinstance(match_headers, Iterable):
-        included = set(match_headers) - DEFAULT_EXCLUDE_HEADERS
-    else:
-        included = set(headers) - DEFAULT_EXCLUDE_HEADERS
-
+    if match_headers is True:
+        match_headers = headers
     return [
         f'{k.lower()}={headers[k]}'
-        for k in sorted(included, key=lambda x: x.lower())
+        for k in sorted(match_headers, key=lambda x: x.lower())
         if k in headers
     ]
 
@@ -102,8 +95,7 @@ def normalize_request(
 
     Args:
         request: Request object to normalize
-        ignored_parameters: Request parames, headers, and/or body params to not match against and
-            to remove from the request
+        ignored_parameters: Request paramters, headers, and/or JSON body params to exclude
     """
     if isinstance(request, Request):
         norm_request: AnyPreparedRequest = Session().prepare_request(request)

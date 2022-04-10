@@ -30,6 +30,10 @@ from tests.conftest import (
     MOCKED_URL_REDIRECT_TARGET,
 )
 
+# Some tests must disable url normalization to retain the custom `http+mock//` protocol
+patch_normalize_url = patch('requests_cache.cache_keys.normalize_url', side_effect=lambda x, y: x)
+
+
 # Basic initialization
 # -----------------------------------------------------
 
@@ -120,9 +124,9 @@ def test_all_methods__ignored_parameters__not_matched(field, method, mock_sessio
     """
     mock_session.settings.ignored_parameters = ['ignored']
     mock_session.settings.match_headers = True
-    params_1 = {'ignored': 'value_1', 'not_ignored': 'value_1'}
-    params_2 = {'ignored': 'value_2', 'not_ignored': 'value_1'}
-    params_3 = {'ignored': 'value_2', 'not_ignored': 'value_2'}
+    params_1 = {'ignored': 'value_1', 'param': 'value_1'}
+    params_2 = {'ignored': 'value_2', 'param': 'value_1'}
+    params_3 = {'ignored': 'value_2', 'param': 'value_2'}
 
     assert mock_session.request(method, MOCKED_URL, **{field: params_1}).from_cache is False
     assert mock_session.request(method, MOCKED_URL, **{field: params_1}).from_cache is True
@@ -137,15 +141,15 @@ def test_all_methods__ignored_parameters__redacted(field, method, mock_session):
     """Test all relevant combinations of methods and data fields. Requests with ignored params
     should have those values redacted from the cached response.
     """
-    mock_session.settings.ignored_parameters = ['access_token']
-    params_1 = {'access_token': 'asdf', 'not_ignored': 'value_1'}
+    mock_session.settings.ignored_parameters = ['ignored']
+    params_1 = {'ignored': 'asdf', 'param': 'value_1'}
 
     mock_session.request(method, MOCKED_URL, **{field: params_1})
     cached_response = mock_session.request(method, MOCKED_URL, **{field: params_1})
-    assert 'access_token' not in cached_response.url
-    assert 'access_token' not in cached_response.request.url
-    assert 'access_token' not in cached_response.request.headers
-    assert 'access_token' not in cached_response.request.body.decode('utf-8')
+    assert 'ignored' not in cached_response.url
+    assert 'ignored' not in cached_response.request.url
+    assert 'ignored' not in cached_response.request.headers
+    assert 'ignored' not in cached_response.request.body.decode('utf-8')
 
 
 # Variations of relevant request arguments
@@ -185,7 +189,8 @@ def test_response_history(mock_session):
     assert len(mock_session.cache.redirects) == 1
 
 
-def test_urls(mock_session):
+@patch_normalize_url
+def test_urls(mock_normalize_url, mock_session):
     for url in [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_HTTPS]:
         mock_session.get(url)
 
@@ -442,7 +447,23 @@ def test_allowable_methods(mock_session):
     assert mock_session.put(MOCKED_URL).from_cache is False
 
 
-def test_filter_fn(mock_session):
+def test_default_ignored_parameters(mock_session):
+    """Common auth params and headers (for OAuth2, etc.) should be ignored by default"""
+    mock_session.get(
+        MOCKED_URL,
+        params={'access_token': 'token'},
+        headers={'Authorization': 'Bearer token'},
+    )
+    response = mock_session.get(MOCKED_URL)
+
+    assert response.from_cache is True
+    assert 'access_token' not in response.url
+    assert 'access_token' not in response.request.url
+    assert 'Authorization' not in response.request.headers
+
+
+@patch_normalize_url
+def test_filter_fn(mock_normalize_url, mock_session):
     mock_session.settings.filter_fn = lambda r: r.request.url != MOCKED_URL_JSON
 
     # This request should be cached
@@ -456,7 +477,8 @@ def test_filter_fn(mock_session):
     assert mock_session.get(MOCKED_URL_JSON).from_cache is False
 
 
-def test_filter_fn__retroactive(mock_session):
+@patch_normalize_url
+def test_filter_fn__retroactive(mock_normalize_url, mock_session):
     """filter_fn should also apply to previously cached responses"""
     mock_session.get(MOCKED_URL_JSON)
     mock_session.settings.filter_fn = lambda r: r.request.url != MOCKED_URL_JSON
@@ -567,7 +589,8 @@ def test_url_allowlist(mock_session):
     assert not mock_session.cache.has_url(MOCKED_URL)
 
 
-def test_remove_expired_responses(mock_session):
+@patch_normalize_url
+def test_remove_expired_responses(mock_normalize_url, mock_session):
     unexpired_url = f'{MOCKED_URL}?x=1'
     mock_session.mock_adapter.register_uri(
         'GET', unexpired_url, status_code=200, text='mock response'

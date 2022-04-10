@@ -14,7 +14,7 @@
 * The constant `requests_cache.DO_NOT_CACHE` may be used to completely disable caching for a request
 
 **Backends:**
-* Add `wal` parameter for SQLite backend to enable write-ahead logging
+* SQLite: Add a `wal` parameter to enable write-ahead logging
 
 **Other features:**
 * All settings that affect cache behavior can now be accessed and modified via `CachedSession.settings`
@@ -27,6 +27,8 @@
 * Populate `cache_key` and `expires` for new (non-cached) responses, if it was written to the cache
 * Add return type hints for all `CachedSession` request methods (`get()`, `post()`, etc.)
 * Always skip both cache read and write for requests excluded by `allowable_methods` (previously only skipped write)
+* Ignore and redact common authentication params and headers (e.g., for OAuth2) by default
+  * This is simply a default value for `ignored_parameters`, to avoid accidentally storing credentials in the cache
 
 **Dependencies:**
 * Replace `appdirs` with `platformdirs`
