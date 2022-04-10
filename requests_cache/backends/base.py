@@ -96,13 +96,6 @@ class BaseCache:
         for r in response.history:
             self.redirects[self.create_key(r.request)] = cache_key
 
-    def bulk_delete(self, keys: Iterable[str]):
-        """Remove multiple responses and their associated redirects from the cache"""
-        self.responses.bulk_delete(keys)
-        # Remove any redirects that no longer point to an existing response
-        invalid_redirects = [k for k, v in self.redirects.items() if v not in self.responses]
-        self.redirects.bulk_delete(set(keys) | set(invalid_redirects))
-
     def clear(self):
         """Delete all items from the cache"""
         logger.info('Clearing all items from the cache')
@@ -186,6 +179,16 @@ class BaseCache:
             logger.debug(f'Updating {len(keys_to_update)} response expirations')
             for key, response in keys_to_update.items():
                 self.responses[key] = response
+
+    def bulk_delete(self, keys: Iterable[str]):
+        """Remove multiple responses and their associated redirects from the cache"""
+        self.responses.bulk_delete(keys)
+        self.remove_invalid_redirects()
+
+    def remove_invalid_redirects(self):
+        """Remove any redirects that no longer point to an existing response"""
+        invalid_redirects = [k for k, v in self.redirects.items() if v not in self.responses]
+        self.redirects.bulk_delete(invalid_redirects)
 
     def response_count(self, check_expiry=False) -> int:
         """Get the number of responses in the cache, excluding invalid (unusable) responses.
