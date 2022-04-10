@@ -69,3 +69,10 @@ BadSignature: Signature b'iFNmzdUOSw5vqrR9Cb_wfI1EoZ8' does not match
 ## Removing Sensitive Info
 The {ref}`ignored_parameters <filter-params>` option can be used to prevent credentials and other
 sensitive info from being saved to the cache. It applies to request parameters, body, and headers.
+
+Some are ignored by default, including:
+* `Authorization` header (most authentication systems)
+* `access_token` request param (used by OAuth)
+* `access_token` in POST body (used by OAuth)
+* `X-API-KEY` header (used by OpenAPI spec)
+* `api_key` request param (used by OpenAPI spec)

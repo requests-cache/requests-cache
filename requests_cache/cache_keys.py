@@ -42,7 +42,7 @@ def create_key(
 
     Args:
         request: Request object to generate a cache key from
-        ignored_parameters: Request parames, headers, and/or body params to not match against
+        ignored_parameters: Request paramters, headers, and/or JSON body params to exclude
         match_headers: Match only the specified headers, or ``True`` to match all headers
         request_kwargs: Request arguments to generate a cache key from
     """
@@ -95,8 +95,7 @@ def normalize_request(
 
     Args:
         request: Request object to normalize
-        ignored_parameters: Request parames, headers, and/or body params to not match against and
-            to remove from the request
+        ignored_parameters: Request paramters, headers, and/or JSON body params to exclude
     """
     if isinstance(request, Request):
         norm_request: AnyPreparedRequest = Session().prepare_request(request)

@@ -31,6 +31,7 @@ from .models import AnyResponse, CachedResponse, OriginalResponse
 from .serializers import SerializerPipeline
 from .settings import (
     DEFAULT_CACHE_NAME,
+    DEFAULT_IGNORED_PARAMS,
     DEFAULT_METHODS,
     DEFAULT_STATUS_CODES,
     CacheSettings,
@@ -62,7 +63,7 @@ class CacheMixin(MIXIN_BASE):
         cache_control: bool = False,
         allowable_codes: Iterable[int] = DEFAULT_STATUS_CODES,
         allowable_methods: Iterable[str] = DEFAULT_METHODS,
-        ignored_parameters: Iterable[str] = None,
+        ignored_parameters: Iterable[str] = DEFAULT_IGNORED_PARAMS,
         match_headers: Union[Iterable[str], bool] = False,
         filter_fn: FilterCallback = None,
         key_fn: KeyCallback = None,
@@ -335,7 +336,8 @@ class CachedSession(CacheMixin, OriginalSession):
         allowable_methods: Cache only responses for one of these HTTP methods
         match_headers: Match request headers when reading from the cache; may be either ``True`` or
             a list of specific headers to match
-        ignored_parameters: List of request parameters to not match against, and exclude from the cache
+        ignored_parameters: Request paramters, headers, and/or JSON body params to exclude from both
+            request matching and cached request data
         stale_if_error: Return stale cache data if a new request raises an exception
         filter_fn: Response filtering function that indicates whether or not a given response should
             be cached. See :ref:`custom-filtering` for details.
