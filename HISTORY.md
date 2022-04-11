@@ -14,7 +14,9 @@
 * The constant `requests_cache.DO_NOT_CACHE` may be used to completely disable caching for a request
 
 **Backends:**
-* SQLite: Add a `wal` parameter to enable write-ahead logging
+* SQLite: Improve performance for removing expired items
+* SQLite: Add `sorted()` method with sorting and other query options
+* SQLite: Add `wal` parameter to enable write-ahead logging
 
 **Other features:**
 * All settings that affect cache behavior can now be accessed and modified via `CachedSession.settings`

@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, timedelta
 from os.path import join
 from tempfile import NamedTemporaryFile, gettempdir
 from threading import Thread
@@ -9,6 +10,7 @@ from platformdirs import user_cache_dir
 
 from requests_cache.backends.base import BaseCache
 from requests_cache.backends.sqlite import MEMORY_URI, SQLiteCache, SQLiteDict, SQLitePickleDict
+from requests_cache.models.response import CachedResponse
 from tests.integration.base_cache_test import BaseCacheTest
 from tests.integration.base_storage_test import CACHE_NAME, BaseStorageTest
 
@@ -22,6 +24,12 @@ class SQLiteTestCase(BaseStorageTest):
             os.unlink(f'{CACHE_NAME}.sqlite')
         except Exception:
             pass
+
+    @patch('requests_cache.backends.sqlite.sqlite3')
+    def test_connection_kwargs(self, mock_sqlite):
+        """A spot check to make sure optional connection kwargs gets passed to connection"""
+        cache = self.storage_class('test', use_temp=True, timeout=0.5, invalid_kwarg='???')
+        mock_sqlite.connect.assert_called_with(cache.db_path, timeout=0.5)
 
     def test_use_cache_dir(self):
         relative_path = self.storage_class(CACHE_NAME).db_path
@@ -72,7 +80,7 @@ class SQLiteTestCase(BaseStorageTest):
         assert set(cache.keys()) == {f'key_{i}' for i in range(n_items)}
         assert set(cache.values()) == {f'value_{i}' for i in range(n_items)}
 
-    def test_chunked_bulk_delete(self):
+    def test_bulk_delete__chunked(self):
         """When deleting more items than SQLite can handle in a single statement, it should be
         chunked into multiple smaller statements
         """
@@ -94,9 +102,23 @@ class SQLiteTestCase(BaseStorageTest):
         cache.bulk_delete(keys)
         assert len(cache) == 0
 
+    def test_bulk_commit__noop(self):
+        def do_noop_bulk(cache):
+            with cache.bulk_commit():
+                pass
+            del cache
+
+        cache = self.init_cache()
+        thread = Thread(target=do_noop_bulk, args=(cache,))
+        thread.start()
+        thread.join()
+
+        # make sure connection is not closed by the thread
+        cache['key_1'] = 'value_1'
+        assert list(cache.keys()) == ['key_1']
+
     def test_switch_commit(self):
         cache = self.init_cache()
-        cache.clear()
         cache['key_1'] = 'value_1'
         cache = self.init_cache(clear=False)
         assert 'key_1' in cache
@@ -114,34 +136,47 @@ class SQLiteTestCase(BaseStorageTest):
         cache_1 = self.init_cache(1, **kwargs)
         cache_2 = self.init_cache(2, **kwargs)
 
-        n = 1000
+        n = 500
         for i in range(n):
-            cache_1[i] = i
-            cache_2[i * 2] = i
+            cache_1[f'key_{i}'] = f'value_{i}'
+            cache_2[f'key_{i*2}'] = f'value_{i}'
 
-        assert set(cache_1.keys()) == set(range(n))
-        assert set(cache_2.values()) == set(range(n))
+        assert set(cache_1.keys()) == {f'key_{i}' for i in range(n)}
+        assert set(cache_2.values()) == {f'value_{i}' for i in range(n)}
 
-    def test_noop(self):
-        def do_noop_bulk(cache):
-            with cache.bulk_commit():
-                pass
-            del cache
-
+    @pytest.mark.parametrize('limit', [None, 50])
+    def test_sorted__by_size(self, limit):
         cache = self.init_cache()
-        thread = Thread(target=do_noop_bulk, args=(cache,))
-        thread.start()
-        thread.join()
 
-        # make sure connection is not closed by the thread
+        # Insert items with decreasing size
+        for i in range(100):
+            suffix = 'padding' * (100 - i)
+            cache[f'key_{i}'] = f'value_{i}_{suffix}'
+
+        # Sorted items should be in ascending order by size
+        items = list(cache.sorted(key='size'))
+        assert len(items) == limit or 100
+
+        prev_item = None
+        for i, item in enumerate(items):
+            assert prev_item is None or len(prev_item) > len(item)
+
+    def test_sorted__reversed(self):
+        cache = self.init_cache()
+
+        for i in range(100):
+            cache[f'key_{i+1:03}'] = f'value_{i+1}'
+
+        items = list(cache.sorted(key='key', reversed=True))
+        assert len(items) == 100
+        for i, item in enumerate(items):
+            assert item == f'value_{100-i}'
+
+    def test_sorted__invalid_sort_key(self):
+        cache = self.init_cache()
         cache['key_1'] = 'value_1'
-        assert list(cache.keys()) == ['key_1']
-
-    @patch('requests_cache.backends.sqlite.sqlite3')
-    def test_connection_kwargs(self, mock_sqlite):
-        """A spot check to make sure optional connection kwargs gets passed to connection"""
-        cache = self.storage_class('test', use_temp=True, timeout=0.5, invalid_kwarg='???')
-        mock_sqlite.connect.assert_called_with(cache.db_path, timeout=0.5)
+        with pytest.raises(ValueError):
+            list(cache.sorted(key='invalid_key'))
 
 
 class TestSQLiteDict(SQLiteTestCase):
@@ -151,6 +186,46 @@ class TestSQLiteDict(SQLiteTestCase):
 class TestSQLitePickleDict(SQLiteTestCase):
     storage_class = SQLitePickleDict
     picklable = True
+
+    @pytest.mark.parametrize('limit', [None, 50])
+    def test_sorted__by_expires(self, limit):
+        cache = self.init_cache()
+        now = datetime.utcnow()
+
+        # Insert items with decreasing expiration time
+        for i in range(100):
+            response = CachedResponse(expires=now + timedelta(seconds=101 - i))
+            cache[f'key_{i}'] = response
+
+        # Sorted items should be in ascending order by expiration time
+        items = list(cache.sorted(key='expires'))
+        assert len(items) == limit or 100
+
+        prev_item = None
+        for i, item in enumerate(items):
+            assert prev_item is None or prev_item.expires < item.expires
+
+    def test_sorted__exclude_expired(self):
+        cache = self.init_cache()
+        now = datetime.utcnow()
+
+        # Make only odd numbered items expired
+        for i in range(100):
+            delta = 101 - i
+            if i % 2 == 1:
+                delta -= 100
+
+            response = CachedResponse(status_code=i, expires=now + timedelta(seconds=delta))
+            cache[f'key_{i}'] = response
+
+        # Items should only include unexpired (even numbered) items, and still be in sorted order
+        items = list(cache.sorted(key='expires', exclude_expired=True))
+        assert len(items) == 50
+        prev_item = None
+
+        for i, item in enumerate(items):
+            assert prev_item is None or prev_item.expires < item.expires
+            assert item.status_code % 2 == 0
 
 
 class TestSQLiteCache(BaseCacheTest):
@@ -190,3 +265,28 @@ class TestSQLiteCache(BaseCacheTest):
         """
         session = self.init_session()
         assert session.cache.db_path == session.cache.responses.db_path
+
+    def test_sorted(self):
+        """Test wrapper method for SQLiteDict.sorted(), with all arguments combined"""
+        session = self.init_session(clear=False)
+        now = datetime.utcnow()
+
+        # Insert items with decreasing expiration time
+        for i in range(500):
+            delta = 1000 - i
+            if i > 400:
+                delta -= 2000
+
+            response = CachedResponse(status_code=i, expires=now + timedelta(seconds=delta))
+            session.cache.responses[f'key_{i}'] = response
+
+        # Sorted items should be in ascending order by expiration time
+        items = list(
+            session.cache.sorted(key='expires', exclude_expired=True, reversed=True, limit=100)
+        )
+        assert len(items) == 100
+
+        prev_item = None
+        for i, item in enumerate(items):
+            assert prev_item is None or prev_item.expires < item.expires
+            assert not item.is_expired

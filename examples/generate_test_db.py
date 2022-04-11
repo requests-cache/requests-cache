@@ -16,9 +16,12 @@ from requests_cache import ALL_METHODS, CachedResponse, CachedSession
 from requests_cache.models.response import format_file_size
 from tests.conftest import HTTPBIN_FORMATS, HTTPBIN_METHODS
 
-# TODO: If others would find it useful, these settings could be turned into CLI args
 BACKEND = 'sqlite'
 CACHE_NAME = 'rubbish_bin'
+MAX_EXPIRE_AFTER = 30  # In seconds; set to -1 to disable expiration
+MAX_RESPONSE_SIZE = 10000  # In bytes
+N_RESPONSES = 100000
+N_INVALID_RESPONSES = 10
 
 BASE_RESPONSE = requests.get('https://httpbin.org/get')
 HTTPBIN_EXTRA_ENDPOINTS = [
@@ -28,11 +31,6 @@ HTTPBIN_EXTRA_ENDPOINTS = [
     'redirect/5',
     'stream-bytes/1024',
 ]
-MAX_EXPIRE_AFTER = 30  # In seconds; set to -1 to disable expiration
-MAX_RESPONSE_SIZE = 10000  # In bytes
-N_RESPONSES = 100000
-N_INVALID_RESPONSES = 10
-
 logging.basicConfig(level='INFO')
 logger = logging.getLogger('requests_cache')
 
