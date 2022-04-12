@@ -38,8 +38,8 @@ Complete project documentation can be found at [requests-cache.readthedocs.io](h
   eagerly cache everything for long-term storage, use
   [URL patterns](https://requests-cache.readthedocs.io/en/stable/user_guide/expiration.html#expiration-with-url-patterns)
   for selective caching, or any combination of strategies
-* ✔️ **Compatibility:** Can be combined with other popular
-  [libraries based on requests](https://requests-cache.readthedocs.io/en/stable/user_guide/compatibility.html)
+* ✔️ **Compatibility:** Can be combined with other
+  [popular libraries based on requests](https://requests-cache.readthedocs.io/en/stable/user_guide/compatibility.html)
 
 ## Quickstart
 First, install with pip:
@@ -116,9 +116,6 @@ To find out more about what you can do with requests-cache, see:
 
 * [User Guide](https://requests-cache.readthedocs.io/en/stable/user_guide.html)
 * [API Reference](https://requests-cache.readthedocs.io/en/stable/reference.html)
+* [Examples](https://requests-cache.readthedocs.io/en/stable/examples.html)
 * [Project Info](https://requests-cache.readthedocs.io/en/stable/project_info.html)
-* A working example at Real Python:
-  [Caching External API Requests](https://realpython.com/blog/python/caching-external-api-requests)
-* More examples in the
-  [examples/](https://github.com/reclosedev/requests-cache/tree/master/examples) folder
 <!-- END-RTD-IGNORE -->

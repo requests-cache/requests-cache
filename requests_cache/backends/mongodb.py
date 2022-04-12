@@ -14,14 +14,54 @@ already have a MongoDB instance you're using for other purposes, or if you find 
 
 Expiration
 ^^^^^^^^^^
-MongoDB natively supports TTL, and can automatically remove expired responses from the cache.
-Note that this is `not guaranteed to happen immediately
-<https://www.mongodb.com/docs/v4.0/core/index-ttl/#timing-of-the-delete-operation>`_. This is the
-recommended way to expire responses, and you can leave the session ``expire_after`` as the default
-(never expire). Example:
+MongoDB `natively supports TTL <https://www.mongodb.com/docs/v4.0/core/index-ttl>`_, and can
+automatically remove expired responses from the cache.
 
-    >>> backend = MongoCache(ttl=3600)
-    >>> session = CachedSession('http_cache', backend=backend)
+**Notes:**
+
+* TTL is set for a whole collection, and cannot be set on a per-document basis.
+* It will persist until explicitly removed or overwritten, or if the collection is deleted.
+* Expired items are
+  `not guaranteed to be removed immediately <https://www.mongodb.com/docs/v4.0/core/index-ttl/#timing-of-the-delete-operation>`_.
+  Typically it happens within 60 seconds.
+* If you want, you can rely entirely on MongoDB TTL instead of requests-cache
+  :ref:`expiration settings <expiration>`.
+* Or you can set both values, to be certain that you don't get an expired response before MongoDB
+  removes it.
+* If you intend to reuse expired responses, e.g. with :ref:`conditional-requests` or ``stale_if_error``,
+  you can set TTL to a larger value than your session ``expire_after``, or disable it altogether.
+
+**Examples:**
+
+Create a TTL index:
+
+>>> backend = MongoCache()
+>>> backend.set_ttl(3600)
+
+Overwrite it with a new value:
+
+>>> backend = MongoCache()
+>>> backend.set_ttl(timedelta(days=1), overwrite=True)
+
+Remove the TTL index:
+
+>>> backend = MongoCache()
+>>> backend.set_ttl(None, overwrite=True)
+
+Use both MongoDB TTL and requests-cache expiration:
+
+>>> ttl = timedelta(days=1)
+>>> backend = MongoCache()
+>>> backend.set_ttl(ttl)
+>>> session = CachedSession(backend=backend, expire_after=ttl)
+
+**Recommended:** Set MongoDB TTL to a longer value than your :py:class:`.CachedSession` expiration.
+This allows expired responses to be eventually cleaned up, but still be reused for conditional
+requests for some period of time:
+
+    >>> backend = MongoCache()
+    >>> backend.set_ttl(timedelta(days=7))
+    >>> session = CachedSession(backend=backend, expire_after=timedelta(days=1))
 
 Connection Options
 ^^^^^^^^^^^^^^^^^^
@@ -37,15 +77,20 @@ API Reference
    :classes-only:
    :nosignatures:
 """
-from typing import Iterable
+from datetime import timedelta
+from typing import Iterable, Union
 
 from pymongo import MongoClient
+from pymongo.errors import OperationFailure
 
 from .._utils import get_valid_kwargs
+from ..expiration import NEVER_EXPIRE, get_expiration_seconds
 from ..serializers import dict_serializer
 from . import BaseCache, BaseStorage
 
 
+# TODO: TTL tests
+# TODO: Example of viewing responses with MongoDB VSCode plugin or other GUI
 class MongoCache(BaseCache):
     """MongoDB cache backend
 
@@ -55,28 +100,31 @@ class MongoCache(BaseCache):
         kwargs: Additional keyword arguments for :py:class:`pymongo.mongo_client.MongoClient`
     """
 
-    def __init__(
-        self,
-        db_name: str = 'http_cache',
-        connection: MongoClient = None,
-        ttl: int = None,
-        **kwargs,
-    ):
+    def __init__(self, db_name: str = 'http_cache', connection: MongoClient = None, **kwargs):
         super().__init__(**kwargs)
-        self.responses = MongoPickleDict(
+        self.responses: MongoDict = MongoPickleDict(
             db_name,
             collection_name='responses',
             connection=connection,
-            ttl=ttl,
             **kwargs,
         )
-        self.redirects = MongoDict(
+        self.redirects: MongoDict = MongoDict(
             db_name,
             collection_name='redirects',
             connection=self.responses.connection,
-            ttl=ttl,
             **kwargs,
         )
+
+    def set_ttl(self, ttl: Union[int, timedelta], overwrite: bool = False):
+        """Set MongoDB TTL for all collections. Notes:
+
+        * This will have no effect if TTL is already set
+        * To overwrite an existing TTL index, use ``overwrite=True``
+        * Use ``ttl=None, overwrite=True`` to remove the TTL index
+        * This may take some time to complete, depending on the size of your cache
+        """
+        self.responses.set_ttl(ttl, overwrite=overwrite)
+        self.redirects.set_ttl(ttl, overwrite=overwrite)
 
 
 class MongoDict(BaseStorage):
@@ -94,24 +142,22 @@ class MongoDict(BaseStorage):
         db_name: str,
         collection_name: str = 'http_cache',
         connection: MongoClient = None,
-        ttl: int = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         connection_kwargs = get_valid_kwargs(MongoClient, kwargs)
         self.connection = connection or MongoClient(**connection_kwargs)
         self.collection = self.connection[db_name][collection_name]
-        # Index will not be recreated if it already exists
-        # TODO: If TTL changes, drop and recreate index? Or just document that you need to manually
-        # call update_ttl()?
-        # TODO: Accept timedelta TTL
-        if ttl:
-            self.collection.create_index('created_at', expireAfterSeconds=ttl)
 
-    def update_ttl(self, ttl: int = None):
-        self.collection.drop_index('created_at')
-        if ttl:
-            self.collection.create_index('created_at', expireAfterSeconds=ttl)
+    def set_ttl(self, ttl: Union[int, timedelta], overwrite: bool = False):
+        if overwrite:
+            try:
+                self.collection.drop_index('ttl_idx')
+            except OperationFailure:
+                pass
+        ttl = get_expiration_seconds(ttl)
+        if ttl and ttl != NEVER_EXPIRE:
+            self.collection.create_index('created_at', name='ttl_idx', expireAfterSeconds=ttl)
 
     def __getitem__(self, key):
         result = self.collection.find_one({'_id': key})
