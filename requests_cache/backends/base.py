@@ -1,4 +1,4 @@
-"""Base classes for all cache backends.
+"""Base classes for all cache backends
 
 .. automodsumm:: requests_cache.backends.base
    :classes-only:
@@ -34,8 +34,7 @@ class BaseCache:
 
     This manages higher-level cache operations, including:
 
-    * Cache expiration
-    * Generating cache keys
+    * Saving and retrieving responses
     * Managing redirect history
     * Convenience methods for general cache info
 
@@ -242,21 +241,21 @@ class BaseCache:
 
 
 class BaseStorage(MutableMapping, ABC):
-    """Base class for backend storage implementations. This provides a common dictionary-like
-    interface for the underlying storage operations (create, read, update, delete). One
-    ``BaseStorage`` instance corresponds to a single table/hash/collection, or whatever the
-    backend-specific equivalent may be.
+    """Base class for client-agnostic storage implementations. Notes:
 
-    ``BaseStorage`` subclasses contain no behavior specific to ``requests`` or caching, which are
-    handled by :py:class:`.BaseCache`.
-
-    ``BaseStorage`` also contains a serializer module or instance (defaulting to :py:mod:`pickle`),
-    which determines how :py:class:`.CachedResponse` objects are saved internally. See
-    :ref:`serializers` for details.
+    * This provides a common dictionary-like interface for the underlying storage operations
+      (create, read, update, delete).
+    * One ``BaseStorage`` instance corresponds to a single table/hash/collection, or whatever the
+      backend-specific equivalent may be.
+    * ``BaseStorage`` subclasses contain no behavior specific to ``requests``, which are handled by
+      :py:class:`.BaseCache` subclasses.
+    * ``BaseStorage`` also contains a serializer object (defaulting to :py:mod:`pickle`), which
+      determines how :py:class:`.CachedResponse` objects are saved internally. See :ref:`serializers`
+      for details.
 
     Args:
         serializer: Custom serializer that provides ``loads`` and ``dumps`` methods
-        kwargs: Additional serializer or backend-specific keyword arguments
+        kwargs: Additional backend-specific keyword arguments
     """
 
     def __init__(self, serializer=None, **kwargs):
@@ -294,8 +293,9 @@ class DictStorage(UserDict, BaseStorage):
         self.serializer = None
 
     def __getitem__(self, key):
-        """An additional step is needed here for response data. Since the original response object
-        is still in memory, its content has already been read and needs to be reset.
+        """An additional step is needed here for response data. The original response object
+        is still in memory, and hasn't gone through a serialize/deserialize loop. So, the file-like
+        response body has already been read, and needs to be reset.
         """
         item = super().__getitem__(key)
         if getattr(item, 'raw', None):

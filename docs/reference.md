@@ -11,12 +11,17 @@ from requests_cache import CachedSession, RedisCache, json_serializer
 ```
 :::
 
+<!--
+TODO:
+* move rst backend docs to md
+* Copy/overwrite from extra_modules/ to modules/
+-->
 ## Primary Modules
 The following modules include the majority of the API relevant for most users:
 
 ```{toctree}
 :maxdepth: 2
-session
+modules/requests_cache.session
 modules/requests_cache.patcher
 modules/requests_cache.backends
 modules/requests_cache.models

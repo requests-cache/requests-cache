@@ -1,22 +1,37 @@
-# requests-cache documentation build configuration file
+"""requests-cache documentation build config.
+
+Notes:
+
+* MyST-flavored markdown is used instead of rST for all user guide docs
+* API reference docs are generated based on module docstrings
+* Google-style docstrings are used throughout the project
+* apidoc is used to generate source files for the majority of module docs
+* The `api/` directory contains manually written docs for some modules
+* The `_templates` directory contains some Sphinx templates that modify auto-generated sources
+"""
 import os
 import sys
-from os.path import abspath, dirname, join
+from os.path import join
+from pathlib import Path
+from shutil import copy
 
 # Add project path
 sys.path.insert(0, os.path.abspath('..'))
 from requests_cache import __version__  # noqa: E402
 
-PROJECT_DIR = abspath(dirname(dirname(__file__)))
-PACKAGE_DIR = join(PROJECT_DIR, 'requests_cache')
-TEMPLATE_DIR = join(PROJECT_DIR, 'docs', '_templates')
+DOCS_DIR = Path(__file__).parent.absolute()
+PROJECT_DIR = DOCS_DIR.parent
+PACKAGE_DIR = PROJECT_DIR / 'requests_cache'
+TEMPLATE_DIR = DOCS_DIR / '_templates'
+EXTRA_APIDOC_DIR = DOCS_DIR / 'api'
+APIDOC_DIR = DOCS_DIR / 'modules'
 
 
 # General information about the project.
 project = 'requests-cache'
 needs_sphinx = '4.0'
 master_doc = 'index'
-source_suffix = ['.rst', '.md']
+source_suffix = ['.md', '.rst']
 version = release = __version__
 html_static_path = ['_static']
 exclude_patterns = ['_build']
@@ -51,8 +66,13 @@ myst_enable_extensions = [
     'smartquotes',
 ]
 
-# Exclude auto-generated page for top-level __init__.py
-exclude_patterns = ['_build', 'modules/requests_cache.rst']
+# Ignore auto-generated pages for which manually written docs exist
+exclude_patterns = [
+    '_build',
+    f'{APIDOC_DIR.stem}/requests_cache.rst',
+    f'{APIDOC_DIR.stem}/requests_cache.backends.*.rst',
+    f'{EXTRA_APIDOC_DIR.stem}/*',
+]
 
 # Enable automatic links to other projects' Sphinx docs
 intersphinx_mapping = {
@@ -87,8 +107,8 @@ autodoc_typehints = 'description'
 always_document_param_types = True
 
 # Use apidoc to auto-generate rst sources
-apidoc_module_dir = PACKAGE_DIR
-apidoc_output_dir = 'modules'
+apidoc_module_dir = str(PACKAGE_DIR)
+apidoc_output_dir = APIDOC_DIR.stem
 apidoc_excluded_paths = ['session.py']
 apidoc_extra_args = [f'--templatedir={TEMPLATE_DIR}']  # Note: Must be an absolute path
 apidoc_module_first = True
@@ -131,6 +151,7 @@ def setup(app):
     """Run some additional steps after the Sphinx builder is initialized"""
     app.add_css_file('collapsible_container.css')
     app.connect('builder-inited', patch_automodapi)
+    app.connect('builder-inited', copy_module_docs)
 
 
 def patch_automodapi(app):
@@ -141,3 +162,8 @@ def patch_automodapi(app):
     from sphinx_automodapi.utils import find_mod_objs
 
     automodsumm.find_mod_objs = lambda *args: find_mod_objs(args[0], onlylocals=True)
+
+
+def copy_module_docs(app):
+    for doc in EXTRA_APIDOC_DIR.iterdir():
+        copy(doc, APIDOC_DIR)

@@ -57,11 +57,11 @@ ujson                      = {optional=true, version=">=4.0"}
 
 # Dependencies for building documentation;
 # defined here because readthedocs doesn't (yet?) support poetry.dev-dependencies
-furo                       = {optional=true, version="^2022.3.4"}
+furo                       = {optional=true, version="^2022.4"}
 linkify-it-py              = {optional=true, version="^1.0"}
 myst-parser                = {optional=true, version=">=0.17"}
 sphinx                     = {optional=true, version="^4.5.0"}
-sphinx-autodoc-typehints   = {optional=true, version="^1.17"}
+sphinx-autodoc-typehints   = {optional=true, version="^1.18"}
 sphinx-automodapi          = {optional=true, version=">=0.14"}
 sphinx-copybutton          = {optional=true, version=">=0.5"}
 sphinx-inline-tabs         = {optional=true, version=">=2022.1.2b11", python=">=3.8"}
