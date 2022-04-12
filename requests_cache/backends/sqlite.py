@@ -49,6 +49,24 @@ application. It supports unlimited concurrent reads. Writes, however, are queued
 so if you need to make large volumes of concurrent requests, you may want to consider a different
 backend that's specifically made for that kind of workload, like :py:class:`.RedisCache`.
 
+Hosting Services and Filesystem Compatibility
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+There are some caveats to using SQLite with some hosting services, based on what kind of storage is
+available:
+
+* NFS:
+    * SQLite may be used on a NFS, but is usually only safe to use from a single process at a time.
+      See the `SQLite FAQ <https://www.sqlite.org/faq.html#q5>`_ for details.
+    * PythonAnywhere is one example of a host that uses NFS-backed storage. Using SQLite from a
+      multiprocess application will likely result in ``sqlite3.OperationalError: database is locked``.
+* Ephemeral storage:
+    * Heroku `explicitly disables SQLite <https://devcenter.heroku.com/articles/sqlite3>`_ on its dynos.
+    * AWS `EC2 <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/InstanceStorage.html>`_,
+      `Lambda (depending on configuration) <https://aws.amazon.com/blogs/compute/choosing-between-aws-lambda-data-storage-options-in-web-apps/>`_,
+      and some other AWS services use ephemeral storage that only persists for the lifetime of the
+      instance. This is fine for short-term caching. For longer-term persistance, you can use an
+      `attached EBS volume <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-attaching-volume.html>`_.
+
 Connection Options
 ^^^^^^^^^^^^^^^^^^
 The SQLite backend accepts any keyword arguments for :py:func:`sqlite3.connect`. These can be passed
