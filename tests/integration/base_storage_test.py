@@ -1,7 +1,9 @@
 """Common tests to run for all backends (BaseStorage subclasses)"""
+from datetime import datetime
 from typing import Dict, Type
 
 import pytest
+from attrs import define, field
 
 from requests_cache.backends import BaseStorage
 from tests.conftest import CACHE_NAME
@@ -97,9 +99,19 @@ class BaseStorageTest:
     def test_picklable_dict(self):
         if self.picklable:
             cache = self.init_cache()
-            cache['key_1'] = Picklable()
-            assert cache['key_1'].attr_1 == 'value_1'
-            assert cache['key_1'].attr_2 == 'value_2'
+            original_obj = BasicDataclass(
+                bool_attr=True,
+                datetime_attr=datetime(2022, 2, 2),
+                int_attr=2,
+                str_attr='value',
+            )
+            cache['key_1'] = original_obj
+
+            obj = cache['key_1']
+            assert obj.bool_attr == original_obj.bool_attr
+            assert obj.datetime_attr == original_obj.datetime_attr
+            assert obj.int_attr == original_obj.int_attr
+            assert obj.str_attr == original_obj.str_attr
 
     def test_clear_and_work_again(self):
         cache_1 = self.init_cache()
@@ -130,6 +142,9 @@ class BaseStorageTest:
             assert f'key_{i}' in str(cache)
 
 
-class Picklable:
-    attr_1 = 'value_1'
-    attr_2 = 'value_2'
+@define
+class BasicDataclass:
+    bool_attr: bool = field(default=None)
+    datetime_attr: datetime = field(default=None)
+    int_attr: int = field(default=None)
+    str_attr: str = field(default=None)

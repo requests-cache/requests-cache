@@ -9,6 +9,9 @@ from requests_cache.serializers import SERIALIZERS, SerializerPipeline
 from tests.integration.base_cache_test import BaseCacheTest
 from tests.integration.base_storage_test import CACHE_NAME, BaseStorageTest
 
+FILE_SERIALIZERS = SERIALIZERS.copy()
+FILE_SERIALIZERS.pop('dict')
+
 
 class TestFileDict(BaseStorageTest):
     storage_class = FileDict
@@ -52,9 +55,9 @@ class TestFileCache(BaseCacheTest):
     backend_class = FileCache
     init_kwargs = {'use_temp': True}
 
-    @pytest.mark.parametrize('serializer_name', SERIALIZERS.keys())
+    @pytest.mark.parametrize('serializer_name', FILE_SERIALIZERS.keys())
     def test_paths(self, serializer_name):
-        if not isinstance(SERIALIZERS[serializer_name], SerializerPipeline):
+        if not isinstance(FILE_SERIALIZERS[serializer_name], SerializerPipeline):
             pytest.skip(f'Dependencies not installed for {serializer_name}')
 
         session = self.init_session(serializer=serializer_name)

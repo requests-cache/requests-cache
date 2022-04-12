@@ -30,9 +30,8 @@ def make_stage(preconf_module: str):
         return get_placeholder_class(e)
 
 
+# Pre-serialization stages
 base_stage = CattrStage()  #: Base stage for all serializer pipelines
-dict_serializer = base_stage  #: Partial serializer that unstructures responses into dicts
-pickle_serializer = SerializerPipeline([base_stage, pickle], is_binary=True)  #: Pickle serializer
 utf8_encoder = Stage(dumps=str.encode, loads=lambda x: x.decode())  #: Encode to bytes
 bson_preconf_stage = make_stage('cattr.preconf.bson')  #: Pre-serialization steps for BSON
 json_preconf_stage = make_stage('cattr.preconf.json')  #: Pre-serialization steps for JSON
@@ -41,6 +40,12 @@ orjson_preconf_stage = make_stage('cattr.preconf.orjson')  #: Pre-serialization 
 toml_preconf_stage = make_stage('cattr.preconf.tomlkit')  #: Pre-serialization steps for TOML
 ujson_preconf_stage = make_stage('cattr.preconf.ujson')  #: Pre-serialization steps for ultrajson
 yaml_preconf_stage = make_stage('cattr.preconf.pyyaml')  #: Pre-serialization steps for YAML
+
+# Basic serializers with no additional dependencies
+dict_serializer = SerializerPipeline(
+    [base_stage], is_binary=False
+)  #: Partial serializer that unstructures responses into dicts
+pickle_serializer = SerializerPipeline([base_stage, pickle], is_binary=True)  #: Pickle serializer
 
 
 # Safe pickle serializer
@@ -68,6 +73,7 @@ except ImportError as e:
     safe_pickle_serializer = get_placeholder_class(e)
 
 
+# BSON serializer
 def _get_bson_functions():
     """Handle different function names between pymongo's bson and standalone bson"""
     try:
@@ -78,7 +84,6 @@ def _get_bson_functions():
         return {'dumps': 'dumps', 'loads': 'loads'}
 
 
-# BSON serializer
 try:
     import bson
 

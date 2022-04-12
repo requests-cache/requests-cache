@@ -12,14 +12,21 @@ MongoDB scales well and is a good option for larger applications. For raw cachin
 it is not quite as fast as :py:mod:`~requests_cache.backends.redis`, but may be preferable if you
 already have a MongoDB instance you're using for other purposes, or if you find it easier to use.
 
+Expiration
+^^^^^^^^^^
+MongoDB natively supports TTL, and can automatically remove expired responses from the cache.
+Note that this is `not guaranteed to happen immediately
+<https://www.mongodb.com/docs/v4.0/core/index-ttl/#timing-of-the-delete-operation>`_. This is the
+recommended way to expire responses, and you can leave the session ``expire_after`` as the default
+(never expire). Example:
+
+    >>> backend = MongoCache(ttl=3600)
+    >>> session = CachedSession('http_cache', backend=backend)
+
 Connection Options
 ^^^^^^^^^^^^^^^^^^
 The MongoDB backend accepts any keyword arguments for :py:class:`pymongo.mongo_client.MongoClient`.
-These can be passed via :py:class:`.CachedSession`:
-
-    >>> session = CachedSession('http_cache', backend='mongodb', host='192.168.1.63', port=27017)
-
-Or via :py:class:`.MongoCache`:
+These can be passed via :py:class:`.MongoCache`:
 
     >>> backend = MongoCache(host='192.168.1.63', port=27017)
     >>> session = CachedSession('http_cache', backend=backend)
@@ -35,6 +42,7 @@ from typing import Iterable
 from pymongo import MongoClient
 
 from .._utils import get_valid_kwargs
+from ..serializers import dict_serializer
 from . import BaseCache, BaseStorage
 
 
@@ -47,13 +55,26 @@ class MongoCache(BaseCache):
         kwargs: Additional keyword arguments for :py:class:`pymongo.mongo_client.MongoClient`
     """
 
-    def __init__(self, db_name: str = 'http_cache', connection: MongoClient = None, **kwargs):
+    def __init__(
+        self,
+        db_name: str = 'http_cache',
+        connection: MongoClient = None,
+        ttl: int = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
-        self.responses = MongoPickleDict(db_name, 'responses', connection=connection, **kwargs)
+        self.responses = MongoPickleDict(
+            db_name,
+            collection_name='responses',
+            connection=connection,
+            ttl=ttl,
+            **kwargs,
+        )
         self.redirects = MongoDict(
             db_name,
             collection_name='redirects',
             connection=self.responses.connection,
+            ttl=ttl,
             **kwargs,
         )
 
@@ -68,11 +89,29 @@ class MongoDict(BaseStorage):
         kwargs: Additional keyword arguments for :py:class:`pymongo.MongoClient`
     """
 
-    def __init__(self, db_name, collection_name='http_cache', connection=None, **kwargs):
+    def __init__(
+        self,
+        db_name: str,
+        collection_name: str = 'http_cache',
+        connection: MongoClient = None,
+        ttl: int = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         connection_kwargs = get_valid_kwargs(MongoClient, kwargs)
         self.connection = connection or MongoClient(**connection_kwargs)
         self.collection = self.connection[db_name][collection_name]
+        # Index will not be recreated if it already exists
+        # TODO: If TTL changes, drop and recreate index? Or just document that you need to manually
+        # call update_ttl()?
+        # TODO: Accept timedelta TTL
+        if ttl:
+            self.collection.create_index('created_at', expireAfterSeconds=ttl)
+
+    def update_ttl(self, ttl: int = None):
+        self.collection.drop_index('created_at')
+        if ttl:
+            self.collection.create_index('created_at', expireAfterSeconds=ttl)
 
     def __getitem__(self, key):
         result = self.collection.find_one({'_id': key})
@@ -105,7 +144,29 @@ class MongoDict(BaseStorage):
 
 
 class MongoPickleDict(MongoDict):
-    """Same as :class:`MongoDict`, but pickles values before saving"""
+    """Same as :class:`MongoDict`, but serializes values before saving.
+
+    By default, responses are only partially serialized (unstructured into a dict), and stored as a
+    document.
+    """
+
+    def __init__(
+        self,
+        db_name: str,
+        collection_name: str = 'http_cache',
+        connection: MongoClient = None,
+        ttl: int = None,
+        serializer=None,
+        **kwargs,
+    ):
+        super().__init__(
+            db_name,
+            collection_name=collection_name,
+            connection=connection,
+            ttl=ttl,
+            serializer=serializer or dict_serializer,
+            **kwargs,
+        )
 
     def __setitem__(self, key, item):
         super().__setitem__(key, self.serializer.dumps(item))

@@ -29,6 +29,7 @@ __all__ = [
 
 SERIALIZERS = {
     'bson': bson_serializer,
+    'dict': dict_serializer,
     'json': json_serializer,
     'pickle': pickle_serializer,
     'yaml': yaml_serializer,

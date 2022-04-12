@@ -17,7 +17,13 @@ from requests import PreparedRequest, Session
 
 from requests_cache import ALL_METHODS, CachedResponse, CachedSession
 from requests_cache.backends.base import BaseCache
-from requests_cache.serializers import SERIALIZERS, SerializerPipeline, safe_pickle_serializer
+from requests_cache.serializers import (
+    SERIALIZERS,
+    SerializerPipeline,
+    Stage,
+    dict_serializer,
+    safe_pickle_serializer,
+)
 from tests.conftest import (
     CACHE_NAME,
     ETAG,
@@ -36,7 +42,8 @@ from tests.conftest import (
 
 logger = getLogger(__name__)
 
-# Handle optional dependencies if they're not installed; if so, skips will be shown in pytest output
+# Handle optional dependencies if they're not installed,
+# so any skipped tests will explicitly be shown in pytest output
 TEST_SERIALIZERS = SERIALIZERS.copy()
 try:
     TEST_SERIALIZERS['safe_pickle'] = safe_pickle_serializer(secret_key='hunter2')
@@ -49,6 +56,7 @@ class BaseCacheTest:
     """Base class for testing cache backend classes"""
 
     backend_class: Type[BaseCache] = None
+    document_support: bool = False
     init_kwargs: Dict = {}
 
     def init_session(self, cache_name=CACHE_NAME, clear=True, **kwargs) -> CachedSession:
@@ -68,11 +76,13 @@ class BaseCacheTest:
     @pytest.mark.parametrize('method', HTTPBIN_METHODS)
     @pytest.mark.parametrize('field', ['params', 'data', 'json'])
     def test_all_methods(self, field, method, serializer):
-        """Test all relevant combinations of methods X data fields X serializers.
+        """Test all relevant combinations of (methods X data fields X serializers).
         Requests with different request params, data, or json should be cached under different keys.
         """
-        if not isinstance(serializer, SerializerPipeline):
+        if not isinstance(serializer, (SerializerPipeline, Stage)):
             pytest.skip(f'Dependencies not installed for {serializer}')
+        if serializer is dict_serializer and not self.document_support:
+            return
 
         url = httpbin(method.lower())
         session = self.init_session(serializer=serializer)
@@ -83,14 +93,16 @@ class BaseCacheTest:
     @pytest.mark.parametrize('serializer', TEST_SERIALIZERS.values())
     @pytest.mark.parametrize('response_format', HTTPBIN_FORMATS)
     def test_all_response_formats(self, response_format, serializer):
-        """Test that all relevant combinations of response formats X serializers are cached correctly"""
+        """Test all relevant combinations of (response formats X serializers)"""
         if not isinstance(serializer, SerializerPipeline):
             pytest.skip(f'Dependencies not installed for {serializer}')
+        if serializer is dict_serializer and not self.document_support:
+            return
 
         session = self.init_session(serializer=serializer)
         # Workaround for this issue: https://github.com/kevin1024/pytest-httpbin/issues/60
         if response_format == 'json' and USE_PYTEST_HTTPBIN:
-            session.allowable_codes = (200, 404)
+            session.settings.allowable_codes = (200, 404)
 
         r1 = session.get(httpbin(response_format))
         r2 = session.get(httpbin(response_format))
@@ -116,8 +128,8 @@ class BaseCacheTest:
     @pytest.mark.parametrize('n_redirects', range(1, 5))
     @pytest.mark.parametrize('endpoint', ['redirect', 'absolute-redirect', 'relative-redirect'])
     def test_redirect_history(self, endpoint, n_redirects):
-        """Test redirect caching (in separate `redirects` cache) with all types of redirect endpoints,
-        using different numbers of consecutive redirects
+        """Test redirect caching (in separate `redirects` cache) with all types of redirect
+        endpoints, using different numbers of consecutive redirects
         """
         session = self.init_session()
         session.get(httpbin(f'{endpoint}/{n_redirects}'))
@@ -147,9 +159,11 @@ class BaseCacheTest:
         response_1 = get_json(httpbin('cookies/set/test1/test2'))
         with session.cache_disabled():
             assert get_json(httpbin('cookies')) == response_1
+
         # From cache
         response_2 = get_json(httpbin('cookies'))
         assert response_2 == get_json(httpbin('cookies'))
+
         # Not from cache
         with session.cache_disabled():
             response_3 = get_json(httpbin('cookies/set/test3/test4'))

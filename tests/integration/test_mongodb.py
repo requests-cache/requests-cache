@@ -49,6 +49,7 @@ class TestMongoPickleDict(BaseStorageTest):
 
 class TestMongoCache(BaseCacheTest):
     backend_class = MongoCache
+    document_support = True
 
 
 class TestGridFSPickleDict(BaseStorageTest):
@@ -86,3 +87,4 @@ class TestGridFSPickleDict(BaseStorageTest):
 
 class TestGridFSCache(BaseCacheTest):
     backend_class = GridFSCache
+    document_support = False
