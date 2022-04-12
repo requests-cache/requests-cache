@@ -13,9 +13,8 @@ The default backend is SQLite, since it's simple to use, requires no extra depen
 configuration, and has the best all-around performance for the majority of use cases.
 
 ```{note}
-In the rare case that SQLite is not available
-(for example, [on Heroku](https://devcenter.heroku.com/articles/sqlite3)), a non-persistent
-in-memory cache is used by default.
+In environments where SQLite is explicitly disabled, a non-persistent in-memory cache is used by
+default.
 ```
 
 ## Backend Dependencies
