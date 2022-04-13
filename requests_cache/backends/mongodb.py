@@ -10,7 +10,25 @@ Use Cases
 ^^^^^^^^^
 MongoDB scales well and is a good option for larger applications. For raw caching performance,
 it is not quite as fast as :py:mod:`~requests_cache.backends.redis`, but may be preferable if you
-already have a MongoDB instance you're using for other purposes, or if you find it easier to use.
+already have an instance running, or if it has a specific feature you want to use. See below for
+some relevant examples.
+
+Viewing Responses
+^^^^^^^^^^^^^^^^^
+Unlike most of the other backends, response data can be easily viewed via the
+`MongoDB shell <https://www.mongodb.com/docs/mongodb-shell/#mongodb-binary-bin.mongosh>`_,
+`Compass <https://www.mongodb.com/products/compass>`_, or any other interface for MongoDB. This is
+possible because its internal document format (`BSON <https://www.mongodb.com/json-and-bson>`_)
+supports all the types needed to store a response as a plain document rather than a fully serialized
+blob.
+
+Here is an example response viewed in
+`MongoDB for VSCode <https://code.visualstudio.com/docs/azure/mongodb>`_:
+
+.. admonition:: Screenshot
+    :class: toggle
+
+    .. image:: ../_static/mongodb_vscode.png
 
 Expiration
 ^^^^^^^^^^
@@ -95,7 +113,6 @@ logger = getLogger(__name__)
 
 
 # TODO: TTL tests
-# TODO: Example of viewing responses with MongoDB VSCode plugin or other GUI
 # TODO: Is there any reason to support custom serializers here?
 # TODO: Save items with different cache keys to avoid conflicts with old serialization format?
 # TODO: Set TTL for redirects? Or just clean up with remove_invalid_redirects()?
