@@ -114,12 +114,10 @@ In addition to HTTP error codes, `stale_if_error` also applies to python excepti
 for more details on request errors in general.
 
 ## Removing Expired Responses
+
+### Manual Removal
 For better read performance, expired responses won't be removed immediately, but will be removed
 (or replaced) the next time they are requested.
-:::{tip}
-Implementing one or more cache eviction algorithms is being considered. If this is something you are
-interested in, please provide feedback via [issues](https://github.com/reclosedev/requests-cache/issues)!
-:::
 
 To manually clear all expired responses, use
 {py:meth}`.CachedSession.remove_expired_responses`:
@@ -127,7 +125,7 @@ To manually clear all expired responses, use
 >>> session.remove_expired_responses()
 ```
 
-Or, when using patching:
+Or, if you are using {py:func}`.install_cache`:
 ```python
 >>> requests_cache.remove_expired_responses()
 ```
@@ -136,6 +134,16 @@ You can also apply a new `expire_after` value to previously cached responses:
 ```python
 >>> session.remove_expired_responses(expire_after=timedelta(days=30))
 ```
+
+### Automatic Removal
+The following backends have native TTL support, which can be used to automatically remove expired
+responses:
+* {py:mod}`MongoDB <requests_cache.backends.mongodb>`
+* {py:mod}`Redis <requests_cache.backends.redis>`
+<!--
+TODO: Not yet supported:
+* {py:mod}`DynamoDB <requests_cache.backends.dynamodb>`
+-->
 
 ## Request Options
 In addition to the base arguments for {py:func}`requests.request`, requests-cache adds some extra

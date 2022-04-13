@@ -1,4 +1,4 @@
-"""Utilities for patching ``requests``.
+"""Utilities for patching ``requests``. See :ref:`patching` for general usage info.
 
 .. warning:: These functions are not thread-safe. Use :py:class:`.CachedSession` if you want to use
     caching in a multi-threaded environment.
