@@ -28,8 +28,8 @@ class CattrStage(Stage):
     on its own, or as a stage within a :py:class:`.SerializerPipeline`.
     """
 
-    def __init__(self, factory: Callable[..., GenConverter] = None):
-        self.converter = init_converter(factory)
+    def __init__(self, factory: Callable[..., GenConverter] = None, **kwargs):
+        self.converter = init_converter(factory, **kwargs)
 
     def dumps(self, value: CachedResponse) -> Dict:
         if not isinstance(value, CachedResponse):
@@ -42,14 +42,22 @@ class CattrStage(Stage):
         return self.converter.structure(value, cl=CachedResponse)
 
 
-def init_converter(factory: Callable[..., GenConverter] = None):
-    """Make a converter to structure and unstructure nested objects within a :py:class:`.CachedResponse`"""
+def init_converter(factory: Callable[..., GenConverter] = None, convert_datetime: bool = True):
+    """Make a converter to structure and unstructure nested objects within a
+    :py:class:`.CachedResponse`
+
+    Args:
+        factory: An optional factory function that returns a ``cattrs`` converter
+        convert_datetime: May be set to ``False`` for pre-configured converters that already have
+            datetime support
+    """
     factory = factory or GenConverter
     converter = factory(omit_if_default=True)
 
     # Convert datetimes to and from iso-formatted strings
-    converter.register_unstructure_hook(datetime, lambda obj: obj.isoformat() if obj else None)  # type: ignore
-    converter.register_structure_hook(datetime, _to_datetime)
+    if convert_datetime:
+        converter.register_unstructure_hook(datetime, lambda obj: obj.isoformat() if obj else None)  # type: ignore
+        converter.register_structure_hook(datetime, _to_datetime)
 
     # Convert timedeltas to and from float values in seconds
     converter.register_unstructure_hook(timedelta, lambda obj: obj.total_seconds() if obj else None)  # type: ignore
@@ -66,6 +74,10 @@ def init_converter(factory: Callable[..., GenConverter] = None):
     converter.register_structure_hook(HTTPHeaderDict, lambda obj, cls: HTTPHeaderDict(obj))
 
     # Tell cattrs to resolve forward references (required for CachedResponse.history)
+    converter.register_unstructure_hook_func(
+        lambda cls: cls.__class__ is ForwardRef,
+        lambda obj, cls=None: converter.unstructure(obj, cls.__forward_value__ if cls else None),
+    )
     converter.register_structure_hook_func(
         lambda cls: cls.__class__ is ForwardRef,
         lambda obj, cls: converter.structure(obj, cls.__forward_value__),

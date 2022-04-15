@@ -78,19 +78,27 @@ API Reference
    :nosignatures:
 """
 from datetime import timedelta
-from typing import Iterable, Union
+from logging import getLogger
+from typing import Iterable, Mapping, Union
 
 from pymongo import MongoClient
 from pymongo.errors import OperationFailure
 
 from .._utils import get_valid_kwargs
 from ..expiration import NEVER_EXPIRE, get_expiration_seconds
-from ..serializers import dict_serializer
+from ..serializers import SerializerPipeline
+from ..serializers.preconf import bson_preconf_stage
 from . import BaseCache, BaseStorage
+
+document_serializer = SerializerPipeline([bson_preconf_stage], is_binary=False)
+logger = getLogger(__name__)
 
 
 # TODO: TTL tests
 # TODO: Example of viewing responses with MongoDB VSCode plugin or other GUI
+# TODO: Is there any reason to support custom serializers here?
+# TODO: Save items with different cache keys to avoid conflicts with old serialization format?
+# TODO: Set TTL for redirects? Or just clean up with remove_invalid_redirects()?
 class MongoCache(BaseCache):
     """MongoDB cache backend
 
@@ -153,21 +161,28 @@ class MongoDict(BaseStorage):
         if overwrite:
             try:
                 self.collection.drop_index('ttl_idx')
+                logger.info('Dropped TTL index')
             except OperationFailure:
                 pass
+
         ttl = get_expiration_seconds(ttl)
         if ttl and ttl != NEVER_EXPIRE:
+            logger.info(f'Creating TTL index for {ttl} seconds')
             self.collection.create_index('created_at', name='ttl_idx', expireAfterSeconds=ttl)
 
     def __getitem__(self, key):
         result = self.collection.find_one({'_id': key})
         if result is None:
             raise KeyError
-        return result['data']
+        return result['data'] if 'data' in result else result
 
     def __setitem__(self, key, item):
-        doc = {'_id': key, 'data': item}
-        self.collection.replace_one({'_id': key}, doc, upsert=True)
+        """If ``item`` is already a dict, its values will be stored under top-level keys.
+        Otherwise, it will be stored under a 'data' key.
+        """
+        if not isinstance(item, Mapping):
+            item = {'data': item}
+        self.collection.replace_one({'_id': key}, item, upsert=True)
 
     def __delitem__(self, key):
         result = self.collection.find_one_and_delete({'_id': key}, {'_id': True})
@@ -192,30 +207,14 @@ class MongoDict(BaseStorage):
 class MongoPickleDict(MongoDict):
     """Same as :class:`MongoDict`, but serializes values before saving.
 
-    By default, responses are only partially serialized (unstructured into a dict), and stored as a
-    document.
+    By default, responses are only partially serialized into a MongoDB-compatible document mapping.
     """
 
-    def __init__(
-        self,
-        db_name: str,
-        collection_name: str = 'http_cache',
-        connection: MongoClient = None,
-        ttl: int = None,
-        serializer=None,
-        **kwargs,
-    ):
-        super().__init__(
-            db_name,
-            collection_name=collection_name,
-            connection=connection,
-            ttl=ttl,
-            serializer=serializer or dict_serializer,
-            **kwargs,
-        )
-
-    def __setitem__(self, key, item):
-        super().__setitem__(key, self.serializer.dumps(item))
+    def __init__(self, *args, serializer=None, **kwargs):
+        super().__init__(*args, serializer=serializer or document_serializer, **kwargs)
 
     def __getitem__(self, key):
         return self.serializer.loads(super().__getitem__(key))
+
+    def __setitem__(self, key, item):
+        super().__setitem__(key, self.serializer.dumps(item))

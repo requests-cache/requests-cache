@@ -22,10 +22,11 @@ from .cattrs import CattrStage
 from .pipeline import SerializerPipeline, Stage
 
 
-def make_stage(preconf_module: str):
+def make_stage(preconf_module: str, **kwargs):
     """Create a preconf serializer stage from a module name, if dependencies are installed"""
     try:
-        return CattrStage(import_module(preconf_module).make_converter)
+        factory = import_module(preconf_module).make_converter
+        return CattrStage(factory, **kwargs)
     except ImportError as e:
         return get_placeholder_class(e)
 
@@ -33,7 +34,9 @@ def make_stage(preconf_module: str):
 # Pre-serialization stages
 base_stage = CattrStage()  #: Base stage for all serializer pipelines
 utf8_encoder = Stage(dumps=str.encode, loads=lambda x: x.decode())  #: Encode to bytes
-bson_preconf_stage = make_stage('cattr.preconf.bson')  #: Pre-serialization steps for BSON
+bson_preconf_stage = make_stage(
+    'cattr.preconf.bson', convert_datetime=False
+)  #: Pre-serialization steps for BSON
 json_preconf_stage = make_stage('cattr.preconf.json')  #: Pre-serialization steps for JSON
 msgpack_preconf_stage = make_stage('cattr.preconf.msgpack')  #: Pre-serialization steps for msgpack
 orjson_preconf_stage = make_stage('cattr.preconf.orjson')  #: Pre-serialization steps for orjson

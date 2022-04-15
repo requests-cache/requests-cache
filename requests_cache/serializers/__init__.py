@@ -19,6 +19,7 @@ __all__ = [
     'SerializerPipeline',
     'Stage',
     'bson_serializer',
+    'dict_serializer',
     'json_serializer',
     'pickle_serializer',
     'safe_pickle_serializer',
@@ -29,7 +30,6 @@ __all__ = [
 
 SERIALIZERS = {
     'bson': bson_serializer,
-    'dict': dict_serializer,
     'json': json_serializer,
     'pickle': pickle_serializer,
     'yaml': yaml_serializer,
