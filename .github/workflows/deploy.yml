@@ -19,6 +19,7 @@ on:
 
 env:
   LATEST_PY_VERSION: '3.10'
+  STRESS_TEST_MULTIPLIER: 5
 
 jobs:
   # Run tests for all supported requests versions
@@ -73,7 +74,7 @@ jobs:
         run: |
           source $VENV
           nox -e test-current
-          nox -e stress
+          nox -e stress -- ${{ env.STRESS_TEST_MULTIPLIER }}
 
   # Deploy stable builds on tags only, and pre-release builds from manual trigger ("workflow_dispatch")
   release:

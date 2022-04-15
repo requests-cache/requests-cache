@@ -68,9 +68,11 @@ def coverage(session):
 def stress_test(session):
     """Run concurrency tests with a higher stress test multiplier"""
     cmd = f'pytest {INTEGRATION_TESTS} -rs -k concurrency'
+    multiplier = session.posargs[0] if session.posargs else STRESS_TEST_MULTIPLIER
+
     session.run(
         *cmd.split(' '),
-        env={'STRESS_TEST_MULTIPLIER': str(STRESS_TEST_MULTIPLIER)},
+        env={'STRESS_TEST_MULTIPLIER': str(multiplier)},
     )
 
 
