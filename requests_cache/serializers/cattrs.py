@@ -73,7 +73,7 @@ def init_converter(factory: Callable[..., GenConverter] = None, convert_datetime
     converter.register_unstructure_hook(HTTPHeaderDict, dict)
     converter.register_structure_hook(HTTPHeaderDict, lambda obj, cls: HTTPHeaderDict(obj))
 
-    # Tell cattrs to resolve forward references (required for CachedResponse.history)
+    # Resolve forward references (required for CachedResponse.history)
     converter.register_unstructure_hook_func(
         lambda cls: cls.__class__ is ForwardRef,
         lambda obj, cls=None: converter.unstructure(obj, cls.__forward_value__ if cls else None),
@@ -82,7 +82,6 @@ def init_converter(factory: Callable[..., GenConverter] = None, convert_datetime
         lambda cls: cls.__class__ is ForwardRef,
         lambda obj, cls: converter.structure(obj, cls.__forward_value__),
     )
-
     return converter
 
 
