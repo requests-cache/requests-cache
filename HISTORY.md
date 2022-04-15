@@ -14,9 +14,13 @@
 * The constant `requests_cache.DO_NOT_CACHE` may be used to completely disable caching for a request
 
 **Backends:**
-* SQLite: Improve performance for removing expired items
-* SQLite: Add `sorted()` method with sorting and other query options
-* SQLite: Add `wal` parameter to enable write-ahead logging
+* SQLite:
+  * Improve performance for removing expired items
+  * Add `sorted()` method with sorting and other query options
+  * Add `wal` parameter to enable write-ahead logging
+* MongoDB:
+  * Store responses in plain (human-readable) document format instead of fully serialized binary
+  * Add optional integration with MongoDB TTL to improve performance for removing expired responses
 
 **Other features:**
 * All settings that affect cache behavior can now be accessed and modified via `CachedSession.settings`
@@ -27,6 +31,7 @@
   * `from_cache`
   * `is_expired`
 * Populate `cache_key` and `expires` for new (non-cached) responses, if it was written to the cache
+* Add serializer name to cache keys to avoid errors due to switching serializers
 * Add return type hints for all `CachedSession` request methods (`get()`, `post()`, etc.)
 * Always skip both cache read and write for requests excluded by `allowable_methods` (previously only skipped write)
 * Ignore and redact common authentication params and headers (e.g., for OAuth2) by default
