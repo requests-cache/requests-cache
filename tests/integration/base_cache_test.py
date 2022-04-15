@@ -60,13 +60,14 @@ class BaseCacheTest:
     init_kwargs: Dict = {}
 
     def init_session(self, cache_name=CACHE_NAME, clear=True, **kwargs) -> CachedSession:
+        kwargs = {**self.init_kwargs, **kwargs}
         kwargs.setdefault('allowable_methods', ALL_METHODS)
         kwargs.setdefault('serializer', 'pickle')
-        backend = self.backend_class(cache_name, **self.init_kwargs, **kwargs)
+        backend = self.backend_class(cache_name, **kwargs)
         if clear:
             backend.clear()
 
-        return CachedSession(backend=backend, **self.init_kwargs, **kwargs)
+        return CachedSession(backend=backend, **kwargs)
 
     @classmethod
     def teardown_class(cls):
@@ -312,7 +313,7 @@ class BaseCacheTest:
         session.get(httpbin('redirect/1'))
         sleep(1)
 
-        # Cache a response + redirects, which should be the only non-expired cache items
+        # Cache a response and some redirects, which should be the only non-expired cache items
         session.get(httpbin('get'), expire_after=-1)
         session.get(httpbin('redirect/3'), expire_after=-1)
         session.cache.remove_expired_responses()
