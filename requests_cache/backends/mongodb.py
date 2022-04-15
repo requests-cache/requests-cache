@@ -115,7 +115,6 @@ logger = getLogger(__name__)
 # TODO: TTL tests
 # TODO: Is there any reason to support custom serializers here?
 # TODO: Save items with different cache keys to avoid conflicts with old serialization format?
-# TODO: Set TTL for redirects? Or just clean up with remove_invalid_redirects()?
 class MongoCache(BaseCache):
     """MongoDB cache backend
 
@@ -141,15 +140,14 @@ class MongoCache(BaseCache):
         )
 
     def set_ttl(self, ttl: Union[int, timedelta], overwrite: bool = False):
-        """Set MongoDB TTL for all collections. Notes:
+        """Create or update a TTL index. Notes:
 
         * This will have no effect if TTL is already set
         * To overwrite an existing TTL index, use ``overwrite=True``
-        * Use ``ttl=None, overwrite=True`` to remove the TTL index
         * This may take some time to complete, depending on the size of your cache
+        * Use ``ttl=None, overwrite=True`` to remove the TTL index
         """
         self.responses.set_ttl(ttl, overwrite=overwrite)
-        self.redirects.set_ttl(ttl, overwrite=overwrite)
 
 
 class MongoDict(BaseStorage):
