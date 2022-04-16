@@ -16,6 +16,16 @@ optimized for performance, with a minor risk of data loss, and is usually the be
 for a cache. If you need different behavior, the frequency and type of persistence can be customized
 or disabled entirely. See `Redis Persistence <https://redis.io/topics/persistence>`_ for details.
 
+Expiration
+^^^^^^^^^^
+Redis natively supports TTL on a per-key basis, and can automatically remove expired responses from
+the cache. This will be set by by default, according to normal :ref:`expiration settings <expiration>`.
+
+If you intend to reuse expired responses, e.g. with :ref:`conditional-requests` or ``stale_if_error``,
+you can disable this behavior with the ``ttl`` argument:
+
+    >>> backend = RedisCache(ttl=False)
+
 Connection Options
 ^^^^^^^^^^^^^^^^^^
 The Redis backend accepts any keyword arguments for :py:class:`redis.client.Redis`. These can be
@@ -28,7 +38,7 @@ Or you can pass an existing ``Redis`` object:
 
     >>> from redis import Redis
     >>> connection = Redis(host='192.168.1.63', port=6379)
-    >>> backend=RedisCache(connection=connection))
+    >>> backend = RedisCache(connection=connection))
     >>> session = CachedSession('http_cache', backend=backend)
 
 Redislite
@@ -36,6 +46,7 @@ Redislite
 If you can't easily set up your own Redis server, another option is
 `redislite <https://github.com/yahoo/redislite>`_. It contains its own lightweight, embedded Redis
 database, and can be used as a drop-in replacement for redis-py. Usage example:
+
     >>> from redislite import Redis
     >>> from requests_cache import CachedSession, RedisCache
     >>>
@@ -60,18 +71,23 @@ from . import BaseCache, BaseStorage
 logger = getLogger(__name__)
 
 
+# TODO: TTL tests
+# TODO: Option to set a different (typically longer) TTL than expire_after, like MongoCache
 class RedisCache(BaseCache):
     """Redis cache backend
 
     Args:
         namespace: Redis namespace
         connection: Redis connection instance to use instead of creating a new one
+        ttl: Use Redis TTL to automatically remove expired items
         kwargs: Additional keyword arguments for :py:class:`redis.client.Redis`
     """
 
-    def __init__(self, namespace='http_cache', connection: Redis = None, **kwargs):
+    def __init__(
+        self, namespace='http_cache', connection: Redis = None, ttl: bool = True, **kwargs
+    ):
         super().__init__(**kwargs)
-        self.responses = RedisDict(namespace, connection=connection, **kwargs)
+        self.responses = RedisDict(namespace, connection=connection, ttl=ttl, **kwargs)
         self.redirects = RedisHashDict(
             namespace, 'redirects', connection=self.responses.connection, **kwargs
         )
@@ -85,12 +101,20 @@ class RedisDict(BaseStorage):
         * Supports TTL
     """
 
-    def __init__(self, namespace: str, collection_name: str = None, connection=None, **kwargs):
+    def __init__(
+        self,
+        namespace: str,
+        collection_name: str = None,
+        connection=None,
+        ttl: bool = True,
+        **kwargs,
+    ):
 
         super().__init__(**kwargs)
         connection_kwargs = get_valid_kwargs(Redis, kwargs)
         self.connection = connection or StrictRedis(**connection_kwargs)
         self.namespace = namespace
+        self.ttl = ttl
 
     def _bkey(self, key: str) -> bytes:
         """Get a full hash key as bytes"""
@@ -110,7 +134,7 @@ class RedisDict(BaseStorage):
 
     def __setitem__(self, key, item):
         """Save an item to the cache, optionally with TTL"""
-        if getattr(item, 'ttl', None):
+        if self.ttl and getattr(item, 'ttl', None):
             self.connection.setex(self._bkey(key), item.ttl, self.serializer.dumps(item))
         else:
             self.connection.set(self._bkey(key), self.serializer.dumps(item))

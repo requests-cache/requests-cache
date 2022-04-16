@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import datetime, timedelta, timezone
 from logging import getLogger
 from typing import TYPE_CHECKING, List, Optional, Tuple
@@ -86,7 +88,10 @@ class CachedResponse(BaseResponse):
     def from_response(cls, response: Response, **kwargs):
         """Create a CachedResponse based on an original Response or another CachedResponse object"""
         if isinstance(response, CachedResponse):
-            return attr.evolve(response, **kwargs)
+            obj = attr.evolve(response, **kwargs)
+            obj._convert_redirects()
+            return obj
+
         obj = cls(**kwargs)
 
         # Copy basic attributes
@@ -101,13 +106,15 @@ class CachedResponse(BaseResponse):
         # Store response body, which will have been read & decoded by requests.Response by now
         obj._content = response.content
 
-        # Copy redirect history, if any; avoid recursion by not copying redirects of redirects
-        obj.history = []
-        if not obj.is_redirect:
-            for redirect in response.history:
-                obj.history.append(cls.from_response(redirect))
-
+        obj._convert_redirects()
         return obj
+
+    def _convert_redirects(self):
+        """Convert redirect history, if any; avoid recursion by not copying redirects of redirects"""
+        if self.is_redirect:
+            self.history = []
+            return
+        self.history = [self.from_response(redirect) for redirect in self.history]
 
     @property
     def _content_consumed(self) -> bool:

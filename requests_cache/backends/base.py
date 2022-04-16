@@ -109,6 +109,7 @@ class BaseCache:
             request=request,
             ignored_parameters=self._settings.ignored_parameters,
             match_headers=self._settings.match_headers,
+            serializer=self.responses.serializer,
             **kwargs,
         )
 
@@ -290,6 +291,7 @@ class DictStorage(UserDict, BaseStorage):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._serializer = None
+        self.serializer = None
 
     def __getitem__(self, key):
         """An additional step is needed here for response data. Since the original response object

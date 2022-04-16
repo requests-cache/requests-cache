@@ -59,7 +59,7 @@ jobs:
       - name: Run tests
         run: |
           source $VENV
-          nox -e cov
+          nox -e cov -- xml
 
       # Latest python version: send coverage report to codecov
       - name: "Upload coverage report to Codecov"

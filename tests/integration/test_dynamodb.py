@@ -32,4 +32,5 @@ class TestDynamoDbDict(BaseStorageTest):
 
 class TestDynamoDbCache(BaseCacheTest):
     backend_class = DynamoDbCache
+    # document_support = True
     init_kwargs = AWS_OPTIONS

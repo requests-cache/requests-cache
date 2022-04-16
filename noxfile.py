@@ -25,8 +25,7 @@ PYTHON_VERSIONS = ['3.7', '3.8', '3.9', '3.10']
 UNIT_TESTS = join('tests', 'unit')
 INTEGRATION_TESTS = join('tests', 'integration')
 STRESS_TEST_MULTIPLIER = 10
-# Generate HTML + stdout coverage report
-COVERAGE_ARGS = '--cov --cov-report=term --cov-report=html'
+DEFAULT_COVERAGE_FORMATS = ['html', 'term']
 # Run tests in parallel, grouped by test module
 XDIST_ARGS = '--numprocesses=auto --dist=loadfile'
 
@@ -58,17 +57,22 @@ def clean(session):
 @session(python=False, name='cov')
 def coverage(session):
     """Run tests and generate coverage report"""
-    cmd = f'pytest {UNIT_TESTS} {INTEGRATION_TESTS} -rs {XDIST_ARGS} {COVERAGE_ARGS}'
-    session.run(*cmd.split(' '))
+    cov_formats = session.posargs or DEFAULT_COVERAGE_FORMATS
+    cov_format_args = [f'--cov-report={f}' for f in cov_formats]
+
+    cmd = f'pytest {UNIT_TESTS} {INTEGRATION_TESTS} -rs {XDIST_ARGS} --cov'
+    session.run(*cmd.split(' '), *cov_format_args)
 
 
 @session(python=False, name='stress')
 def stress_test(session):
     """Run concurrency tests with a higher stress test multiplier"""
     cmd = f'pytest {INTEGRATION_TESTS} -rs -k concurrency'
+    multiplier = session.posargs[0] if session.posargs else STRESS_TEST_MULTIPLIER
+
     session.run(
         *cmd.split(' '),
-        env={'STRESS_TEST_MULTIPLIER': str(STRESS_TEST_MULTIPLIER)},
+        env={'STRESS_TEST_MULTIPLIER': str(multiplier)},
     )
 
 

@@ -17,7 +17,6 @@ from requests_cache import ALL_METHODS, CachedSession
 from requests_cache._utils import get_placeholder_class
 from requests_cache.backends import BACKEND_CLASSES, BaseCache, SQLiteDict, SQLitePickleDict
 from requests_cache.backends.base import DESERIALIZE_ERRORS
-from requests_cache.cache_keys import create_key
 from requests_cache.expiration import DO_NOT_CACHE, EXPIRE_IMMEDIATELY, NEVER_EXPIRE
 from tests.conftest import (
     MOCKED_URL,
@@ -84,7 +83,7 @@ def test_response_defaults(mock_session):
     response_1 = mock_session.get(MOCKED_URL)
     response_2 = mock_session.get(MOCKED_URL)
     response_3 = mock_session.get(MOCKED_URL)
-    cache_key = 'd7fa9fb7317b7412'
+    cache_key = '29de1c4491126e0b'
 
     assert response_1.cache_key == cache_key
     assert isinstance(response_1.created_at, datetime)
@@ -487,11 +486,11 @@ def test_filter_fn__retroactive(mock_normalize_url, mock_session):
 
 
 def test_key_fn(mock_session):
-    def create_key(request, **kwargs):
+    def create_custom_key(request, **kwargs):
         """Create a key based on only the request URL (without params)"""
         return request.url.split('?')[0]
 
-    mock_session.settings.key_fn = create_key
+    mock_session.settings.key_fn = create_custom_key
     mock_session.get(MOCKED_URL)
     response = mock_session.get(MOCKED_URL, params={'k': 'v'})
     assert response.from_cache is True
@@ -617,13 +616,13 @@ def test_remove_expired_responses(mock_normalize_url, mock_session):
 
 def test_remove_expired_responses__error(mock_session):
     # Start with two cached responses, one of which will raise an error
-    mock_session.get(MOCKED_URL)
-    mock_session.get(MOCKED_URL_JSON)
+    response_1 = mock_session.get(MOCKED_URL)
+    response_2 = mock_session.get(MOCKED_URL_JSON)
 
     def error_on_key(key):
-        if key == create_key(method='GET', url=MOCKED_URL_JSON):
+        if key == response_2.cache_key:
             raise PickleError
-        return mock_session.get(MOCKED_URL_JSON)
+        return response_1
 
     with patch.object(SQLitePickleDict, '__getitem__', side_effect=error_on_key):
         BaseCache.remove_expired_responses(mock_session.cache)

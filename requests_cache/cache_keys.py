@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 from hashlib import blake2b
 from logging import getLogger
-from typing import TYPE_CHECKING, Dict, Iterable, List, Mapping, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Mapping, Optional, Union
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from requests import Request, Session
@@ -35,6 +35,7 @@ def create_key(
     request: AnyRequest = None,
     ignored_parameters: ParamList = None,
     match_headers: Union[ParamList, bool] = False,
+    serializer: Any = None,
     **request_kwargs,
 ) -> str:
     """Create a normalized cache key from either a request object or :py:class:`~requests.Request`
@@ -58,6 +59,7 @@ def create_key(
         request.body or '',
         request_kwargs.get('verify', True),
         *get_matched_headers(request.headers, match_headers),
+        str(serializer),
     ]
 
     # Generate a hash based on this info
