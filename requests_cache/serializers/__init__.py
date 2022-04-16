@@ -4,6 +4,7 @@
 from .cattrs import CattrStage
 from .pipeline import SerializerPipeline, Stage
 from .preconf import (
+    bson_document_serializer,
     bson_serializer,
     dict_serializer,
     json_serializer,
@@ -19,6 +20,7 @@ __all__ = [
     'SerializerPipeline',
     'Stage',
     'bson_serializer',
+    'bson_document_serializer',
     'dict_serializer',
     'json_serializer',
     'pickle_serializer',

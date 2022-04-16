@@ -15,14 +15,14 @@ from requests_cache.backends import (
     MongoDict,
     MongoPickleDict,
 )
-from requests_cache.backends.mongodb import document_serializer
 from requests_cache.expiration import NEVER_EXPIRE
+from requests_cache.serializers import bson_document_serializer
 from tests.conftest import HTTPBIN_FORMATS, HTTPBIN_METHODS, fail_if_no_connection, httpbin
 from tests.integration.base_cache_test import TEST_SERIALIZERS, BaseCacheTest
 from tests.integration.base_storage_test import BaseStorageTest
 
 # Add extra MongoDB-specific format to list of serializers to test against
-MONGODB_SERIALIZERS = [document_serializer] + list(TEST_SERIALIZERS.values())
+MONGODB_SERIALIZERS = [bson_document_serializer] + list(TEST_SERIALIZERS.values())
 logger = getLogger(__name__)
 
 

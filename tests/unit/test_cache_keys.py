@@ -8,7 +8,7 @@ from requests import PreparedRequest, Request
 
 from requests_cache.cache_keys import MAX_NORM_BODY_SIZE, create_key, normalize_request
 
-CACHE_KEY = 'e8cb526891875e37'
+CACHE_KEY = 'e25f7e6326966e82'
 
 
 @pytest.mark.parametrize(

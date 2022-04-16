@@ -37,11 +37,12 @@ class SerializerPipeline:
         is_binary: Indicates whether the serialized content is binary
     """
 
-    def __init__(self, stages: Sequence, is_binary: bool = False):
+    def __init__(self, stages: Sequence, name: str = None, is_binary: bool = False):
         self.is_binary = is_binary
         self.stages = stages
         self.dump_stages = [stage.dumps for stage in stages]
         self.load_stages = [stage.loads for stage in reversed(stages)]
+        self.name = name
 
     def dumps(self, value) -> Union[str, bytes]:
         for step in self.dump_stages:
@@ -52,3 +53,6 @@ class SerializerPipeline:
         for step in self.load_stages:
             value = step(value)
         return value
+
+    def __str__(self) -> str:
+        return f'SerializerPipeline(name={self.name}, n_stages={len(self.dump_stages)})'

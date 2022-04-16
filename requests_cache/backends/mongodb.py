@@ -104,16 +104,12 @@ from pymongo.errors import OperationFailure
 
 from .._utils import get_valid_kwargs
 from ..expiration import NEVER_EXPIRE, get_expiration_seconds
-from ..serializers import SerializerPipeline
-from ..serializers.preconf import bson_preconf_stage
+from ..serializers import bson_document_serializer
 from . import BaseCache, BaseStorage
 
-document_serializer = SerializerPipeline([bson_preconf_stage], is_binary=False)
 logger = getLogger(__name__)
 
 
-# TODO: Is there any reason to support custom serializers here?
-# TODO: Save items with different cache keys to avoid conflicts with old serialization format?
 class MongoCache(BaseCache):
     """MongoDB cache backend
 
@@ -239,7 +235,7 @@ class MongoPickleDict(MongoDict):
     """
 
     def __init__(self, *args, serializer=None, **kwargs):
-        super().__init__(*args, serializer=serializer or document_serializer, **kwargs)
+        super().__init__(*args, serializer=serializer or bson_document_serializer, **kwargs)
 
     def __getitem__(self, key):
         return self.serializer.loads(super().__getitem__(key))
