@@ -2,7 +2,7 @@
 from contextlib import contextmanager, nullcontext
 from logging import getLogger
 from threading import RLock
-from typing import TYPE_CHECKING, Dict, Iterable, MutableMapping, Optional, Union
+from typing import TYPE_CHECKING, Iterable, MutableMapping, Optional, Union
 
 from requests import PreparedRequest
 from requests import Session as OriginalSession
@@ -19,6 +19,7 @@ from .policy import (
     DEFAULT_STATUS_CODES,
     CacheActions,
     CacheSettings,
+    ExpirationPatterns,
     ExpirationTime,
     FilterCallback,
     KeyCallback,
@@ -27,12 +28,12 @@ from .policy import (
 from .serializers import SerializerPipeline
 
 __all__ = ['CachedSession', 'CacheMixin']
-
-logger = getLogger(__name__)
 if TYPE_CHECKING:
     MIXIN_BASE = OriginalSession
 else:
     MIXIN_BASE = object
+
+logger = getLogger(__name__)
 
 
 class CacheMixin(MIXIN_BASE):
@@ -46,7 +47,7 @@ class CacheMixin(MIXIN_BASE):
         backend: BackendSpecifier = None,
         serializer: Union[str, SerializerPipeline] = None,
         expire_after: ExpirationTime = -1,
-        urls_expire_after: Dict[str, ExpirationTime] = None,
+        urls_expire_after: ExpirationPatterns = None,
         cache_control: bool = False,
         allowable_codes: Iterable[int] = DEFAULT_STATUS_CODES,
         allowable_methods: Iterable[str] = DEFAULT_METHODS,

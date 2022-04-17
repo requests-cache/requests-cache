@@ -12,7 +12,7 @@ from collections.abc import MutableMapping
 from datetime import datetime
 from logging import getLogger
 from pickle import PickleError
-from typing import Iterable, Iterator, Optional, Tuple, Union
+from typing import Iterable, Iterator, Optional, Tuple
 
 from requests import PreparedRequest, Response
 
@@ -25,7 +25,6 @@ from ..serializers import init_serializer
 # Specific exceptions that may be raised during deserialization
 DESERIALIZE_ERRORS = (AttributeError, ImportError, PickleError, TypeError, ValueError)
 
-ResponseOrKey = Union[CachedResponse, str]
 logger = getLogger(__name__)
 
 
@@ -259,7 +258,7 @@ class BaseStorage(MutableMapping, ABC):
     """
 
     def __init__(self, serializer=None, **kwargs):
-        self.serializer = init_serializer(serializer, **kwargs)
+        self.serializer = init_serializer(serializer)
         logger.debug(f'Initializing {type(self).__name__} with serializer: {self.serializer}')
 
     def bulk_delete(self, keys: Iterable[str]):

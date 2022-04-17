@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from logging import getLogger
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import TYPE_CHECKING, List, Optional
 
 import attr
 from attr import define, field
@@ -18,7 +18,6 @@ if TYPE_CHECKING:
     from ..policy.actions import CacheActions
 
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S %Z'  # Format used for __str__ only
-HeaderList = List[Tuple[str, str]]
 logger = getLogger(__name__)
 
 
