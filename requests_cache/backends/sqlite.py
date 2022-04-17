@@ -1,3 +1,9 @@
+"""SQLite cache backend. For usage details, see :ref:`Backends: SQLite <sqlite>`.
+
+.. automodsumm:: requests_cache.backends.sqlite
+   :classes-only:
+   :nosignatures:
+"""
 import sqlite3
 import threading
 from contextlib import contextmanager

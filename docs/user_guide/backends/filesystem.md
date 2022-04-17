@@ -1,5 +1,6 @@
+(filesystem)=
 # Filesystem
-```{image} ../_static/files-generic.png
+```{image} ../../_static/files-generic.png
 ```
 
 This backend stores responses in files on the local filesystem, with one file per response.
@@ -11,6 +12,18 @@ for example:
 - Manually viewing cached responses without the need for extra tools (e.g., with a simple text editor)
 - Using cached responses as sample data for automated tests
 - Reading cached responses directly from another application or library, without depending on requests-cache
+
+## Usage Example
+Initialize with a {py:class}`.FileCache` instance:
+```python
+>>> from requests_cache import CachedSession, FileCache
+>>> session = CachedSession(backend=FileCache())
+```
+
+Or by alias:
+```python
+>>> session = CachedSession(backend='filesystem')
+```
 
 ## File Formats
 By default, responses are saved as pickle files. If you want to save responses in a human-readable
@@ -41,16 +54,3 @@ Or as YAML (requires `pyyaml`):
 - Write performance will vary based on the serializer used, in the range of roughly 1-3ms per write.
 - This backend stores response files in a single directory, and does not currently implement fan-out. This means that on most filesystems, storing a very large number of responses will result in reduced performance.
 - This backend currently uses a simple threading lock rather than a file lock system, so it is not an ideal choice for highly parallel applications.
-
-## API Reference
-```{eval-rst}
-.. automodsumm:: requests_cache.backends.filesystem
-   :classes-only:
-   :nosignatures:
-
-.. automodule:: requests_cache.backends.filesystem
-   :members:
-   :undoc-members:
-   :inherited-members:
-   :show-inheritance:
-```

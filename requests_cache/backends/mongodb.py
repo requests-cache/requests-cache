@@ -1,3 +1,9 @@
+"""MongoDB cache backend. For usage details, see :ref:`Backends: MongoDB <mongodb>`.
+
+.. automodsumm:: requests_cache.backends.mongodb
+   :classes-only:
+   :nosignatures:
+"""
 from datetime import timedelta
 from logging import getLogger
 from typing import Iterable, Mapping, Optional, Union
@@ -14,7 +20,7 @@ logger = getLogger(__name__)
 
 
 class MongoCache(BaseCache):
-    """MongoDB cache backend
+    """MongoDB cache backend.
 
     Args:
         db_name: Database name

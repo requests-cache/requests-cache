@@ -1,15 +1,35 @@
+(sqlite)=
 # SQLite
-```{image} ../_static/sqlite.png
+```{image} ../../_static/sqlite.png
 ```
-
 [SQLite](https://www.sqlite.org/) is a fast and lightweight SQL database engine that stores data
 either in memory or in a single file on disk.
 
 ## Use Cases
 Despite its simplicity, SQLite is a powerful tool. For example, it's the primary storage system for
-a number of common applications including Dropbox, Firefox, and Chrome. It's well suited for
-caching, and requires no extra configuration or dependencies, which is why it's the default backend
-for requests-cache.
+a number of common applications including Firefox, Chrome, and many components of both Android and
+iOS. It's well suited for caching, and requires no extra configuration or dependencies, which is why
+it's 'used as the default backend for requests-cache.
+
+## Usage Example
+SQLite is the default backend, but if you want to pass extra connection options or just want to be
+explicit, initialize your session with a {py:class}`.SQLiteCache` instance:
+```python
+>>> from requests_cache import CachedSession, SQLiteCache
+>>> session = CachedSession(backend=SQLiteCache())
+```
+
+Or by alias:
+```python
+>>> session = CachedSession(backend='sqlite')
+```
+
+## Connection Options
+This backend accepts any keyword arguments for {py:func}`sqlite3.connect`:
+```python
+>>> backend = SQLiteCache('http_cache', timeout=30)
+>>> session = CachedSession(backend=backend)
+```
 
 ## Cache Files
 - See {ref}`files` for general info on specifying cache paths
@@ -62,29 +82,3 @@ available:
     and some other AWS services use ephemeral storage that only persists for the lifetime of the
     instance. This is fine for short-term caching. For longer-term persistance, you can use an
     [attached EBS volume](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-attaching-volume.html).
-
-## Connection Options
-The SQLite backend accepts any keyword arguments for {py:func}`sqlite3.connect`. These can be passed
-via {py:class}`.CachedSession`:
-```python
->>> session = CachedSession('http_cache', timeout=30)
-```
-
-Or via {py:class}`.SQLiteCache`:
-```python
->>> backend = SQLiteCache('http_cache', timeout=30)
->>> session = CachedSession(backend=backend)
-```
-
-## API Reference
-```{eval-rst}
-.. automodsumm:: requests_cache.backends.sqlite
-   :classes-only:
-   :nosignatures:
-
-.. automodule:: requests_cache.backends.sqlite
-   :members:
-   :undoc-members:
-   :inherited-members:
-   :show-inheritance:
-```

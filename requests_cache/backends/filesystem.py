@@ -1,3 +1,9 @@
+"""Filesystem cache backend. For usage details, see :ref:`Backends: Filesystem <filesystem>`.
+
+.. automodsumm:: requests_cache.backends.filesystem
+   :classes-only:
+   :nosignatures:
+"""
 from contextlib import contextmanager
 from os import makedirs
 from pathlib import Path
@@ -12,7 +18,7 @@ from .sqlite import AnyPath, SQLiteDict, get_cache_path
 
 
 class FileCache(BaseCache):
-    """Filesystem backend.
+    """Filesystem cache backend.
 
     Args:
         cache_name: Base directory for cache files

@@ -1,3 +1,9 @@
+"""Redis cache backend. For usage details, see :ref:`Backends: Redis <redis>`.
+
+.. automodsumm:: requests_cache.backends.redis
+   :classes-only:
+   :nosignatures:
+"""
 from logging import getLogger
 from typing import Iterable
 
@@ -13,7 +19,7 @@ logger = getLogger(__name__)
 # TODO: TTL tests
 # TODO: Option to set a different (typically longer) TTL than expire_after, like MongoCache
 class RedisCache(BaseCache):
-    """Redis cache backend
+    """Redis cache backend.
 
     Args:
         namespace: Redis namespace

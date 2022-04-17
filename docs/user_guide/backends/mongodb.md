@@ -1,5 +1,6 @@
+(mongodb)=
 # MongoDB
-```{image} ../_static/mongodb.png
+```{image} ../../_static/mongodb.png
 ```
 
 [MongoDB](https://www.mongodb.com) is a NoSQL document database. It stores data in collections
@@ -9,8 +10,27 @@ database.
 ## Use Cases
 MongoDB scales well and is a good option for larger applications. For raw caching performance, it is
 not quite as fast as {py:mod}`~requests_cache.backends.redis`, but may be preferable if you already
-have an instance running, or if it has a specific feature you want to use. See below for some
-relevant examples.
+have an instance running, or if it has a specific feature you want to use. See sections below for
+some relevant examples.
+
+## Usage Example
+Initialize with a {py:class}`.MongoCache` instance:
+```python
+>>> from requests_cache import CachedSession, MongoCache
+>>> session = CachedSession(backend=MongoCache())
+```
+
+Or by alias:
+```python
+>>> session = CachedSession(backend='mongodb')
+```
+
+## Connection Options
+This backend accepts any keyword arguments for {py:class}`pymongo.mongo_client.MongoClient`:
+```python
+>>> backend = MongoCache(host='192.168.1.63', port=27017)
+>>> session = CachedSession('http_cache', backend=backend)
+```
 
 ## Viewing Responses
 Unlike most of the other backends, response data can be easily viewed via the
@@ -26,7 +46,7 @@ Here is an example response viewed in
 :::{admonition} Screenshot
 :class: toggle
 
-```{image} ../_static/mongodb_vscode.png
+```{image} ../../_static/mongodb_vscode.png
 ```
 :::
 
@@ -81,25 +101,4 @@ requests for some period of time:
 >>> backend = MongoCache()
 >>> backend.set_ttl(timedelta(days=7))
 >>> session = CachedSession(backend=backend, expire_after=timedelta(days=1))
-```
-
-## Connection Options
-The MongoDB backend accepts any keyword arguments for {py:class}`pymongo.mongo_client.MongoClient`.
-These can be passed via {py:class}`.MongoCache`:
-```python
->>> backend = MongoCache(host='192.168.1.63', port=27017)
->>> session = CachedSession('http_cache', backend=backend)
-```
-
-## API Reference
-```{eval-rst}
-.. automodsumm:: requests_cache.backends.mongodb
-   :classes-only:
-   :nosignatures:
-
-.. automodule:: requests_cache.backends.mongodb
-   :members:
-   :undoc-members:
-   :inherited-members:
-   :show-inheritance:
 ```

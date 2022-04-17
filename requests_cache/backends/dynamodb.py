@@ -1,3 +1,9 @@
+"""DynamoDB cache backend. For usage details, see :ref:`Backends: DynamoDB <dynamodb>`.
+
+.. automodsumm:: requests_cache.backends.dynamodb
+   :classes-only:
+   :nosignatures:
+"""
 from typing import Dict, Iterable
 
 import boto3
@@ -10,7 +16,7 @@ from . import BaseCache, BaseStorage
 
 
 class DynamoDbCache(BaseCache):
-    """DynamoDB cache backend
+    """DynamoDB cache backend.
 
     Args:
         table_name: DynamoDB table name
@@ -59,6 +65,7 @@ class DynamoDbDict(BaseStorage):
         self.connection = connection or boto3.resource('dynamodb', **connection_kwargs)
         self.namespace = namespace
 
+        # TODO: Create default table as on-demand instead of provisioned?
         try:
             self.connection.create_table(
                 AttributeDefinitions=[

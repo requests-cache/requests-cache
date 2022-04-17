@@ -1,3 +1,9 @@
+"""GridFS cache backend. For usage details, see :ref:`Backends: GridFS <gridfs>` and :ref:`Backends: MongoDB <mongodb>`.
+
+.. automodsumm:: requests_cache.backends.gridfs
+   :classes-only:
+   :nosignatures:
+"""
 from logging import getLogger
 from threading import RLock
 
@@ -14,10 +20,6 @@ logger = getLogger(__name__)
 
 class GridFSCache(BaseCache):
     """GridFS cache backend.
-
-    Example:
-
-        >>> session = CachedSession('http_cache', backend='gridfs')
 
     Args:
         db_name: Database name

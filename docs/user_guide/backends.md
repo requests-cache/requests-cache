@@ -1,41 +1,38 @@
 (backends)=
 # {fa}`database` Backends
-![](../_static/sqlite_32px.png)
-![](../_static/redis_32px.png)
-![](../_static/mongodb_32px.png)
-![](../_static/dynamodb_32px.png)
-![](../_static/files-json_32px.png)
-
 This page contains general information about the cache backends supported by requests-cache.
-See {py:mod}`.requests_cache.backends` for additional details on each individual backend.
 
-The default backend is SQLite, since it's simple to use, requires no extra dependencies or
-configuration, and has the best all-around performance for the majority of use cases.
+The default backend is SQLite, since it requires no extra dependencies or configuration, and has
+great all-around performance for the most common use cases.
 
-```{note}
-In environments where SQLite is explicitly disabled, a non-persistent in-memory cache is used by
-default.
+Here is a full list of backends available, and any extra dependencies required:
+
+Backend                                               | Class                      | Alias          | Dependencies
+------------------------------------------------------|----------------------------|----------------|----------------------------------------------------------
+![](../_static/sqlite_32px.png)     {ref}`sqlite`     | {py:class}`.SQLiteCache`   | `'sqlite'`     |
+![](../_static/redis_32px.png)      {ref}`redis`      | {py:class}`.RedisCache`    | `'redis'`      | [redis-py](https://github.com/andymccurdy/redis-py)
+![](../_static/mongodb_32px.png)    {ref}`mongodb`    | {py:class}`.MongoCache`    | `'mongodb'`    | [pymongo](https://github.com/mongodb/mongo-python-driver)
+![](../_static/mongodb_32px.png)    {ref}`gridfs`     | {py:class}`.GridFSCache`   | `'gridfs'`     | [pymongo](https://github.com/mongodb/mongo-python-driver)
+![](../_static/dynamodb_32px.png)   {ref}`dynamodb`   | {py:class}`.DynamoDbCache` | `'dynamodb'`   | [boto3](https://github.com/boto/boto3)
+![](../_static/files-json_32px.png) {ref}`filesystem` | {py:class}`.FileCache`     | `'filesystem'` |
+![](../_static/memory_32px.png) Memory                | {py:class}`.BaseCache`     | `'memory'`     |
+
+<!-- Hidden ToC tree to add pages to sidebar ToC -->
+```{toctree}
+:hidden:
+:glob: true
+
+backends/*
 ```
-
-## Backend Dependencies
-Most of the other backends require some extra dependencies, listed below.
-
-Backend                                                | Class                      | Alias          | Dependencies
--------------------------------------------------------|----------------------------|----------------|-------------
-[SQLite](https://www.sqlite.org)                       | {py:class}`.SQLiteCache`   | `'sqlite'`     |
-[Redis](https://redis.io)                              | {py:class}`.RedisCache`    | `'redis'`      | [redis-py](https://github.com/andymccurdy/redis-py)
-[MongoDB](https://www.mongodb.com)                     | {py:class}`.MongoCache`    | `'mongodb'`    | [pymongo](https://github.com/mongodb/mongo-python-driver)
-[GridFS](https://docs.mongodb.com/manual/core/gridfs/) | {py:class}`.GridFSCache`   | `'gridfs'`     | [pymongo](https://github.com/mongodb/mongo-python-driver)
-[DynamoDB](https://aws.amazon.com/dynamodb)            | {py:class}`.DynamoDbCache` | `'dynamodb'`   | [boto3](https://github.com/boto/boto3)
-Filesystem                                             | {py:class}`.FileCache`     | `'filesystem'` |
-Memory                                                 | {py:class}`.BaseCache`     | `'memory'`     |
 
 ## Choosing a Backend
 Here are some general notes on choosing a backend:
 * All of the backends perform well enough that they usually won't become a bottleneck until you
-  start hitting around **700-1000 requests per second**.
-* It's recommended to start with SQLite until you have a specific reason to switch.
-* If/when you outgrow SQLite, the next logical choice would usually be Redis.
+  start hitting around **700-1000 requests per second**
+* It's recommended to start with SQLite until you have a specific reason to switch
+* If/when you encounter limitations with SQLite, the next logical choice is usually Redis
+* Each backend has some unique features that make them well suited for specific use cases; see
+  individual backend docs for more details
 
 Here are some specific situations where you may want to choose one of the other backends:
 * Your application is distributed across multiple machines, without access to a common filesystem
@@ -46,9 +43,6 @@ Here are some specific situations where you may want to choose one of the other 
 * You want to reuse your cached response data outside of requests-cache
 * You want to use a specific feature available in one of the other backends
 
-Docs for {py:mod}`backend modules <requests_cache.backends>` contain more details on use cases
-for each one.
-
 ## Specifying a Backend
 You can specify which backend to use with the `backend` parameter for either {py:class}`.CachedSession`
 or {py:func}`.install_cache`. You can specify one by name, using the aliases listed above:
@@ -56,7 +50,7 @@ or {py:func}`.install_cache`. You can specify one by name, using the aliases lis
 >>> session = CachedSession('my_cache', backend='redis')
 ```
 
-Or by instance:
+Or by instance, which is preferable if you want to pass additional backend-specific options:
 ```python
 >>> backend = RedisCache(host='192.168.1.63', port=6379)
 >>> session = CachedSession('my_cache', backend=backend)
@@ -74,10 +68,7 @@ DynamoDB        | Table name
 Filesystem      | Cache directory
 
 Each backend class also accepts optional parameters for the underlying connection. For example,
-{py:class}`.SQLiteCache` accepts parameters for {py:func}`sqlite3.connect`:
-```python
->>> session = CachedSession('my_cache', backend='sqlite', timeout=30)
-```
+the {ref}`sqlite` backend accepts parameters for {py:func}`sqlite3.connect`.
 
 ## Testing Backends
 If you just want to quickly try out all of the available backends for comparison,

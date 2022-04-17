@@ -6,7 +6,7 @@ Notes:
 * API reference docs are generated based on module docstrings
 * Google-style docstrings are used throughout the project
 * apidoc is used to generate source files for the majority of module docs
-* The `api/` directory contains manually written docs for some modules
+* The `api/` directory contains manually formatted sources for some modules
 * The `_templates` directory contains some Sphinx templates that modify auto-generated sources
 """
 import os
@@ -66,11 +66,10 @@ myst_enable_extensions = [
     'smartquotes',
 ]
 
-# Ignore auto-generated pages for which manually written docs exist
+# Ignore a subset of auto-generated pages
 exclude_patterns = [
     '_build',
     f'{APIDOC_DIR.stem}/requests_cache.rst',
-    f'{APIDOC_DIR.stem}/requests_cache.backends.*.rst',
     f'{EXTRA_APIDOC_DIR.stem}/*',
 ]
 
@@ -165,5 +164,6 @@ def patch_automodapi(app):
 
 
 def copy_module_docs(app):
+    """Copy manually written doc sources to apidoc directory"""
     for doc in EXTRA_APIDOC_DIR.iterdir():
         copy(doc, APIDOC_DIR)
