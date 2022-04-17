@@ -1,4 +1,4 @@
-"""Internal utilities for generating the cache keys that are used to match requests
+"""Internal utilities for generating cache keys that are used for request matching
 
 .. automodsumm:: requests_cache.cache_keys
    :functions-only:

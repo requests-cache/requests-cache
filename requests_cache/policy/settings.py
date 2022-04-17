@@ -1,10 +1,9 @@
-from typing import Callable, Dict, Iterable, Union
+from typing import Dict, Iterable, Union
 
 from attr import define, field
-from requests import Response
 
 from .._utils import get_valid_kwargs
-from .expiration import ExpirationTime
+from . import ExpirationTime, FilterCallback, KeyCallback
 
 ALL_METHODS = ('GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE')
 DEFAULT_CACHE_NAME = 'http_cache'
@@ -13,10 +12,6 @@ DEFAULT_STATUS_CODES = (200,)
 
 # Default params and/or headers that are excluded from cache keys and redacted from cached responses
 DEFAULT_IGNORED_PARAMS = ('Authorization', 'X-API-KEY', 'access_token', 'api_key')
-
-# Signatures for user-provided callbacks
-FilterCallback = Callable[[Response], bool]
-KeyCallback = Callable[..., str]
 
 
 @define
