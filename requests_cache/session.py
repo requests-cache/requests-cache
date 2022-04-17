@@ -11,19 +11,20 @@ from urllib3 import filepost
 
 from ._utils import get_valid_kwargs
 from .backends import BackendSpecifier, init_backend
-from .cache_control import CacheActions, set_request_headers
-from .expiration import ExpirationTime
 from .models import AnyResponse, CachedResponse, OriginalResponse
-from .serializers import SerializerPipeline
-from .settings import (
+from .policy import (
     DEFAULT_CACHE_NAME,
     DEFAULT_IGNORED_PARAMS,
     DEFAULT_METHODS,
     DEFAULT_STATUS_CODES,
+    CacheActions,
     CacheSettings,
+    ExpirationTime,
     FilterCallback,
     KeyCallback,
+    set_request_headers,
 )
+from .serializers import SerializerPipeline
 
 __all__ = ['CachedSession', 'CacheMixin']
 

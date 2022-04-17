@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from requests_cache.expiration import (
+from requests_cache.policy.expiration import (
     EXPIRE_IMMEDIATELY,
     get_expiration_datetime,
     get_url_expiration,

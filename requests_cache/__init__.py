@@ -7,14 +7,12 @@ __version__ = '0.10.0'
 
 try:
     from .backends import *
-    from .cache_control import *
     from .cache_keys import *
-    from .expiration import *
     from .models import *
     from .patcher import *
+    from .policy import *
     from .serializers import *
     from .session import *
-    from .settings import *
 # Log and ignore ImportErrors, if imported outside a virtualenv (e.g., just to check __version__)
 except ImportError as e:
     getLogger('requests_cache').warning(e, exc_info=True)

@@ -6,7 +6,7 @@ from logging import getLogger
 from math import ceil
 from typing import Dict, Optional, Union
 
-from ._utils import try_int
+from .._utils import try_int
 
 __all__ = ['DO_NOT_CACHE', 'EXPIRE_IMMEDIATELY', 'NEVER_EXPIRE', 'get_expiration_datetime']
 

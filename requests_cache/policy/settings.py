@@ -3,7 +3,7 @@ from typing import Callable, Dict, Iterable, Union
 from attr import define, field
 from requests import Response
 
-from ._utils import get_valid_kwargs
+from .._utils import get_valid_kwargs
 from .expiration import ExpirationTime
 
 ALL_METHODS = ('GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE')
@@ -23,8 +23,8 @@ KeyCallback = Callable[..., str]
 class CacheSettings:
     """Class used internally to store settings that affect caching behavior. This allows settings
     to be used across multiple modules, but exposed to the user in a single property
-    (:py:attr:`.CachedSession.settings`). These values can safely be modified after initialization. See
-    :py:class:`.CachedSession` and :ref:`user-guide` for usage details.
+    (:py:attr:`.CachedSession.settings`). These values can safely be modified after initialization.
+    See :py:class:`.CachedSession` and :ref:`user-guide` for usage details.
     """
 
     allowable_codes: Iterable[int] = field(default=DEFAULT_STATUS_CODES)

@@ -16,7 +16,8 @@ from attr import define, field
 from requests import PreparedRequest, Response
 from requests.models import CaseInsensitiveDict
 
-from ._utils import coalesce, try_int
+from .._utils import coalesce, try_int
+from ..models import CachedResponse
 from .expiration import (
     DO_NOT_CACHE,
     EXPIRE_IMMEDIATELY,
@@ -26,7 +27,6 @@ from .expiration import (
     get_expiration_seconds,
     get_url_expiration,
 )
-from .models import CachedResponse
 from .settings import CacheSettings
 
 __all__ = ['CacheActions']

@@ -18,8 +18,8 @@ from typing import Collection, Iterable, Iterator, List, Tuple, Type, Union
 from platformdirs import user_cache_dir
 
 from .._utils import chunkify, get_valid_kwargs
-from ..expiration import ExpirationTime
 from ..models import CachedResponse
+from ..policy.expiration import ExpirationTime
 from . import BaseCache, BaseStorage
 
 MEMORY_URI = 'file::memory:?cache=shared'
