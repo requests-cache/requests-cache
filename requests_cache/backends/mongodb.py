@@ -1,96 +1,5 @@
-"""
-.. image::
-    ../_static/mongodb.png
+"""MongoDB cache backend. For usage details, see :ref:`Backends: MongoDB <mongodb>`.
 
-`MongoDB <https://www.mongodb.com>`_ is a NoSQL document database. It stores data in collections
-of documents, which are more flexible and less strictly structured than tables in a relational
-database.
-
-Use Cases
-^^^^^^^^^
-MongoDB scales well and is a good option for larger applications. For raw caching performance,
-it is not quite as fast as :py:mod:`~requests_cache.backends.redis`, but may be preferable if you
-already have an instance running, or if it has a specific feature you want to use. See below for
-some relevant examples.
-
-Viewing Responses
-^^^^^^^^^^^^^^^^^
-Unlike most of the other backends, response data can be easily viewed via the
-`MongoDB shell <https://www.mongodb.com/docs/mongodb-shell/#mongodb-binary-bin.mongosh>`_,
-`Compass <https://www.mongodb.com/products/compass>`_, or any other interface for MongoDB. This is
-possible because its internal document format (`BSON <https://www.mongodb.com/json-and-bson>`_)
-supports all the types needed to store a response as a plain document rather than a fully serialized
-blob.
-
-Here is an example response viewed in
-`MongoDB for VSCode <https://code.visualstudio.com/docs/azure/mongodb>`_:
-
-.. admonition:: Screenshot
-    :class: toggle
-
-    .. image:: ../_static/mongodb_vscode.png
-
-Expiration
-^^^^^^^^^^
-MongoDB `natively supports TTL <https://www.mongodb.com/docs/v4.0/core/index-ttl>`_, and can
-automatically remove expired responses from the cache.
-
-**Notes:**
-
-* TTL is set for a whole collection, and cannot be set on a per-document basis.
-* It will persist until explicitly removed or overwritten, or if the collection is deleted.
-* Expired items are
-  `not guaranteed to be removed immediately <https://www.mongodb.com/docs/v4.0/core/index-ttl/#timing-of-the-delete-operation>`_.
-  Typically it happens within 60 seconds.
-* If you want, you can rely entirely on MongoDB TTL instead of requests-cache
-  :ref:`expiration settings <expiration>`.
-* Or you can set both values, to be certain that you don't get an expired response before MongoDB
-  removes it.
-* If you intend to reuse expired responses, e.g. with :ref:`conditional-requests` or ``stale_if_error``,
-  you can set TTL to a larger value than your session ``expire_after``, or disable it altogether.
-
-**Examples:**
-
-Create a TTL index:
-
->>> backend = MongoCache()
->>> backend.set_ttl(3600)
-
-Overwrite it with a new value:
-
->>> backend = MongoCache()
->>> backend.set_ttl(timedelta(days=1), overwrite=True)
-
-Remove the TTL index:
-
->>> backend = MongoCache()
->>> backend.set_ttl(None, overwrite=True)
-
-Use both MongoDB TTL and requests-cache expiration:
-
->>> ttl = timedelta(days=1)
->>> backend = MongoCache()
->>> backend.set_ttl(ttl)
->>> session = CachedSession(backend=backend, expire_after=ttl)
-
-**Recommended:** Set MongoDB TTL to a longer value than your :py:class:`.CachedSession` expiration.
-This allows expired responses to be eventually cleaned up, but still be reused for conditional
-requests for some period of time:
-
-    >>> backend = MongoCache()
-    >>> backend.set_ttl(timedelta(days=7))
-    >>> session = CachedSession(backend=backend, expire_after=timedelta(days=1))
-
-Connection Options
-^^^^^^^^^^^^^^^^^^
-The MongoDB backend accepts any keyword arguments for :py:class:`pymongo.mongo_client.MongoClient`.
-These can be passed via :py:class:`.MongoCache`:
-
-    >>> backend = MongoCache(host='192.168.1.63', port=27017)
-    >>> session = CachedSession('http_cache', backend=backend)
-
-API Reference
-^^^^^^^^^^^^^
 .. automodsumm:: requests_cache.backends.mongodb
    :classes-only:
    :nosignatures:
@@ -111,7 +20,7 @@ logger = getLogger(__name__)
 
 
 class MongoCache(BaseCache):
-    """MongoDB cache backend
+    """MongoDB cache backend.
 
     Args:
         db_name: Database name

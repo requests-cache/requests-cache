@@ -73,6 +73,8 @@ def init_backend(cache_name: str, backend: BackendSpecifier = None, **kwargs) ->
             backend.cache_name = cache_name
         return backend
     # If no backend is specified, use SQLite as default, unless the environment doesn't support it
+    # TODO: Deprecate fallback to memory?
+    #   Unsupported SQLite is a rare case, and should probably be handled by the user instead.
     elif not backend:
         sqlite_supported = issubclass(BACKEND_CLASSES['sqlite'], BaseCache)
         backend = 'sqlite' if sqlite_supported else 'memory'

@@ -25,13 +25,6 @@ If you are interested in helping out, here are a few ways to get started:
   completely ruled out either
 * If you find an issue you want to work on, please comment on it so others know it's in progress
 
-## Pre-release Installation
-If you want to test out the latest in-development changes, you can install pre-release versions:
-```bash
-pip install --pre requests-cache
-```
-Pre-release documentation can be found here: https://requests-cache.readthedocs.io/en/latest/
-
 ## Dev Installation
 To set up for local development (requires [poetry](https://python-poetry.org/docs/#installation)):
 
@@ -198,6 +191,7 @@ pip install -U requests-cache
 Notes:
 * See python packaging docs on
 [pre-release versioning](https://packaging.python.org/guides/distributing-packages-using-setuptools/#pre-release-versioning) for more info on how this works
+* requests-cache pre-release docs can be found here: https://requests-cache.readthedocs.io/en/latest/
 * Any collaborator can trigger a pre-release build for requests-cache by going to
   **Actions > Deploy > Run workflow**
 * A complete list of builds can by found on [PyPI under 'Release History'](https://pypi.org/project/requests-cache/#history)
