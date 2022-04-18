@@ -24,12 +24,9 @@ class CacheDirectives:
     no_cache: bool = field(default=False)
     no_store: bool = field(default=False)
     only_if_cached: bool = field(default=False)
+    stale_if_error: int = field(default=None, converter=try_int)
     etag: str = field(default=None)
     last_modified: str = field(default=None)
-
-    # Not yet implemented:
-    # stale_if_error: int = field(default=None, converter=try_int)
-    # stale_while_revalidate: bool = field(default=False)
 
     @classmethod
     def from_headers(cls, headers: HeaderDict):
@@ -46,8 +43,7 @@ class CacheDirectives:
         kwargs['last_modified'] = headers.get('Last-Modified')
         return cls(**kwargs)
 
-    @property
-    def expire_offset(self) -> timedelta:
+    def get_expire_offset(self) -> timedelta:
         """Return the time offset to use for expiration, if either min-fresh or max-stale is set"""
         offset_seconds = 0
         if self.max_stale:

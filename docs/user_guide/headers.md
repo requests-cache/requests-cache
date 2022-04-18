@@ -54,6 +54,8 @@ The following headers are currently supported:
 - `Cache-Control: no-store`: Skip reading from and writing to the cache
 - `Cache-Control: only-if-cached`: Only return results from the cache. If not cached, return a 504
   response instead of sending a new request. Note that this may return a stale response.
+- `Cache-Control: stale-if-error`: If an error occurs while refreshing a cached response, use it
+  if it expired by no more than this many seconds ago
 - `If-None-Match`: Automatically added for revalidation, if an `ETag` is available
 - `If-Modified-Since`: Automatically added for revalidation, if `Last-Modified` is available
 

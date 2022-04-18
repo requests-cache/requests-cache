@@ -108,6 +108,13 @@ you get a 500. You will then get the expired cache data instead:
 True, True
 ```
 
+Similar to the header `Cache-Control: stale-if-error`, you may also pass time value representing the
+maximum staleness you are willing to accept:
+```python
+# If there is an error on refresh, use a cached response if it expired 5 minutes ago or less
+session = CachedSession(stale_if_error=timedelta(minutes=5))
+```
+
 In addition to HTTP error codes, `stale_if_error` also applies to python exceptions (typically a
 {py:exc}`~requests.RequestException`). See `requests` documentation on
 [Errors and Exceptions](https://2.python-requests.org/en/master/user/quickstart/#errors-and-exceptions)
