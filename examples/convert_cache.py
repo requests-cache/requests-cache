@@ -43,4 +43,4 @@ def convert_cache(*args, **kwargs):
 
 # Example: convert a cache named 'demo_cache.sqlite' in the current directory
 if __name__ == '__main__':
-    convert_cache('demo_cache', backend='sqlite')
+    convert_cache('demo_cache.sqlite')
