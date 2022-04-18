@@ -292,6 +292,11 @@ class CacheMixin(MIXIN_BASE):
             finally:
                 self.settings.disabled = False
 
+    def close(self):
+        """Close the session and any open backend connections"""
+        super().close()
+        self.cache.close()
+
     def remove_expired_responses(self, expire_after: ExpirationTime = None):
         """Remove expired responses from the cache, optionally with revalidation
 

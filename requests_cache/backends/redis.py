@@ -102,6 +102,9 @@ class RedisDict(BaseStorage):
     def clear(self):
         self.bulk_delete(self.keys())
 
+    def close(self):
+        self.connection.close()
+
     def keys(self):
         return [
             decode(key).replace(f'{self.namespace}:', '')
