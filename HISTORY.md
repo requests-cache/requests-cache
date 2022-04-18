@@ -50,6 +50,9 @@ The following undocumented behaviors have been removed:
   `CachedSession.settings`.
   * Previously, some settings could be modified by setting them on either `CachedSession` or `BaseCache`. In some cases this could silently fail or otherwise have undefined behavior.
 
+Internal module changes:
+* The contents of the `cache_control` module have been split up into multiple modules in a new `policy` subpackage
+
 ### 0.9.3 (2022-02-22)
 * Fix handling BSON serializer differences between pymongo's `bson` and standalone `bson` codec.
 * Handle `CorruptGridFile` error in GridFS backend

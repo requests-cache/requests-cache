@@ -25,7 +25,6 @@ modules/requests_cache.session
 modules/requests_cache.patcher
 modules/requests_cache.backends
 modules/requests_cache.models
-modules/requests_cache.settings
 ```
 
 ## Secondary Modules
@@ -33,7 +32,6 @@ The following modules are mainly for internal use, and are relevant for contribu
 ```{toctree}
 :maxdepth: 2
 modules/requests_cache.cache_keys
-modules/requests_cache.cache_control
-modules/requests_cache.expiration
+modules/requests_cache.policy
 modules/requests_cache.serializers
 ```

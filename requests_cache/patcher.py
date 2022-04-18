@@ -14,7 +14,7 @@ from typing import Optional, Type
 import requests
 
 from .backends import BackendSpecifier, BaseCache
-from .expiration import ExpirationTime
+from .policy import ExpirationTime
 from .session import CachedSession, OriginalSession
 
 logger = getLogger(__name__)

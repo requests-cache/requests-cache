@@ -4,9 +4,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 from requests import PreparedRequest, Request
 
-from requests_cache.cache_control import EXPIRE_IMMEDIATELY, CacheActions
 from requests_cache.models import CachedResponse
-from requests_cache.settings import CacheSettings
+from requests_cache.policy.actions import EXPIRE_IMMEDIATELY, CacheActions
+from requests_cache.policy.settings import CacheSettings
 from tests.conftest import ETAG, HTTPDATE_STR, LAST_MODIFIED, MOCKED_URL, get_mock_response
 
 IGNORED_DIRECTIVES = [
@@ -27,7 +27,7 @@ IGNORED_DIRECTIVES = [
         (None, None, 1),
     ],
 )
-@patch('requests_cache.cache_control.get_url_expiration')
+@patch('requests_cache.policy.actions.get_url_expiration')
 def test_init(
     get_url_expiration,
     request_expire_after,

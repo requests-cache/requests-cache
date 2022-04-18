@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from logging import getLogger
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import TYPE_CHECKING, List, Optional
 
 import attr
 from attr import define, field
@@ -11,14 +11,13 @@ from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
 from urllib3._collections import HTTPHeaderDict
 
-from ..expiration import ExpirationTime, get_expiration_datetime
+from ..policy.expiration import ExpirationTime, get_expiration_datetime
 from . import CachedHTTPResponse, CachedRequest
 
 if TYPE_CHECKING:
-    from ..cache_control import CacheActions
+    from ..policy.actions import CacheActions
 
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S %Z'  # Format used for __str__ only
-HeaderList = List[Tuple[str, str]]
 logger = getLogger(__name__)
 
 
