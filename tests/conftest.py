@@ -12,7 +12,7 @@ import os
 from datetime import datetime, timedelta
 from functools import wraps
 from logging import basicConfig, getLogger
-from os.path import abspath, dirname, join
+from pathlib import Path
 from unittest.mock import MagicMock
 from uuid import uuid4
 
@@ -66,9 +66,9 @@ MOCKED_URL_404 = 'http+mock://requests-cache.com/nonexistent'
 MOCKED_URL_500 = 'http+mock://requests-cache.com/answer?q=this-statement-is-false'
 MOCK_PROTOCOLS = ['mock://', 'http+mock://', 'https+mock://']
 
-PROJECT_DIR = abspath(dirname(dirname(__file__)))
-SAMPLE_DATA_DIR = join(PROJECT_DIR, 'tests', 'sample_data')
-SAMPLE_CACHE_FILES = [join(SAMPLE_DATA_DIR, path) for path in os.listdir(SAMPLE_DATA_DIR)]
+PROJECT_DIR = Path(__file__).parent.parent.absolute()
+SAMPLE_DATA_DIR = PROJECT_DIR / 'tests' / 'sample_data'
+SAMPLE_CACHE_FILES = list(SAMPLE_DATA_DIR.glob('sample.db.*'))
 
 AWS_OPTIONS = {
     'endpoint_url': 'http://localhost:8000',
