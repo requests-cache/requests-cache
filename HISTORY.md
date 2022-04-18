@@ -21,21 +21,26 @@
 * MongoDB:
   * Store responses in plain (human-readable) document format instead of fully serialized binary
   * Add optional integration with MongoDB TTL to improve performance for removing expired responses
+* SQLite, Redis, MongoDB, and GridFS: Close open database connections when `CachedSession` is used as a contextmanager, or if `CachedSession.close()` is called
 
-**Other features:**
-* All settings that affect cache behavior can now be accessed and modified via `CachedSession.settings`
-* Add `OriginalResponse` class, which wraps `requests.Response` objects and adds type hints for extra cache attributes set on non-cached responses:
+**Type hints:**
+* Add `OriginalResponse` type, which adds type hints to `requests.Response` objects for extra attributes added by requests-cache:
   * `cache_key`
   * `created_at`
   * `expires`
   * `from_cache`
   * `is_expired`
-* Populate `cache_key` and `expires` for new (non-cached) responses, if it was written to the cache
+* `OriginalResponse.cache_key` and `expires` will be populated for any new response that was written to the cache
+* Add return type hints for all request wrapper methods (`CachedSession.get()`, `head()`, etc.)
+
+**Request Matching & Filtering:**
 * Add serializer name to cache keys to avoid errors due to switching serializers
-* Add return type hints for all `CachedSession` request methods (`get()`, `post()`, etc.)
 * Always skip both cache read and write for requests excluded by `allowable_methods` (previously only skipped write)
 * Ignore and redact common authentication params and headers (e.g., for OAuth2) by default
   * This is simply a default value for `ignored_parameters`, to avoid accidentally storing credentials in the cache
+
+**Other features:**
+* All settings that affect cache behavior can now be accessed and modified via `CachedSession.settings`
 
 **Dependencies:**
 * Replace `appdirs` with `platformdirs`

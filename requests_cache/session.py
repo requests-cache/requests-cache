@@ -96,9 +96,9 @@ class CacheMixin(MIXIN_BASE):
         self.settings.expire_after = value
 
     # Wrapper methods to add return type hints
-    def get(self, url: str, **kwargs) -> AnyResponse:  # type: ignore
+    def get(self, url: str, params=None, **kwargs) -> AnyResponse:  # type: ignore
         kwargs.setdefault('allow_redirects', True)
-        return self.request('GET', url, **kwargs)
+        return self.request('GET', url, params=params, **kwargs)
 
     def options(self, url: str, **kwargs) -> AnyResponse:  # type: ignore
         kwargs.setdefault('allow_redirects', True)
@@ -108,14 +108,14 @@ class CacheMixin(MIXIN_BASE):
         kwargs.setdefault('allow_redirects', False)
         return self.request('HEAD', url, **kwargs)
 
-    def post(self, url: str, **kwargs) -> AnyResponse:  # type: ignore
-        return self.request('POST', url, **kwargs)
+    def post(self, url: str, data=None, **kwargs) -> AnyResponse:  # type: ignore
+        return self.request('POST', url, data=data, **kwargs)
 
-    def put(self, url: str, **kwargs) -> AnyResponse:  # type: ignore
-        return self.request('PUT', url, **kwargs)
+    def put(self, url: str, data=None, **kwargs) -> AnyResponse:  # type: ignore
+        return self.request('PUT', url, data=data, **kwargs)
 
-    def patch(self, url: str, **kwargs) -> AnyResponse:  # type: ignore
-        return self.request('PATCH', url, **kwargs)
+    def patch(self, url: str, data=None, **kwargs) -> AnyResponse:  # type: ignore
+        return self.request('PATCH', url, data=data, **kwargs)
 
     def delete(self, url: str, **kwargs) -> AnyResponse:  # type: ignore
         return self.request('DELETE', url, **kwargs)
