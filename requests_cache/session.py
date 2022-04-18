@@ -2,7 +2,7 @@
 from contextlib import contextmanager, nullcontext
 from logging import getLogger
 from threading import RLock
-from typing import TYPE_CHECKING, Dict, Iterable, MutableMapping, Optional, Union
+from typing import TYPE_CHECKING, Iterable, MutableMapping, Optional, Union
 
 from requests import PreparedRequest
 from requests import Session as OriginalSession
@@ -11,27 +11,29 @@ from urllib3 import filepost
 
 from ._utils import get_valid_kwargs
 from .backends import BackendSpecifier, init_backend
-from .cache_control import CacheActions, set_request_headers
-from .expiration import ExpirationTime
 from .models import AnyResponse, CachedResponse, OriginalResponse
-from .serializers import SerializerPipeline
-from .settings import (
+from .policy import (
     DEFAULT_CACHE_NAME,
     DEFAULT_IGNORED_PARAMS,
     DEFAULT_METHODS,
     DEFAULT_STATUS_CODES,
+    CacheActions,
     CacheSettings,
+    ExpirationPatterns,
+    ExpirationTime,
     FilterCallback,
     KeyCallback,
+    set_request_headers,
 )
+from .serializers import SerializerPipeline
 
 __all__ = ['CachedSession', 'CacheMixin']
-
-logger = getLogger(__name__)
 if TYPE_CHECKING:
     MIXIN_BASE = OriginalSession
 else:
     MIXIN_BASE = object
+
+logger = getLogger(__name__)
 
 
 class CacheMixin(MIXIN_BASE):
@@ -45,7 +47,7 @@ class CacheMixin(MIXIN_BASE):
         backend: BackendSpecifier = None,
         serializer: Union[str, SerializerPipeline] = None,
         expire_after: ExpirationTime = -1,
-        urls_expire_after: Dict[str, ExpirationTime] = None,
+        urls_expire_after: ExpirationPatterns = None,
         cache_control: bool = False,
         allowable_codes: Iterable[int] = DEFAULT_STATUS_CODES,
         allowable_methods: Iterable[str] = DEFAULT_METHODS,

@@ -12,7 +12,7 @@ from pymongo import MongoClient
 from pymongo.errors import OperationFailure
 
 from .._utils import get_valid_kwargs
-from ..expiration import NEVER_EXPIRE, get_expiration_seconds
+from ..policy.expiration import NEVER_EXPIRE, get_expiration_seconds
 from ..serializers import bson_document_serializer
 from . import BaseCache, BaseStorage
 

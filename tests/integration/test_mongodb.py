@@ -15,7 +15,7 @@ from requests_cache.backends import (
     MongoDict,
     MongoPickleDict,
 )
-from requests_cache.expiration import NEVER_EXPIRE
+from requests_cache.policy.expiration import NEVER_EXPIRE
 from requests_cache.serializers import bson_document_serializer
 from tests.conftest import HTTPBIN_FORMATS, HTTPBIN_METHODS, fail_if_no_connection, httpbin
 from tests.integration.base_cache_test import TEST_SERIALIZERS, BaseCacheTest
