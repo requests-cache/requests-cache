@@ -136,6 +136,9 @@ class MongoDict(BaseStorage):
     def clear(self):
         self.collection.drop()
 
+    def close(self):
+        self.connection.close()
+
 
 class MongoPickleDict(MongoDict):
     """Same as :class:`MongoDict`, but serializes values before saving.

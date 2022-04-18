@@ -71,7 +71,8 @@ class BaseCacheTest:
 
     @classmethod
     def teardown_class(cls):
-        cls().init_session(clear=True)
+        session = cls().init_session(clear=True)
+        session.close()
 
     @pytest.mark.parametrize('serializer', TEST_SERIALIZERS.values())
     @pytest.mark.parametrize('method', HTTPBIN_METHODS)

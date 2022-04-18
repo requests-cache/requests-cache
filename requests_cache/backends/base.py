@@ -100,6 +100,12 @@ class BaseCache:
         self.responses.clear()
         self.redirects.clear()
 
+    def close(self):
+        """Close any open backend connections"""
+        logger.debug('Closing backend connections')
+        self.responses.close()
+        self.redirects.close()
+
     def create_key(self, request: PreparedRequest = None, **kwargs) -> str:
         """Create a normalized cache key from a request object"""
         key_fn = self._settings.key_fn or create_key
@@ -271,6 +277,9 @@ class BaseStorage(MutableMapping, ABC):
                 del self[k]
             except KeyError:
                 pass
+
+    def close(self):
+        """Close any open backend connections"""
 
     def __str__(self):
         return str(list(self.keys()))
