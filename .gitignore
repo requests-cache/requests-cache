@@ -7,6 +7,7 @@
 build/
 dist/
 downloads/
+example_cache/
 http_cache/
 venv/
 .venv

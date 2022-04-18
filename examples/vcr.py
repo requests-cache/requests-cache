@@ -1,19 +1,18 @@
-"""Utilities to export responses to a format compatible with VCR-based libraries, including
-`vcrpy <https://github.com/kevin1024/vcrpy>`_ and `betamax <https://github.com/betamaxpy/betamax>`_.
+#!/usr/bin/env python
 """
-from __future__ import annotations
-
+Example utilities to export responses to a format compatible with VCR-based libraries, including:
+* [vcrpy](https://github.com/kevin1024/vcrpy)
+* [betamax](https://github.com/betamaxpy/betamax)
+"""
 from os import makedirs
 from os.path import abspath, dirname, expanduser, join
-from typing import TYPE_CHECKING, Any, Dict, Iterable
+from typing import Any, Dict, Iterable
 from urllib.parse import urlparse
 
-from .. import __version__
-from ..models import CachedResponse
-from .preconf import yaml_preconf_stage
+import yaml
 
-if TYPE_CHECKING:
-    from ..backends import BaseCache
+from requests_cache import BaseCache, CachedResponse, CachedSession, __version__
+from requests_cache.serializers.preconf import yaml_preconf_stage
 
 
 def to_vcr_cassette(cache: BaseCache, path: str):
@@ -85,9 +84,16 @@ def to_vcr_cassette_dicts_by_host(responses: Iterable[CachedResponse]) -> Dict[s
 
 
 def write_cassette(cassette, path):
-    import yaml
-
     path = abspath(expanduser(path))
     makedirs(dirname(path), exist_ok=True)
     with open(path, 'w') as f:
         f.write(yaml.safe_dump(cassette))
+
+
+# Create an example cache and export it to a cassette
+if __name__ == '__main__':
+    cache_dir = 'example_cache'
+    session = CachedSession(join(cache_dir, 'http_cache.sqlite'))
+    session.get('http://httpbin.org/get')
+    session.get('http://httpbin.org/json')
+    to_vcr_cassette(session.cache, join(cache_dir, 'http_cache.yaml'))

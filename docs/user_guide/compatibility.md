@@ -172,3 +172,14 @@ requests-mock examples above.
 ```{literalinclude} ../../tests/compat/test_responses_load_cache.py
 ```
 :::
+
+## VCR
+If you would like to reuse your cached response data for unit tests, one option is to convert your
+cache into a format compatible with VCR-vased libraries like
+[vcrpy](https://github.com/kevin1024/vcrpy) and [betamax](https://github.com/betamaxpy/betamax).
+:::{admonition} Example: vcr.py
+:class: toggle
+```{literalinclude} ../../examples/vcr.py
+:lines: 7-
+```
+:::

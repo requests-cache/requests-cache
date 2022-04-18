@@ -166,3 +166,17 @@ The following scripts can also be found in the
 :lines: 6-
 ```
 :::
+
+
+### VCR Export
+```{include} ../examples/vcr.py
+:start-line: 2
+:end-line: 5
+```
+
+:::{admonition} Example: `vcr.py`
+:class: toggle
+```{literalinclude} ../examples/vcr.py
+:lines: 7-
+```
+:::
