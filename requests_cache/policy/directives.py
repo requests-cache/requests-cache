@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import Optional
 
 from attr import define, field
@@ -7,6 +8,7 @@ from .._utils import get_valid_kwargs, try_int
 from . import HeaderDict, get_expiration_seconds
 
 
+# TODO: Add custom __rich_repr__ to exclude default values to make logs cleaner (w/ RichHandler)
 @define
 class CacheDirectives:
     """Parses Cache-Control directives and other relevant cache settings from either request or
@@ -16,6 +18,8 @@ class CacheDirectives:
     expires: str = field(default=None)
     immutable: bool = field(default=False)
     max_age: int = field(default=None, converter=try_int)
+    max_stale: int = field(default=None, converter=try_int)
+    min_fresh: int = field(default=None, converter=try_int)
     must_revalidate: bool = field(default=False)
     no_cache: bool = field(default=False)
     no_store: bool = field(default=False)
@@ -24,8 +28,6 @@ class CacheDirectives:
     last_modified: str = field(default=None)
 
     # Not yet implemented:
-    # max_stale: int = field(default=None, converter=try_int)
-    # min_fresh: int = field(default=None, converter=try_int)
     # stale_if_error: int = field(default=None, converter=try_int)
     # stale_while_revalidate: bool = field(default=False)
 
@@ -44,8 +46,15 @@ class CacheDirectives:
         kwargs['last_modified'] = headers.get('Last-Modified')
         return cls(**kwargs)
 
-    # def to_dict(self) -> CaseInsensitiveDict:
-    #     return {k.title().replace('_', '-'): v for k, v in asdict(self).items() if v is not None}
+    @property
+    def expire_offset(self) -> timedelta:
+        """Return the time offset to use for expiration, if either min-fresh or max-stale is set"""
+        offset_seconds = 0
+        if self.max_stale:
+            offset_seconds = self.max_stale
+        elif self.min_fresh:
+            offset_seconds = -self.min_fresh
+        return timedelta(seconds=offset_seconds)
 
     @property
     def has_validator(self) -> bool:

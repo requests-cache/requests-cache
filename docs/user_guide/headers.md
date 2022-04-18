@@ -48,6 +48,8 @@ The following headers are currently supported:
 
 **Request headers:**
 - `Cache-Control: max-age`: Used as the expiration time in seconds
+- `Cache-Control: max-stale`: Accept responses that have been expired for up to this many seconds
+- `Cache-Control: min-fresh`: Don't accept responses if they will expire within this many seconds
 - `Cache-Control: no-cache`: Revalidate with the server before using a cached response
 - `Cache-Control: no-store`: Skip reading from and writing to the cache
 - `Cache-Control: only-if-cached`: Only return results from the cache. If not cached, return a 504

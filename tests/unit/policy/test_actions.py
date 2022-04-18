@@ -200,6 +200,38 @@ def test_update_from_cached_response__ignored():
     assert actions._validation_headers == {}
 
 
+@pytest.mark.parametrize('max_stale, rejected', [(5, True), (15, False)])
+def test_is_expired__max_stale(max_stale, rejected):
+    """For a response that expired 10 seconds ago, it may be either accepted or rejected based on
+    max-stale
+    """
+    request = Request(
+        url='https://img.site.com/base/img.jpg',
+        headers={'Cache-Control': f'max-stale={max_stale}'},
+    )
+    actions = CacheActions.from_request('key', request)
+    cached_response = CachedResponse(
+        expires=datetime.utcnow() - timedelta(seconds=10),
+    )
+    assert actions._is_expired(cached_response) is rejected
+
+
+@pytest.mark.parametrize('min_fresh, rejected', [(5, False), (15, True)])
+def test_is_expired__min_fresh(min_fresh, rejected):
+    """For a response that expires in 10 seconds, it may be either accepted or rejected based on
+    min-fresh
+    """
+    request = Request(
+        url='https://img.site.com/base/img.jpg',
+        headers={'Cache-Control': f'min-fresh={min_fresh}'},
+    )
+    actions = CacheActions.from_request('key', request)
+    cached_response = CachedResponse(
+        expires=datetime.utcnow() + timedelta(seconds=10),
+    )
+    assert actions._is_expired(cached_response) is rejected
+
+
 @pytest.mark.parametrize(
     'headers, expected_expiration',
     [

@@ -5,6 +5,8 @@
 
 **Expiration & Headers:**
 * Add support for `Cache-Control: only-if-cached`
+* Add support for `Cache-Control: min-fresh`
+* Add support for `Cache-Control: max-stale`
 * Revalidate for `Cache-Control: no-cache` request or response header
 * Revalidate for `Cache-Control: max-age=0, must-revalidate` response headers
 * Add `only_if_cached` option to `CachedSession.request()` and `send()` to return only cached results without sending real requests

@@ -56,7 +56,10 @@ class CacheActions:
 
     # Inputs/internal attributes
     _settings: CacheSettings = field(default=None, repr=False, init=False)
+    _request_directives = field(default=None, repr=False, init=False)
     _validation_headers: Dict[str, str] = field(factory=dict, repr=False, init=False)
+
+    # TODO: set these on either directives or settings?
     _only_if_cached: bool = field(default=False)
     _refresh: bool = field(default=False)
 
@@ -105,12 +108,23 @@ class CacheActions:
             skip_write=directives.no_store,
         )
         actions._settings = settings
+        actions._request_directives = directives
         return actions
 
     @property
     def expires(self) -> Optional[datetime]:
-        """Convert the user/header-provided expiration value to a datetime"""
+        """Convert the user/header-provided expiration value to a datetime. Applies to new cached
+        responses, and previously cached responses that are being revalidated.
+        """
         return get_expiration_datetime(self.expire_after)
+
+    def _is_expired(self, cached_response: 'CachedResponse'):
+        """Determine whether a given cached response is "fresh enough" to satisfy the request"""
+        if not getattr(cached_response, 'expires', None):
+            return False
+
+        expires_ajusted = cached_response.expires + self._request_directives.expire_offset
+        return datetime.utcnow() >= expires_ajusted
 
     def update_from_cached_response(self, cached_response: 'CachedResponse'):
         """Check for relevant cache headers from a cached response, and set headers for a
@@ -119,7 +133,7 @@ class CacheActions:
         Used after fetching a cached response, but before potentially sending a new request.
         """
         # Determine if we need to send a new request or respond with an error
-        is_expired = getattr(cached_response, 'is_expired', False)
+        is_expired = self._is_expired(cached_response)
         invalid_response = cached_response is None or is_expired
         if invalid_response and self._only_if_cached and not self._settings.stale_if_error:
             self.error_504 = True
