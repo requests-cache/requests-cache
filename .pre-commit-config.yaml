@@ -11,11 +11,6 @@ repos:
     rev: 22.3.0
     hooks:
       - id: black
-  - repo: https://github.com/asottile/blacken-docs
-    rev: v1.12.1
-    hooks:
-      - id: blacken-docs
-        args: [--skip-errors, --skip-string-normalization]
   - repo: https://github.com/timothycrosley/isort
     rev: 5.10.1
     hooks:
