@@ -36,13 +36,33 @@ This backend accepts any keyword arguments for {py:meth}`boto3.session.Session.r
 >>> session = CachedSession(backend=backend)
 ```
 
-## Creating Tables
-Tables will be automatically created if they don't already exist. This is convienient if you just
+## Table
+A table will be automatically created if one doesn't already exist. This is convienient if you just
 want to quickly test out DynamoDB as a cache backend, but in a production environment you will
-likely want to create the tables yourself, for example with [CloudFormation](https://aws.amazon.com/cloudformation/) or [Terraform](https://www.terraform.io/). Here are the
-details you'll need:
+likely want to create the tables yourself, for example with
+[CloudFormation](https://aws.amazon.com/cloudformation/) or [Terraform](https://www.terraform.io/).
 
-- Tables: two tables, named `responses` and `redirects`
-- Partition key (aka namespace): `namespace`
-- Range key (aka sort key): `key`
-- Attributes: `namespace` (string) and `key` (string)
+Here are the details you will need:
+
+- Table: `http_cache` (or any other name, as long as it matches the `table_name` parameter for `DynamoDbCache`)
+- Attributes:
+  - `namespace`: String
+  - `key`: String
+- Keys:
+  - Partition key (aka namespace): `namespace`
+  - Range key (aka sort key): `key`
+
+### Example CloudFormation Template
+:::{admonition} Example: [cloudformation.yml](https://github.com/reclosedev/requests-cache/blob/master/examples/cloudformation.yml)
+:class: toggle
+```{literalinclude} ../../../examples/cloudformation.yml
+:language: yaml
+```
+:::
+
+Then deploy with:
+```
+aws cloudformation deploy \
+    --stack-name requests-cache \
+    --template-file examples/cloudformation.yml
+```
