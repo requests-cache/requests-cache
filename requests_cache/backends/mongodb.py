@@ -29,7 +29,7 @@ class MongoCache(BaseCache):
     """
 
     def __init__(self, db_name: str = 'http_cache', connection: MongoClient = None, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(cache_name=db_name, **kwargs)
         self.responses: MongoDict = MongoPickleDict(
             db_name,
             collection_name='responses',
