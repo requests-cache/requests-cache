@@ -1,15 +1,9 @@
 (headers)=
 # {fa}`file-code` Cache Headers
-Most common request and response headers related to caching are supported, including
-[Cache-Control](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control)
-and [ETags](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag).
-
-```{note}
-requests-cache is not (yet) intended to be strict implementation of HTTP caching according to
-[RFC 2616](https://datatracker.ietf.org/doc/html/rfc2616),
-[RFC 7234](https://datatracker.ietf.org/doc/html/rfc7234), etc. If there is additional behavior you
-would like to see, please create an issue to request it.
-```
+Requests-cache supports most common HTTP caching headers, including
+[ETags](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag),
+[Cache-Control](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control),
+and several extensions.
 
 (conditional-requests)=
 ## Conditional Requests
@@ -22,19 +16,20 @@ requests-cache repo:
 ```python
 >>> # Cache a response that will expire immediately
 >>> url = 'https://api.github.com/repos/reclosedev/requests-cache'
->>> session = CachedSession(expire_after=0.0001)
+>>> session = CachedSession(expire_after=1)
 >>> session.get(url)
->>> time.sleep(0.0001)
+>>> time.sleep(1)
 
 >>> # The cached response will still be used until the remote content actually changes
 >>> response = session.get(url)
->>> print(response.from_cache, response.is_expired)
-True, True
+>>> print(response.from_cache)
+True
 ```
 
 ## Cache-Control
 `Cache-Control` **request** headers will always be used if present. This is mainly useful if you are
-adding requests-cache to an existing application or library that already uses caching request headers.
+adding requests-cache to an existing application or library that already sends requests with cache
+headers.
 
 `Cache-Control` **response** headers are an opt-in feature. If enabled, these will take priority over
 any other `expire_after` values. See {ref}`precedence` for the full order of precedence.
@@ -44,6 +39,13 @@ To enable this behavior, use the `cache_control` option:
 ```
 
 ## Supported Headers
+Requests-cache implements the majority of private cache behaviors specified by the following RFCs,
+with some minor variations:
+* [RFC 2616](https://datatracker.ietf.org/doc/html/rfc2616)
+* [RFC 5861](https://datatracker.ietf.org/doc/html/rfc5861)
+* [RFC 7234](https://datatracker.ietf.org/doc/html/rfc7234)
+* [RFC 8246](https://datatracker.ietf.org/doc/html/rfc8246)
+
 The following headers are currently supported:
 
 **Request headers:**

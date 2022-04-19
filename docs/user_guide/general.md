@@ -37,7 +37,8 @@ clear out everything at once with {py:meth}`.BaseCache.clear`:
 (patching)=
 ## Patching
 In some situations, it may not be possible or convenient to manage your own session object. In those
-cases, you can use {py:func}`.install_cache` to add caching to all `requests` functions:
+cases, you can use {py:func}`.install_cache`. This adds fully transparent caching to all `requests`
+functions, without the need to modify any existing code:
 ```python
 >>> import requests
 >>> import requests_cache
