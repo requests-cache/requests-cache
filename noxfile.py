@@ -7,6 +7,7 @@ Notes:
 * All other commands: the current environment will be used instead of creating new ones
 * Run `nox -l` to see all available commands
 """
+from os import getenv
 from os.path import join
 from shutil import rmtree
 
@@ -57,11 +58,16 @@ def clean(session):
 @session(python=False, name='cov')
 def coverage(session):
     """Run tests and generate coverage report"""
-    cov_formats = session.posargs or DEFAULT_COVERAGE_FORMATS
-    cov_format_args = [f'--cov-report={f}' for f in cov_formats]
+    cmd = f'pytest {UNIT_TESTS} {INTEGRATION_TESTS} -rs {XDIST_ARGS} --cov'.split(' ')
 
-    cmd = f'pytest {UNIT_TESTS} {INTEGRATION_TESTS} -rs {XDIST_ARGS} --cov'
-    session.run(*cmd.split(' '), *cov_format_args)
+    # Add coverage formats
+    cov_formats = session.posargs or DEFAULT_COVERAGE_FORMATS
+    cmd += [f'--cov-report={f}' for f in cov_formats]
+
+    # Add verbose flag, if set by environment
+    if getenv('PYTEST_VERBOSE'):
+        cmd += ['--verbose']
+    session.run(*cmd)
 
 
 @session(python=False, name='stress')

@@ -19,6 +19,7 @@ on:
 
 env:
   LATEST_PY_VERSION: '3.10'
+  PYTEST_VERBOSE: 'true'
   STRESS_TEST_MULTIPLIER: 5
 
 jobs:
