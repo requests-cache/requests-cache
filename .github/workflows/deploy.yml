@@ -19,6 +19,7 @@ on:
 
 env:
   LATEST_PY_VERSION: '3.10'
+  PYTEST_VERBOSE: 'true'
   STRESS_TEST_MULTIPLIER: 5
 
 jobs:
@@ -28,7 +29,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.7]
-        requests-version: [2.22, 2.23, 2.24, 2.25, latest]
+        requests-version: [2.22, 2.23, 2.24, 2.25, 2.26, latest]
       fail-fast: false
     services:
       nginx:

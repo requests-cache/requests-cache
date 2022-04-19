@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "requests-cache"
 version = "0.10.0"
-description = "A transparent persistent cache for the requests library"
+description = "A persistent cache for the requests library"
 authors = ["Roman Haritonov"]
 maintainers = ["Jordan Cook"]
 license = "BSD-2-Clause"
@@ -9,8 +9,8 @@ readme = "README.md"
 documentation = "https://requests-cache.readthedocs.io"
 homepage = "https://github.com/reclosedev/requests-cache"
 repository = "https://github.com/reclosedev/requests-cache"
-keywords = ["requests", "cache", "http", "python-requests", "web", "performance", "sqlite", "redis",
-            "mongodb", "gridfs", "dynamodb"]
+keywords = ["requests", "python-requests", "cache", "http", "web", "performance",
+            "sqlite", "redis", "mongodb", "gridfs", "dynamodb"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -33,21 +33,16 @@ requests      = "^2.22"    # Needs no introduction
 urllib3       = ">=1.25.5" # Use a slightly newer version than required by requests (for bugfixes)
 attrs         = ">=21.2"   # For response data models
 cattrs        = ">=22.0"   # For response serialization
-platformdirs  = "^2.5"     # For options that use platform-specific user cache dirs
-url-normalize = "^1.4"     # For improved request matching
+platformdirs  = "^2.5"     # For features that use platform-specific system directories
+url-normalize = "^1.4"     # For more accurate request matching
 
 # Optional backend dependencies
 boto3                      = {optional=true, version="^1.15"}
 botocore                   = {optional=true, version="^1.18"}
-pymongo                    = [
-                                {optional=true, version=">=3,<4.1", python="<3.9"},
-                                {optional=true, version=">=3", python=">=3.9"},
-                             ]
-redis                      = [
-                                {optional=true, version=">=3,<4.2", python="<3.9"},
-                                {optional=true, version=">=3", python=">=3.9"},
-                             ]
-
+pymongo                    = [{optional=true, version=">=3,<4.1", python="<3.9"},
+                              {optional=true, version=">=3", python=">=3.9"}]
+redis                      = [{optional=true, version=">=3,<4.2", python="<3.9"},
+                              {optional=true, version=">=3", python=">=3.9"}]
 
 # Optional serialization dependencies
 bson                       = {optional=true, version=">=0.5"}

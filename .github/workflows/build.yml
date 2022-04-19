@@ -9,6 +9,7 @@ on:
   workflow_dispatch:
 env:
   LATEST_PY_VERSION: '3.10'
+  PYTEST_VERBOSE: 'true'
 
 jobs:
   # Run tests for each supported python version
