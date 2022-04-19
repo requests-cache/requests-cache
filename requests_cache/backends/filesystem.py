@@ -30,7 +30,7 @@ class FileCache(BaseCache):
     """
 
     def __init__(self, cache_name: AnyPath = 'http_cache', use_temp: bool = False, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(cache_name=str(cache_name), **kwargs)
         self.responses: FileDict = FileDict(cache_name, use_temp=use_temp, **kwargs)
         self.redirects: SQLiteDict = SQLiteDict(
             self.cache_dir / 'redirects.sqlite', 'redirects', **kwargs

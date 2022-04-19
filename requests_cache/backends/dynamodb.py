@@ -29,7 +29,7 @@ class DynamoDbCache(BaseCache):
     def __init__(
         self, table_name: str = 'http_cache', connection: ServiceResource = None, **kwargs
     ):
-        super().__init__(**kwargs)
+        super().__init__(cache_name=table_name, **kwargs)
         self.responses = DynamoDbDict(table_name, 'responses', connection=connection, **kwargs)
         self.redirects = DynamoDbDict(
             table_name, 'redirects', connection=self.responses.connection, **kwargs

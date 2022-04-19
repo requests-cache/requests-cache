@@ -6,6 +6,7 @@ from attr import define, field
 from requests import PreparedRequest, Response
 
 from .._utils import coalesce
+from ..models import RichMixin
 from . import (
     DO_NOT_CACHE,
     EXPIRE_IMMEDIATELY,
@@ -24,9 +25,8 @@ if TYPE_CHECKING:
 logger = getLogger(__name__)
 
 
-# TODO: Add custom __rich_repr__ to exclude default values to make logs cleaner (w/ RichHandler)
 @define
-class CacheActions:
+class CacheActions(RichMixin):
     """Translates cache settings and headers into specific actions to take for a given cache item.
      The resulting actions are then handled in :py:meth:`CachedSession.send`.
 
@@ -47,7 +47,7 @@ class CacheActions:
     """
 
     # Outputs
-    cache_key: str = field(default=None)
+    cache_key: str = field(default=None, repr=False)
     error_504: bool = field(default=False)
     expire_after: ExpirationTime = field(default=None)
     resend_request: bool = field(default=False)
@@ -119,7 +119,6 @@ class CacheActions:
         """
         return get_expiration_datetime(self.expire_after)
 
-    # TODO: Better name?
     def is_usable(self, cached_response: 'CachedResponse', error: bool = False):
         """Determine whether a given cached response is "fresh enough" to satisfy the request,
         based on min-fresh, max-stale, or stale-if-error (if an error has occured).

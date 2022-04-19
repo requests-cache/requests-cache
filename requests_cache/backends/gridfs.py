@@ -28,7 +28,7 @@ class GridFSCache(BaseCache):
     """
 
     def __init__(self, db_name: str, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(cache_name=db_name, **kwargs)
         self.responses = GridFSPickleDict(db_name, **kwargs)
         self.redirects = MongoDict(
             db_name, collection_name='redirects', connection=self.responses.connection, **kwargs
