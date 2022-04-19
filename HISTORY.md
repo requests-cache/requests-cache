@@ -24,6 +24,8 @@
 * MongoDB:
   * Store responses in plain (human-readable) document format instead of fully serialized binary
   * Add optional integration with MongoDB TTL to improve performance for removing expired responses
+* DynamoDB:
+  * Create default table in on-demand mode instead of provisioned
 * SQLite, Redis, MongoDB, and GridFS: Close open database connections when `CachedSession` is used as a contextmanager, or if `CachedSession.close()` is called
 
 **Type hints:**
@@ -34,7 +36,7 @@
   * `from_cache`
   * `is_expired`
 * `OriginalResponse.cache_key` and `expires` will be populated for any new response that was written to the cache
-* Add return type hints for all request wrapper methods (`CachedSession.get()`, `head()`, etc.)
+* Add request wrapper methods with return type hints for all HTTP methods (`CachedSession.get()`, `head()`, etc.)
 
 **Request Matching & Filtering:**
 * Add serializer name to cache keys to avoid errors due to switching serializers
