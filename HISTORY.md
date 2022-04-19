@@ -5,13 +5,16 @@
 
 **Expiration & Headers:**
 * Add support for `Cache-Control: only-if-cached`
+* Add support for `Cache-Control: min-fresh`
+* Add support for `Cache-Control: max-stale`
 * Revalidate for `Cache-Control: no-cache` request or response header
 * Revalidate for `Cache-Control: max-age=0, must-revalidate` response headers
 * Add `only_if_cached` option to `CachedSession.request()` and `send()` to return only cached results without sending real requests
 * Add `refresh` option to `CachedSession.request()` and `send()` to revalidate with the server before using a cached response
 * Add `force_refresh` option to `CachedSession.request()` and `send()` to awlays make and cache a new request regardless of existing cache contents
 * Make behavior for `expire_after=0` consistent with `Cache-Control: max-age=0`: if the response has a validator, save it to the cache but revalidate on use.
-* The constant `requests_cache.DO_NOT_CACHE` may be used to completely disable caching for a request
+  * The constant `requests_cache.DO_NOT_CACHE` may be used to completely disable caching for a request
+* Make behavior for `stale_if_error` partially consistent with `Cache-Control: stale-if-error`: Add support for time values (int, timedelta, etc.) in addition to `True/False`
 
 **Backends:**
 * SQLite:

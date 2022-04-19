@@ -200,6 +200,61 @@ def test_update_from_cached_response__ignored():
     assert actions._validation_headers == {}
 
 
+@pytest.mark.parametrize('max_stale, usable', [(5, False), (15, True)])
+def test_is_usable__max_stale(max_stale, usable):
+    """For a response that expired 10 seconds ago, it may be either accepted or rejected based on
+    max-stale
+    """
+    request = Request(
+        url='https://img.site.com/base/img.jpg',
+        headers={'Cache-Control': f'max-stale={max_stale}'},
+    )
+    actions = CacheActions.from_request('key', request)
+    cached_response = CachedResponse(
+        expires=datetime.utcnow() - timedelta(seconds=10),
+    )
+    assert actions.is_usable(cached_response) is usable
+
+
+@pytest.mark.parametrize('min_fresh, usable', [(5, True), (15, False)])
+def test_is_usable__min_fresh(min_fresh, usable):
+    """For a response that expires in 10 seconds, it may be either accepted or rejected based on
+    min-fresh
+    """
+    request = Request(
+        url='https://img.site.com/base/img.jpg',
+        headers={'Cache-Control': f'min-fresh={min_fresh}'},
+    )
+    actions = CacheActions.from_request('key', request)
+    cached_response = CachedResponse(
+        expires=datetime.utcnow() + timedelta(seconds=10),
+    )
+    assert actions.is_usable(cached_response) is usable
+
+
+@pytest.mark.parametrize(
+    'stale_if_error, error, usable',
+    [
+        (5, True, False),
+        (15, True, True),
+        (15, False, False),
+    ],
+)
+def test_is_usable__stale_if_error(stale_if_error, error, usable):
+    """For a response that expired 10 seconds ago, if an error occured while refreshing, it may be
+    either accepted or rejected based on stale-if-error
+    """
+    request = Request(
+        url='https://img.site.com/base/img.jpg',
+        headers={'Cache-Control': f'stale-if-error={stale_if_error}'},
+    )
+    actions = CacheActions.from_request('key', request)
+    cached_response = CachedResponse(
+        expires=datetime.utcnow() - timedelta(seconds=10),
+    )
+    assert actions.is_usable(cached_response, error=error) is usable
+
+
 @pytest.mark.parametrize(
     'headers, expected_expiration',
     [

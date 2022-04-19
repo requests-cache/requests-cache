@@ -55,7 +55,7 @@ class CacheMixin(MIXIN_BASE):
         match_headers: Union[Iterable[str], bool] = False,
         filter_fn: FilterCallback = None,
         key_fn: KeyCallback = None,
-        stale_if_error: bool = False,
+        stale_if_error: Union[bool, int] = False,
         **kwargs,
     ):
         self.cache = init_backend(cache_name, backend, serializer=serializer, **kwargs)
@@ -256,17 +256,16 @@ class CacheMixin(MIXIN_BASE):
 
     def _handle_error(self, cached_response: CachedResponse, actions: CacheActions) -> AnyResponse:
         """Handle a request error based on settings:
-        * Default behavior: delete the stale cache item and re-raise the error
+        * Default behavior: re-raise the error
         * stale-if-error: Ignore the error and and return the stale cache item
         """
-        if self.settings.stale_if_error:
+        if actions.is_usable(cached_response, error=True):
             logger.warning(
                 f'Request for URL {cached_response.request.url} failed; using cached response',
                 exc_info=True,
             )
             return cached_response
         else:
-            self.cache.delete(actions.cache_key)
             raise
 
     @contextmanager
@@ -331,7 +330,8 @@ class CachedSession(CacheMixin, OriginalSession):
             a list of specific headers to match
         ignored_parameters: Request paramters, headers, and/or JSON body params to exclude from both
             request matching and cached request data
-        stale_if_error: Return stale cache data if a new request raises an exception
+        stale_if_error: Return stale cache data if a new request raises an exception. Optionally
+            accepts a time value representing maximum staleness to accept.
         filter_fn: Response filtering function that indicates whether or not a given response should
             be cached. See :ref:`custom-filtering` for details.
         key_fn: Request matching function for generating custom cache keys. See

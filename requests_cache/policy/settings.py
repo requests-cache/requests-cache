@@ -14,6 +14,7 @@ DEFAULT_STATUS_CODES = (200,)
 DEFAULT_IGNORED_PARAMS = ('Authorization', 'X-API-KEY', 'access_token', 'api_key')
 
 
+# TODO: Add custom __rich_repr__ to exclude default values to make logs cleaner (w/ RichHandler)
 @define
 class CacheSettings:
     """Class used internally to store settings that affect caching behavior. This allows settings
@@ -32,7 +33,7 @@ class CacheSettings:
     key_fn: KeyCallback = field(default=None)
     match_headers: Union[Iterable[str], bool] = field(default=False)
     only_if_cached: bool = field(default=False)
-    stale_if_error: bool = field(default=False)
+    stale_if_error: Union[bool, ExpirationTime] = field(default=False)
     urls_expire_after: Dict[str, ExpirationTime] = field(factory=dict)
 
     @classmethod
