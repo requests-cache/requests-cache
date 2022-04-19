@@ -39,7 +39,7 @@ url-normalize = "^1.4"     # For more accurate request matching
 # Optional backend dependencies
 boto3                      = {optional=true, version="^1.15"}
 botocore                   = {optional=true, version="^1.18"}
-pymongo                    = [{optional=true, version=">=3,<4.1", python="<3.9"},
+pymongo                    = [{optional=true, version=">=3,<4.2", python="<3.9"},
                               {optional=true, version=">=3", python=">=3.9"}]
 redis                      = [{optional=true, version=">=3,<4.2", python="<3.9"},
                               {optional=true, version=">=3", python=">=3.9"}]
