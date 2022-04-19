@@ -5,12 +5,12 @@ from attr import define, field
 from requests.models import CaseInsensitiveDict
 
 from .._utils import get_valid_kwargs, try_int
+from ..models import RichMixin
 from . import HeaderDict, get_expiration_seconds
 
 
-# TODO: Add custom __rich_repr__ to exclude default values to make logs cleaner (w/ RichHandler)
 @define
-class CacheDirectives:
+class CacheDirectives(RichMixin):
     """Parses Cache-Control directives and other relevant cache settings from either request or
     response headers
     """

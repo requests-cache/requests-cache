@@ -6,12 +6,13 @@ from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
 
 from ..cache_keys import encode
+from . import RichMixin
 
 logger = getLogger(__name__)
 
 
 @define(auto_attribs=False)
-class CachedRequest:
+class CachedRequest(RichMixin):
     """A serializable dataclass that emulates :py:class:`requests.PreparedResponse`"""
 
     body: bytes = field(default=None, converter=encode)

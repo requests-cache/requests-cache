@@ -12,7 +12,7 @@ from requests.structures import CaseInsensitiveDict
 from urllib3._collections import HTTPHeaderDict
 
 from ..policy.expiration import ExpirationTime, get_expiration_datetime
-from . import CachedHTTPResponse, CachedRequest
+from . import CachedHTTPResponse, CachedRequest, RichMixin
 
 if TYPE_CHECKING:
     from ..policy.actions import CacheActions
@@ -57,7 +57,7 @@ class OriginalResponse(BaseResponse):
 
 
 @define(auto_attribs=False, slots=False)
-class CachedResponse(BaseResponse):
+class CachedResponse(BaseResponse, RichMixin):
     """A class that emulates :py:class:`requests.Response`, optimized for serialization"""
 
     _content: bytes = field(default=None)

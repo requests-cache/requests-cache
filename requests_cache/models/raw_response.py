@@ -10,11 +10,13 @@ from urllib3.response import (  # type: ignore  # import location false positive
     is_fp_closed,
 )
 
+from . import RichMixin
+
 logger = getLogger(__name__)
 
 
 @define(auto_attribs=False, slots=False)
-class CachedHTTPResponse(HTTPResponse):
+class CachedHTTPResponse(HTTPResponse, RichMixin):
     """A serializable dataclass that emulates :py:class:`~urllib3.response.HTTPResponse`.
     Supports streaming requests and generator usage.
 
