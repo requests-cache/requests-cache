@@ -60,9 +60,24 @@ Here are the details you will need:
 ```
 :::
 
-Then deploy with:
+To deploy with the [AWS CLI](https://aws.amazon.com/cli):
 ```
 aws cloudformation deploy \
     --stack-name requests-cache \
     --template-file examples/cloudformation.yml
+```
+
+## Expiration
+DynamoDB natively supports TTL on a per-item basis, and can automatically remove expired responses from
+the cache. This will be set by by default, according to normal {ref}`expiration settings <expiration>`.
+
+```{warning}
+DynamoDB does not remove expired items immediately. See
+[How It Works: DynamoDB Time to Live](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/howitworks-ttl.html)
+for more details.
+```
+
+If needed, you can disable this behavior with the `ttl` argument:
+```python
+>>> backend = DynamoDbCache(ttl=False)
 ```

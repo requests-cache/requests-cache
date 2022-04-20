@@ -25,7 +25,16 @@ from timeout_decorator import timeout
 
 from requests_cache import ALL_METHODS, CachedSession, install_cache, uninstall_cache
 
-CACHE_NAME = 'pytest_cache'
+# Configure logging to show log output when tests fail (or with pytest -s)
+basicConfig(
+    level='INFO',
+    format='%(message)s',
+    datefmt='[%m-%d %H:%M:%S]',
+    handlers=[RichHandler(rich_tracebacks=True, markup=True)],
+)
+# getLogger('requests_cache').setLevel('DEBUG')
+logger = getLogger(__name__)
+
 
 # Allow running longer stress tests with an environment variable
 STRESS_TEST_MULTIPLIER = int(os.getenv('STRESS_TEST_MULTIPLIER', '1'))
@@ -49,7 +58,6 @@ HTTPBIN_FORMATS = [
     'robots.txt',
     'xml',
 ]
-
 HTTPDATE_STR = 'Fri, 16 APR 2021 21:13:00 GMT'
 HTTPDATE_DATETIME = datetime(2021, 4, 16, 21, 13)
 EXPIRED_DT = datetime.now() - timedelta(1)
@@ -66,27 +74,10 @@ MOCKED_URL_404 = 'http+mock://requests-cache.com/nonexistent'
 MOCKED_URL_500 = 'http+mock://requests-cache.com/answer?q=this-statement-is-false'
 MOCK_PROTOCOLS = ['mock://', 'http+mock://', 'https+mock://']
 
+CACHE_NAME = 'pytest_cache'
 PROJECT_DIR = Path(__file__).parent.parent.absolute()
 SAMPLE_DATA_DIR = PROJECT_DIR / 'tests' / 'sample_data'
 SAMPLE_CACHE_FILES = list(SAMPLE_DATA_DIR.glob('sample.db.*'))
-
-AWS_OPTIONS = {
-    'endpoint_url': 'http://localhost:8000',
-    'region_name': 'us-east-1',
-    'aws_access_key_id': 'placeholder',
-    'aws_secret_access_key': 'placeholder',
-}
-
-
-# Configure logging to show log output when tests fail (or with pytest -s)
-basicConfig(
-    level='INFO',
-    format='%(message)s',
-    datefmt='[%m-%d %H:%M:%S]',
-    handlers=[RichHandler(rich_tracebacks=True, markup=True)],
-)
-# getLogger('requests_cache').setLevel('DEBUG')
-logger = getLogger(__name__)
 
 
 def httpbin(path):

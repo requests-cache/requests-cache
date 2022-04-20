@@ -28,8 +28,11 @@
 * MongoDB:
   * Store responses in plain (human-readable) document format instead of fully serialized binary
   * Add optional integration with MongoDB TTL to improve performance for removing expired responses
+    * Disabled by default. See 'Backends: MongoDB' docs for details.
 * DynamoDB:
   * Create default table in on-demand mode instead of provisioned
+  * Add optional integration with DynamoDB TTL to improve performance for removing expired responses
+    * This is enabled by default, but may be disabled
 * SQLite, Redis, MongoDB, and GridFS: Close open database connections when `CachedSession` is used as a contextmanager, or if `CachedSession.close()` is called
 
 **Type hints:**
@@ -98,7 +101,8 @@ Internal module changes:
 
 **Backends:**
 * Filesystem and SQLite backends: Add better error message if parent path exists but isn't a directory
-* Redis: Improve performance by using native Redis TTL for cache expiration
+* Redis: Add optional integration with Redis TTL to improve performance for removing expired responses
+  * This is enabled by default, but may be disabled
 
 **Other features:**
 * Support `expire_after` param for `CachedSession.send()`

@@ -18,8 +18,9 @@ class BaseStorageTest:
     num_instances: int = 10  # Max number of cache instances to test
 
     def init_cache(self, cache_name=CACHE_NAME, index=0, clear=True, **kwargs):
+        kwargs = {**self.init_kwargs, **kwargs}
         kwargs.setdefault('serializer', 'pickle')
-        cache = self.storage_class(cache_name, f'table_{index}', **self.init_kwargs, **kwargs)
+        cache = self.storage_class(cache_name, f'table_{index}', **kwargs)
         if clear:
             cache.clear()
         return cache
@@ -98,7 +99,7 @@ class BaseStorageTest:
 
     def test_picklable_dict(self):
         if self.picklable:
-            cache = self.init_cache()
+            cache = self.init_cache(serializer='pickle')
             original_obj = BasicDataclass(
                 bool_attr=True,
                 datetime_attr=datetime(2022, 2, 2),
