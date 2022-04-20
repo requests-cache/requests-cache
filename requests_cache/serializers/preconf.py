@@ -4,7 +4,7 @@
 required for specific serialization formats.
 
 This module wraps those converters as serializer :py:class:`.Stage` objects. These are then used as
-a stage in a :py:class:`.SerializerPipeline`, which runs after the base converter and before the
+stages in a :py:class:`.SerializerPipeline`, which runs after the base converter and before the
 format's ``dumps()`` (or equivalent) method.
 
 For any optional libraries that aren't installed, the corresponding serializer will be a placeholder
@@ -14,11 +14,15 @@ class that raises an ``ImportError`` at initialization time instead of at import
    :nosignatures:
 """
 import pickle
+from datetime import timedelta
+from decimal import Decimal
 from functools import partial
 from importlib import import_module
 
+from cattr import GenConverter
+
 from .._utils import get_placeholder_class
-from .cattrs import CattrStage
+from .cattrs import CattrStage, make_decimal_timedelta_converter
 from .pipeline import SerializerPipeline, Stage
 
 
@@ -144,3 +148,13 @@ try:
     )  #: Complete YAML serializer
 except ImportError as e:
     yaml_serializer = get_placeholder_class(e)
+
+
+dynamodb_preconf_stage = CattrStage(
+    factory=make_decimal_timedelta_converter, convert_timedelta=False
+)
+dynamodb_document_serializer = SerializerPipeline(
+    [dynamodb_preconf_stage],
+    name='dynamodb_document',
+    is_binary=False,
+)

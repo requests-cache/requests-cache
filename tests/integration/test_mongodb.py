@@ -13,7 +13,7 @@ from requests_cache.backends import (
     GridFSPickleDict,
     MongoCache,
     MongoDict,
-    MongoPickleDict,
+    MongoDocumentDict,
 )
 from requests_cache.policy.expiration import NEVER_EXPIRE
 from requests_cache.serializers import bson_document_serializer
@@ -41,7 +41,7 @@ class TestMongoDict(BaseStorageTest):
 
 
 class TestMongoPickleDict(BaseStorageTest):
-    storage_class = MongoPickleDict
+    storage_class = MongoDocumentDict
     picklable = True
 
     @patch('requests_cache.backends.mongodb.MongoClient')
@@ -57,7 +57,6 @@ class TestMongoPickleDict(BaseStorageTest):
 
 class TestMongoCache(BaseCacheTest):
     backend_class = MongoCache
-    document_support = True
 
     init_kwargs = {'serializer': None}  # Use class default serializer instead of pickle
 
@@ -146,4 +145,3 @@ class TestGridFSPickleDict(BaseStorageTest):
 
 class TestGridFSCache(BaseCacheTest):
     backend_class = GridFSCache
-    document_support = False

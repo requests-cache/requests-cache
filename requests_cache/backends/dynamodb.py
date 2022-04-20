@@ -12,6 +12,7 @@ from boto3.resources.base import ServiceResource
 from botocore.exceptions import ClientError
 
 from .._utils import get_valid_kwargs
+from ..serializers import dynamodb_document_serializer
 from . import BaseCache, BaseStorage
 
 
@@ -30,18 +31,16 @@ class DynamoDbCache(BaseCache):
         self, table_name: str = 'http_cache', connection: ServiceResource = None, **kwargs
     ):
         super().__init__(cache_name=table_name, **kwargs)
-        self.responses = DynamoDbDict(table_name, 'responses', connection=connection, **kwargs)
+        self.responses = DynamoDocumentDict(
+            table_name, 'responses', connection=connection, **kwargs
+        )
         self.redirects = DynamoDbDict(
             table_name, 'redirects', connection=self.responses.connection, **kwargs
         )
 
 
 class DynamoDbDict(BaseStorage):
-    """A dictionary-like interface for DynamoDB key-value store
-
-    **Notes:**
-        * The actual table name on the Dynamodb server will be ``namespace:table_name``
-        * In order to deal with how DynamoDB stores data, all values are serialized.
+    """A dictionary-like interface for DynamoDB table
 
     Args:
         table_name: DynamoDB table name
@@ -54,7 +53,7 @@ class DynamoDbDict(BaseStorage):
     def __init__(
         self,
         table_name: str,
-        namespace: str = 'http_cache',
+        namespace: str,
         connection: ServiceResource = None,
         **kwargs,
     ):
@@ -111,12 +110,10 @@ class DynamoDbDict(BaseStorage):
 
         # Depending on the serializer, the value may be either a string or Binary object
         raw_value = result['Item']['value']
-        return self.serializer.loads(
-            raw_value.value if isinstance(raw_value, Binary) else raw_value
-        )
+        return raw_value.value if isinstance(raw_value, Binary) else raw_value
 
     def __setitem__(self, key, value):
-        item = {**self.composite_key(key), 'value': self.serializer.dumps(value)}
+        item = {**self.composite_key(key), 'value': value}
         self._table.put_item(Item=item)
 
     def __delitem__(self, key):
@@ -145,3 +142,19 @@ class DynamoDbDict(BaseStorage):
 
     def clear(self):
         self.bulk_delete((k for k in self))
+
+
+class DynamoDocumentDict(DynamoDbDict):
+    """Same as :class:`DynamoDbDict`, but serializes values before saving.
+
+    By default, responses are only partially serialized into a DynamoDB-compatible document format.
+    """
+
+    def __init__(self, *args, serializer=None, **kwargs):
+        super().__init__(*args, serializer=serializer or dynamodb_document_serializer, **kwargs)
+
+    def __getitem__(self, key):
+        return self.serializer.loads(super().__getitem__(key))
+
+    def __setitem__(self, key, item):
+        super().__setitem__(key, self.serializer.dumps(item))

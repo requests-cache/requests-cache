@@ -15,17 +15,17 @@ logger = getLogger(__name__)
 
 # Import all backend classes for which dependencies are installed
 try:
-    from .dynamodb import DynamoDbCache, DynamoDbDict
+    from .dynamodb import DynamoDbCache, DynamoDbDict, DynamoDocumentDict
 except ImportError as e:
-    DynamoDbCache = DynamoDbDict = get_placeholder_class(e)  # type: ignore
+    DynamoDbCache = DynamoDbDict = DynamoDocumentDict = get_placeholder_class(e)  # type: ignore
 try:
     from .gridfs import GridFSCache, GridFSPickleDict
 except ImportError as e:
     GridFSCache = GridFSPickleDict = get_placeholder_class(e)  # type: ignore
 try:
-    from .mongodb import MongoCache, MongoDict, MongoPickleDict
+    from .mongodb import MongoCache, MongoDict, MongoDocumentDict
 except ImportError as e:
-    MongoCache = MongoDict = MongoPickleDict = get_placeholder_class(e)  # type: ignore
+    MongoCache = MongoDict = MongoDocumentDict = get_placeholder_class(e)  # type: ignore
 try:
     from .redis import RedisCache, RedisDict, RedisHashDict
 except ImportError as e:

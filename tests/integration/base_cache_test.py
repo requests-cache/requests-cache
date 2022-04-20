@@ -21,7 +21,6 @@ from requests_cache.serializers import (
     SERIALIZERS,
     SerializerPipeline,
     Stage,
-    dict_serializer,
     safe_pickle_serializer,
 )
 from tests.conftest import (
@@ -56,7 +55,6 @@ class BaseCacheTest:
     """Base class for testing cache backend classes"""
 
     backend_class: Type[BaseCache] = None
-    document_support: bool = False
     init_kwargs: Dict = {}
 
     def init_session(self, cache_name=CACHE_NAME, clear=True, **kwargs) -> CachedSession:
@@ -83,8 +81,6 @@ class BaseCacheTest:
         """
         if not isinstance(serializer, (SerializerPipeline, Stage)):
             pytest.skip(f'Dependencies not installed for {serializer}')
-        if serializer is dict_serializer and not self.document_support:
-            return
 
         url = httpbin(method.lower())
         session = self.init_session(serializer=serializer)
@@ -98,8 +94,6 @@ class BaseCacheTest:
         """Test all relevant combinations of (response formats X serializers)"""
         if not isinstance(serializer, SerializerPipeline):
             pytest.skip(f'Dependencies not installed for {serializer}')
-        if serializer is dict_serializer and not self.document_support:
-            return
 
         session = self.init_session(serializer=serializer)
         # Workaround for this issue: https://github.com/kevin1024/pytest-httpbin/issues/60
