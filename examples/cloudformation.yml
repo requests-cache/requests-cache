@@ -1,0 +1,32 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: An example of creating a DynamoDB table to use as a requests-cache backend
+
+Parameters:
+  CacheTableName:
+    Type: String
+    Default: http_cache
+    Description: >
+      An alternate DynamoDB table name to use. If provided, this must match the
+      table_name parameter for DynamoDbCache.
+
+Resources:
+  DynamoDBRequestCache:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref CacheTableName
+      AttributeDefinitions:
+        - AttributeName: namespace
+          AttributeType: S
+        - AttributeName: key
+          AttributeType: S
+      KeySchema:
+        - AttributeName: namespace
+          KeyType: HASH
+        - AttributeName: key
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+      # Uncomment for provisioned throughput instead of on-demand
+      # BillingMode: PROVISIONED
+      # ProvisionedThroughput:
+      #     WriteCapacityUnits: 2
+      #     ReadCapacityUnits: 2

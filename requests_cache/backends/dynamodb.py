@@ -53,11 +53,9 @@ class DynamoDbDict(BaseStorage):
 
     def __init__(
         self,
-        table_name,
-        namespace='http_cache',
-        connection=None,
-        read_capacity_units=1,
-        write_capacity_units=1,
+        table_name: str,
+        namespace: str = 'http_cache',
+        connection: ServiceResource = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -65,7 +63,12 @@ class DynamoDbDict(BaseStorage):
         self.connection = connection or boto3.resource('dynamodb', **connection_kwargs)
         self.namespace = namespace
 
-        # TODO: Create default table as on-demand instead of provisioned?
+        self._create_table(table_name)
+        self._table = self.connection.Table(table_name)
+        self._table.wait_until_exists()
+
+    def _create_table(self, table_name: str):
+        """Create a default table if one does not already exist"""
         try:
             self.connection.create_table(
                 AttributeDefinitions=[
@@ -83,15 +86,10 @@ class DynamoDbDict(BaseStorage):
                     {'AttributeName': 'namespace', 'KeyType': 'HASH'},
                     {'AttributeName': 'key', 'KeyType': 'RANGE'},
                 ],
-                ProvisionedThroughput={
-                    'ReadCapacityUnits': read_capacity_units,
-                    'WriteCapacityUnits': write_capacity_units,
-                },
+                BillingMode="PAY_PER_REQUEST",
             )
         except ClientError:
             pass
-        self._table = self.connection.Table(table_name)
-        self._table.wait_until_exists()
 
     def composite_key(self, key: str) -> Dict[str, str]:
         return {'namespace': self.namespace, 'key': str(key)}
