@@ -36,7 +36,50 @@ This backend accepts any keyword arguments for {py:meth}`boto3.session.Session.r
 >>> session = CachedSession(backend=backend)
 ```
 
-## Table
+## Viewing Responses
+By default, responses are only partially serialized so they can be saved as plain DynamoDB
+documents. Response data can then be easily viewed via the
+[AWS Console](https://aws.amazon.com/console/).
+
+Here is an example of responses listed under **DynamoDB > Tables > Explore Items:**
+:::{admonition} Screenshot
+:class: toggle
+```{image} ../../_static/dynamodb_items.png
+```
+:::
+
+And here is an example response:
+:::{admonition} Screenshot
+:class: toggle
+```{image} ../../_static/dynamodb_response.png
+```
+:::
+
+It is also possible query these responses with the [AWS CLI](https://aws.amazon.com/cli), for example:
+```bash
+aws dynamodb query \
+    --table-name http_cache \
+    --key-condition-expression "namespace = :n1" \
+    --expression-attribute-values '{":n1": {"S": "responses"}}' \
+    > responses.json
+```
+
+## Expiration
+DynamoDB natively supports TTL on a per-item basis, and can automatically remove expired responses from
+the cache. This will be set by by default, according to normal {ref}`expiration settings <expiration>`.
+
+```{warning}
+DynamoDB does not remove expired items immediately. See
+[How It Works: DynamoDB Time to Live](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/howitworks-ttl.html)
+for more details.
+```
+
+If needed, you can disable this behavior with the `ttl` argument:
+```python
+>>> backend = DynamoDbCache(ttl=False)
+```
+
+## Creating a Table
 A table will be automatically created if one doesn't already exist. This is convienient if you just
 want to quickly test out DynamoDB as a cache backend, but in a production environment you will
 likely want to create the tables yourself, for example with
@@ -65,19 +108,4 @@ To deploy with the [AWS CLI](https://aws.amazon.com/cli):
 aws cloudformation deploy \
     --stack-name requests-cache \
     --template-file examples/cloudformation.yml
-```
-
-## Expiration
-DynamoDB natively supports TTL on a per-item basis, and can automatically remove expired responses from
-the cache. This will be set by by default, according to normal {ref}`expiration settings <expiration>`.
-
-```{warning}
-DynamoDB does not remove expired items immediately. See
-[How It Works: DynamoDB Time to Live](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/howitworks-ttl.html)
-for more details.
-```
-
-If needed, you can disable this behavior with the `ttl` argument:
-```python
->>> backend = DynamoDbCache(ttl=False)
 ```

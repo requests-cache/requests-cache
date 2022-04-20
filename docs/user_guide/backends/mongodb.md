@@ -33,19 +33,16 @@ This backend accepts any keyword arguments for {py:class}`pymongo.mongo_client.M
 ```
 
 ## Viewing Responses
-Unlike most of the other backends, response data can be easily viewed via the
+By default, responses are only partially serialized so they can be saved as plain MongoDB documents.
+Response data can be easily viewed via the
 [MongoDB shell](https://www.mongodb.com/docs/mongodb-shell/#mongodb-binary-bin.mongosh),
-[Compass](https://www.mongodb.com/products/compass), or any other interface for MongoDB. This is
-possible because its internal document format ([BSON](https://www.mongodb.com/json-and-bson))
-supports all the types needed to store a response as a plain document rather than a fully serialized
-blob.
+[Compass](https://www.mongodb.com/products/compass), or any other interface for MongoDB.
 
 Here is an example response viewed in
 [MongoDB for VSCode](https://code.visualstudio.com/docs/azure/mongodb):
 
 :::{admonition} Screenshot
 :class: toggle
-
 ```{image} ../../_static/mongodb_vscode.png
 ```
 :::

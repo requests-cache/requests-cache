@@ -45,7 +45,6 @@ class DynamoDbCache(BaseCache):
         )
 
 
-# TODO: Add screenshot of viewing responses in AWS console
 class DynamoDbDict(BaseStorage):
     """A dictionary-like interface for DynamoDB table
 
