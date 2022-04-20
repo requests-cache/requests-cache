@@ -28,6 +28,12 @@ def test_read():
     assert raw._fp.closed is True
 
 
+def test_read__always_decode():
+    """read() with decode_content=False is not supported"""
+    raw = CachedHTTPResponse(body=b'mock response', headers={'Content-Encoding': 'gzip'})
+    assert raw.read(decode_content=False) == b'mock response'
+
+
 def test_close():
     raw = CachedHTTPResponse(body=b'mock response')
     raw.close()

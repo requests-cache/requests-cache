@@ -45,9 +45,6 @@ def get_placeholder_class(original_exception: Exception = None):
         def __init__(self, *args, **kwargs):
             _log_error()
 
-        def __getattr__(self, *args, **kwargs):
-            _log_error()
-
         def dumps(self, *args, **kwargs):
             _log_error()
 
