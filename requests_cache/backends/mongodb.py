@@ -30,7 +30,7 @@ class MongoCache(BaseCache):
 
     def __init__(self, db_name: str = 'http_cache', connection: MongoClient = None, **kwargs):
         super().__init__(cache_name=db_name, **kwargs)
-        self.responses: MongoDict = MongoPickleDict(
+        self.responses: MongoDict = MongoDocumentDict(
             db_name,
             collection_name='responses',
             connection=connection,
@@ -140,10 +140,10 @@ class MongoDict(BaseStorage):
         self.connection.close()
 
 
-class MongoPickleDict(MongoDict):
+class MongoDocumentDict(MongoDict):
     """Same as :class:`MongoDict`, but serializes values before saving.
 
-    By default, responses are only partially serialized into a MongoDB-compatible document mapping.
+    By default, responses are only partially serialized into a MongoDB-compatible document format.
     """
 
     def __init__(self, *args, serializer=None, **kwargs):

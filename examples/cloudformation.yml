@@ -24,9 +24,15 @@ Resources:
           KeyType: HASH
         - AttributeName: key
           KeyType: RANGE
-      BillingMode: PAY_PER_REQUEST
-      # Uncomment for provisioned throughput instead of on-demand
-      # BillingMode: PROVISIONED
-      # ProvisionedThroughput:
-      #     WriteCapacityUnits: 2
-      #     ReadCapacityUnits: 2
+      # BillingMode: PAY_PER_REQUEST
+
+      # Optional: Use provisioned throughput instead of on-demand
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+          WriteCapacityUnits: 2
+          ReadCapacityUnits: 2
+
+      # Optional: Enable DynamoDB's TTL feature
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true

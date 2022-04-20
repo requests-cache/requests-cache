@@ -4,6 +4,7 @@
    :classes-only:
    :nosignatures:
 """
+from time import time
 from typing import Dict, Iterable
 
 import boto3
@@ -12,6 +13,7 @@ from boto3.resources.base import ServiceResource
 from botocore.exceptions import ClientError
 
 from .._utils import get_valid_kwargs
+from ..serializers import dynamodb_document_serializer
 from . import BaseCache, BaseStorage
 
 
@@ -23,38 +25,43 @@ class DynamoDbCache(BaseCache):
         namespace: Name of DynamoDB hash map
         connection: :boto3:`DynamoDB Resource <services/dynamodb.html#DynamoDB.ServiceResource>`
             object to use instead of creating a new one
+        ttl: Use DynamoDB TTL to automatically remove expired items
         kwargs: Additional keyword arguments for :py:meth:`~boto3.session.Session.resource`
     """
 
     def __init__(
-        self, table_name: str = 'http_cache', connection: ServiceResource = None, **kwargs
+        self,
+        table_name: str = 'http_cache',
+        ttl: bool = True,
+        connection: ServiceResource = None,
+        **kwargs,
     ):
         super().__init__(cache_name=table_name, **kwargs)
-        self.responses = DynamoDbDict(table_name, 'responses', connection=connection, **kwargs)
+        self.responses = DynamoDbDocumentDict(
+            table_name, 'responses', ttl=ttl, connection=connection, **kwargs
+        )
         self.redirects = DynamoDbDict(
-            table_name, 'redirects', connection=self.responses.connection, **kwargs
+            table_name, 'redirects', ttl=False, connection=self.responses.connection, **kwargs
         )
 
 
 class DynamoDbDict(BaseStorage):
-    """A dictionary-like interface for DynamoDB key-value store
-
-    **Notes:**
-        * The actual table name on the Dynamodb server will be ``namespace:table_name``
-        * In order to deal with how DynamoDB stores data, all values are serialized.
+    """A dictionary-like interface for DynamoDB table
 
     Args:
         table_name: DynamoDB table name
         namespace: Name of DynamoDB hash map
         connection: :boto3:`DynamoDB Resource <services/dynamodb.html#DynamoDB.ServiceResource>`
             object to use instead of creating a new one
+        ttl: Use DynamoDB TTL to automatically remove expired items
         kwargs: Additional keyword arguments for :py:meth:`~boto3.session.Session.resource`
     """
 
     def __init__(
         self,
         table_name: str,
-        namespace: str = 'http_cache',
+        namespace: str,
+        ttl: bool = True,
         connection: ServiceResource = None,
         **kwargs,
     ):
@@ -62,36 +69,48 @@ class DynamoDbDict(BaseStorage):
         connection_kwargs = get_valid_kwargs(boto3.Session, kwargs, extras=['endpoint_url'])
         self.connection = connection or boto3.resource('dynamodb', **connection_kwargs)
         self.namespace = namespace
+        self.table_name = table_name
+        self.ttl = ttl
 
-        self._create_table(table_name)
-        self._table = self.connection.Table(table_name)
-        self._table.wait_until_exists()
+        self._table = self.connection.Table(self.table_name)
+        self._create_table()
+        if ttl:
+            self._enable_ttl()
 
-    def _create_table(self, table_name: str):
+    def _create_table(self):
         """Create a default table if one does not already exist"""
         try:
             self.connection.create_table(
                 AttributeDefinitions=[
-                    {
-                        'AttributeName': 'namespace',
-                        'AttributeType': 'S',
-                    },
-                    {
-                        'AttributeName': 'key',
-                        'AttributeType': 'S',
-                    },
+                    {'AttributeName': 'namespace', 'AttributeType': 'S'},
+                    {'AttributeName': 'key', 'AttributeType': 'S'},
                 ],
-                TableName=table_name,
+                TableName=self.table_name,
                 KeySchema=[
                     {'AttributeName': 'namespace', 'KeyType': 'HASH'},
                     {'AttributeName': 'key', 'KeyType': 'RANGE'},
                 ],
-                BillingMode="PAY_PER_REQUEST",
+                BillingMode='PAY_PER_REQUEST',
             )
-        except ClientError:
-            pass
+            self._table.wait_until_exists()
+        # Ignore error if table already exists
+        except ClientError as e:
+            if e.response['Error']['Code'] != 'ResourceInUseException':
+                raise
 
-    def composite_key(self, key: str) -> Dict[str, str]:
+    def _enable_ttl(self):
+        """Enable TTL, if not already enabled"""
+        try:
+            self.connection.meta.client.update_time_to_live(
+                TableName=self.table_name,
+                TimeToLiveSpecification={'AttributeName': 'ttl', 'Enabled': True},
+            )
+        # Ignore error if TTL is already enabled
+        except ClientError as e:
+            if e.response['Error']['Code'] != 'ValidationException':
+                raise
+
+    def _composite_key(self, key: str) -> Dict[str, str]:
         return {'namespace': self.namespace, 'key': str(key)}
 
     def _scan(self):
@@ -105,22 +124,25 @@ class DynamoDbDict(BaseStorage):
         )
 
     def __getitem__(self, key):
-        result = self._table.get_item(Key=self.composite_key(key))
+        result = self._table.get_item(Key=self._composite_key(key))
         if 'Item' not in result:
             raise KeyError
 
-        # Depending on the serializer, the value may be either a string or Binary object
+        # With a custom serializer, the value may be a Binary object
         raw_value = result['Item']['value']
-        return self.serializer.loads(
-            raw_value.value if isinstance(raw_value, Binary) else raw_value
-        )
+        return raw_value.value if isinstance(raw_value, Binary) else raw_value
 
     def __setitem__(self, key, value):
-        item = {**self.composite_key(key), 'value': self.serializer.dumps(value)}
+        item = {**self._composite_key(key), 'value': value}
+
+        # If enabled, set TTL value as a timestamp in unix format
+        if self.ttl and getattr(value, 'ttl', None):
+            item['ttl'] = int(time() + value.ttl)
+
         self._table.put_item(Item=item)
 
     def __delitem__(self, key):
-        response = self._table.delete_item(Key=self.composite_key(key), ReturnValues='ALL_OLD')
+        response = self._table.delete_item(Key=self._composite_key(key), ReturnValues='ALL_OLD')
         if 'Attributes' not in response:
             raise KeyError
 
@@ -141,7 +163,23 @@ class DynamoDbDict(BaseStorage):
         """Delete multiple keys from the cache. Does not raise errors for missing keys."""
         with self._table.batch_writer() as batch:
             for key in keys:
-                batch.delete_item(Key=self.composite_key(key))
+                batch.delete_item(Key=self._composite_key(key))
 
     def clear(self):
         self.bulk_delete((k for k in self))
+
+
+class DynamoDbDocumentDict(DynamoDbDict):
+    """Same as :class:`DynamoDbDict`, but serializes values before saving.
+
+    By default, responses are only partially serialized into a DynamoDB-compatible document format.
+    """
+
+    def __init__(self, *args, serializer=None, **kwargs):
+        super().__init__(*args, serializer=serializer or dynamodb_document_serializer, **kwargs)
+
+    def __getitem__(self, key):
+        return self.serializer.loads(super().__getitem__(key))
+
+    def __setitem__(self, key, item):
+        super().__setitem__(key, self.serializer.dumps(item))

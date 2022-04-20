@@ -19,7 +19,8 @@ class TestFileDict(BaseStorageTest):
         rmtree(CACHE_NAME, ignore_errors=True)
 
     def init_cache(self, index=0, clear=True, **kwargs):
-        cache = FileDict(f'{CACHE_NAME}_{index}', serializer='pickle', use_temp=True, **kwargs)
+        kwargs.setdefault('serializer', 'pickle')
+        cache = FileDict(f'{CACHE_NAME}_{index}', use_temp=True, **kwargs)
         if clear:
             cache.clear()
         return cache

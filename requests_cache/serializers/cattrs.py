@@ -12,6 +12,7 @@ serialization format.
    :nosignatures:
 """
 from datetime import datetime, timedelta
+from decimal import Decimal
 from typing import Callable, Dict, ForwardRef, MutableMapping
 
 from cattr import GenConverter
@@ -42,7 +43,11 @@ class CattrStage(Stage):
         return self.converter.structure(value, cl=CachedResponse)
 
 
-def init_converter(factory: Callable[..., GenConverter] = None, convert_datetime: bool = True):
+def init_converter(
+    factory: Callable[..., GenConverter] = None,
+    convert_datetime: bool = True,
+    convert_timedelta: bool = True,
+) -> GenConverter:
     """Make a converter to structure and unstructure nested objects within a
     :py:class:`.CachedResponse`
 
@@ -56,15 +61,18 @@ def init_converter(factory: Callable[..., GenConverter] = None, convert_datetime
 
     # Convert datetimes to and from iso-formatted strings
     if convert_datetime:
-        converter.register_unstructure_hook(datetime, lambda obj: obj.isoformat() if obj else None)  # type: ignore
+        converter.register_unstructure_hook(datetime, lambda obj: obj.isoformat() if obj else None)
         converter.register_structure_hook(datetime, _to_datetime)
 
     # Convert timedeltas to and from float values in seconds
-    converter.register_unstructure_hook(timedelta, lambda obj: obj.total_seconds() if obj else None)  # type: ignore
-    converter.register_structure_hook(timedelta, _to_timedelta)
+    if convert_timedelta:
+        converter.register_unstructure_hook(
+            timedelta, lambda obj: obj.total_seconds() if obj else None
+        )
+        converter.register_structure_hook(timedelta, _to_timedelta)
 
     # Convert dict-like objects to and from plain dicts
-    converter.register_unstructure_hook(RequestsCookieJar, lambda obj: dict(obj.items()))  # type: ignore
+    converter.register_unstructure_hook(RequestsCookieJar, lambda obj: dict(obj.items()))
     converter.register_structure_hook(RequestsCookieJar, lambda obj, cls: cookiejar_from_dict(obj))
     converter.register_unstructure_hook(CaseInsensitiveDict, dict)
     converter.register_structure_hook(
@@ -85,6 +93,16 @@ def init_converter(factory: Callable[..., GenConverter] = None, convert_datetime
     return converter
 
 
+def make_decimal_timedelta_converter(**kwargs) -> GenConverter:
+    """Make a converter that uses Decimals instead of floats to represent timedelta objects"""
+    converter = GenConverter(**kwargs)
+    converter.register_unstructure_hook(
+        timedelta, lambda obj: Decimal(str(obj.total_seconds())) if obj else None
+    )
+    converter.register_structure_hook(timedelta, _to_timedelta)
+    return converter
+
+
 def _to_datetime(obj, cls) -> datetime:
     if isinstance(obj, str):
         obj = datetime.fromisoformat(obj)
@@ -94,4 +112,6 @@ def _to_datetime(obj, cls) -> datetime:
 def _to_timedelta(obj, cls) -> timedelta:
     if isinstance(obj, (int, float)):
         obj = timedelta(seconds=obj)
+    elif isinstance(obj, Decimal):
+        obj = timedelta(seconds=float(obj))
     return obj
