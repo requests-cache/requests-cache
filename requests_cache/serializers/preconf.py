@@ -55,7 +55,7 @@ dict_serializer = SerializerPipeline(
 pickle_serializer = SerializerPipeline(
     [base_stage, pickle], name='pickle', is_binary=True
 )  #: Pickle serializer
-
+no_op_serializer = SerializerPipeline([], name='no_op')  #: Placeholder serializer that does nothing
 
 # Safe pickle serializer
 def signer_stage(secret_key=None, salt='requests-cache') -> Stage:

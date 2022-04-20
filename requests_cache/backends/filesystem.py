@@ -91,7 +91,7 @@ class FileDict(BaseStorage):
         mode = 'rb' if self.is_binary else 'r'
         with self._try_io():
             with self._path(key).open(mode) as f:
-                return self.serializer.loads(f.read())
+                return self.deserialize(f.read())
 
     def __delitem__(self, key):
         with self._try_io():
@@ -100,7 +100,7 @@ class FileDict(BaseStorage):
     def __setitem__(self, key, value):
         with self._try_io():
             with self._path(key).open(mode='wb' if self.is_binary else 'w') as f:
-                f.write(self.serializer.dumps(value))
+                f.write(self.serialize(value))
 
     def __iter__(self):
         yield from self.keys()

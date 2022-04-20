@@ -43,10 +43,14 @@ class SQLiteCache(BaseCache):
         kwargs: Additional keyword arguments for :py:func:`sqlite3.connect`
     """
 
-    def __init__(self, db_path: AnyPath = 'http_cache', **kwargs):
+    def __init__(self, db_path: AnyPath = 'http_cache', serializer=None, **kwargs):
         super().__init__(cache_name=str(db_path), **kwargs)
-        self.responses: SQLiteDict = SQLitePickleDict(db_path, table_name='responses', **kwargs)
-        self.redirects: SQLiteDict = SQLiteDict(db_path, table_name='redirects', **kwargs)
+        self.responses: SQLiteDict = SQLiteDict(
+            db_path, table_name='responses', serializer=serializer or 'pickle', **kwargs
+        )
+        self.redirects: SQLiteDict = SQLiteDict(
+            db_path, table_name='redirects', serializer=None, **kwargs
+        )
 
     @property
     def db_path(self) -> AnyPath:
@@ -211,7 +215,8 @@ class SQLiteDict(BaseStorage):
         # raise error after the with block, otherwise the connection will be locked
         if not row:
             raise KeyError
-        return row[0]
+
+        return self.deserialize(row[0])
 
     def __setitem__(self, key, value):
         self._insert(key, value)
@@ -288,34 +293,11 @@ class SQLiteDict(BaseStorage):
                 f'  ORDER BY {key} {direction} {limit_expr}',
                 params,
             ):
-                yield row[0]
+                yield self.deserialize(row[0])
 
     def vacuum(self):
         with self.connection(commit=True) as con:
             con.execute('VACUUM')
-
-
-class SQLitePickleDict(SQLiteDict):
-    """Same as :class:`SQLiteDict`, but serializes values before saving"""
-
-    def __setitem__(self, key, value: CachedResponse):
-        serialized_value = self.serializer.dumps(value)
-        if isinstance(serialized_value, bytes):
-            serialized_value = sqlite3.Binary(serialized_value)
-        super()._insert(key, serialized_value, getattr(value, 'expires', None))
-
-    def __getitem__(self, key):
-        return self.serializer.loads(super().__getitem__(key))
-
-    def sorted(
-        self,
-        key: str = 'expires',
-        reversed: bool = False,
-        limit: int = None,
-        exclude_expired: bool = False,
-    ):
-        for value in super().sorted(key, reversed, limit, exclude_expired):
-            yield self.serializer.loads(value)
 
 
 def _format_sequence(values: Collection) -> Tuple[str, List]:
@@ -372,9 +354,3 @@ def sqlite_template(
     uri: bool = False,
 ):
     """Template function to get an accurate signature for the builtin :py:func:`sqlite3.connect`"""
-
-
-# Aliases for backwards-compatibility
-DbCache = SQLiteCache
-DbDict = SQLiteDict
-DbPickeDict = SQLitePickleDict

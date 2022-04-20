@@ -19,6 +19,7 @@ from . import BaseCache, BaseStorage
 
 class DynamoDbCache(BaseCache):
     """DynamoDB cache backend.
+    By default, responses are only partially serialized into a DynamoDB-compatible document format.
 
     Args:
         table_name: DynamoDB table name
@@ -34,14 +35,25 @@ class DynamoDbCache(BaseCache):
         table_name: str = 'http_cache',
         ttl: bool = True,
         connection: ServiceResource = None,
+        serializer=None,
         **kwargs,
     ):
         super().__init__(cache_name=table_name, **kwargs)
-        self.responses = DynamoDbDocumentDict(
-            table_name, 'responses', ttl=ttl, connection=connection, **kwargs
+        self.responses = DynamoDbDict(
+            table_name,
+            'responses',
+            ttl=ttl,
+            serializer=serializer or dynamodb_document_serializer,
+            connection=connection,
+            **kwargs,
         )
         self.redirects = DynamoDbDict(
-            table_name, 'redirects', ttl=False, connection=self.responses.connection, **kwargs
+            table_name,
+            'redirects',
+            ttl=False,
+            connection=self.responses.connection,
+            serializer=None,
+            **kwargs,
         )
 
 
@@ -132,14 +144,15 @@ class DynamoDbDict(BaseStorage):
 
         # With a custom serializer, the value may be a Binary object
         raw_value = result['Item']['value']
-        return raw_value.value if isinstance(raw_value, Binary) else raw_value
+        value = raw_value.value if isinstance(raw_value, Binary) else raw_value
+        return self.deserialize(value)
 
     def __setitem__(self, key, value):
-        item = {**self._composite_key(key), 'value': value}
+        item = {**self._composite_key(key), 'value': self.serialize(value)}
 
         # If enabled, set TTL value as a timestamp in unix format
         if self.ttl and getattr(value, 'ttl', None):
-            item['ttl'] = int(time() + value.ttl)
+            item['ttl'] = round(time() + value.ttl)
 
         self._table.put_item(Item=item)
 
@@ -169,19 +182,3 @@ class DynamoDbDict(BaseStorage):
 
     def clear(self):
         self.bulk_delete((k for k in self))
-
-
-class DynamoDbDocumentDict(DynamoDbDict):
-    """Same as :class:`DynamoDbDict`, but serializes values before saving.
-
-    By default, responses are only partially serialized into a DynamoDB-compatible document format.
-    """
-
-    def __init__(self, *args, serializer=None, **kwargs):
-        super().__init__(*args, serializer=serializer or dynamodb_document_serializer, **kwargs)
-
-    def __getitem__(self, key):
-        return self.serializer.loads(super().__getitem__(key))
-
-    def __setitem__(self, key, item):
-        super().__setitem__(key, self.serializer.dumps(item))

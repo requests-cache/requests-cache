@@ -5,7 +5,7 @@ from unittest.mock import patch
 import pytest
 
 from requests_cache import CachedResponse
-from requests_cache.backends import BaseCache, SQLitePickleDict
+from requests_cache.backends import BaseCache, SQLiteDict
 from tests.conftest import MOCKED_URL, MOCKED_URL_HTTPS, MOCKED_URL_JSON, MOCKED_URL_REDIRECT
 
 YESTERDAY = datetime.utcnow() - timedelta(days=1)
@@ -24,7 +24,7 @@ class TimeBomb:
 def test_urls__with_invalid_response(mock_session):
     responses = [mock_session.get(url) for url in [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_HTTPS]]
     responses[2] = AttributeError
-    with patch.object(SQLitePickleDict, '__getitem__', side_effect=responses):
+    with patch.object(SQLiteDict, '__getitem__', side_effect=responses):
         expected_urls = [MOCKED_URL, MOCKED_URL_JSON]
         assert set(mock_session.cache.urls) == set(expected_urls)
 
@@ -67,7 +67,7 @@ def test_values__with_invalid_responses(check_expiry, expected_count, mock_sessi
     responses[1] = AttributeError
     responses[2] = CachedResponse(expires=YESTERDAY, url='test')
 
-    with patch.object(SQLitePickleDict, '__getitem__', side_effect=responses):
+    with patch.object(SQLiteDict, '__getitem__', side_effect=responses):
         values = mock_session.cache.values(check_expiry=check_expiry)
         assert len(list(values)) == expected_count
 

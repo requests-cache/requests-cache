@@ -134,12 +134,12 @@ class CachedResponse(BaseResponse, RichMixin):
         return self.expires is not None and datetime.utcnow() >= self.expires
 
     @property
-    def ttl(self) -> Optional[int]:
-        """Get time to expiration in seconds"""
-        if self.expires is None or self.is_expired:
+    def ttl(self) -> Optional[float]:
+        """Get time to expiration in seconds (rounded to the nearest second)"""
+        if self.expires is None:
             return None
         delta = self.expires - datetime.utcnow()
-        return int(delta.total_seconds())
+        return delta.total_seconds()
 
     @property
     def next(self) -> Optional[PreparedRequest]:

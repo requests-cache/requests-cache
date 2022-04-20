@@ -263,8 +263,8 @@ class BaseStorage(MutableMapping, ABC):
         kwargs: Additional backend-specific keyword arguments
     """
 
-    def __init__(self, serializer=None, **kwargs):
-        self.serializer = init_serializer(serializer)
+    def __init__(self, **kwargs):
+        self.serializer = init_serializer(kwargs.get('serializer', 'pickle'))
         logger.debug(f'Initializing {type(self).__name__} with serializer: {self.serializer}')
 
     def bulk_delete(self, keys: Iterable[str]):
@@ -280,6 +280,14 @@ class BaseStorage(MutableMapping, ABC):
 
     def close(self):
         """Close any open backend connections"""
+
+    def serialize(self, value):
+        """Serialize value, if a serializer is available"""
+        return self.serializer.dumps(value) if self.serializer else value
+
+    def deserialize(self, value):
+        """Deserialize value, if a serializer is available"""
+        return self.serializer.loads(value) if self.serializer else value
 
     def __str__(self):
         return str(list(self.keys()))
@@ -297,7 +305,6 @@ class DictStorage(UserDict, BaseStorage):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._serializer = None
         self.serializer = None
 
     def __getitem__(self, key):

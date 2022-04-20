@@ -3,6 +3,7 @@ import json
 import time
 from collections import UserDict, defaultdict
 from datetime import datetime, timedelta
+from logging import getLogger
 from pathlib import Path
 from pickle import PickleError
 from unittest.mock import patch
@@ -15,7 +16,7 @@ from requests.structures import CaseInsensitiveDict
 
 from requests_cache import ALL_METHODS, CachedSession
 from requests_cache._utils import get_placeholder_class
-from requests_cache.backends import BACKEND_CLASSES, BaseCache, SQLiteDict, SQLitePickleDict
+from requests_cache.backends import BACKEND_CLASSES, BaseCache, SQLiteDict
 from requests_cache.backends.base import DESERIALIZE_ERRORS
 from requests_cache.policy.expiration import DO_NOT_CACHE, EXPIRE_IMMEDIATELY, NEVER_EXPIRE
 from tests.conftest import (
@@ -32,6 +33,7 @@ from tests.conftest import (
 # Some tests must disable url normalization to retain the custom `http+mock//` protocol
 patch_normalize_url = patch('requests_cache.cache_keys.normalize_url', side_effect=lambda x, y: x)
 
+logger = getLogger(__name__)
 
 # Basic initialization
 # -----------------------------------------------------
@@ -421,7 +423,7 @@ def test_unpickle_errors(mock_session):
     """If there is an error during deserialization, the request should be made again"""
     assert mock_session.get(MOCKED_URL_JSON).from_cache is False
 
-    with patch.object(SQLitePickleDict, '__getitem__', side_effect=PickleError):
+    with patch.object(SQLiteDict, '__getitem__', side_effect=PickleError):
         resp = mock_session.get(MOCKED_URL_JSON)
         assert resp.from_cache is False
         assert resp.json()['message'] == 'mock json response'
@@ -649,7 +651,7 @@ def test_remove_expired_responses__error(mock_session):
             raise PickleError
         return response_1
 
-    with patch.object(SQLitePickleDict, '__getitem__', side_effect=error_on_key):
+    with patch.object(SQLiteDict, '__getitem__', side_effect=error_on_key):
         BaseCache.remove_expired_responses(mock_session.cache)
     assert len(mock_session.cache.responses) == 1
     assert mock_session.get(MOCKED_URL).from_cache is True
@@ -695,7 +697,7 @@ def test_remove_expired_responses__per_request(mock_session):
     # All 3 responses should still be cached
     mock_session.remove_expired_responses()
     for response in mock_session.cache.responses.values():
-        print('Expires:', response.expires - datetime.utcnow() if response.expires else None)
+        logger.info(f'Expires in {response.ttl} seconds')
     assert len(mock_session.cache.responses) == 3
 
     # One should be expired after 1s, and another should be expired after 2s

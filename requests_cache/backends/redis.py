@@ -75,14 +75,15 @@ class RedisDict(BaseStorage):
         result = self.connection.get(self._bkey(key))
         if result is None:
             raise KeyError
-        return self.serializer.loads(result)
+        return self.deserialize(result)
 
     def __setitem__(self, key, item):
         """Save an item to the cache, optionally with TTL"""
-        if self.ttl and getattr(item, 'ttl', None):
-            self.connection.setex(self._bkey(key), item.ttl, self.serializer.dumps(item))
+        ttl_seconds = getattr(item, 'ttl', None)
+        if self.ttl and ttl_seconds and ttl_seconds > 0:
+            self.connection.setex(self._bkey(key), round(ttl_seconds), self.serialize(item))
         else:
-            self.connection.set(self._bkey(key), self.serializer.dumps(item))
+            self.connection.set(self._bkey(key), self.serialize(item))
 
     def __delitem__(self, key):
         if not self.connection.delete(self._bkey(key)):
@@ -141,10 +142,10 @@ class RedisHashDict(BaseStorage):
         result = self.connection.hget(self._hash_key, encode(key))
         if result is None:
             raise KeyError
-        return self.serializer.loads(result)
+        return self.deserialize(result)
 
     def __setitem__(self, key, item):
-        self.connection.hset(self._hash_key, encode(key), self.serializer.dumps(item))
+        self.connection.hset(self._hash_key, encode(key), self.serialize(item))
 
     def __delitem__(self, key):
         if not self.connection.hdel(self._hash_key, encode(key)):

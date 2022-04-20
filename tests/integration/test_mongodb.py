@@ -6,14 +6,8 @@ import pytest
 from gridfs import GridFS
 from gridfs.errors import CorruptGridFile, FileExists
 
-from requests_cache.backends import (
-    GridFSCache,
-    GridFSPickleDict,
-    MongoCache,
-    MongoDict,
-    MongoDocumentDict,
-)
-from requests_cache.policy.expiration import NEVER_EXPIRE
+from requests_cache.backends import GridFSCache, GridFSDict, MongoCache, MongoDict
+from requests_cache.policy import NEVER_EXPIRE
 from requests_cache.serializers import bson_document_serializer
 from tests.conftest import HTTPBIN_FORMATS, HTTPBIN_METHODS, fail_if_no_connection, httpbin
 from tests.integration.base_cache_test import TEST_SERIALIZERS, BaseCacheTest
@@ -37,11 +31,6 @@ def ensure_connection():
 class TestMongoDict(BaseStorageTest):
     storage_class = MongoDict
 
-
-class TestMongoPickleDict(BaseStorageTest):
-    storage_class = MongoDocumentDict
-    picklable = True
-
     def test_connection_kwargs(self):
         """A spot check to make sure optional connection kwargs gets passed to connection"""
         # MongoClient prevents direct access to private members like __init_kwargs;
@@ -60,7 +49,6 @@ class TestMongoPickleDict(BaseStorageTest):
 
 class TestMongoCache(BaseCacheTest):
     backend_class = MongoCache
-
     init_kwargs = {'serializer': None}  # Use class default serializer instead of pickle
 
     @pytest.mark.parametrize('serializer', MONGODB_SERIALIZERS)
@@ -113,14 +101,14 @@ class TestMongoCache(BaseCacheTest):
         assert session.cache.get_ttl() is None
 
 
-class TestGridFSPickleDict(BaseStorageTest):
-    storage_class = GridFSPickleDict
+class TestGridFSDict(BaseStorageTest):
+    storage_class = GridFSDict
     picklable = True
     num_instances = 1  # Only test a single collecton instead of multiple
 
     def test_connection_kwargs(self):
         """A spot check to make sure optional connection kwargs gets passed to connection"""
-        cache = GridFSPickleDict(
+        cache = GridFSDict(
             'test',
             host='mongodb://0.0.0.0',
             port=2222,

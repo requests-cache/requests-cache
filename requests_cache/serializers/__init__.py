@@ -9,6 +9,7 @@ from .preconf import (
     dict_serializer,
     dynamodb_document_serializer,
     json_serializer,
+    no_op_serializer,
     pickle_serializer,
     safe_pickle_serializer,
     utf8_encoder,
@@ -25,6 +26,7 @@ __all__ = [
     'dynamodb_document_serializer',
     'dict_serializer',
     'json_serializer',
+    'no_op_serializer',
     'pickle_serializer',
     'safe_pickle_serializer',
     'yaml_serializer',
@@ -40,9 +42,8 @@ SERIALIZERS = {
 }
 
 
-def init_serializer(serializer=None):
+def init_serializer(serializer):
     """Initialize a serializer from a name or instance"""
-    serializer = serializer or 'pickle'
     if isinstance(serializer, str):
         serializer = SERIALIZERS[serializer]
     return serializer
