@@ -14,3 +14,4 @@ def test_from_request(mock_session):
     assert response.request.headers == request.headers == expected_headers
     assert response.request.method == request.method == 'GET'
     assert response.request.url == request.url == MOCKED_URL
+    assert response.request._cookies == request._cookies == request.cookies == {}

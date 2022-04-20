@@ -159,8 +159,7 @@ def normalize_json_body(
     original_body: Union[str, bytes], ignored_parameters: ParamList
 ) -> Union[str, bytes]:
     """Normalize and filter a request body with serialized JSON data"""
-
-    if len(original_body) == 0 or len(original_body) > MAX_NORM_BODY_SIZE:
+    if len(original_body) <= 2 or len(original_body) > MAX_NORM_BODY_SIZE:
         return original_body
 
     try:
@@ -169,7 +168,7 @@ def normalize_json_body(
         return json.dumps(body)
     # If it's invalid JSON, then don't mess with it
     except (AttributeError, TypeError, ValueError):
-        logger.debug('Invalid JSON body:', exc_info=True)
+        logger.debug('Invalid JSON body')
         return original_body
 
 

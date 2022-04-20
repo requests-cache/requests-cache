@@ -75,7 +75,7 @@ class CachedHTTPResponse(HTTPResponse, RichMixin):
         :py:meth:`urllib3.response.HTTPResponse.read()`
         """
         if 'content-encoding' in self.headers and decode_content is False:
-            logger.warning('read() returns decoded data, even with decode_content=False')
+            logger.warning('read(decode_content=False) is not supported for cached responses')
 
         data = self._fp.read(amt)
         # "close" the file to inform consumers to stop reading from it

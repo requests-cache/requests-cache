@@ -86,6 +86,16 @@ def test_normalize_request__json_body_invalid():
     assert normalize_request(request, ignored_parameters=['param_2']).body == b'invalid JSON!'
 
 
+def test_normalize_request__json_body_empty():
+    request = Request(
+        method='GET',
+        url='https://img.site.com/base/img.jpg',
+        data=b'{}',
+        headers={'Content-Type': 'application/json'},
+    )
+    assert normalize_request(request, ignored_parameters=['param_2']).body == b'{}'
+
+
 def test_normalize_request__binary_body():
     request = Request(
         method='GET',

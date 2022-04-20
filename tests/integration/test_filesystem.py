@@ -37,16 +37,10 @@ class TestFileDict(BaseStorageTest):
         assert not str(relative_path).startswith(gettempdir())
         assert str(temp_path).startswith(gettempdir())
 
-    def test_load_previous_binary_file(self):
-        """If we init a new cache and load a file previously saved in binary mode, the cache should
-        handle this and open future files in binary mode for the rest of the session.
-        """
-        cache = self.init_cache()
-        cache['foo'] = 'bar'
-
-        cache = self.init_cache(clear=False)
-        assert cache['foo'] == 'bar'
-        assert cache.is_binary is True
+    def test_custom_extension(self):
+        cache = self.init_cache(extension='dat')
+        cache['key'] = 'value'
+        assert cache._path('key').suffix == '.dat'
 
 
 class TestFileCache(BaseCacheTest):

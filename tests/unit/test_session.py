@@ -457,10 +457,18 @@ def test_allowable_methods(mock_session):
     assert mock_session.cache.has_url(MOCKED_URL, method='OPTIONS')
     assert mock_session.options(MOCKED_URL).from_cache is True
 
-    # This request should be filtered out on both read and write
+    # These requests should be filtered out on both read and write
     mock_session.put(MOCKED_URL)
     assert not mock_session.cache.has_url(MOCKED_URL, method='PUT')
     assert mock_session.put(MOCKED_URL).from_cache is False
+
+    mock_session.patch(MOCKED_URL)
+    assert not mock_session.cache.has_url(MOCKED_URL, method='PATCH')
+    assert mock_session.patch(MOCKED_URL).from_cache is False
+
+    mock_session.delete(MOCKED_URL)
+    assert not mock_session.cache.has_url(MOCKED_URL, method='DELETE')
+    assert mock_session.delete(MOCKED_URL).from_cache is False
 
 
 def test_default_ignored_parameters(mock_session):

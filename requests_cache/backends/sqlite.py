@@ -13,7 +13,7 @@ from os import unlink
 from os.path import isfile
 from pathlib import Path
 from tempfile import gettempdir
-from typing import Collection, Iterable, Iterator, List, Tuple, Type, Union
+from typing import Collection, Iterator, List, Tuple, Type, Union
 
 from platformdirs import user_cache_dir
 
@@ -319,9 +319,7 @@ class SQLitePickleDict(SQLiteDict):
 
 
 def _format_sequence(values: Collection) -> Tuple[str, List]:
-    """Get SQL parameter marks for a sequence-based query, and ensure value is a sequence"""
-    if not isinstance(values, Iterable):
-        values = [values]
+    """Get SQL parameter marks for a sequence-based query"""
     return ','.join(['?'] * len(values)), list(values)
 
 
