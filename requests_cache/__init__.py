@@ -3,7 +3,7 @@ from logging import getLogger
 
 # Version is defined in pyproject.toml.
 # It's copied here to make it easier for client code to check the installed version.
-__version__ = '0.10.0'
+__version__ = '1.0.0'
 
 try:
     from .backends import *

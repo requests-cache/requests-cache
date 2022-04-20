@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "requests-cache"
-version = "0.10.0"
+version = "1.0.0"
 description = "A persistent cache for the requests library"
 authors = ["Roman Haritonov"]
 maintainers = ["Jordan Cook"]
@@ -12,7 +12,7 @@ repository = "https://github.com/reclosedev/requests-cache"
 keywords = ["requests", "python-requests", "cache", "http", "web", "performance",
             "sqlite", "redis", "mongodb", "gridfs", "dynamodb"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",

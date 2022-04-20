@@ -1,14 +1,18 @@
 # History
 
-## Unreleased
+## 1.0.0 (Unreleased)
 [See all unreleased issues and PRs](https://github.com/reclosedev/requests-cache/milestone/5?closed=1)
 
 **Expiration & Headers:**
-* Add support for `Cache-Control: only-if-cached`
 * Add support for `Cache-Control: min-fresh`
 * Add support for `Cache-Control: max-stale`
+* Add support for `Cache-Control: stale-if-error`
+* Add support for `Cache-Control: only-if-cached`
 * Revalidate for `Cache-Control: no-cache` request or response header
 * Revalidate for `Cache-Control: max-age=0, must-revalidate` response headers
+
+**Settings:**
+* All settings that affect cache behavior can now be accessed and modified via `CachedSession.settings`
 * Add `only_if_cached` option to `CachedSession.request()` and `send()` to return only cached results without sending real requests
 * Add `refresh` option to `CachedSession.request()` and `send()` to revalidate with the server before using a cached response
 * Add `force_refresh` option to `CachedSession.request()` and `send()` to awlays make and cache a new request regardless of existing cache contents
@@ -43,9 +47,6 @@
 * Always skip both cache read and write for requests excluded by `allowable_methods` (previously only skipped write)
 * Ignore and redact common authentication params and headers (e.g., for OAuth2) by default
   * This is simply a default value for `ignored_parameters`, to avoid accidentally storing credentials in the cache
-
-**Other features:**
-* All settings that affect cache behavior can now be accessed and modified via `CachedSession.settings`
 
 **Dependencies:**
 * Replace `appdirs` with `platformdirs`
