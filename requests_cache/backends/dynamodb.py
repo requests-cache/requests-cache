@@ -26,12 +26,7 @@ details you'll need:
 
 Connection Options
 ^^^^^^^^^^^^^^^^^^
-The DynamoDB backend accepts any keyword arguments for :py:meth:`boto3.session.Session.resource`.
-These can be passed via :py:class:`.CachedSession`:
-
-    >>> session = CachedSession('http_cache', backend='dynamodb', region_name='us-west-2')
-
-Or via :py:class:`.DynamoDbCache`:
+The DynamoDB backend accepts any keyword arguments for :py:meth:`boto3.session.Session.resource`:
 
     >>> backend = DynamoDbCache(region_name='us-west-2')
     >>> session = CachedSession('http_cache', backend=backend)
@@ -99,7 +94,9 @@ class DynamoDbDict(BaseStorage):
         **kwargs,
     ):
         super().__init__(**kwargs)
-        connection_kwargs = get_valid_kwargs(boto3.Session, kwargs, extras=['endpoint_url'])
+        connection_kwargs = get_valid_kwargs(
+            boto3.Session.__init__, kwargs, extras=['endpoint_url']
+        )
         self.connection = connection or boto3.resource('dynamodb', **connection_kwargs)
         self.namespace = namespace
 
