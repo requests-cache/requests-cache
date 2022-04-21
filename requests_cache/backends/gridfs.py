@@ -51,7 +51,7 @@ class GridFSPickleDict(BaseStorage):
 
     def __init__(self, db_name, collection_name=None, connection=None, **kwargs):
         super().__init__(**kwargs)
-        connection_kwargs = get_valid_kwargs(MongoClient, kwargs)
+        connection_kwargs = get_valid_kwargs(MongoClient.__init__, kwargs)
         self.connection = connection or MongoClient(**connection_kwargs)
         self.db = self.connection[db_name]
         self.fs = GridFS(self.db)

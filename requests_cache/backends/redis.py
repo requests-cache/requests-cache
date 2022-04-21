@@ -56,7 +56,7 @@ class RedisDict(BaseStorage):
     ):
 
         super().__init__(**kwargs)
-        connection_kwargs = get_valid_kwargs(Redis, kwargs)
+        connection_kwargs = get_valid_kwargs(Redis.__init__, kwargs)
         self.connection = connection or StrictRedis(**connection_kwargs)
         self.namespace = namespace
         self.ttl = ttl
