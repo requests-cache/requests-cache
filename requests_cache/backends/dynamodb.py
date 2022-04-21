@@ -66,7 +66,9 @@ class DynamoDbDict(BaseStorage):
         **kwargs,
     ):
         super().__init__(**kwargs)
-        connection_kwargs = get_valid_kwargs(boto3.Session, kwargs, extras=['endpoint_url'])
+        connection_kwargs = get_valid_kwargs(
+            boto3.Session.__init__, kwargs, extras=['endpoint_url']
+        )
         self.connection = connection or boto3.resource('dynamodb', **connection_kwargs)
         self.namespace = namespace
         self.table_name = table_name
