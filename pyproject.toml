@@ -39,8 +39,8 @@ url-normalize = "^1.4"     # For improved request matching
 # Optional backend dependencies
 boto3                      = {optional=true, version="^1.15"}
 botocore                   = {optional=true, version="^1.18"}
-pymongo                    = {optional=true, version=">=3,<5"}
-redis                      = {optional=true, version=">=3,<5"}
+pymongo                    = {optional=true, version=">=3"}
+redis                      = {optional=true, version=">=3"}
 
 # Optional serialization dependencies
 bson                       = {optional=true, version=">=0.5"}

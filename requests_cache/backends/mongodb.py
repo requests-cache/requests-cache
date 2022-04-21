@@ -8,12 +8,7 @@ database.
 
 Connection Options
 ^^^^^^^^^^^^^^^^^^
-The MongoDB backend accepts any keyword arguments for :py:class:`pymongo.mongo_client.MongoClient`.
-These can be passed via :py:class:`.CachedSession`:
-
-    >>> session = CachedSession('http_cache', backend='mongodb', host='192.168.1.63', port=27017)
-
-Or via :py:class:`.MongoCache`:
+The MongoDB backend accepts any keyword arguments for :py:class:`pymongo.mongo_client.MongoClient`:
 
     >>> backend = MongoCache(host='192.168.1.63', port=27017)
     >>> session = CachedSession('http_cache', backend=backend)
@@ -64,7 +59,7 @@ class MongoDict(BaseStorage):
 
     def __init__(self, db_name, collection_name='http_cache', connection=None, **kwargs):
         super().__init__(**kwargs)
-        connection_kwargs = get_valid_kwargs(MongoClient, kwargs)
+        connection_kwargs = get_valid_kwargs(MongoClient.__init__, kwargs)
         self.connection = connection or MongoClient(**connection_kwargs)
         self.collection = self.connection[db_name][collection_name]
 

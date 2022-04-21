@@ -49,12 +49,7 @@ backend that's specifically made for that kind of workload, like :py:class:`.Red
 
 Connection Options
 ^^^^^^^^^^^^^^^^^^
-The SQLite backend accepts any keyword arguments for :py:func:`sqlite3.connect`. These can be passed
-via :py:class:`.CachedSession`:
-
-    >>> session = CachedSession('http_cache', timeout=30)
-
-Or via :py:class:`.SQLiteCache`:
+The SQLite backend accepts any keyword arguments for :py:func:`sqlite3.connect`:
 
     >>> backend = SQLiteCache('http_cache', timeout=30)
     >>> session = CachedSession(backend=backend)

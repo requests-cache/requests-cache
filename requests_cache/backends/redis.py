@@ -15,12 +15,7 @@ or disabled entirely. See `Redis Persistence <https://redis.io/topics/persistenc
 
 Connection Options
 ^^^^^^^^^^^^^^^^^^
-The Redis backend accepts any keyword arguments for :py:class:`redis.client.Redis`. These can be passed
-via :py:class:`.CachedSession`:
-
-    >>> session = CachedSession('http_cache', backend='redis', host='192.168.1.63', port=6379)
-
-Or via :py:class:`.RedisCache`:
+The Redis backend accepts any keyword arguments for :py:class:`redis.client.Redis`:
 
     >>> backend = RedisCache(host='192.168.1.63', port=6379)
     >>> session = CachedSession('http_cache', backend=backend)
@@ -70,7 +65,7 @@ class RedisDict(BaseStorage):
 
     def __init__(self, namespace: str, collection_name: str = None, connection=None, **kwargs):
         super().__init__(**kwargs)
-        connection_kwargs = get_valid_kwargs(Redis, kwargs)
+        connection_kwargs = get_valid_kwargs(Redis.__init__, kwargs)
         self.connection = connection or StrictRedis(**connection_kwargs)
         self.namespace = namespace
 

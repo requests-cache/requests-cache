@@ -56,16 +56,20 @@ class TestGridFSPickleDict(BaseStorageTest):
     picklable = True
     num_instances = 1  # Only test a single collecton instead of multiple
 
-    @patch('requests_cache.backends.gridfs.GridFS')
-    @patch('requests_cache.backends.gridfs.MongoClient')
-    @patch(
-        'requests_cache.backends.gridfs.get_valid_kwargs',
-        side_effect=lambda cls, kwargs: get_valid_kwargs(MongoClient, kwargs),
-    )
-    def test_connection_kwargs(self, mock_get_valid_kwargs, mock_client, mock_gridfs):
-        """A spot check to make sure optional connection kwargs gets passed to connection"""
-        GridFSPickleDict('test', host='http://0.0.0.0', port=1234, invalid_kwarg='???')
-        mock_client.assert_called_with(host='http://0.0.0.0', port=1234)
+    def test_connection_kwargs(self):
+        """A spot check to make sure optional connection kwargs get passed to connection"""
+        # MongoClient prevents direct access to private members like __init_kwargs;
+        # need to test indirectly using its repr
+        cache = MongoDict(
+            'test',
+            host='mongodb://0.0.0.0',
+            port=2222,
+            tz_aware=True,
+            connect=False,
+            invalid_kwarg='???',
+        )
+        assert "host=['0.0.0.0:2222']" in repr(cache.connection)
+        assert "tz_aware=True" in repr(cache.connection)
 
     def test_corrupt_file(self):
         """A corrupted file should be handled and raise a KeyError instead"""
