@@ -20,7 +20,7 @@ from ..cache_keys import create_key, redact_response
 from ..models import CachedResponse
 from ..policy.expiration import ExpirationTime
 from ..policy.settings import DEFAULT_CACHE_NAME, CacheSettings
-from ..serializers import init_serializer
+from ..serializers import SerializerType, init_serializer, pickle_serializer
 
 # Specific exceptions that may be raised during deserialization
 DESERIALIZE_ERRORS = (AttributeError, ImportError, PickleError, TypeError, ValueError)
@@ -239,10 +239,10 @@ class BaseCache:
         """Show a count of total **rows** currently stored in the backend. For performance reasons,
         this does not check for invalid or expired responses.
         """
-        return f'Total rows: {len(self.responses)} responses, {len(self.redirects)} redirects'
+        return f'<{self.__class__.__name__}(name={self.cache_name})>'
 
     def __repr__(self):
-        return f'<{self.__class__.__name__}(name={self.cache_name})>'
+        return str(self)
 
 
 class BaseStorage(MutableMapping, ABC):
@@ -260,12 +260,20 @@ class BaseStorage(MutableMapping, ABC):
 
     Args:
         serializer: Custom serializer that provides ``loads`` and ``dumps`` methods
+        no_serializer: Explicitly disable serialization, and write values as-is; this is to avoid
+            ambiguity with ``serializer=None``
         kwargs: Additional backend-specific keyword arguments
     """
 
-    def __init__(self, serializer=None, **kwargs):
-        self.serializer = init_serializer(serializer)
-        logger.debug(f'Initializing {type(self).__name__} with serializer: {self.serializer}')
+    # Default serializer to use for responses, if one isn't specified; may be overridden
+    default_serializer: SerializerType = pickle_serializer
+
+    def __init__(self, serializer: SerializerType = None, no_serializer: bool = False, **kwargs):
+        if no_serializer:
+            self.serializer = None
+        else:
+            self.serializer = init_serializer(serializer or self.default_serializer)
+        logger.debug(f'Initialized {type(self).__name__} with serializer: {self.serializer}')
 
     def bulk_delete(self, keys: Iterable[str]):
         """Delete multiple keys from the cache, without raising errors for missing keys. This is a
@@ -280,6 +288,14 @@ class BaseStorage(MutableMapping, ABC):
 
     def close(self):
         """Close any open backend connections"""
+
+    def serialize(self, value):
+        """Serialize value, if a serializer is available"""
+        return self.serializer.dumps(value) if self.serializer else value
+
+    def deserialize(self, value):
+        """Deserialize value, if a serializer is available"""
+        return self.serializer.loads(value) if self.serializer else value
 
     def __str__(self):
         return str(list(self.keys()))
@@ -297,7 +313,6 @@ class DictStorage(UserDict, BaseStorage):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._serializer = None
         self.serializer = None
 
     def __getitem__(self, key):

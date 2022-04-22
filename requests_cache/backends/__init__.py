@@ -15,35 +15,35 @@ logger = getLogger(__name__)
 
 # Import all backend classes for which dependencies are installed
 try:
-    from .dynamodb import DynamoDbCache, DynamoDbDict, DynamoDbDocumentDict
+    from .dynamodb import DynamoDbCache, DynamoDbDict
 except ImportError as e:
-    DynamoDbCache = DynamoDbDict = DynamoDbDocumentDict = get_placeholder_class(e)  # type: ignore
+    DynamoDbCache = DynamoDbDict = get_placeholder_class(e)  # type: ignore
+
 try:
-    from .gridfs import GridFSCache, GridFSPickleDict
+    from .gridfs import GridFSCache, GridFSDict
 except ImportError as e:
-    GridFSCache = GridFSPickleDict = get_placeholder_class(e)  # type: ignore
+    GridFSCache = GridFSDict = get_placeholder_class(e)  # type: ignore
+
 try:
-    from .mongodb import MongoCache, MongoDict, MongoDocumentDict
+    from .mongodb import MongoCache, MongoDict
 except ImportError as e:
-    MongoCache = MongoDict = MongoDocumentDict = get_placeholder_class(e)  # type: ignore
+    MongoCache = MongoDict = get_placeholder_class(e)  # type: ignore
+
 try:
     from .redis import RedisCache, RedisDict, RedisHashDict
 except ImportError as e:
     RedisCache = RedisDict = RedisHashDict = get_placeholder_class(e)  # type: ignore
+
 try:
-    # Note: Heroku doesn't support SQLite due to ephemeral storage
-    from .sqlite import SQLiteCache, SQLiteDict, SQLitePickleDict
+    from .sqlite import SQLiteCache, SQLiteDict
 except ImportError as e:
-    SQLiteCache = SQLiteDict = SQLitePickleDict = get_placeholder_class(e)  # type: ignore
+    SQLiteCache = SQLiteDict = get_placeholder_class(e)  # type: ignore
+
 try:
     from .filesystem import FileCache, FileDict
 except ImportError as e:
     FileCache = FileDict = get_placeholder_class(e)  # type: ignore
 
-# Aliases for backwards-compatibility
-DbCache = SQLiteCache
-DbDict = SQLiteDict
-DbPickleDict = SQLitePickleDict
 
 BACKEND_CLASSES = {
     'dynamodb': DynamoDbCache,

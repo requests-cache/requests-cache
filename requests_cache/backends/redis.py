@@ -11,13 +11,14 @@ from redis import Redis, StrictRedis
 
 from .._utils import get_valid_kwargs
 from ..cache_keys import decode, encode
+from ..serializers import utf8_encoder
 from . import BaseCache, BaseStorage
 
 logger = getLogger(__name__)
 
 
 # TODO: TTL tests
-# TODO: Option to set a different (typically longer) TTL than expire_after, like MongoCache
+# TODO: Option to set a TTL offset, for longer expiration than expire_after
 class RedisCache(BaseCache):
     """Redis cache backend.
 
@@ -33,8 +34,13 @@ class RedisCache(BaseCache):
     ):
         super().__init__(cache_name=namespace, **kwargs)
         self.responses = RedisDict(namespace, connection=connection, ttl=ttl, **kwargs)
+        kwargs.pop('serializer', None)
         self.redirects = RedisHashDict(
-            namespace, 'redirects', connection=self.responses.connection, **kwargs
+            namespace,
+            'redirects',
+            connection=self.responses.connection,
+            serializer=utf8_encoder,  # Only needs encoding to/decoding from bytes
+            **kwargs,
         )
 
 
@@ -75,14 +81,15 @@ class RedisDict(BaseStorage):
         result = self.connection.get(self._bkey(key))
         if result is None:
             raise KeyError
-        return self.serializer.loads(result)
+        return self.deserialize(result)
 
     def __setitem__(self, key, item):
         """Save an item to the cache, optionally with TTL"""
-        if self.ttl and getattr(item, 'ttl', None):
-            self.connection.setex(self._bkey(key), item.ttl, self.serializer.dumps(item))
+        expires_delta = getattr(item, 'expires_delta', None)
+        if self.ttl and (expires_delta or 0) > 0:
+            self.connection.setex(self._bkey(key), expires_delta, self.serialize(item))
         else:
-            self.connection.set(self._bkey(key), self.serializer.dumps(item))
+            self.connection.set(self._bkey(key), self.serialize(item))
 
     def __delitem__(self, key):
         if not self.connection.delete(self._bkey(key)):
@@ -115,14 +122,14 @@ class RedisDict(BaseStorage):
         return [(k, self[k]) for k in self.keys()]
 
     def values(self):
-        return [self.serializer.loads(v) for v in self.connection.mget(*self._bkeys(self.keys()))]
+        return [self.deserialize(v) for v in self.connection.mget(*self._bkeys(self.keys()))]
 
 
 class RedisHashDict(BaseStorage):
     """A dictionary-like interface for operations on a single Redis hash
 
     **Notes:**
-        * All keys will be encoded as bytes, and all values will be serialized
+        * All keys will be encoded as bytes
         * Items will be stored in a hash named ``namespace:collection_name``
     """
 
@@ -141,10 +148,10 @@ class RedisHashDict(BaseStorage):
         result = self.connection.hget(self._hash_key, encode(key))
         if result is None:
             raise KeyError
-        return self.serializer.loads(result)
+        return self.deserialize(result)
 
     def __setitem__(self, key, item):
-        self.connection.hset(self._hash_key, encode(key), self.serializer.dumps(item))
+        self.connection.hset(self._hash_key, encode(key), self.serialize(item))
 
     def __delitem__(self, key):
         if not self.connection.hdel(self._hash_key, encode(key)):
@@ -170,10 +177,10 @@ class RedisHashDict(BaseStorage):
     def items(self):
         """Get all ``(key, value)`` pairs in the hash"""
         return [
-            (decode(k), self.serializer.loads(v))
+            (decode(k), self.deserialize(v))
             for k, v in self.connection.hgetall(self._hash_key).items()
         ]
 
     def values(self):
         """Get all values in the hash"""
-        return [self.serializer.loads(v) for v in self.connection.hvals(self._hash_key)]
+        return [self.deserialize(v) for v in self.connection.hvals(self._hash_key)]

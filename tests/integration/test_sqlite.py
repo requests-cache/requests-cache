@@ -9,13 +9,14 @@ import pytest
 from platformdirs import user_cache_dir
 
 from requests_cache.backends.base import BaseCache
-from requests_cache.backends.sqlite import MEMORY_URI, SQLiteCache, SQLiteDict, SQLitePickleDict
+from requests_cache.backends.sqlite import MEMORY_URI, SQLiteCache, SQLiteDict
 from requests_cache.models.response import CachedResponse
 from tests.integration.base_cache_test import BaseCacheTest
 from tests.integration.base_storage_test import CACHE_NAME, BaseStorageTest
 
 
-class SQLiteTestCase(BaseStorageTest):
+class TestSQLiteDict(BaseStorageTest):
+    storage_class = SQLiteDict
     init_kwargs = {'use_temp': True}
 
     @classmethod
@@ -178,15 +179,6 @@ class SQLiteTestCase(BaseStorageTest):
         with pytest.raises(ValueError):
             list(cache.sorted(key='invalid_key'))
 
-
-class TestSQLiteDict(SQLiteTestCase):
-    storage_class = SQLiteDict
-
-
-class TestSQLitePickleDict(SQLiteTestCase):
-    storage_class = SQLitePickleDict
-    picklable = True
-
     @pytest.mark.parametrize('limit', [None, 50])
     def test_sorted__by_expires(self, limit):
         cache = self.init_cache()
@@ -213,7 +205,7 @@ class TestSQLitePickleDict(SQLiteTestCase):
         for i in range(100):
             delta = 101 - i
             if i % 2 == 1:
-                delta -= 100
+                delta -= 101
 
             response = CachedResponse(status_code=i, expires=now + timedelta(seconds=delta))
             cache[f'key_{i}'] = response
@@ -226,6 +218,20 @@ class TestSQLitePickleDict(SQLiteTestCase):
         for i, item in enumerate(items):
             assert prev_item is None or prev_item.expires < item.expires
             assert item.status_code % 2 == 0
+
+    @pytest.mark.parametrize(
+        'db_path, use_temp',
+        [
+            ('filesize_test', True),
+            (':memory:', False),
+        ],
+    )
+    def test_size(self, db_path, use_temp):
+        """Test approximate expected size of a database, for both file-based and in-memory databases"""
+        cache = self.init_cache(db_path, use_temp=use_temp)
+        for i in range(100):
+            cache[f'key_{i}'] = f'value_{i}'
+        assert 10000 < cache.size() < 200000
 
 
 class TestSQLiteCache(BaseCacheTest):

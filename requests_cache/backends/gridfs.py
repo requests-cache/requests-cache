@@ -29,9 +29,13 @@ class GridFSCache(BaseCache):
 
     def __init__(self, db_name: str, **kwargs):
         super().__init__(cache_name=db_name, **kwargs)
-        self.responses = GridFSPickleDict(db_name, **kwargs)
+        self.responses = GridFSDict(db_name, **kwargs)
         self.redirects = MongoDict(
-            db_name, collection_name='redirects', connection=self.responses.connection, **kwargs
+            db_name,
+            collection_name='redirects',
+            connection=self.responses.connection,
+            no_serializer=True,
+            **kwargs
         )
 
     def remove_expired_responses(self, *args, **kwargs):
@@ -39,7 +43,7 @@ class GridFSCache(BaseCache):
             return super().remove_expired_responses(*args, **kwargs)
 
 
-class GridFSPickleDict(BaseStorage):
+class GridFSDict(BaseStorage):
     """A dictionary-like interface for a GridFS database
 
     Args:
@@ -63,13 +67,13 @@ class GridFSPickleDict(BaseStorage):
                 result = self.fs.find_one({'_id': key})
                 if result is None:
                     raise KeyError
-                return self.serializer.loads(result.read())
+                return self.deserialize(result.read())
         except CorruptGridFile as e:
             logger.warning(e, exc_info=True)
             raise KeyError
 
     def __setitem__(self, key, item):
-        value = self.serializer.dumps(item)
+        value = self.serialize(item)
         encoding = None if isinstance(value, bytes) else 'utf-8'
 
         with self._lock:

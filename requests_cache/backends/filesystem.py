@@ -12,7 +12,7 @@ from shutil import rmtree
 from threading import RLock
 from typing import Iterator
 
-from ..serializers import SERIALIZERS
+from ..serializers import SERIALIZERS, json_serializer
 from . import BaseCache, BaseStorage
 from .sqlite import AnyPath, SQLiteDict, get_cache_path
 
@@ -33,7 +33,7 @@ class FileCache(BaseCache):
         super().__init__(cache_name=str(cache_name), **kwargs)
         self.responses: FileDict = FileDict(cache_name, use_temp=use_temp, **kwargs)
         self.redirects: SQLiteDict = SQLiteDict(
-            self.cache_dir / 'redirects.sqlite', 'redirects', **kwargs
+            self.cache_dir / 'redirects.sqlite', 'redirects', no_serializer=True, **kwargs
         )
 
     @property
@@ -58,6 +58,8 @@ class FileCache(BaseCache):
 
 class FileDict(BaseStorage):
     """A dictionary-like interface to files on the local filesystem"""
+
+    default_serializer = json_serializer
 
     def __init__(
         self,
@@ -91,7 +93,7 @@ class FileDict(BaseStorage):
         mode = 'rb' if self.is_binary else 'r'
         with self._try_io():
             with self._path(key).open(mode) as f:
-                return self.serializer.loads(f.read())
+                return self.deserialize(f.read())
 
     def __delitem__(self, key):
         with self._try_io():
@@ -100,7 +102,7 @@ class FileDict(BaseStorage):
     def __setitem__(self, key, value):
         with self._try_io():
             with self._path(key).open(mode='wb' if self.is_binary else 'w') as f:
-                f.write(self.serializer.dumps(value))
+                f.write(self.serialize(value))
 
     def __iter__(self):
         yield from self.keys()

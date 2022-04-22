@@ -51,6 +51,10 @@ except ImportError:
 VALIDATOR_HEADERS = [{'ETag': ETAG}, {'Last-Modified': LAST_MODIFIED}]
 
 
+def _valid_serializer(serializer) -> bool:
+    return isinstance(serializer, (SerializerPipeline, Stage))
+
+
 class BaseCacheTest:
     """Base class for testing cache backend classes"""
 
@@ -79,7 +83,7 @@ class BaseCacheTest:
         """Test all relevant combinations of (methods X data fields X serializers).
         Requests with different request params, data, or json should be cached under different keys.
         """
-        if not isinstance(serializer, (SerializerPipeline, Stage)):
+        if not _valid_serializer(serializer):
             pytest.skip(f'Dependencies not installed for {serializer}')
 
         url = httpbin(method.lower())
@@ -92,7 +96,7 @@ class BaseCacheTest:
     @pytest.mark.parametrize('response_format', HTTPBIN_FORMATS)
     def test_all_response_formats(self, response_format, serializer):
         """Test all relevant combinations of (response formats X serializers)"""
-        if not isinstance(serializer, SerializerPipeline):
+        if not _valid_serializer(serializer):
             pytest.skip(f'Dependencies not installed for {serializer}')
 
         session = self.init_session(serializer=serializer)
@@ -311,6 +315,9 @@ class BaseCacheTest:
         # Cache a response and some redirects, which should be the only non-expired cache items
         session.get(httpbin('get'), expire_after=-1)
         session.get(httpbin('redirect/3'), expire_after=-1)
+        assert len(session.cache.redirects.keys()) == 4
+        print(list(session.cache.redirects.items()))
+        print(list(session.cache.responses.keys()))
         session.cache.remove_expired_responses()
 
         assert len(session.cache.responses.keys()) == 2

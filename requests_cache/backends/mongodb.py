@@ -21,6 +21,7 @@ logger = getLogger(__name__)
 
 class MongoCache(BaseCache):
     """MongoDB cache backend.
+    By default, responses are only partially serialized into a MongoDB-compatible document format.
 
     Args:
         db_name: Database name
@@ -30,7 +31,7 @@ class MongoCache(BaseCache):
 
     def __init__(self, db_name: str = 'http_cache', connection: MongoClient = None, **kwargs):
         super().__init__(cache_name=db_name, **kwargs)
-        self.responses: MongoDict = MongoDocumentDict(
+        self.responses: MongoDict = MongoDict(
             db_name,
             collection_name='responses',
             connection=connection,
@@ -40,6 +41,7 @@ class MongoCache(BaseCache):
             db_name,
             collection_name='redirects',
             connection=self.responses.connection,
+            no_serializer=True,
             **kwargs,
         )
 
@@ -67,6 +69,8 @@ class MongoDict(BaseStorage):
         connection: :py:class:`pymongo.MongoClient` object to reuse instead of creating a new one
         kwargs: Additional keyword arguments for :py:class:`pymongo.MongoClient`
     """
+
+    default_serializer = bson_document_serializer
 
     def __init__(
         self,
@@ -107,15 +111,17 @@ class MongoDict(BaseStorage):
         result = self.collection.find_one({'_id': key})
         if result is None:
             raise KeyError
-        return result['data'] if 'data' in result else result
+        value = result['data'] if 'data' in result else result
+        return self.deserialize(value)
 
-    def __setitem__(self, key, item):
-        """If ``item`` is already a dict, its values will be stored under top-level keys.
+    def __setitem__(self, key, value):
+        """If ``value`` is already a dict, its values will be stored under top-level keys.
         Otherwise, it will be stored under a 'data' key.
         """
-        if not isinstance(item, Mapping):
-            item = {'data': item}
-        self.collection.replace_one({'_id': key}, item, upsert=True)
+        value = self.serialize(value)
+        if not isinstance(value, Mapping):
+            value = {'data': value}
+        self.collection.replace_one({'_id': key}, value, upsert=True)
 
     def __delitem__(self, key):
         result = self.collection.find_one_and_delete({'_id': key}, {'_id': True})
@@ -138,19 +144,3 @@ class MongoDict(BaseStorage):
 
     def close(self):
         self.connection.close()
-
-
-class MongoDocumentDict(MongoDict):
-    """Same as :class:`MongoDict`, but serializes values before saving.
-
-    By default, responses are only partially serialized into a MongoDB-compatible document format.
-    """
-
-    def __init__(self, *args, serializer=None, **kwargs):
-        super().__init__(*args, serializer=serializer or bson_document_serializer, **kwargs)
-
-    def __getitem__(self, key):
-        return self.serializer.loads(super().__getitem__(key))
-
-    def __setitem__(self, key, item):
-        super().__setitem__(key, self.serializer.dumps(item))

@@ -7,18 +7,17 @@
 import sqlite3
 import threading
 from contextlib import contextmanager
-from datetime import datetime
 from logging import getLogger
 from os import unlink
-from os.path import isfile
+from os.path import getsize, isfile
 from pathlib import Path
 from tempfile import gettempdir
+from time import time
 from typing import Collection, Iterator, List, Tuple, Type, Union
 
 from platformdirs import user_cache_dir
 
 from .._utils import chunkify, get_valid_kwargs
-from ..models import CachedResponse
 from ..policy.expiration import ExpirationTime
 from . import BaseCache, BaseStorage
 
@@ -45,8 +44,10 @@ class SQLiteCache(BaseCache):
 
     def __init__(self, db_path: AnyPath = 'http_cache', **kwargs):
         super().__init__(cache_name=str(db_path), **kwargs)
-        self.responses: SQLiteDict = SQLitePickleDict(db_path, table_name='responses', **kwargs)
-        self.redirects: SQLiteDict = SQLiteDict(db_path, table_name='redirects', **kwargs)
+        self.responses: SQLiteDict = SQLiteDict(db_path, table_name='responses', **kwargs)
+        self.redirects: SQLiteDict = SQLiteDict(
+            db_path, table_name='redirects', no_serializer=True, **kwargs
+        )
 
     @property
     def db_path(self) -> AnyPath:
@@ -211,17 +212,19 @@ class SQLiteDict(BaseStorage):
         # raise error after the with block, otherwise the connection will be locked
         if not row:
             raise KeyError
-        return row[0]
+
+        return self.deserialize(row[0])
 
     def __setitem__(self, key, value):
-        self._insert(key, value)
-
-    def _insert(self, key, value, expires: datetime = None):
-        posix_expires = round(expires.timestamp()) if expires else None
+        # If available, set expiration as a timestamp in unix format
+        expires = value.expires_unix if getattr(value, 'expires_unix', None) else None
+        value = self.serialize(value)
+        if isinstance(value, bytes):
+            value = sqlite3.Binary(value)
         with self.connection(commit=True) as con:
             con.execute(
                 f'INSERT OR REPLACE INTO {self.table_name} (key,value,expires) VALUES (?,?,?)',
-                (key, value, posix_expires),
+                (key, value, expires),
             )
 
     def __iter__(self):
@@ -257,10 +260,25 @@ class SQLiteDict(BaseStorage):
 
     def clear_expired(self):
         """Remove expired items from the cache"""
-        posix_now = round(datetime.utcnow().timestamp())
         with self._lock, self.connection(commit=True) as con:
-            con.execute(f"DELETE FROM {self.table_name} WHERE expires <= ?", (posix_now,))
+            con.execute(f"DELETE FROM {self.table_name} WHERE expires <= ?", (round(time()),))
         self.vacuum()
+
+    def size(self) -> int:
+        """Return the size of the database, in bytes. For an in-memory database, this will be an
+        estimate based on page size.
+        """
+        try:
+            return getsize(self.db_path)
+        except IOError:
+            return self._estimate_size()
+
+    def _estimate_size(self) -> int:
+        """Estimate the current size of the database based on page count * size"""
+        with self.connection() as conn:
+            page_count = conn.execute('PRAGMA page_count').fetchone()[0]
+            page_size = conn.execute('PRAGMA page_size').fetchone()[0]
+            return page_count * page_size
 
     def sorted(
         self, key: str = 'expires', reversed: bool = False, limit: int = None, exclude_expired=False
@@ -278,9 +296,8 @@ class SQLiteDict(BaseStorage):
         filter_expr = ''
         params: Tuple = ()
         if exclude_expired:
-            posix_now = round(datetime.utcnow().timestamp())
             filter_expr = 'WHERE expires is null or expires > ?'
-            params = (posix_now,)
+            params = (time(),)
 
         with self.connection(commit=True) as con:
             for row in con.execute(
@@ -288,34 +305,11 @@ class SQLiteDict(BaseStorage):
                 f'  ORDER BY {key} {direction} {limit_expr}',
                 params,
             ):
-                yield row[0]
+                yield self.deserialize(row[0])
 
     def vacuum(self):
         with self.connection(commit=True) as con:
             con.execute('VACUUM')
-
-
-class SQLitePickleDict(SQLiteDict):
-    """Same as :class:`SQLiteDict`, but serializes values before saving"""
-
-    def __setitem__(self, key, value: CachedResponse):
-        serialized_value = self.serializer.dumps(value)
-        if isinstance(serialized_value, bytes):
-            serialized_value = sqlite3.Binary(serialized_value)
-        super()._insert(key, serialized_value, getattr(value, 'expires', None))
-
-    def __getitem__(self, key):
-        return self.serializer.loads(super().__getitem__(key))
-
-    def sorted(
-        self,
-        key: str = 'expires',
-        reversed: bool = False,
-        limit: int = None,
-        exclude_expired: bool = False,
-    ):
-        for value in super().sorted(key, reversed, limit, exclude_expired):
-            yield self.serializer.loads(value)
 
 
 def _format_sequence(values: Collection) -> Tuple[str, List]:
@@ -372,9 +366,3 @@ def sqlite_template(
     uri: bool = False,
 ):
     """Template function to get an accurate signature for the builtin :py:func:`sqlite3.connect`"""
-
-
-# Aliases for backwards-compatibility
-DbCache = SQLiteCache
-DbDict = SQLiteDict
-DbPickeDict = SQLitePickleDict

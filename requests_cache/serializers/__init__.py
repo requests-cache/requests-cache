@@ -1,6 +1,8 @@
 """Response serialization utilities. See :ref:`serializers` for general usage info.
 """
 # flake8: noqa: F401
+from typing import Union
+
 from .cattrs import CattrStage
 from .pipeline import SerializerPipeline, Stage
 from .preconf import (
@@ -39,10 +41,11 @@ SERIALIZERS = {
     'yaml': yaml_serializer,
 }
 
+SerializerType = Union[str, SerializerPipeline, Stage]
 
-def init_serializer(serializer=None):
+
+def init_serializer(serializer: SerializerType = None):
     """Initialize a serializer from a name or instance"""
-    serializer = serializer or 'pickle'
     if isinstance(serializer, str):
         serializer = SERIALIZERS[serializer]
     return serializer

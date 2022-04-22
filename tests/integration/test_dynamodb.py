@@ -5,7 +5,7 @@ from unittest.mock import patch
 import pytest
 from botocore.exceptions import ClientError
 
-from requests_cache.backends import DynamoDbCache, DynamoDbDict, DynamoDbDocumentDict
+from requests_cache.backends import DynamoDbCache, DynamoDbDict
 from requests_cache.serializers import dynamodb_document_serializer
 from tests.conftest import HTTPBIN_FORMATS, HTTPBIN_METHODS, fail_if_no_connection
 from tests.integration.base_cache_test import TEST_SERIALIZERS, BaseCacheTest
@@ -69,7 +69,7 @@ class TestDynamoDbDict(BaseStorageTest):
         """
         cache = self.init_cache(ttl=ttl_enabled)
         item = OrderedDict(foo='bar')
-        item.ttl = 60
+        item.expires_unix = 60
         cache['key'] = item
 
         # 'ttl' is a reserved word, so to retrieve it we need to alias it
@@ -84,12 +84,6 @@ class TestDynamoDbDict(BaseStorageTest):
             assert isinstance(ttl_value, Decimal)
         else:
             assert ttl_value is None
-
-
-class TestDynamoDbDocumentDict(BaseStorageTest):
-    storage_class = DynamoDbDocumentDict
-    init_kwargs = DYNAMODB_OPTIONS
-    picklable = True
 
 
 class TestDynamoDbCache(BaseCacheTest):

@@ -14,7 +14,6 @@ class BaseStorageTest:
 
     storage_class: Type[BaseStorage] = None
     init_kwargs: Dict = {}
-    picklable: bool = False
     num_instances: int = 10  # Max number of cache instances to test
 
     def init_cache(self, cache_name=CACHE_NAME, index=0, clear=True, **kwargs):
@@ -98,21 +97,20 @@ class BaseStorageTest:
             cache['key']
 
     def test_picklable_dict(self):
-        if self.picklable:
-            cache = self.init_cache(serializer='pickle')
-            original_obj = BasicDataclass(
-                bool_attr=True,
-                datetime_attr=datetime(2022, 2, 2),
-                int_attr=2,
-                str_attr='value',
-            )
-            cache['key_1'] = original_obj
+        cache = self.init_cache(serializer='pickle')
+        original_obj = BasicDataclass(
+            bool_attr=True,
+            datetime_attr=datetime(2022, 2, 2),
+            int_attr=2,
+            str_attr='value',
+        )
+        cache['key_1'] = original_obj
 
-            obj = cache['key_1']
-            assert obj.bool_attr == original_obj.bool_attr
-            assert obj.datetime_attr == original_obj.datetime_attr
-            assert obj.int_attr == original_obj.int_attr
-            assert obj.str_attr == original_obj.str_attr
+        obj = cache['key_1']
+        assert obj.bool_attr == original_obj.bool_attr
+        assert obj.datetime_attr == original_obj.datetime_attr
+        assert obj.int_attr == original_obj.int_attr
+        assert obj.str_attr == original_obj.str_attr
 
     def test_clear_and_work_again(self):
         cache_1 = self.init_cache()
