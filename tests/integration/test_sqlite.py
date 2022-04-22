@@ -219,12 +219,19 @@ class TestSQLiteDict(BaseStorageTest):
             assert prev_item is None or prev_item.expires < item.expires
             assert item.status_code % 2 == 0
 
-    def test_filesize(self):
-        """Test approximate expected size of database file, in bytes"""
-        cache = self.init_cache()
+    @pytest.mark.parametrize(
+        'db_path, use_temp',
+        [
+            ('filesize_test', True),
+            (':memory:', False),
+        ],
+    )
+    def test_size(self, db_path, use_temp):
+        """Test approximate expected size of a database, for both file-based and in-memory databases"""
+        cache = self.init_cache(db_path, use_temp=use_temp)
         for i in range(100):
             cache[f'key_{i}'] = f'value_{i}'
-        assert 50000 < cache.filesize() < 200000
+        assert 10000 < cache.size() < 200000
 
 
 class TestSQLiteCache(BaseCacheTest):

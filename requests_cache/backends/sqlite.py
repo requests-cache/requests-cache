@@ -9,7 +9,7 @@ import threading
 from contextlib import contextmanager
 from logging import getLogger
 from os import unlink
-from os.path import isfile
+from os.path import getsize, isfile
 from pathlib import Path
 from tempfile import gettempdir
 from time import time
@@ -265,6 +265,22 @@ class SQLiteDict(BaseStorage):
         with self._lock, self.connection(commit=True) as con:
             con.execute(f"DELETE FROM {self.table_name} WHERE expires <= ?", (round(time()),))
         self.vacuum()
+
+    def size(self) -> int:
+        """Return the size of the database, in bytes. For an in-memory database, this will be an
+        estimate based on page size.
+        """
+        try:
+            return getsize(self.db_path)
+        except IOError:
+            return self._estimate_size()
+
+    def _estimate_size(self) -> int:
+        """Estimate the current size of the database based on page count * size"""
+        with self.connection() as conn:
+            page_count = conn.execute('PRAGMA page_count').fetchone()[0]
+            page_size = conn.execute('PRAGMA page_size').fetchone()[0]
+            return page_count * page_size
 
     def sorted(
         self, key: str = 'expires', reversed: bool = False, limit: int = None, exclude_expired=False
