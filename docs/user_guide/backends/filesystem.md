@@ -26,17 +26,9 @@ Or by alias:
 ```
 
 ## File Formats
-By default, responses are saved as pickle files. If you want to save responses in a human-readable
-format, you can use one of the other available {ref}`serializers`. For example, to save responses as
-JSON files:
-```python
->>> session = CachedSession('~/http_cache', backend='filesystem', serializer='json')
->>> session.get('https://httpbin.org/get')
->>> print(list(session.cache.paths()))
-> ['/home/user/http_cache/4dc151d95200ec.json']
-```
-
-Or as YAML (requires `pyyaml`):
+By default, responses are saved as JSON files. If you prefer a deiffernt format, you can use of the
+other available {ref}`serializers` or provide your own. For example, to save responses as
+YAML files (requires `pyyaml`):
 ```python
 >>> session = CachedSession('~/http_cache', backend='filesystem', serializer='yaml')
 >>> session.get('https://httpbin.org/get')

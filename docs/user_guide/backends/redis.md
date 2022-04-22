@@ -47,6 +47,9 @@ or disabled entirely. See [Redis Persistence](https://redis.io/topics/persistenc
 Redis natively supports TTL on a per-key basis, and can automatically remove expired responses from
 the cache. This will be set by by default, according to normal {ref}`expiration settings <expiration>`.
 
+Expired items are not removed immediately, but will never be returned from the cache. See
+[Redis: EXPIRE](https://redis.io/commands/expire/) docs for more details.
+
 If you intend to reuse expired responses, e.g. with {ref}`conditional-requests` or `stale_if_error`,
 you can disable this behavior with the `ttl` argument:
 ```python
