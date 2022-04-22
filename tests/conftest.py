@@ -11,6 +11,7 @@ https://requests-mock.readthedocs.io/en/latest/adapter.html
 import os
 from datetime import datetime, timedelta
 from functools import wraps
+from importlib import import_module
 from logging import basicConfig, getLogger
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -224,6 +225,12 @@ def get_mock_response(
     )
 
 
+def assert_delta_approx_equal(dt1: datetime, dt2: datetime, target_delta, threshold_seconds=2):
+    """Assert that the given datetimes are approximately ``target_delta`` seconds apart"""
+    diff_in_seconds = (dt2 - dt1).total_seconds()
+    assert abs(diff_in_seconds - target_delta) <= threshold_seconds
+
+
 def fail_if_no_connection(connect_timeout: float = 1.0) -> bool:
     """Decorator for testing a backend connection. This will intentionally cause a test failure if
     the wrapped function doesn't have dependencies installed, doesn't connect after a short timeout,
@@ -247,7 +254,16 @@ def fail_if_no_connection(connect_timeout: float = 1.0) -> bool:
     return decorator
 
 
-def assert_delta_approx_equal(dt1: datetime, dt2: datetime, target_delta, threshold_seconds=2):
-    """Assert that the given datetimes are approximately ``target_delta`` seconds apart"""
-    diff_in_seconds = (dt2 - dt1).total_seconds()
-    assert abs(diff_in_seconds - target_delta) <= threshold_seconds
+def is_installed(module_name: str) -> bool:
+    """Check if a given dependency is installed"""
+    try:
+        import_module(module_name)
+        return True
+    except ImportError:
+        return False
+
+
+def skip_missing_deps(module_name: str) -> pytest.Mark:
+    return pytest.mark.skipif(
+        not is_installed(module_name), reason=f'{module_name} is not installed'
+    )
