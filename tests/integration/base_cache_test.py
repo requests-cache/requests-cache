@@ -44,7 +44,6 @@ logger = getLogger(__name__)
 # Handle optional dependencies if they're not installed,
 # so any skipped tests will explicitly be shown in pytest output
 TEST_SERIALIZERS = SERIALIZERS.copy()
-TEST_SERIALIZERS['no_op'] = None
 try:
     TEST_SERIALIZERS['safe_pickle'] = safe_pickle_serializer(secret_key='hunter2')
 except ImportError:
@@ -53,7 +52,7 @@ VALIDATOR_HEADERS = [{'ETag': ETAG}, {'Last-Modified': LAST_MODIFIED}]
 
 
 def _valid_serializer(serializer) -> bool:
-    return isinstance(serializer, (SerializerPipeline, Stage)) or serializer is None
+    return isinstance(serializer, (SerializerPipeline, Stage))
 
 
 class BaseCacheTest:
@@ -317,6 +316,8 @@ class BaseCacheTest:
         session.get(httpbin('get'), expire_after=-1)
         session.get(httpbin('redirect/3'), expire_after=-1)
         assert len(session.cache.redirects.keys()) == 4
+        print(list(session.cache.redirects.items()))
+        print(list(session.cache.responses.keys()))
         session.cache.remove_expired_responses()
 
         assert len(session.cache.responses.keys()) == 2

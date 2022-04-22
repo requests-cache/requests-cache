@@ -29,22 +29,19 @@ class MongoCache(BaseCache):
         kwargs: Additional keyword arguments for :py:class:`pymongo.mongo_client.MongoClient`
     """
 
-    def __init__(
-        self, db_name: str = 'http_cache', connection: MongoClient = None, serializer=None, **kwargs
-    ):
+    def __init__(self, db_name: str = 'http_cache', connection: MongoClient = None, **kwargs):
         super().__init__(cache_name=db_name, **kwargs)
         self.responses: MongoDict = MongoDict(
             db_name,
             collection_name='responses',
             connection=connection,
-            serializer=serializer or bson_document_serializer,
             **kwargs,
         )
         self.redirects: MongoDict = MongoDict(
             db_name,
             collection_name='redirects',
             connection=self.responses.connection,
-            serializer=None,
+            no_serializer=True,
             **kwargs,
         )
 
@@ -72,6 +69,8 @@ class MongoDict(BaseStorage):
         connection: :py:class:`pymongo.MongoClient` object to reuse instead of creating a new one
         kwargs: Additional keyword arguments for :py:class:`pymongo.MongoClient`
     """
+
+    default_serializer = bson_document_serializer
 
     def __init__(
         self,

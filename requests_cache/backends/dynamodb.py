@@ -34,24 +34,22 @@ class DynamoDbCache(BaseCache):
         table_name: str = 'http_cache',
         ttl: bool = True,
         connection: ServiceResource = None,
-        serializer=None,
         **kwargs,
     ):
         super().__init__(cache_name=table_name, **kwargs)
         self.responses = DynamoDbDict(
             table_name,
-            'responses',
+            namespace='responses',
             ttl=ttl,
-            serializer=serializer or dynamodb_document_serializer,
             connection=connection,
             **kwargs,
         )
         self.redirects = DynamoDbDict(
             table_name,
-            'redirects',
+            namespace='redirects',
             ttl=False,
             connection=self.responses.connection,
-            serializer=None,
+            no_serializer=True,
             **kwargs,
         )
 
@@ -67,6 +65,8 @@ class DynamoDbDict(BaseStorage):
         ttl: Use DynamoDB TTL to automatically remove expired items
         kwargs: Additional keyword arguments for :py:meth:`~boto3.session.Session.resource`
     """
+
+    default_serializer = dynamodb_document_serializer
 
     def __init__(
         self,

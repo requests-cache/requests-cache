@@ -42,13 +42,11 @@ class SQLiteCache(BaseCache):
         kwargs: Additional keyword arguments for :py:func:`sqlite3.connect`
     """
 
-    def __init__(self, db_path: AnyPath = 'http_cache', serializer=None, **kwargs):
+    def __init__(self, db_path: AnyPath = 'http_cache', **kwargs):
         super().__init__(cache_name=str(db_path), **kwargs)
-        self.responses: SQLiteDict = SQLiteDict(
-            db_path, table_name='responses', serializer=serializer or 'pickle', **kwargs
-        )
+        self.responses: SQLiteDict = SQLiteDict(db_path, table_name='responses', **kwargs)
         self.redirects: SQLiteDict = SQLiteDict(
-            db_path, table_name='redirects', serializer=None, **kwargs
+            db_path, table_name='redirects', no_serializer=True, **kwargs
         )
 
     @property

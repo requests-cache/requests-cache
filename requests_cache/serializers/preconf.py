@@ -53,9 +53,8 @@ dict_serializer = SerializerPipeline(
     [base_stage], name='dict', is_binary=False
 )  #: Partial serializer that unstructures responses into dicts
 pickle_serializer = SerializerPipeline(
-    [base_stage, pickle], name='pickle', is_binary=True
+    [base_stage, Stage(pickle)], name='pickle', is_binary=True
 )  #: Pickle serializer
-no_op_serializer = SerializerPipeline([], name='no_op')  #: Placeholder serializer that does nothing
 
 # Safe pickle serializer
 def signer_stage(secret_key=None, salt='requests-cache') -> Stage:
@@ -77,7 +76,7 @@ def safe_pickle_serializer(secret_key=None, salt='requests-cache', **kwargs) -> 
     responses on write, and validate that signature with a secret key on read.
     """
     return SerializerPipeline(
-        [base_stage, pickle, signer_stage(secret_key, salt)],
+        [base_stage, Stage(pickle), signer_stage(secret_key, salt)],
         name='safe_pickle',
         is_binary=True,
     )

@@ -31,7 +31,11 @@ class GridFSCache(BaseCache):
         super().__init__(cache_name=db_name, **kwargs)
         self.responses = GridFSDict(db_name, **kwargs)
         self.redirects = MongoDict(
-            db_name, collection_name='redirects', connection=self.responses.connection, **kwargs
+            db_name,
+            collection_name='redirects',
+            connection=self.responses.connection,
+            no_serializer=True,
+            **kwargs
         )
 
     def remove_expired_responses(self, *args, **kwargs):

@@ -11,6 +11,7 @@ from redis import Redis, StrictRedis
 
 from .._utils import get_valid_kwargs
 from ..cache_keys import decode, encode
+from ..serializers import utf8_encoder
 from . import BaseCache, BaseStorage
 
 logger = getLogger(__name__)
@@ -33,8 +34,13 @@ class RedisCache(BaseCache):
     ):
         super().__init__(cache_name=namespace, **kwargs)
         self.responses = RedisDict(namespace, connection=connection, ttl=ttl, **kwargs)
+        kwargs.pop('serializer', None)
         self.redirects = RedisHashDict(
-            namespace, 'redirects', connection=self.responses.connection, **kwargs
+            namespace,
+            'redirects',
+            connection=self.responses.connection,
+            serializer=utf8_encoder,  # Only needs encoding to/decoding from bytes
+            **kwargs,
         )
 
 
@@ -116,14 +122,14 @@ class RedisDict(BaseStorage):
         return [(k, self[k]) for k in self.keys()]
 
     def values(self):
-        return [self.serializer.loads(v) for v in self.connection.mget(*self._bkeys(self.keys()))]
+        return [self.deserialize(v) for v in self.connection.mget(*self._bkeys(self.keys()))]
 
 
 class RedisHashDict(BaseStorage):
     """A dictionary-like interface for operations on a single Redis hash
 
     **Notes:**
-        * All keys will be encoded as bytes, and all values will be serialized
+        * All keys will be encoded as bytes
         * Items will be stored in a hash named ``namespace:collection_name``
     """
 
@@ -171,10 +177,10 @@ class RedisHashDict(BaseStorage):
     def items(self):
         """Get all ``(key, value)`` pairs in the hash"""
         return [
-            (decode(k), self.serializer.loads(v))
+            (decode(k), self.deserialize(v))
             for k, v in self.connection.hgetall(self._hash_key).items()
         ]
 
     def values(self):
         """Get all values in the hash"""
-        return [self.serializer.loads(v) for v in self.connection.hvals(self._hash_key)]
+        return [self.deserialize(v) for v in self.connection.hvals(self._hash_key)]

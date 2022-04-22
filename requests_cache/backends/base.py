@@ -20,7 +20,7 @@ from ..cache_keys import create_key, redact_response
 from ..models import CachedResponse
 from ..policy.expiration import ExpirationTime
 from ..policy.settings import DEFAULT_CACHE_NAME, CacheSettings
-from ..serializers import init_serializer
+from ..serializers import SerializerType, init_serializer, pickle_serializer
 
 # Specific exceptions that may be raised during deserialization
 DESERIALIZE_ERRORS = (AttributeError, ImportError, PickleError, TypeError, ValueError)
@@ -260,12 +260,20 @@ class BaseStorage(MutableMapping, ABC):
 
     Args:
         serializer: Custom serializer that provides ``loads`` and ``dumps`` methods
+        no_serializer: Explicitly disable serialization, and write values as-is; this is to avoid
+            ambiguity with ``serializer=None``
         kwargs: Additional backend-specific keyword arguments
     """
 
-    def __init__(self, **kwargs):
-        self.serializer = init_serializer(kwargs.get('serializer', 'pickle'))
-        logger.debug(f'Initializing {type(self).__name__} with serializer: {self.serializer}')
+    # Default serializer to use for responses, if one isn't specified; may be overridden
+    default_serializer: SerializerType = pickle_serializer
+
+    def __init__(self, serializer: SerializerType = None, no_serializer: bool = False, **kwargs):
+        if no_serializer:
+            self.serializer = None
+        else:
+            self.serializer = init_serializer(serializer or self.default_serializer)
+        logger.debug(f'Initialized {type(self).__name__} with serializer: {self.serializer}')
 
     def bulk_delete(self, keys: Iterable[str]):
         """Delete multiple keys from the cache, without raising errors for missing keys. This is a

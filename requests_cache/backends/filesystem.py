@@ -12,7 +12,7 @@ from shutil import rmtree
 from threading import RLock
 from typing import Iterator
 
-from ..serializers import SERIALIZERS
+from ..serializers import SERIALIZERS, json_serializer
 from . import BaseCache, BaseStorage
 from .sqlite import AnyPath, SQLiteDict, get_cache_path
 
@@ -33,7 +33,7 @@ class FileCache(BaseCache):
         super().__init__(cache_name=str(cache_name), **kwargs)
         self.responses: FileDict = FileDict(cache_name, use_temp=use_temp, **kwargs)
         self.redirects: SQLiteDict = SQLiteDict(
-            self.cache_dir / 'redirects.sqlite', 'redirects', **kwargs
+            self.cache_dir / 'redirects.sqlite', 'redirects', no_serializer=True, **kwargs
         )
 
     @property
@@ -58,6 +58,8 @@ class FileCache(BaseCache):
 
 class FileDict(BaseStorage):
     """A dictionary-like interface to files on the local filesystem"""
+
+    default_serializer = json_serializer
 
     def __init__(
         self,

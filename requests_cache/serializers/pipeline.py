@@ -9,7 +9,8 @@ from ..models import CachedResponse
 
 
 class Stage:
-    """Generic class to wrap serialization steps with consistent ``dumps()`` and ``loads()`` methods
+    """A single stage in a serializer pipeline. This wraps serialization steps with consistent
+    ``dumps()`` and ``loads()`` methods
 
     Args:
         obj: Serializer object or module, if applicable

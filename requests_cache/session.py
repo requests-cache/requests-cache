@@ -25,7 +25,7 @@ from .policy import (
     KeyCallback,
     set_request_headers,
 )
-from .serializers import SerializerPipeline
+from .serializers import SerializerType
 
 __all__ = ['CachedSession', 'CacheMixin']
 if TYPE_CHECKING:
@@ -45,7 +45,7 @@ class CacheMixin(MIXIN_BASE):
         self,
         cache_name: str = DEFAULT_CACHE_NAME,
         backend: BackendSpecifier = None,
-        serializer: Union[str, SerializerPipeline] = None,
+        serializer: SerializerType = None,
         expire_after: ExpirationTime = -1,
         urls_expire_after: ExpirationPatterns = None,
         cache_control: bool = False,
