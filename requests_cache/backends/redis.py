@@ -17,7 +17,7 @@ logger = getLogger(__name__)
 
 
 # TODO: TTL tests
-# TODO: Option to set a different (typically longer) TTL than expire_after, like MongoCache
+# TODO: Option to set a TTL offset, for longer expiration than expire_after
 class RedisCache(BaseCache):
     """Redis cache backend.
 
@@ -79,9 +79,9 @@ class RedisDict(BaseStorage):
 
     def __setitem__(self, key, item):
         """Save an item to the cache, optionally with TTL"""
-        ttl_seconds = getattr(item, 'ttl', None)
-        if self.ttl and ttl_seconds and ttl_seconds > 0:
-            self.connection.setex(self._bkey(key), round(ttl_seconds), self.serialize(item))
+        expires_delta = getattr(item, 'expires_delta', None)
+        if self.ttl and (expires_delta or 0) > 0:
+            self.connection.setex(self._bkey(key), expires_delta, self.serialize(item))
         else:
             self.connection.set(self._bkey(key), self.serialize(item))
 

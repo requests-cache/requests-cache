@@ -691,17 +691,17 @@ def test_remove_expired_responses__per_request(mock_session):
     mock_session.mock_adapter.register_uri('GET', second_url, status_code=200)
     mock_session.mock_adapter.register_uri('GET', third_url, status_code=200)
     mock_session.get(MOCKED_URL)
-    mock_session.get(second_url, expire_after=1)
-    mock_session.get(third_url, expire_after=2)
+    mock_session.get(second_url, expire_after=2)
+    mock_session.get(third_url, expire_after=4)
 
     # All 3 responses should still be cached
     mock_session.remove_expired_responses()
     for response in mock_session.cache.responses.values():
-        logger.info(f'Expires in {response.ttl} seconds')
+        logger.info(f'Expires in {response.expires_delta} seconds')
     assert len(mock_session.cache.responses) == 3
 
-    # One should be expired after 1s, and another should be expired after 2s
-    time.sleep(1)
+    # One should be expired after 2s, and another should be expired after 4s
+    time.sleep(2)
     mock_session.remove_expired_responses()
     assert len(mock_session.cache.responses) == 2
     time.sleep(2)

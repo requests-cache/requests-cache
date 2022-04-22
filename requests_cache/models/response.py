@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from logging import getLogger
+from time import time
 from typing import TYPE_CHECKING, List, Optional
 
 import attr
@@ -134,12 +135,18 @@ class CachedResponse(BaseResponse, RichMixin):
         return self.expires is not None and datetime.utcnow() >= self.expires
 
     @property
-    def ttl(self) -> Optional[float]:
+    def expires_delta(self) -> Optional[int]:
         """Get time to expiration in seconds (rounded to the nearest second)"""
         if self.expires is None:
             return None
         delta = self.expires - datetime.utcnow()
-        return delta.total_seconds()
+        return round(delta.total_seconds())
+
+    @property
+    def expires_unix(self) -> Optional[int]:
+        """Get expiration time as a Unix timestamp"""
+        seconds = self.expires_delta
+        return round(time() + seconds) if seconds else None
 
     @property
     def next(self) -> Optional[PreparedRequest]:

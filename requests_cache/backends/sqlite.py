@@ -7,18 +7,17 @@
 import sqlite3
 import threading
 from contextlib import contextmanager
-from datetime import datetime
 from logging import getLogger
 from os import unlink
 from os.path import isfile
 from pathlib import Path
 from tempfile import gettempdir
+from time import time
 from typing import Collection, Iterator, List, Tuple, Type, Union
 
 from platformdirs import user_cache_dir
 
 from .._utils import chunkify, get_valid_kwargs
-from ..models import CachedResponse
 from ..policy.expiration import ExpirationTime
 from . import BaseCache, BaseStorage
 
@@ -219,14 +218,15 @@ class SQLiteDict(BaseStorage):
         return self.deserialize(row[0])
 
     def __setitem__(self, key, value):
-        self._insert(key, value)
-
-    def _insert(self, key, value, expires: datetime = None):
-        posix_expires = round(expires.timestamp()) if expires else None
+        # If available, set expiration as a timestamp in unix format
+        expires = value.expires_unix if getattr(value, 'expires_unix', None) else None
+        value = self.serialize(value)
+        if isinstance(value, bytes):
+            value = sqlite3.Binary(value)
         with self.connection(commit=True) as con:
             con.execute(
                 f'INSERT OR REPLACE INTO {self.table_name} (key,value,expires) VALUES (?,?,?)',
-                (key, value, posix_expires),
+                (key, value, expires),
             )
 
     def __iter__(self):
@@ -262,9 +262,8 @@ class SQLiteDict(BaseStorage):
 
     def clear_expired(self):
         """Remove expired items from the cache"""
-        posix_now = round(datetime.utcnow().timestamp())
         with self._lock, self.connection(commit=True) as con:
-            con.execute(f"DELETE FROM {self.table_name} WHERE expires <= ?", (posix_now,))
+            con.execute(f"DELETE FROM {self.table_name} WHERE expires <= ?", (round(time()),))
         self.vacuum()
 
     def sorted(
@@ -283,9 +282,8 @@ class SQLiteDict(BaseStorage):
         filter_expr = ''
         params: Tuple = ()
         if exclude_expired:
-            posix_now = round(datetime.utcnow().timestamp())
             filter_expr = 'WHERE expires is null or expires > ?'
-            params = (posix_now,)
+            params = (time(),)
 
         with self.connection(commit=True) as con:
             for row in con.execute(

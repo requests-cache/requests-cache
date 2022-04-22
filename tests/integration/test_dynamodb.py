@@ -69,7 +69,7 @@ class TestDynamoDbDict(BaseStorageTest):
         """
         cache = self.init_cache(ttl=ttl_enabled)
         item = OrderedDict(foo='bar')
-        item.ttl = 60
+        item.expires_unix = 60
         cache['key'] = item
 
         # 'ttl' is a reserved word, so to retrieve it we need to alias it

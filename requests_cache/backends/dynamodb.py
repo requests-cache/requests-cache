@@ -4,7 +4,6 @@
    :classes-only:
    :nosignatures:
 """
-from time import time
 from typing import Dict, Iterable
 
 import boto3
@@ -151,8 +150,8 @@ class DynamoDbDict(BaseStorage):
         item = {**self._composite_key(key), 'value': self.serialize(value)}
 
         # If enabled, set TTL value as a timestamp in unix format
-        if self.ttl and getattr(value, 'ttl', None):
-            item['ttl'] = round(time() + value.ttl)
+        if self.ttl and getattr(value, 'expires_unix', None):
+            item['ttl'] = value.expires_unix
 
         self._table.put_item(Item=item)
 
