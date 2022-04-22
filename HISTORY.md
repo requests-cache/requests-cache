@@ -23,6 +23,7 @@
 **Backends:**
 * SQLite:
   * Improve performance for removing expired items
+  * Add `size()` method to get estimated size of the database (including in-memory databases)
   * Add `sorted()` method with sorting and other query options
   * Add `wal` parameter to enable write-ahead logging
 * MongoDB:
@@ -33,7 +34,14 @@
   * Create default table in on-demand mode instead of provisioned
   * Add optional integration with DynamoDB TTL to improve performance for removing expired responses
     * This is enabled by default, but may be disabled
+* Filesystem:
+  * The default file format has been changed from pickle to JSON
 * SQLite, Redis, MongoDB, and GridFS: Close open database connections when `CachedSession` is used as a contextmanager, or if `CachedSession.close()` is called
+
+**Request Matching & Filtering:**
+* Add serializer name to cache keys to avoid errors due to switching serializers
+* Always skip both cache read and write for requests excluded by `allowable_methods` (previously only skipped write)
+* Ignore and redact common authentication headers and request parameters by default. This provides some default recommended values for `ignored_parameters`, to avoid accidentally storing common credentials (e.g., OAuth tokens) in the cache. This will have no effect if you are already setting `ignored_parameters`.
 
 **Type hints:**
 * Add `OriginalResponse` type, which adds type hints to `requests.Response` objects for extra attributes added by requests-cache:
@@ -45,29 +53,28 @@
 * `OriginalResponse.cache_key` and `expires` will be populated for any new response that was written to the cache
 * Add request wrapper methods with return type hints for all HTTP methods (`CachedSession.get()`, `head()`, etc.)
 
-**Request Matching & Filtering:**
-* Add serializer name to cache keys to avoid errors due to switching serializers
-* Always skip both cache read and write for requests excluded by `allowable_methods` (previously only skipped write)
-* Ignore and redact common authentication params and headers (e.g., for OAuth2) by default
-  * This is simply a default value for `ignored_parameters`, to avoid accidentally storing credentials in the cache
-
 **Dependencies:**
 * Replace `appdirs` with `platformdirs`
 
-**Potentially breaking changes:**
+**Breaking changes:**
+Some relatively minor breaking changes have been made that are not expected to affect most users.
+If you encounter a problem not listed here after updating, please file a bug report!
+
 The following undocumented behaviors have been removed:
-* The arguments `match_headers` and `ignored_parameters` must be passed to `CachedSession`.
-  * Previously, these could also be passed to a `BaseCache` instance.
-* The `CachedSession` `backend` argument must be either an instance or string alias.
-  * Previously it would also accept a backend class.
+* The arguments `match_headers` and `ignored_parameters` must be passed to `CachedSession`. Previously, these could also be passed to a `BaseCache` instance.
+* The `CachedSession` `backend` argument must be either an instance or string alias. Previously it would also accept a backend class.
 * After initialization, cache settings can only be accesed and modified via
-  `CachedSession.settings`.
-  * Previously, some settings could be modified by setting them on either `CachedSession` or `BaseCache`. In some cases this could silently fail or otherwise have undefined behavior.
+  `CachedSession.settings`. Previously, some settings could be modified by setting them on either `CachedSession` or `BaseCache`. In some cases this could silently fail or otherwise have undefined behavior.
 
-Internal module changes:
-* The contents of the `cache_control` module have been split up into multiple modules in a new `policy` subpackage
+The following is relevant for users who have made custom backends that extend built-in storage classes:
+* All `BaseStorage` subclasses now have a `serializer` attribute, which will be unused if
+  set to `None`.
+* All serializer-specific `BaseStorage` subclasses have been removed, and merged into their respective parent classes. This includes `SQLitePickleDict`, `MongoPickleDict`, and `GridFSPickleDict`.
 
-## 0.9.4 (2022-04-21)
+Internal utility module changes:
+* The `cache_control` module (added in `0.7`) has been split up into multiple modules in a new `policy` subpackage
+
+### 0.9.4 (2022-04-22)
 * Fix forwarding connection parameters passed to `RedisCache` for redis-py 4.2 and python <=3.8
 * Fix forwarding connection parameters passed to `MongoCache` for pymongo 4.1 and python <=3.8
 

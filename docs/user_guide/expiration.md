@@ -142,15 +142,13 @@ You can also apply a new `expire_after` value to previously cached responses:
 >>> session.remove_expired_responses(expire_after=timedelta(days=30))
 ```
 
+(ttl)=
 ### Automatic Removal
 The following backends have native TTL support, which can be used to automatically remove expired
 responses:
+* {py:mod}`DynamoDB <requests_cache.backends.dynamodb>`
 * {py:mod}`MongoDB <requests_cache.backends.mongodb>`
 * {py:mod}`Redis <requests_cache.backends.redis>`
-<!--
-TODO: Not yet supported:
-* {py:mod}`DynamoDB <requests_cache.backends.dynamodb>`
--->
 
 ## Request Options
 In addition to the base arguments for {py:func}`requests.request`, requests-cache adds some extra
