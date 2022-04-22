@@ -1,5 +1,9 @@
 # History
 
+## 0.9.4 (2022-04-22)
+* Fix forwarding connection parameters passed to `RedisCache` for redis-py 4.2 and python <=3.8
+* Fix forwarding connection parameters passed to `MongoCache` for pymongo 4.1 and python <=3.8
+
 ## 0.9.3 (2022-02-22)
 * Fix handling BSON serializer differences between pymongo's `bson` and standalone `bson` codec.
 * Handle `CorruptGridFile` error in GridFS backend
