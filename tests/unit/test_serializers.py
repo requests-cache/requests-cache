@@ -9,8 +9,6 @@ from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
-from itsdangerous import Signer
-from itsdangerous.exc import BadSignature
 
 from requests_cache import (
     CachedResponse,
@@ -21,6 +19,7 @@ from requests_cache import (
     safe_pickle_serializer,
     utf8_encoder,
 )
+from tests.conftest import skip_missing_deps
 
 
 def test_stdlib_json():
@@ -35,6 +34,7 @@ def test_stdlib_json():
     reload(requests_cache.serializers.preconf)
 
 
+@skip_missing_deps('ujson')
 def test_ujson():
     import ujson
 
@@ -43,6 +43,7 @@ def test_ujson():
     assert module_json is ujson
 
 
+@skip_missing_deps('bson')
 def test_standalone_bson():
     """Handle different method names for standalone bson codec vs pymongo"""
     import requests_cache.serializers.preconf
@@ -80,7 +81,11 @@ def test_optional_dependencies():
     reload(requests_cache.serializers.preconf)
 
 
+@skip_missing_deps('itsdangerous')
 def test_cache_signing(tempfile_path):
+    from itsdangerous import Signer
+    from itsdangerous.exc import BadSignature
+
     serializer = safe_pickle_serializer(secret_key=str(uuid4()))
     session = CachedSession(tempfile_path, serializer=serializer)
     assert isinstance(session.cache.responses.serializer.stages[-1].obj, Signer)

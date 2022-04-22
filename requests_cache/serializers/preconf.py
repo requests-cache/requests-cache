@@ -116,6 +116,7 @@ try:
     )  #: BSON partial serializer that produces a MongoDB-compatible document
 except ImportError as e:
     bson_serializer = get_placeholder_class(e)
+    bson_document_serializer = get_placeholder_class(e)
 
 
 # JSON serializer

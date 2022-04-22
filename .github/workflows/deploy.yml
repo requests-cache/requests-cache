@@ -77,9 +77,41 @@ jobs:
           nox -e test-current
           nox -e stress -- ${{ env.STRESS_TEST_MULTIPLIER }}
 
+  # Run unit tests without any optional dependencies installed
+  test-minimum-deps:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Set up python + poetry
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: ${{ env.LATEST_PY_VERSION }}
+      - uses: snok/install-poetry@v1.3
+        with:
+          version: 1.2.0b1
+          virtualenvs-in-project: true
+
+      # Cache packages per python version, and reuse until lockfile changes
+      - name: Cache python packages
+        id: cache
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ matrix.python-version }}-latest-minimum-deps-${{ hashFiles('poetry.lock') }}
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: poetry install -v
+
+      - name: Run unit tests with no optional dependencies
+        run: |
+          source $VENV
+          pytest -n auto tests/unit
+
+
   # Deploy stable builds on tags only, and pre-release builds from manual trigger ("workflow_dispatch")
   release:
-    needs: [test]
+    needs: [test, test-minimum-deps]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

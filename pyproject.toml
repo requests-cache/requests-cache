@@ -32,7 +32,7 @@ python        = "^3.7"
 requests      = "^2.22"    # Needs no introduction
 urllib3       = ">=1.25.5" # Use a slightly newer version than required by requests (for bugfixes)
 attrs         = ">=21.2"   # For response data models
-cattrs        = ">=22.0"   # For response serialization
+cattrs        = ">=22.1"   # For response serialization
 platformdirs  = "^2.5"     # For features that use platform-specific system directories
 url-normalize = "^1.4"     # For more accurate request matching
 
@@ -62,6 +62,9 @@ sphinx-notfound-page       = {optional=true, version=">=0.8"}
 sphinx-panels              = {optional=true, version="^0.6"}
 sphinxcontrib-apidoc       = {optional=true, version="^0.3"}
 
+# Temporary fix until cattrs 22.2.0 is released
+exceptiongroup = {version = "^1.0.0-rc.3", python = "^3.10.0"}
+
 [tool.poetry.extras]
 # Package extras for optional backend dependencies
 dynamodb = ["boto3", "botocore"]
@@ -85,7 +88,6 @@ docs     = ["furo", "linkify-it-py", "myst-parser", "sphinx", "sphinx-autodoc-ty
 [tool.poetry.dev-dependencies]
 # For unit + integration tests
 coverage              = "^6.3"
-exceptiongroup        = "*"
 psutil                = "^5.0"
 pytest                = "^7.1"
 pytest-clarity        = "^1.0.1"
