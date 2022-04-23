@@ -25,6 +25,7 @@ class CacheDirectives(RichMixin):
     no_store: bool = field(default=False)
     only_if_cached: bool = field(default=False)
     stale_if_error: int = field(default=None, converter=try_int)
+    stale_while_revalidate: int = field(default=None, converter=try_int)
     etag: str = field(default=None)
     last_modified: str = field(default=None)
 

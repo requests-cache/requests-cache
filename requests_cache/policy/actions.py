@@ -42,16 +42,19 @@ class CacheActions(RichMixin):
         expire_after: User or header-provided expiration value
         send_request: Send a new request
         resend_request: Send a new request to refresh a stale cache item
+        resend_async: Return a stale cache item, and send a non-blocking request to refresh it
         skip_read: Skip reading from the cache
         skip_write: Skip writing to the cache
     """
 
     # Outputs
+    # TODO: Besides skip read/write, will there always be only one action? Should these be an enum instead?
     cache_key: str = field(default=None, repr=False)
     error_504: bool = field(default=False)
     expire_after: ExpirationTime = field(default=None)
-    resend_request: bool = field(default=False)
     send_request: bool = field(default=False)
+    resend_request: bool = field(default=False)
+    resend_async: bool = field(default=False)
     skip_read: bool = field(default=False)
     skip_write: bool = field(default=False)
 
@@ -63,6 +66,7 @@ class CacheActions(RichMixin):
     _only_if_cached: bool = field(default=False, repr=False)
     _refresh: bool = field(default=False, repr=False)
     _stale_if_error: Union[bool, ExpirationTime] = field(default=None, repr=False)
+    _stale_while_revalidate: Union[bool, ExpirationTime] = field(default=None, repr=False)
     _validation_headers: Dict[str, str] = field(factory=dict, repr=False)
 
     @classmethod
@@ -82,6 +86,9 @@ class CacheActions(RichMixin):
         only_if_cached = settings.only_if_cached or directives.only_if_cached
         refresh = directives.max_age == EXPIRE_IMMEDIATELY or directives.must_revalidate
         stale_if_error = settings.stale_if_error or directives.stale_if_error
+        stale_while_revalidate = (
+            settings.stale_while_revalidate or directives.stale_while_revalidate
+        )
 
         # Check expiration values in order of precedence
         expire_after = coalesce(
@@ -107,6 +114,7 @@ class CacheActions(RichMixin):
             skip_read=any(read_criteria.values()),
             skip_write=directives.no_store,
             stale_if_error=stale_if_error,
+            stale_while_revalidate=stale_while_revalidate,
             directives=directives,
             settings=settings,
         )
@@ -121,18 +129,27 @@ class CacheActions(RichMixin):
 
     def is_usable(self, cached_response: 'CachedResponse', error: bool = False):
         """Determine whether a given cached response is "fresh enough" to satisfy the request,
-        based on min-fresh, max-stale, or stale-if-error (if an error has occured).
+        based on:
+
+        * min-fresh
+        * max-stale
+        * stale-if-error (if an error has occured)
+        * stale-while-revalidate
         """
         if cached_response is None:
             return False
-        elif cached_response.expires is None:
+        elif (
+            cached_response.expires is None
+            or (cached_response.is_expired and self._stale_while_revalidate is True)
+            or (error and self._stale_if_error is True)
+        ):
             return True
-        # Handle additional types supported for stale_if_error
-        elif error and self._stale_if_error is True:
-            return True
+        # Handle stale_if_error as a time value
         elif error and self._stale_if_error:
-            offset_seconds = get_expiration_seconds(self._stale_if_error)
-            offset = timedelta(seconds=offset_seconds)
+            offset = timedelta(seconds=get_expiration_seconds(self._stale_if_error))
+        # Handle stale_while_revalidate as a time value
+        elif cached_response.is_expired and self._stale_while_revalidate:
+            offset = timedelta(seconds=get_expiration_seconds(self._stale_while_revalidate))
         # Handle min-fresh and max-stale
         else:
             offset = self._directives.get_expire_offset()
@@ -145,18 +162,21 @@ class CacheActions(RichMixin):
 
         Used after fetching a cached response, but before potentially sending a new request.
         """
-        valid_response = self.is_usable(cached_response)
-        valid_if_error = self.is_usable(cached_response, error=True)
+        usable_response = self.is_usable(cached_response)
+        usable_if_error = self.is_usable(cached_response, error=True)
 
         # Can't satisfy the request
-        if not valid_response and self._only_if_cached and not valid_if_error:
+        if not usable_response and self._only_if_cached and not usable_if_error:
             self.error_504 = True
         # Send the request for the first time
         elif cached_response is None:
             self.send_request = True
         # Resend the request, unless settings permit a stale response
-        elif not valid_response and not (self._only_if_cached and valid_if_error):
+        elif not usable_response and not (self._only_if_cached and usable_if_error):
             self.resend_request = True
+        # Resend the request in the background; meanwhile return stale response
+        elif cached_response.is_expired and usable_response and self._stale_while_revalidate:
+            self.resend_async = True
 
         if cached_response is not None:
             self._update_validation_headers(cached_response)

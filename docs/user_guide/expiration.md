@@ -120,6 +120,29 @@ In addition to HTTP error codes, `stale_if_error` also applies to python excepti
 [Errors and Exceptions](https://2.python-requests.org/en/master/user/quickstart/#errors-and-exceptions)
 for more details on request errors in general.
 
+(stale-while-revalidate)=
+## Asynchronous Revalidation
+You can use the `stale_while_revalidate` option to improve performance when refreshing responses.
+This will cause an expired cached response to be returned initially, while a non-blocking request is
+sent to refresh the response for the next time it's requested.
+
+```{note}
+While the corresponding response header `Cache-Control: stale-while-revalidate` only applies to
+{ref}`conditional-requests`, requests-cache extends this behavior to other refresh requests as well
+(even if a validator is not available).
+```
+
+You may either set this to `True` to do this regardless of the cached response's age:
+```python
+session = CachedSession(stale_while_revalidate=True)
+```
+
+Or specify a maximum staleness value you are willing to accept:
+```python
+# Use a cached response while revalidating, if it expired 5 minutes ago or less
+session = CachedSession(stale_while_revalidate=timedelta(minutes=5))
+```
+
 ## Removing Expired Responses
 
 ### Manual Removal

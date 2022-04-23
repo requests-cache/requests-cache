@@ -19,6 +19,7 @@ from uuid import uuid4
 
 import pytest
 import requests
+from requests import Request
 from requests_mock import ANY as ANY_METHOD
 from requests_mock import Adapter
 from rich.logging import RichHandler
@@ -61,7 +62,7 @@ HTTPBIN_FORMATS = [
 ]
 HTTPDATE_STR = 'Fri, 16 APR 2021 21:13:00 GMT'
 HTTPDATE_DATETIME = datetime(2021, 4, 16, 21, 13)
-EXPIRED_DT = datetime.now() - timedelta(1)
+EXPIRED_DT = datetime.utcnow() - timedelta(1)
 ETAG = '"644b5b0155e6404a9cc4bd9d8b1ae730"'
 LAST_MODIFIED = 'Thu, 05 Jul 2012 15:31:30 GMT'
 
@@ -221,7 +222,7 @@ def get_mock_response(
         url=url,
         status_code=status_code,
         headers=headers,
-        request=MagicMock(method=method, url=url, headers=request_headers),
+        request=Request(method=method, url=url, headers=request_headers),
     )
 
 
