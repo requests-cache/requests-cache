@@ -26,6 +26,10 @@ requests-cache repo:
 True
 ```
 
+```{note}
+Also see {ref}`stale-while-revalidate` for a variation of this behavior.
+```
+
 ## Cache-Control
 `Cache-Control` **request** headers will always be used if present. This is mainly useful if you are
 adding requests-cache to an existing application or library that already sends requests with cache
@@ -62,11 +66,13 @@ The following headers are currently supported:
 - `If-Modified-Since`: Automatically added for revalidation, if `Last-Modified` is available
 
 **Response headers:**
+- `Cache-Control: immutable`: Cache the response with no expiration
 - `Cache-Control: max-age`: Used as the expiration time in seconds
 - `Cache-Control: must-revalidate`: When used in combination with `max-age=0`, revalidate immediately.
 - `Cache-Control: no-cache`: Revalidate with the server before using a cached response
 - `Cache-Control: no-store` Skip writing to the cache
-- `Cache-Control: immutable`: Cache the response with no expiration
+- `Cache-Control: stale-if-error`: Same behavior as request header
+- `Cache-Control: stale-while-revalidate`: If expired by less than this many seconds, return the stale response immediately and send an asynchronous revalidation request
 - `Expires`: Used as an absolute expiration datetime
 - `ETag`: Validator used for conditional requests
 - `Last-Modified`: Validator used for conditional requests

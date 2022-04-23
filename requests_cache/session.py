@@ -1,7 +1,7 @@
 """Main classes to add caching features to :py:class:`requests.Session`"""
 from contextlib import contextmanager, nullcontext
 from logging import getLogger
-from threading import RLock
+from threading import RLock, Thread
 from typing import TYPE_CHECKING, Iterable, MutableMapping, Optional, Union
 
 from requests import PreparedRequest
@@ -197,10 +197,13 @@ class CacheMixin(MIXIN_BASE):
         # Handle missing and expired responses based on settings and headers
         if actions.error_504:
             response: AnyResponse = get_504_response(request)
-        elif actions.send_request:
-            response = self._send_and_cache(request, actions, cached_response, **kwargs)
+        elif actions.resend_async:
+            self._resend_async(request, actions, cached_response, **kwargs)
+            response = cached_response  # type: ignore
         elif actions.resend_request:
             response = self._resend(request, actions, cached_response, **kwargs)  # type: ignore
+        elif actions.send_request:
+            response = self._send_and_cache(request, actions, cached_response, **kwargs)
         else:
             response = cached_response  # type: ignore  # Guaranteed to be non-None by this point
 
@@ -255,6 +258,12 @@ class CacheMixin(MIXIN_BASE):
             return response
         except Exception:
             return self._handle_error(cached_response, actions)
+
+    def _resend_async(self, *args, **kwargs):
+        """Send a non-blocking request to refresh a cached response"""
+        logger.debug('Using stale response while revalidating')
+        thread = Thread(target=self._send_and_cache, args=args, kwargs=kwargs)
+        thread.start()
 
     def _handle_error(self, cached_response: CachedResponse, actions: CacheActions) -> AnyResponse:
         """Handle a request error based on settings:
@@ -338,8 +347,10 @@ class CachedSession(CacheMixin, OriginalSession):
             a list of specific headers to match
         ignored_parameters: Request paramters, headers, and/or JSON body params to exclude from both
             request matching and cached request data
-        stale_if_error: Return stale cache data if a new request raises an exception. Optionally
+        stale_if_error: Return a stale response if a new request raises an exception. Optionally
             accepts a time value representing maximum staleness to accept.
+        stale_while_revalidate: Return a stale response initially, while a non-blocking request is
+            sent to refresh the response for the next time it's requested
         filter_fn: Response filtering function that indicates whether or not a given response should
             be cached. See :ref:`custom-filtering` for details.
         key_fn: Request matching function for generating custom cache keys. See

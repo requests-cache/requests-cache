@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from requests import PreparedRequest, Request
@@ -16,6 +16,8 @@ IGNORED_DIRECTIVES = [
     'public',
     's-maxage=<seconds>',
 ]
+BASIC_REQUEST = Request(method='GET', url='https://site.com/img.jpg', headers={})
+EXPIRED_RESPONSE = CachedResponse(expires=datetime.utcnow() - timedelta(1))
 
 
 @pytest.mark.parametrize(
@@ -142,6 +144,19 @@ def test_init_from_settings_and_headers(
     assert actions.skip_read == expected_skip_read
 
 
+def test_update_from_cached_response__new_request():
+    actions = CacheActions.from_request('key', BASIC_REQUEST)
+    actions.update_from_cached_response(None)
+    assert actions.send_request is True
+
+
+def test_update_from_cached_response__resend_request():
+    actions = CacheActions.from_request('key', BASIC_REQUEST)
+
+    actions.update_from_cached_response(EXPIRED_RESPONSE)
+    assert actions.resend_request is True
+
+
 @pytest.mark.parametrize(
     'response_headers, expected_validation_headers',
     [
@@ -154,16 +169,15 @@ def test_init_from_settings_and_headers(
         ),
     ],
 )
-def test_update_from_cached_response(response_headers, expected_validation_headers):
+def test_update_from_cached_response__revalidate(response_headers, expected_validation_headers):
     """Conditional request headers should be added if the cached response is expired"""
-    actions = CacheActions.from_request(
-        'key', MagicMock(url='https://img.site.com/base/img.jpg', headers={})
-    )
+    actions = CacheActions.from_request('key', BASIC_REQUEST)
     cached_response = CachedResponse(
-        headers=response_headers, expires=datetime.now() - timedelta(1)
+        headers=response_headers, expires=datetime.utcnow() - timedelta(1)
     )
 
     actions.update_from_cached_response(cached_response)
+    assert actions.send_request is bool(expected_validation_headers)
     assert actions._validation_headers == expected_validation_headers
 
 
@@ -174,30 +188,51 @@ def test_update_from_cached_response(response_headers, expected_validation_heade
         ({}, {'Cache-Control': 'max-age=0,must-revalidate'}),
     ],
 )
-def test_update_from_cached_response__revalidate_headers(request_headers, response_headers):
-    """Conditional request headers should be added if requested by headers (even if the response
-    is not expired)"""
+def test_update_from_cached_response__refresh(request_headers, response_headers):
+    """Conditional request headers should be added if requested by response headers, even if the
+    response is not expired
+    """
     actions = CacheActions.from_request(
-        'key', MagicMock(url='https://img.site.com/base/img.jpg', headers=request_headers)
+        'key', Request(url='https://img.site.com/base/img.jpg', headers=request_headers)
     )
     cached_response = CachedResponse(headers={'ETag': ETAG, **response_headers}, expires=None)
 
     actions.update_from_cached_response(cached_response)
+    assert actions.send_request is True
     assert actions._validation_headers == {'If-None-Match': ETAG}
 
 
-def test_update_from_cached_response__ignored():
+def test_update_from_cached_response__no_revalidation():
     """Conditional request headers should NOT be added if the cached response is not expired and
     revalidation is otherwise not requested"""
-    actions = CacheActions.from_request(
-        'key', MagicMock(url='https://img.site.com/base/img.jpg', headers={})
-    )
+    actions = CacheActions.from_request('key', BASIC_REQUEST)
     cached_response = CachedResponse(
         headers={'ETag': ETAG, 'Last-Modified': LAST_MODIFIED}, expires=None
     )
 
     actions.update_from_cached_response(cached_response)
     assert actions._validation_headers == {}
+
+
+def test_update_from_cached_response__504():
+    settings = CacheSettings(only_if_cached=True)
+    actions = CacheActions.from_request('key', BASIC_REQUEST, settings=settings)
+    actions.update_from_cached_response(EXPIRED_RESPONSE)
+    assert actions.error_504 is True
+
+
+def test_update_from_cached_response__stale_if_error():
+    settings = CacheSettings(only_if_cached=True, stale_if_error=True)
+    actions = CacheActions.from_request('key', BASIC_REQUEST, settings=settings)
+    actions.update_from_cached_response(EXPIRED_RESPONSE)
+    assert actions.error_504 is False and actions.resend_request is False
+
+
+def test_update_from_cached_response__stale_while_revalidate():
+    settings = CacheSettings(only_if_cached=True, stale_while_revalidate=True)
+    actions = CacheActions.from_request('key', BASIC_REQUEST, settings=settings)
+    actions.update_from_cached_response(EXPIRED_RESPONSE)
+    assert actions.resend_async is True
 
 
 @pytest.mark.parametrize('max_stale, usable', [(5, False), (15, True)])
@@ -210,9 +245,7 @@ def test_is_usable__max_stale(max_stale, usable):
         headers={'Cache-Control': f'max-stale={max_stale}'},
     )
     actions = CacheActions.from_request('key', request)
-    cached_response = CachedResponse(
-        expires=datetime.utcnow() - timedelta(seconds=10),
-    )
+    cached_response = CachedResponse(expires=datetime.utcnow() - timedelta(seconds=10))
     assert actions.is_usable(cached_response) is usable
 
 
@@ -226,9 +259,7 @@ def test_is_usable__min_fresh(min_fresh, usable):
         headers={'Cache-Control': f'min-fresh={min_fresh}'},
     )
     actions = CacheActions.from_request('key', request)
-    cached_response = CachedResponse(
-        expires=datetime.utcnow() + timedelta(seconds=10),
-    )
+    cached_response = CachedResponse(expires=datetime.utcnow() + timedelta(seconds=10))
     assert actions.is_usable(cached_response) is usable
 
 
@@ -249,10 +280,28 @@ def test_is_usable__stale_if_error(stale_if_error, error, usable):
         headers={'Cache-Control': f'stale-if-error={stale_if_error}'},
     )
     actions = CacheActions.from_request('key', request)
-    cached_response = CachedResponse(
-        expires=datetime.utcnow() - timedelta(seconds=10),
-    )
+    cached_response = CachedResponse(expires=datetime.utcnow() - timedelta(seconds=10))
     assert actions.is_usable(cached_response, error=error) is usable
+
+
+@pytest.mark.parametrize(
+    'stale_while_revalidate, usable',
+    [
+        (5, False),
+        (15, True),
+    ],
+)
+def test_is_usable__stale_while_revalidate(stale_while_revalidate, usable):
+    """For a response that expired 10 seconds ago, if an error occured while refreshing, it may be
+    either accepted or rejected based on stale-while-revalidate
+    """
+    request = Request(
+        url='https://img.site.com/base/img.jpg',
+        headers={'Cache-Control': f'stale-while-revalidate={stale_while_revalidate}'},
+    )
+    actions = CacheActions.from_request('key', request)
+    cached_response = CachedResponse(expires=datetime.utcnow() - timedelta(seconds=10))
+    assert actions.is_usable(cached_response=cached_response) is usable
 
 
 @pytest.mark.parametrize(
@@ -272,10 +321,7 @@ def test_is_usable__stale_if_error(stale_if_error, error, usable):
 )
 def test_update_from_response(headers, expected_expiration):
     """Test with Cache-Control response headers"""
-    url = 'https://img.site.com/base/img.jpg'
-    actions = CacheActions.from_request(
-        'key', MagicMock(url=url), CacheSettings(cache_control=True)
-    )
+    actions = CacheActions.from_request('key', BASIC_REQUEST, CacheSettings(cache_control=True))
     actions.update_from_response(get_mock_response(headers=headers))
 
     assert actions.expire_after == expected_expiration
@@ -283,19 +329,13 @@ def test_update_from_response(headers, expected_expiration):
 
 
 def test_update_from_response__no_store():
-    url = 'https://img.site.com/base/img.jpg'
-    actions = CacheActions.from_request(
-        'key', MagicMock(url=url), CacheSettings(cache_control=True)
-    )
+    actions = CacheActions.from_request('key', BASIC_REQUEST, CacheSettings(cache_control=True))
     actions.update_from_response(get_mock_response(headers={'Cache-Control': 'no-store'}))
     assert actions.skip_write is True
 
 
 def test_update_from_response__ignored():
-    url = 'https://img.site.com/base/img.jpg'
-    actions = CacheActions.from_request(
-        'key', MagicMock(url=url), CacheSettings(cache_control=False)
-    )
+    actions = CacheActions.from_request('key', BASIC_REQUEST, CacheSettings(cache_control=False))
     actions.update_from_response(get_mock_response(headers={'Cache-Control': 'max-age=5'}))
     assert actions.expire_after is None
 
@@ -307,10 +347,7 @@ def test_update_from_response__revalidate(mock_datetime, cache_headers, validato
     """If expiration is 0 and there's a validator, the response should be cached, but with immediate
     expiration
     """
-    url = 'https://img.site.com/base/img.jpg'
-    actions = CacheActions.from_request(
-        'key', MagicMock(url=url), CacheSettings(cache_control=True)
-    )
+    actions = CacheActions.from_request('key', BASIC_REQUEST, CacheSettings(cache_control=True))
     response = get_mock_response(headers={**cache_headers, **validator_headers})
     actions.update_from_response(response)
 
@@ -324,7 +361,6 @@ def test_ignored_headers(directive):
     request = Request(
         method='GET', url='https://img.site.com/base/img.jpg', headers={'Cache-Control': directive}
     ).prepare()
-
     settings = CacheSettings(expire_after=1, cache_control=True)
     actions = CacheActions.from_request('key', request, settings)
 
