@@ -69,14 +69,11 @@ def test_init_missing_backend_dependency():
 def test_repr(mock_session):
     """Test session and cache string representations"""
     mock_session.settings.expire_after = 11
-    mock_session.cache.responses['key'] = 'value'
-    mock_session.cache.redirects['key'] = 'value'
-    mock_session.cache.redirects['key_2'] = 'value'
+    mock_session.settings.cache_control = True
 
     assert mock_session.cache.cache_name in repr(mock_session)
-    assert '11' in repr(mock_session)
-    assert '2 redirects' in str(mock_session.cache)
-    assert '1 responses' in str(mock_session.cache)
+    assert 'expire_after=11' in repr(mock_session)
+    assert 'cache_control=True' in repr(mock_session)
 
 
 def test_response_defaults(mock_session):

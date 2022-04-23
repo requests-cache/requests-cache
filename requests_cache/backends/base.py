@@ -239,10 +239,10 @@ class BaseCache:
         """Show a count of total **rows** currently stored in the backend. For performance reasons,
         this does not check for invalid or expired responses.
         """
-        return f'Total rows: {len(self.responses)} responses, {len(self.redirects)} redirects'
+        return f'<{self.__class__.__name__}(name={self.cache_name})>'
 
     def __repr__(self):
-        return f'<{self.__class__.__name__}(name={self.cache_name})>'
+        return str(self)
 
 
 class BaseStorage(MutableMapping, ABC):
