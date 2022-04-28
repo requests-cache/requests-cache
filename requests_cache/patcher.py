@@ -13,7 +13,7 @@ from typing import Callable, Dict, Iterable, Optional, Type
 
 import requests
 
-from .backends import BackendSpecifier, BaseCache
+from .backends import BackendSpecifier, BaseCache, init_backend
 from .cache_control import ExpirationTime
 from .session import CachedSession, OriginalSession
 
@@ -45,6 +45,7 @@ def install_cache(
         session_factory: Session class to use. It must inherit from either
             :py:class:`.CachedSession` or :py:class:`.CacheMixin`
     """
+    backend = init_backend(cache_name, backend, **kwargs)
 
     class _ConfiguredCachedSession(session_factory):  # type: ignore  # See mypy issue #5865
         def __init__(self):
