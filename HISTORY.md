@@ -1,5 +1,8 @@
 # History
 
+## 0.9.5 (Unreleased)
+* Fix usage of memory backend with `install_cache()`
+
 ## 0.9.4 (2022-04-22)
 * Fix forwarding connection parameters passed to `RedisCache` for redis-py 4.2 and python <=3.8
 * Fix forwarding connection parameters passed to `MongoCache` for pymongo 4.1 and python <=3.8
