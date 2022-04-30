@@ -172,8 +172,8 @@ class CacheActions(RichMixin):
             self._update_from_response_headers(directives)
 
         # If "expired" but there's a validator, save it to the cache and revalidate on use
-        do_not_cache = self.expire_after == DO_NOT_CACHE
         skip_stale = self.expire_after == EXPIRE_IMMEDIATELY and not directives.has_validator
+        do_not_cache = self.expire_after == DO_NOT_CACHE
 
         # Apply filter callback, if any
         callback = self._settings.filter_fn

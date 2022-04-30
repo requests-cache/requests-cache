@@ -146,7 +146,7 @@ class CachedResponse(BaseResponse, RichMixin):
     def expires_unix(self) -> Optional[int]:
         """Get expiration time as a Unix timestamp"""
         seconds = self.expires_delta
-        return round(time() + seconds) if seconds else None
+        return round(time() + seconds) if seconds is not None else None
 
     @property
     def next(self) -> Optional[PreparedRequest]:
