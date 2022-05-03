@@ -799,6 +799,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "lazka",
+      "name": "Christoph Reiter",
+      "avatar_url": "https://avatars.githubusercontent.com/u/991986?v=4",
+      "profile": "http://lazka.github.io/",
+      "contributions": [
+        "bug",
+        "ideas"
+      ]
     }
   ],
   "contributorsPerLine": 7,
