@@ -51,6 +51,7 @@ class CacheMixin(MIXIN_BASE):
         cache_control: bool = False,
         allowable_codes: Iterable[int] = DEFAULT_STATUS_CODES,
         allowable_methods: Iterable[str] = DEFAULT_METHODS,
+        always_revalidate: bool = False,
         ignored_parameters: Iterable[str] = DEFAULT_IGNORED_PARAMS,
         match_headers: Union[Iterable[str], bool] = False,
         filter_fn: FilterCallback = None,
@@ -65,6 +66,7 @@ class CacheMixin(MIXIN_BASE):
             cache_control=cache_control,
             allowable_codes=allowable_codes,
             allowable_methods=allowable_methods,
+            always_revalidate=always_revalidate,
             ignored_parameters=ignored_parameters,
             match_headers=match_headers,
             filter_fn=filter_fn,
@@ -326,6 +328,8 @@ class CachedSession(CacheMixin, OriginalSession):
         cache_control: Use Cache-Control and other response headers to set expiration
         allowable_codes: Only cache responses with one of these status codes
         allowable_methods: Cache only responses for one of these HTTP methods
+        always_revalidate: Revalidate with the server for every request, even if the cached response
+            is not expired
         match_headers: Match request headers when reading from the cache; may be either ``True`` or
             a list of specific headers to match
         ignored_parameters: Request paramters, headers, and/or JSON body params to exclude from both

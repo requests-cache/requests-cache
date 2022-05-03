@@ -28,9 +28,10 @@ class BaseResponse(Response):
     provide type hints for extra cache-related attributes that are added to non-cached responses.
     """
 
-    cache_key: Optional[str] = None
     created_at: datetime = field(factory=datetime.utcnow)
     expires: Optional[datetime] = field(default=None)
+    cache_key: Optional[str] = None  # Not serialized; set by BaseCache.get_response()
+    revalidated: bool = False  # Not serialized; set by CacheActions.update_revalidated_response()
 
     @property
     def from_cache(self) -> bool:
@@ -63,7 +64,6 @@ class CachedResponse(BaseResponse, RichMixin):
 
     _content: bytes = field(default=None)
     _next: Optional[CachedRequest] = field(default=None)
-    cache_key: Optional[str] = None  # Not serialized; set by BaseCache.get_response()
     cookies: RequestsCookieJar = field(factory=RequestsCookieJar)
     created_at: datetime = field(factory=datetime.utcnow)
     elapsed: timedelta = field(factory=timedelta)

@@ -203,6 +203,7 @@ class CacheActions(RichMixin):
         logger.debug(f'Response for URL {response.request.url} has not been modified')
         cached_response.expires = self.expires
         cached_response.headers.update(response.headers)
+        cached_response.revalidated = True
         return cached_response
 
     def _update_from_response_headers(self, directives: CacheDirectives):
@@ -230,7 +231,7 @@ class CacheActions(RichMixin):
             or self._refresh
             or directives.no_cache
             or directives.must_revalidate
-            and directives.max_age == 0
+            or (self._settings.always_revalidate and directives.has_validator)
         )
 
         # Add the appropriate validation headers, if needed

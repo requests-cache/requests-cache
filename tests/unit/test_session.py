@@ -801,8 +801,28 @@ def test_request_refresh(mock_session):
 
     assert response_1.from_cache is False
     assert response_2.from_cache is True
-    assert response_3.from_cache is True
-    assert response_4.from_cache is True
+    assert response_3.from_cache is True and response_3.revalidated is True
+    assert response_4.from_cache is True and response_4.revalidated is False
+
+    # Expect expiration to get reset after revalidation
+    assert response_2.expires < response_4.expires
+
+
+def test_request_always_revalidate(mock_session):
+    """The session always_revalidate option should send a conditional request, if possible"""
+    mock_session.settings.expire_after = 60
+    response_1 = mock_session.get(MOCKED_URL_ETAG)
+    response_2 = mock_session.get(MOCKED_URL_ETAG)
+    mock_session.mock_adapter.register_uri('GET', MOCKED_URL_ETAG, status_code=304)
+
+    mock_session.settings.always_revalidate = True
+    response_3 = mock_session.get(MOCKED_URL_ETAG)
+    response_4 = mock_session.get(MOCKED_URL_ETAG)
+
+    assert response_1.from_cache is False
+    assert response_2.from_cache is True
+    assert response_3.from_cache is True and response_3.revalidated is True
+    assert response_4.from_cache is True and response_4.revalidated is True
 
     # Expect expiration to get reset after revalidation
     assert response_2.expires < response_4.expires
@@ -821,7 +841,7 @@ def test_request_refresh__no_validator(mock_session):
 
     assert response_1.from_cache is False
     assert response_2.from_cache is True
-    assert response_3.from_cache is True
+    assert response_3.from_cache is True and response_3.revalidated is False
     assert response_2.expires == response_4.expires
 
 

@@ -181,6 +181,15 @@ Example:
 >>> assert response_2.from_cache is False
 ```
 
+### Validation-Only Requests
+If you want to always send a conditional request before using a cached response, you can use the
+session setting `always_revalidate`:
+```python
+>>> session = CachedSession(always_revalidate=True)
+```
+
+Unlike the `refresh` option, this only affects cached responses with a validator.
+
 ### Cache-Only Requests
 If you want to only use cached responses without making any real requests, you can use the
 `only_if_cached` option. This essentially uses your cache in "offline mode". If a response isn't
