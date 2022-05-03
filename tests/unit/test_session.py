@@ -18,6 +18,7 @@ from requests_cache import ALL_METHODS, CachedSession
 from requests_cache._utils import get_placeholder_class
 from requests_cache.backends import BACKEND_CLASSES, BaseCache, SQLiteDict
 from requests_cache.backends.base import DESERIALIZE_ERRORS
+from requests_cache.models import CachedRequest, CachedResponse
 from requests_cache.policy.expiration import DO_NOT_CACHE, EXPIRE_IMMEDIATELY, NEVER_EXPIRE
 from tests.conftest import (
     MOCKED_URL,
@@ -646,10 +647,12 @@ def test_remove_expired_responses__error(mock_session):
     def error_on_key(key):
         if key == response_2.cache_key:
             raise PickleError
-        return response_1
+        return CachedResponse.from_response(response_1)
 
+    # Test the generic BaseCache implementation, not the SQLite-specific one
     with patch.object(SQLiteDict, '__getitem__', side_effect=error_on_key):
         BaseCache.remove_expired_responses(mock_session.cache)
+
     assert len(mock_session.cache.responses) == 1
     assert mock_session.get(MOCKED_URL).from_cache is True
     assert mock_session.get(MOCKED_URL_JSON).from_cache is False
@@ -704,6 +707,36 @@ def test_remove_expired_responses__per_request(mock_session):
     time.sleep(2)
     mock_session.remove_expired_responses()
     assert len(mock_session.cache.responses) == 1
+
+
+# @patch_normalize_url
+def test_remove_expired_responses__older_than(mock_session):
+    # Cache 4 responses with different creation times
+    response_0 = CachedResponse(request=CachedRequest(method='GET', url='https://test.com/test_0'))
+    mock_session.cache.save_response(response_0)
+    response_1 = CachedResponse(request=CachedRequest(method='GET', url='https://test.com/test_1'))
+    response_1.created_at -= timedelta(seconds=1)
+    mock_session.cache.save_response(response_1)
+    response_2 = CachedResponse(request=CachedRequest(method='GET', url='https://test.com/test_2'))
+    response_2.created_at -= timedelta(seconds=2)
+    mock_session.cache.save_response(response_2)
+    response_3 = CachedResponse(request=CachedRequest(method='GET', url='https://test.com/test_3'))
+    response_3.created_at -= timedelta(seconds=3)
+    mock_session.cache.save_response(response_3)
+
+    # Incrementally remove responses older than 3, 2, and 1 seconds
+    assert len(mock_session.cache.responses) == 4
+    mock_session.remove_expired_responses(older_than=timedelta(seconds=3))
+    assert len(mock_session.cache.responses) == 3
+    mock_session.remove_expired_responses(older_than=timedelta(seconds=2))
+    assert len(mock_session.cache.responses) == 2
+    mock_session.remove_expired_responses(older_than=timedelta(seconds=1))
+    assert len(mock_session.cache.responses) == 1
+
+    # Remove the last response after it's 1 second old
+    time.sleep(1)
+    mock_session.remove_expired_responses(older_than=timedelta(seconds=1))
+    assert len(mock_session.cache.responses) == 0
 
 
 # Additional request() and send() options

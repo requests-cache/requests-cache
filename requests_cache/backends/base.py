@@ -18,8 +18,7 @@ from requests import PreparedRequest, Response
 
 from ..cache_keys import create_key, redact_response
 from ..models import CachedResponse
-from ..policy.expiration import ExpirationTime
-from ..policy.settings import DEFAULT_CACHE_NAME, CacheSettings
+from ..policy import DEFAULT_CACHE_NAME, CacheSettings, ExpirationTime
 from ..serializers import SerializerType, init_serializer, pickle_serializer
 
 # Specific exceptions that may be raised during deserialization
@@ -157,24 +156,32 @@ class BaseCache:
         for key, _ in self._get_valid_responses(check_expiry=check_expiry):
             yield key
 
-    def remove_expired_responses(self, expire_after: ExpirationTime = None):
+    def remove_expired_responses(
+        self, expire_after: ExpirationTime = None, older_than: ExpirationTime = None
+    ):
         """Remove expired and invalid responses from the cache, and optionally reset expiration
 
         Args:
-            expire_after: A new expiration time to set on existing cache items
+            expire_after: A new expiration value to set on existing cache items, **relative to the
+                current time**
+            older_than: Remove all cache items older than this value, **relative to the cache
+                creation time**
         """
         logger.info(
-            'Removing expired responses.'
-            + (f'Resetting expiration with: {expire_after}' if expire_after else '')
+            'Removing expired responses'
+            + (f' and responses older than: {older_than}' if older_than else '')
+            + (f' and resetting expiration with: {expire_after}' if expire_after else '')
         )
         keys_to_update = {}
         keys_to_delete = []
 
         for key, response in self._get_valid_responses(delete=True):
-            # If we're resetting expiration and it's not yet expired, update the cached item's expiration
+            # If we're resetting expiration, do that prior to checking if it's expired
             if expire_after is not None and not response.reset_expiration(expire_after):
                 keys_to_update[key] = response
-            if response.is_expired:
+            if response.is_expired or (
+                older_than is not None and response.is_older_than(older_than)
+            ):
                 keys_to_delete.append(key)
 
         # Delay updates & deletes until the end, to avoid conflicts with _get_valid_responses()
@@ -218,22 +225,22 @@ class BaseCache:
         """Get all responses from the cache, and skip (+ optionally delete) any invalid ones that
         can't be deserialized. Can also optionally check response expiry and exclude expired responses.
         """
-        invalid_keys = []
+        keys_to_delete = []
 
         for key in self.responses.keys():
             try:
                 response = self.responses[key]
                 if check_expiry and response.is_expired:
-                    invalid_keys.append(key)
+                    keys_to_delete.append(key)
                 else:
                     yield key, response
             except DESERIALIZE_ERRORS:
-                invalid_keys.append(key)
+                keys_to_delete.append(key)
 
         # Delay deletion until the end, to improve responsiveness when used as a generator
         if delete:
-            logger.debug(f'Deleting {len(invalid_keys)} invalid/expired responses')
-            self.bulk_delete(invalid_keys)
+            logger.debug(f'Deleting {len(keys_to_delete)} invalid/expired responses')
+            self.bulk_delete(keys_to_delete)
 
     def __str__(self):
         """Show a count of total **rows** currently stored in the backend. For performance reasons,

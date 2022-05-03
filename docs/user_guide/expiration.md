@@ -137,8 +137,15 @@ Or, if you are using {py:func}`.install_cache`:
 >>> requests_cache.remove_expired_responses()
 ```
 
-You can also apply a new `expire_after` value to previously cached responses:
+You can also remove responses older than a certain time:
 ```python
+# Remove expired responses *and* responses older than 7 days
+remove_expired_responses(older_than=timedelta(days=7))
+```
+
+Or apply a new expiration value to previously cached responses:
+```python
+# Reset expiration for all responses to 30 days from now
 >>> session.remove_expired_responses(expire_after=timedelta(days=30))
 ```
 
