@@ -2,6 +2,7 @@
 
 ## 0.9.5 (Unreleased)
 * Fix usage of memory backend with `install_cache()`
+* Add compatibility with cattrs 22.1
 
 ## 0.9.4 (2022-04-22)
 * Fix forwarding connection parameters passed to `RedisCache` for redis-py 4.2 and python <=3.8
