@@ -1,11 +1,11 @@
 """CachedSession tests that use mocked responses only"""
 import json
-import time
 from collections import UserDict, defaultdict
 from datetime import datetime, timedelta
 from logging import getLogger
 from pathlib import Path
 from pickle import PickleError
+from time import sleep, time
 from unittest.mock import patch
 from urllib.parse import urlencode
 
@@ -343,7 +343,7 @@ def test_expired_request_error(mock_session):
     mock_session.settings.stale_if_error = False
     mock_session.settings.expire_after = 1
     mock_session.get(MOCKED_URL)
-    time.sleep(1)
+    sleep(1)
 
     with patch.object(mock_session.cache, 'save_response', side_effect=ValueError):
         with pytest.raises(ValueError):
@@ -357,7 +357,7 @@ def test_stale_if_error__exception(mock_session):
 
     assert mock_session.get(MOCKED_URL).from_cache is False
     assert mock_session.get(MOCKED_URL).from_cache is True
-    time.sleep(1)
+    sleep(1)
     with patch.object(mock_session.cache, 'save_response', side_effect=RequestException):
         response = mock_session.get(MOCKED_URL)
         assert response.from_cache is True and response.is_expired is True
@@ -371,7 +371,7 @@ def test_stale_if_error__error_code(mock_session):
 
     assert mock_session.get(MOCKED_URL_404).from_cache is False
 
-    time.sleep(1)
+    sleep(1)
     response = mock_session.get(MOCKED_URL_404)
     assert response.from_cache is True and response.is_expired is True
 
@@ -469,6 +469,26 @@ def test_allowable_methods(mock_session):
     mock_session.delete(MOCKED_URL)
     assert not mock_session.cache.has_url(MOCKED_URL, method='DELETE')
     assert mock_session.delete(MOCKED_URL).from_cache is False
+
+
+def test_always_revalidate(mock_session):
+    """The session always_revalidate option should send a conditional request, if possible"""
+    mock_session.settings.expire_after = 60
+    response_1 = mock_session.get(MOCKED_URL_ETAG)
+    response_2 = mock_session.get(MOCKED_URL_ETAG)
+    mock_session.mock_adapter.register_uri('GET', MOCKED_URL_ETAG, status_code=304)
+
+    mock_session.settings.always_revalidate = True
+    response_3 = mock_session.get(MOCKED_URL_ETAG)
+    response_4 = mock_session.get(MOCKED_URL_ETAG)
+
+    assert response_1.from_cache is False
+    assert response_2.from_cache is True
+    assert response_3.from_cache is True and response_3.revalidated is True
+    assert response_4.from_cache is True and response_4.revalidated is True
+
+    # Expect expiration to get reset after revalidation
+    assert response_2.expires < response_4.expires
 
 
 def test_default_ignored_parameters(mock_session):
@@ -590,7 +610,7 @@ def test_304_not_modified(
 ):
     url = f'{MOCKED_URL}/endpoint_2'
     if cache_expired:
-        mock_session.settings.expire_after = datetime.now() - timedelta(1)
+        mock_session.settings.expire_after = datetime.utcnow() - timedelta(1)
     if cache_hit:
         mock_session.mock_adapter.register_uri('GET', url, status_code=200)
         mock_session.get(url)
@@ -623,7 +643,7 @@ def test_remove_expired_responses(mock_normalize_url, mock_session):
     mock_session.settings.expire_after = 1
     mock_session.get(MOCKED_URL)
     mock_session.get(MOCKED_URL_JSON)
-    time.sleep(1)
+    sleep(1)
     mock_session.get(unexpired_url)
 
     # At this point we should have 1 unexpired response and 2 expired responses
@@ -634,7 +654,7 @@ def test_remove_expired_responses(mock_normalize_url, mock_session):
     assert cached_response.url == unexpired_url
 
     # Now the last response should be expired as well
-    time.sleep(1)
+    sleep(1)
     BaseCache.remove_expired_responses(mock_session.cache)
     assert len(mock_session.cache.responses) == 0
 
@@ -701,15 +721,14 @@ def test_remove_expired_responses__per_request(mock_session):
     assert len(mock_session.cache.responses) == 3
 
     # One should be expired after 2s, and another should be expired after 4s
-    time.sleep(2)
+    sleep(2)
     mock_session.remove_expired_responses()
     assert len(mock_session.cache.responses) == 2
-    time.sleep(2)
+    sleep(2)
     mock_session.remove_expired_responses()
     assert len(mock_session.cache.responses) == 1
 
 
-# @patch_normalize_url
 def test_remove_expired_responses__older_than(mock_session):
     # Cache 4 responses with different creation times
     response_0 = CachedResponse(request=CachedRequest(method='GET', url='https://test.com/test_0'))
@@ -734,9 +753,72 @@ def test_remove_expired_responses__older_than(mock_session):
     assert len(mock_session.cache.responses) == 1
 
     # Remove the last response after it's 1 second old
-    time.sleep(1)
+    sleep(1)
     mock_session.remove_expired_responses(older_than=timedelta(seconds=1))
     assert len(mock_session.cache.responses) == 0
+
+
+def test_stale_while_revalidate(mock_session):
+    # Start with expired responses
+    mocked_url_2 = f'{MOCKED_URL_ETAG}?k=v'
+    mock_session.settings.stale_while_revalidate = True
+    mock_session.get(MOCKED_URL_ETAG, expire_after=timedelta(seconds=-2))
+    mock_session.get(mocked_url_2, expire_after=timedelta(seconds=-2))
+    assert mock_session.cache.has_url(MOCKED_URL_ETAG)
+
+    # First, let's just make sure the correct method is called
+    mock_session.mock_adapter.register_uri('GET', MOCKED_URL_ETAG, status_code=304)
+    with patch.object(CachedSession, '_resend_async') as mock_send:
+        response = mock_session.get(MOCKED_URL_ETAG)
+        mock_send.assert_called_once()
+
+    def slow_request(*args, **kwargs):
+        sleep(0.1)
+        return mock_session._send_and_cache(*args, **kwargs)
+
+    # Next, test that the revalidation request is non-blocking
+    start = time()
+    with patch.object(CachedSession, '_send_and_cache', side_effect=slow_request) as mock_send:
+        response = mock_session.get(mocked_url_2, expire_after=60)
+        assert response.from_cache is True and response.is_expired is True
+        assert time() - start < 0.1
+        sleep(0.1)
+        mock_send.assert_called()
+
+    # Finally, check that the cached response has been refreshed
+    sleep(0.2)  # Background thread may be a bit slow on CI runner
+    response = mock_session.get(mocked_url_2)
+    assert response.from_cache is True and response.is_expired is False
+
+
+def test_stale_while_revalidate__time(mock_session):
+    """stale_while_revalidate should also accept a time value (max acceptable staleness)"""
+    mocked_url_2 = f'{MOCKED_URL_ETAG}?k=v'
+    mock_session.settings.stale_while_revalidate = timedelta(seconds=3)
+    mock_session.get(MOCKED_URL_ETAG, expire_after=timedelta(seconds=-2))
+    response = mock_session.get(mocked_url_2, expire_after=timedelta(seconds=-4))
+
+    # stale_while_revalidate should apply to this response (expired 2 seconds ago)
+    response = mock_session.get(MOCKED_URL_ETAG)
+    assert response.from_cache is True and response.is_expired is True
+
+    # but not this response (expired 4 seconds ago)
+    response = mock_session.get(mocked_url_2)
+    assert response.from_cache is False and response.is_expired is False
+
+
+def test_stale_while_revalidate__refresh(mock_session):
+    """stale_while_revalidate should also apply to normal refresh requests"""
+    mock_session.settings.stale_while_revalidate = True
+    mock_session.get(MOCKED_URL, expire_after=1)
+    sleep(1)  # An expired response without a validator won't be cached, so need to sleep
+
+    response = mock_session.get(MOCKED_URL)
+    assert response.from_cache is True and response.is_expired is True
+
+    sleep(0.2)
+    response = mock_session.get(MOCKED_URL)
+    assert response.from_cache is True and response.is_expired is False
 
 
 # Additional request() and send() options
@@ -750,7 +832,7 @@ def test_request_expire_after__enable_expiration(mock_session):
     assert response.from_cache is False
     assert mock_session.get(MOCKED_URL).from_cache is True
 
-    time.sleep(1)
+    sleep(1)
     response = mock_session.get(MOCKED_URL)
     assert response.from_cache is False
 
@@ -772,7 +854,7 @@ def test_request_expire_after__prepared_request(mock_session):
     assert response.from_cache is False
     assert mock_session.send(request).from_cache is True
 
-    time.sleep(1)
+    sleep(1)
     response = mock_session.get(MOCKED_URL)
     assert response.from_cache is False
 
@@ -796,7 +878,7 @@ def test_request_only_if_cached__uncached(mock_session):
 def test_request_only_if_cached__expired(mock_session):
     """By default, only_if_cached will not return an expired response"""
     mock_session.get(MOCKED_URL, expire_after=1)
-    time.sleep(1)
+    sleep(1)
 
     response = mock_session.get(MOCKED_URL, only_if_cached=True)
     assert response.status_code == 504
@@ -805,7 +887,7 @@ def test_request_only_if_cached__expired(mock_session):
 def test_request_only_if_cached__stale_if_error__expired(mock_session):
     """only_if_cached *will* return an expired response if stale_if_error is also set"""
     mock_session.get(MOCKED_URL, expire_after=1)
-    time.sleep(1)
+    sleep(1)
 
     mock_session.settings.stale_if_error = True
     response = mock_session.get(MOCKED_URL, only_if_cached=True)
@@ -836,26 +918,6 @@ def test_request_refresh(mock_session):
     assert response_2.from_cache is True
     assert response_3.from_cache is True and response_3.revalidated is True
     assert response_4.from_cache is True and response_4.revalidated is False
-
-    # Expect expiration to get reset after revalidation
-    assert response_2.expires < response_4.expires
-
-
-def test_request_always_revalidate(mock_session):
-    """The session always_revalidate option should send a conditional request, if possible"""
-    mock_session.settings.expire_after = 60
-    response_1 = mock_session.get(MOCKED_URL_ETAG)
-    response_2 = mock_session.get(MOCKED_URL_ETAG)
-    mock_session.mock_adapter.register_uri('GET', MOCKED_URL_ETAG, status_code=304)
-
-    mock_session.settings.always_revalidate = True
-    response_3 = mock_session.get(MOCKED_URL_ETAG)
-    response_4 = mock_session.get(MOCKED_URL_ETAG)
-
-    assert response_1.from_cache is False
-    assert response_2.from_cache is True
-    assert response_3.from_cache is True and response_3.revalidated is True
-    assert response_4.from_cache is True and response_4.revalidated is True
 
     # Expect expiration to get reset after revalidation
     assert response_2.expires < response_4.expires

@@ -11,6 +11,7 @@ example_cache/
 http_cache/
 venv/
 .venv
+Pipfile
 
 # JS
 node_modules/

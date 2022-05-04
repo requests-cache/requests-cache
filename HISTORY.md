@@ -3,26 +3,30 @@
 ## 1.0.0 (Unreleased)
 [See all unreleased issues and PRs](https://github.com/reclosedev/requests-cache/milestone/5?closed=1)
 
-**Expiration & Headers:**
+**Expiration & headers:**
 * Add support for `Cache-Control: min-fresh`
 * Add support for `Cache-Control: max-stale`
-* Add support for `Cache-Control: stale-if-error`
 * Add support for `Cache-Control: only-if-cached`
+* Add support for `Cache-Control: stale-if-error`
+* Add support for `Cache-Control: stale-while-error`
 * Revalidate for `Cache-Control: no-cache` request or response header
 * Revalidate for `Cache-Control: max-age=0, must-revalidate` response headers
 * Add an attribute `CachedResponse.revalidated` to indicate if a cached response was revalidated for
   the current request
 
-**Settings:**
+**Session settings:**
 * All settings that affect cache behavior can now be accessed and modified via `CachedSession.settings`
+* Add `always_revalidate` session setting to always revalidate before using a cached response (if a validator) is available.
+* Add `only_if_cached` settion setting to return only cached results without sending real requests
+* Add `stale_while_revalidate` session setting to return a stale response initially, while a non-blocking request is sent to refresh the response
+* Make behavior for `stale_if_error` partially consistent with `Cache-Control: stale-if-error`: Add support for time values (int, timedelta, etc.) in addition to `True/False`
+
+**Request settings:**
 * Add `only_if_cached` option to `CachedSession.request()` and `send()` to return only cached results without sending real requests
 * Add `refresh` option to `CachedSession.request()` and `send()` to revalidate with the server before using a cached response
 * Add `force_refresh` option to `CachedSession.request()` and `send()` to awlays make and cache a new request regardless of existing cache contents
 * Make behavior for `expire_after=0` consistent with `Cache-Control: max-age=0`: if the response has a validator, save it to the cache but revalidate on use.
   * The constant `requests_cache.DO_NOT_CACHE` may be used to completely disable caching for a request
-* Make behavior for `stale_if_error` partially consistent with `Cache-Control: stale-if-error`: Add support for time values (int, timedelta, etc.) in addition to `True/False`
-* Add `always_revalidate` session setting to always revalidate before using a cached response (if a
-  validator) is available.
 
 **Backends:**
 * SQLite:
@@ -42,7 +46,7 @@
   * The default file format has been changed from pickle to JSON
 * SQLite, Redis, MongoDB, and GridFS: Close open database connections when `CachedSession` is used as a contextmanager, or if `CachedSession.close()` is called
 
-**Request Matching & Filtering:**
+**Request matching & filtering:**
 * Add serializer name to cache keys to avoid errors due to switching serializers
 * Always skip both cache read and write for requests excluded by `allowable_methods` (previously only skipped write)
 * Ignore and redact common authentication headers and request parameters by default. This provides some default recommended values for `ignored_parameters`, to avoid accidentally storing common credentials (e.g., OAuth tokens) in the cache. This will have no effect if you are already setting `ignored_parameters`.
@@ -63,7 +67,7 @@
 
 **Breaking changes:**
 Some relatively minor breaking changes have been made that are not expected to affect most users.
-If you encounter a problem not listed here after updating, please file a bug report!
+If you encounter a problem not listed here after updating to 1.0, please file a bug report!
 
 The following undocumented behaviors have been removed:
 * The arguments `match_headers` and `ignored_parameters` must be passed to `CachedSession`. Previously, these could also be passed to a `BaseCache` instance.
@@ -78,6 +82,10 @@ The following is relevant for users who have made custom backends that extend bu
 
 Internal utility module changes:
 * The `cache_control` module (added in `0.7`) has been split up into multiple modules in a new `policy` subpackage
+
+### 0.9.5 (Unreleased)
+* Fix usage of memory backend with `install_cache()`
+* Add compatibility with cattrs 22.1
 
 ### 0.9.4 (2022-04-22)
 * Fix forwarding connection parameters passed to `RedisCache` for redis-py 4.2 and python <=3.8
@@ -109,7 +117,7 @@ Internal utility module changes:
 ## 0.9.0 (2022-01-01)
 [See all issues and PRs for 0.9](https://github.com/reclosedev/requests-cache/milestone/4?closed=1)
 
-**Expiration & Headers:**
+**Expiration & headers:**
 * Use `Cache-Control` **request** headers by default
 * Add support for `Cache-Control: immutable`
 * Add support for immediate expiration + revalidation with `Cache-Control: max-age=0` and `Expires: 0`
@@ -145,7 +153,7 @@ Internal utility module changes:
 ## 0.8.0 (2021-09-07)
 [See all issues and PRs for 0.8](https://github.com/reclosedev/requests-cache/milestone/3?closed=1)
 
-**Expiration & Headers:**
+**Expiration & headers:**
 * Add support for conditional requests and cache validation using:
     * `ETag` + `If-None-Match` headers
     * `Last-Modified` + `If-Modified-Since` headers
@@ -246,7 +254,7 @@ The following changes are meant to make certain behaviors more obvious for new u
     * Redis: `redis.Redis`
     * MongoDB and GridFS: `pymongo.MongoClient`
 
-**Expiration & Headers:**
+**Expiration & headers:**
 * Add optional support for the following **request** headers:
     * `Cache-Control: max-age`
     * `Cache-Control: no-cache`
