@@ -316,8 +316,6 @@ class BaseCacheTest:
         session.get(httpbin('get'), expire_after=-1)
         session.get(httpbin('redirect/3'), expire_after=-1)
         assert len(session.cache.redirects.keys()) == 4
-        print(list(session.cache.redirects.items()))
-        print(list(session.cache.responses.keys()))
         session.cache.remove_expired_responses()
 
         assert len(session.cache.responses.keys()) == 2

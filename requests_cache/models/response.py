@@ -28,9 +28,10 @@ class BaseResponse(Response):
     provide type hints for extra cache-related attributes that are added to non-cached responses.
     """
 
-    cache_key: Optional[str] = None
     created_at: datetime = field(factory=datetime.utcnow)
     expires: Optional[datetime] = field(default=None)
+    cache_key: Optional[str] = None  # Not serialized; set by BaseCache.get_response()
+    revalidated: bool = False  # Not serialized; set by CacheActions.update_revalidated_response()
 
     @property
     def from_cache(self) -> bool:
@@ -63,7 +64,6 @@ class CachedResponse(BaseResponse, RichMixin):
 
     _content: bytes = field(default=None)
     _next: Optional[CachedRequest] = field(default=None)
-    cache_key: Optional[str] = None  # Not serialized; set by BaseCache.get_response()
     cookies: RequestsCookieJar = field(factory=RequestsCookieJar)
     created_at: datetime = field(factory=datetime.utcnow)
     elapsed: timedelta = field(factory=timedelta)
@@ -126,15 +126,6 @@ class CachedResponse(BaseResponse, RichMixin):
         pass
 
     @property
-    def from_cache(self) -> bool:
-        return True
-
-    @property
-    def is_expired(self) -> bool:
-        """Determine if this cached response is expired"""
-        return self.expires is not None and datetime.utcnow() >= self.expires
-
-    @property
     def expires_delta(self) -> Optional[int]:
         """Get time to expiration in seconds (rounded to the nearest second)"""
         if self.expires is None:
@@ -146,7 +137,21 @@ class CachedResponse(BaseResponse, RichMixin):
     def expires_unix(self) -> Optional[int]:
         """Get expiration time as a Unix timestamp"""
         seconds = self.expires_delta
-        return round(time() + seconds) if seconds else None
+        return round(time() + seconds) if seconds is not None else None
+
+    @property
+    def from_cache(self) -> bool:
+        return True
+
+    @property
+    def is_expired(self) -> bool:
+        """Determine if this cached response is expired"""
+        return self.expires is not None and datetime.utcnow() >= self.expires
+
+    def is_older_than(self, older_than: ExpirationTime) -> bool:
+        """Determine if this cached response is older than the given time"""
+        older_than = get_expiration_datetime(older_than, negative_delta=True)
+        return older_than is not None and self.created_at < older_than
 
     @property
     def next(self) -> Optional[PreparedRequest]:

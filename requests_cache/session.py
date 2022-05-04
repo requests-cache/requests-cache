@@ -51,6 +51,7 @@ class CacheMixin(MIXIN_BASE):
         cache_control: bool = False,
         allowable_codes: Iterable[int] = DEFAULT_STATUS_CODES,
         allowable_methods: Iterable[str] = DEFAULT_METHODS,
+        always_revalidate: bool = False,
         ignored_parameters: Iterable[str] = DEFAULT_IGNORED_PARAMS,
         match_headers: Union[Iterable[str], bool] = False,
         filter_fn: FilterCallback = None,
@@ -65,6 +66,7 @@ class CacheMixin(MIXIN_BASE):
             cache_control=cache_control,
             allowable_codes=allowable_codes,
             allowable_methods=allowable_methods,
+            always_revalidate=always_revalidate,
             ignored_parameters=ignored_parameters,
             match_headers=match_headers,
             filter_fn=filter_fn,
@@ -296,13 +298,17 @@ class CacheMixin(MIXIN_BASE):
         super().close()
         self.cache.close()
 
-    def remove_expired_responses(self, expire_after: ExpirationTime = None):
-        """Remove expired responses from the cache, optionally with revalidation
+    def remove_expired_responses(
+        self, expire_after: ExpirationTime = None, older_than: ExpirationTime = None
+    ):
+        """Remove expired and invalid responses from the cache, and optionally reset expiration
 
         Args:
-            expire_after: A new expiration time used to revalidate the cache
+            expire_after: A new expiration value to set on existing cache items (relative to the
+                current time)
+            older_than: Remove all cache items older than this value
         """
-        self.cache.remove_expired_responses(expire_after)
+        self.cache.remove_expired_responses(expire_after, older_than)
 
     def __repr__(self):
         return f'<CachedSession(cache={repr(self.cache)}, settings={self.settings})>'
@@ -326,6 +332,8 @@ class CachedSession(CacheMixin, OriginalSession):
         cache_control: Use Cache-Control and other response headers to set expiration
         allowable_codes: Only cache responses with one of these status codes
         allowable_methods: Cache only responses for one of these HTTP methods
+        always_revalidate: Revalidate with the server for every request, even if the cached response
+            is not expired
         match_headers: Match request headers when reading from the cache; may be either ``True`` or
             a list of specific headers to match
         ignored_parameters: Request paramters, headers, and/or JSON body params to exclude from both

@@ -172,8 +172,8 @@ class CacheActions(RichMixin):
             self._update_from_response_headers(directives)
 
         # If "expired" but there's a validator, save it to the cache and revalidate on use
-        do_not_cache = self.expire_after == DO_NOT_CACHE
         skip_stale = self.expire_after == EXPIRE_IMMEDIATELY and not directives.has_validator
+        do_not_cache = self.expire_after == DO_NOT_CACHE
 
         # Apply filter callback, if any
         callback = self._settings.filter_fn
@@ -203,6 +203,7 @@ class CacheActions(RichMixin):
         logger.debug(f'Response for URL {response.request.url} has not been modified')
         cached_response.expires = self.expires
         cached_response.headers.update(response.headers)
+        cached_response.revalidated = True
         return cached_response
 
     def _update_from_response_headers(self, directives: CacheDirectives):
@@ -230,7 +231,7 @@ class CacheActions(RichMixin):
             or self._refresh
             or directives.no_cache
             or directives.must_revalidate
-            and directives.max_age == 0
+            or (self._settings.always_revalidate and directives.has_validator)
         )
 
         # Add the appropriate validation headers, if needed

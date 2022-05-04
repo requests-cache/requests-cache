@@ -10,6 +10,8 @@
 * Add support for `Cache-Control: only-if-cached`
 * Revalidate for `Cache-Control: no-cache` request or response header
 * Revalidate for `Cache-Control: max-age=0, must-revalidate` response headers
+* Add an attribute `CachedResponse.revalidated` to indicate if a cached response was revalidated for
+  the current request
 
 **Settings:**
 * All settings that affect cache behavior can now be accessed and modified via `CachedSession.settings`
@@ -19,6 +21,8 @@
 * Make behavior for `expire_after=0` consistent with `Cache-Control: max-age=0`: if the response has a validator, save it to the cache but revalidate on use.
   * The constant `requests_cache.DO_NOT_CACHE` may be used to completely disable caching for a request
 * Make behavior for `stale_if_error` partially consistent with `Cache-Control: stale-if-error`: Add support for time values (int, timedelta, etc.) in addition to `True/False`
+* Add `always_revalidate` session setting to always revalidate before using a cached response (if a
+  validator) is available.
 
 **Backends:**
 * SQLite:
@@ -50,6 +54,7 @@
   * `expires`
   * `from_cache`
   * `is_expired`
+  * `revalidated`
 * `OriginalResponse.cache_key` and `expires` will be populated for any new response that was written to the cache
 * Add request wrapper methods with return type hints for all HTTP methods (`CachedSession.get()`, `head()`, etc.)
 

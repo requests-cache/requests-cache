@@ -137,8 +137,15 @@ Or, if you are using {py:func}`.install_cache`:
 >>> requests_cache.remove_expired_responses()
 ```
 
-You can also apply a new `expire_after` value to previously cached responses:
+You can also remove responses older than a certain time:
 ```python
+# Remove expired responses *and* responses older than 7 days
+remove_expired_responses(older_than=timedelta(days=7))
+```
+
+Or apply a new expiration value to previously cached responses:
+```python
+# Reset expiration for all responses to 30 days from now
 >>> session.remove_expired_responses(expire_after=timedelta(days=30))
 ```
 
@@ -180,6 +187,15 @@ Example:
 >>> response_2 = session.get('http://httpbin.org/get', refresh=True)
 >>> assert response_2.from_cache is False
 ```
+
+### Validation-Only Requests
+If you want to always send a conditional request before using a cached response, you can use the
+session setting `always_revalidate`:
+```python
+>>> session = CachedSession(always_revalidate=True)
+```
+
+Unlike the `refresh` option, this only affects cached responses with a validator.
 
 ### Cache-Only Requests
 If you want to only use cached responses without making any real requests, you can use the

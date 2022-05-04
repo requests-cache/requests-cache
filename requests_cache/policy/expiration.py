@@ -17,14 +17,16 @@ NEVER_EXPIRE = -1
 logger = getLogger(__name__)
 
 
-def get_expiration_datetime(expire_after: ExpirationTime) -> Optional[datetime]:
+def get_expiration_datetime(
+    expire_after: ExpirationTime, start_time: datetime = None, negative_delta: bool = False
+) -> Optional[datetime]:
     """Convert an expiration value in any supported format to an absolute datetime"""
     # Never expire (or do not cache, in which case expiration won't be used)
     if expire_after is None or expire_after in [NEVER_EXPIRE, DO_NOT_CACHE]:
         return None
     # Expire immediately
     elif try_int(expire_after) == EXPIRE_IMMEDIATELY:
-        return datetime.utcnow()
+        return start_time or datetime.utcnow()
     # Already a datetime or datetime str
     if isinstance(expire_after, str):
         return _parse_http_date(expire_after)
@@ -34,7 +36,9 @@ def get_expiration_datetime(expire_after: ExpirationTime) -> Optional[datetime]:
     # Otherwise, it must be a timedelta or time in seconds
     if not isinstance(expire_after, timedelta):
         expire_after = timedelta(seconds=expire_after)
-    return datetime.utcnow() + expire_after
+    if negative_delta:
+        expire_after = -expire_after
+    return (start_time or datetime.utcnow()) + expire_after
 
 
 def get_expiration_seconds(expire_after: ExpirationTime) -> int:
