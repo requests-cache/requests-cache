@@ -24,7 +24,8 @@ package.json
 
 # Test / coverage reports
 .coverage
-.tox
+.coverage.*
+.nox
 .mypy_cache/
 test-reports/
 

@@ -33,7 +33,7 @@ requests      = "^2.22"    # Needs no introduction
 urllib3       = "^1.25.5"  # Use a slightly newer version than required by requests (for bugfixes)
 appdirs       = "^1.4.4"   # For options that use platform-specific user cache dirs
 attrs         = "^21.2"    # For response data models
-cattrs        = "^1.8"     # For response serialization
+cattrs        = ">=1.8,<=22.2" # For response serialization
 url-normalize = "^1.4"     # For improved request matching
 
 # Optional backend dependencies
@@ -61,6 +61,9 @@ sphinx-inline-tabs         = {optional=true, version=">=2022.1.2b11", python=">=
 sphinx-notfound-page       = {optional=true, version="*"}
 sphinx-panels              = {optional=true, version="^0.6"}
 sphinxcontrib-apidoc       = {optional=true, version="^0.3"}
+
+# Temporary fix until cattrs 22.2.0 is released
+exceptiongroup             = {version = ">=1.0.0-rc.3", python = "^3.10.0"}
 
 [tool.poetry.extras]
 # Package extras for optional backend dependencies
