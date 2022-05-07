@@ -99,7 +99,7 @@ responses             = "0.19.0"
 timeout-decorator     = "^0.5"
 
 # Tools for linting, type checking, etc. are managed with pre-commit
-pre-commit            = "^2.18"
+pre-commit            = "^2.19"
 
 # For convenience in local development
 nox                   = "^2022.1.7"
