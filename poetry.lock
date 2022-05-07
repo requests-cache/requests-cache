@@ -371,7 +371,7 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "linkify-it-py"
-version = "1.0.3"
+version = "2.0.0"
 description = "Links recognition library with FULL unicode support."
 category = "main"
 optional = true
@@ -1242,7 +1242,7 @@ yaml = ["pyyaml"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "b6ba448a5098d97983790762b9cf1de0724c0d166ac99f0508043f4c3b5cd34a"
+content-hash = "1615dfd69afdc88e89d2505262b17251efdc28dca64e3d76cfcf00ecc64afccb"
 
 [metadata.files]
 alabaster = [
@@ -1416,8 +1416,8 @@ jmespath = [
     {file = "jmespath-1.0.0.tar.gz", hash = "sha256:a490e280edd1f57d6de88636992d05b71e97d69a26a19f058ecf7d304474bf5e"},
 ]
 linkify-it-py = [
-    {file = "linkify-it-py-1.0.3.tar.gz", hash = "sha256:2b3f168d5ce75e3a425e34b341a6b73e116b5d9ed8dbbbf5dc7456843b7ce2ee"},
-    {file = "linkify_it_py-1.0.3-py3-none-any.whl", hash = "sha256:11e29f00150cddaa8f434153f103c14716e7e097a8fd372d9eb1ed06ed91524d"},
+    {file = "linkify-it-py-2.0.0.tar.gz", hash = "sha256:476464480906bed8b2fa3813bf55566282e55214ad7e41b7d1c2b564666caf2f"},
+    {file = "linkify_it_py-2.0.0-py3-none-any.whl", hash = "sha256:1bff43823e24e507a099e328fc54696124423dd6320c75a9da45b4b754b748ad"},
 ]
 livereload = [
     {file = "livereload-2.6.3.tar.gz", hash = "sha256:776f2f865e59fde56490a56bcc6773b6917366bce0c267c60ee8aaf1a0959869"},
