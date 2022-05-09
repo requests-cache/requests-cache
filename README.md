@@ -12,7 +12,7 @@
 
 ## Summary
 **requests-cache** is a persistent HTTP cache that provides an easy way to get better
-performance with the python [requests](http://python-requests.org) library.
+performance with the python [requests](https://python-requests.org) library.
 
 <!-- RTD-IGNORE -->
 Complete project documentation can be found at [requests-cache.readthedocs.io](https://requests-cache.readthedocs.io).
@@ -60,7 +60,7 @@ import requests
 
 session = requests.Session()
 for i in range(60):
-    session.get('http://httpbin.org/delay/1')
+    session.get('https://httpbin.org/delay/1')
 ```
 
 **This takes 1 second:**
@@ -69,7 +69,7 @@ import requests_cache
 
 session = requests_cache.CachedSession('demo_cache')
 for i in range(60):
-    session.get('http://httpbin.org/delay/1')
+    session.get('https://httpbin.org/delay/1')
 ```
 
 With caching, the response will be fetched once, saved to `demo_cache.sqlite`, and subsequent
@@ -84,7 +84,7 @@ import requests
 import requests_cache
 
 requests_cache.install_cache('demo_cache')
-requests.get('http://httpbin.org/delay/1')
+requests.get('https://httpbin.org/delay/1')
 ```
 
 **Settings:**

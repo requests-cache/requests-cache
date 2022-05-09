@@ -15,7 +15,7 @@ with a regular {py:class}`requests.Session` object, or wrapper functions like
 To cache additional HTTP methods, specify them with `allowable_methods`:
 ```python
 >>> session = CachedSession(allowable_methods=('GET', 'POST'))
->>> session.post('http://httpbin.org/post', json={'param': 'value'})
+>>> session.post('https://httpbin.org/post', json={'param': 'value'})
 ```
 
 For example, some APIs use the `POST` method to request data via a JSON-formatted request body, for
@@ -26,7 +26,7 @@ to ensure you don't send the exact same data multiple times.
 To cache additional status codes, specify them with `allowable_codes`
 ```python
 >>> session = CachedSession(allowable_codes=(200, 418))
->>> session.get('http://httpbin.org/teapot')
+>>> session.get('https://httpbin.org/teapot')
 ```
 
 (selective-caching)=

@@ -94,6 +94,6 @@ def write_cassette(cassette, path):
 if __name__ == '__main__':
     cache_dir = 'example_cache'
     session = CachedSession(join(cache_dir, 'http_cache.sqlite'))
-    session.get('http://httpbin.org/get')
-    session.get('http://httpbin.org/json')
+    session.get('https://httpbin.org/get')
+    session.get('https://httpbin.org/json')
     to_vcr_cassette(session.cache, join(cache_dir, 'http_cache.yaml'))

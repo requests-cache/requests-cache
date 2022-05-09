@@ -36,7 +36,7 @@ class SQLiteCache(BaseCache):
         use_temp: Store database in a temp directory (e.g., ``/tmp/http_cache.sqlite``)
         use_memory: Store database in memory instead of in a file
         fast_save: Significantly increases cache write performance, but with the possibility of data
-            loss. See `pragma: synchronous <http://www.sqlite.org/pragma.html#pragma_synchronous>`_
+            loss. See `pragma: synchronous <https://www.sqlite.org/pragma.html#pragma_synchronous>`_
             for details.
         wal: Use `Write Ahead Logging <https://sqlite.org/wal.html>`_, so readers do not block writers.
         kwargs: Additional keyword arguments for :py:func:`sqlite3.connect`

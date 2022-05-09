@@ -190,7 +190,7 @@ The `expire_after` argument can be used to override the session's expiration for
 ```python
 >>> session = CachedSession(expire_after=300)
 >>> # This request will be cached for 60 seconds, not 300
->>> session.get('http://httpbin.org/get', expire_after=60)
+>>> session.get('https://httpbin.org/get', expire_after=60)
 ```
 
 ### Manual Refresh
@@ -206,8 +206,8 @@ described above.
 
 Example:
 ```python
->>> response_1 = session.get('http://httpbin.org/get')
->>> response_2 = session.get('http://httpbin.org/get', refresh=True)
+>>> response_1 = session.get('https://httpbin.org/get')
+>>> response_2 = session.get('https://httpbin.org/get', refresh=True)
 >>> assert response_2.from_cache is False
 ```
 
@@ -227,21 +227,21 @@ cached or is expired, you will get a `504 Not Cached` response instead.
 ```python
 >>> session = CachedSession()
 >>> session.cache.clear()
->>> response = session.get('http://httpbin.org/get', only_if_cached=True)
+>>> response = session.get('https://httpbin.org/get', only_if_cached=True)
 >>> print(response.status_code)
 504
 >>> response.raise_for_status()
-HTTPError: 504 Server Error: Not Cached for url: http://httpbin.org/get
+HTTPError: 504 Server Error: Not Cached for url: https://httpbin.org/get
 ```
 
 You can also combine this with `stale_if_error` to return cached responses even if they are expired.
 ```python
 >>> session = CachedSession(expire_after=1, stale_if_error=True)
->>> session.get('http://httpbin.org/get')
+>>> session.get('https://httpbin.org/get')
 >>> time.sleep(1)
 
 >>> # The response will be cached but expired by this point
->>> response = session.get('http://httpbin.org/get', only_if_cached=True)
+>>> response = session.get('https://httpbin.org/get', only_if_cached=True)
 >>> print(response.status_code)
 200
 ```

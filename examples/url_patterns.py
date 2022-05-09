@@ -16,7 +16,7 @@ urls_expire_after = {
 urls = [
     'https://httpbin.org/get',               # Will expire in an hour
     'https://httpbin.org/image/jpeg',        # Will expire in a week
-    'http://www.fillmurray.com/460/300',     # Will never expire
+    'https://www.fillmurray.com/460/300',     # Will never expire
     'https://via.placeholder.com/350x150',   # Will not be cached
 ]
 

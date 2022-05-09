@@ -61,7 +61,7 @@ def disabled():
     Example:
 
         >>> with requests_cache.disabled():
-        ...     requests.get('http://httpbin.org/get')
+        ...     requests.get('https://httpbin.org/get')
 
     """
     previous = requests.Session
@@ -80,7 +80,7 @@ def enabled(*args, **kwargs):
     Example:
 
         >>> with requests_cache.enabled('cache.db'):
-        ...     requests.get('http://httpbin.org/get')
+        ...     requests.get('https://httpbin.org/get')
 
     Accepts the same arguments as :py:class:`.CachedSession` and :py:func:`.install_cache`.
     """

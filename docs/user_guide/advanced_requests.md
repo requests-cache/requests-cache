@@ -27,8 +27,8 @@ It can be used, for example, for request throttling:
 >>> session = CachedSession()
 >>> session.hooks['response'].append(make_throttle_hook(0.1))
 >>> # The first (real) request will have an added delay
->>> session.get('http://httpbin.org/get')
->>> session.get('http://httpbin.org/get')
+>>> session.get('https://httpbin.org/get')
+>>> session.get('https://httpbin.org/get')
 ```
 :::
 

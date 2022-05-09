@@ -21,12 +21,12 @@ Examples:
 >>> session = CachedSession(expire_after=timedelta(days=1))
 
 >>> # Placeholders are added for non-cached responses
->>> response = session.get('http://httpbin.org/get')
+>>> response = session.get('https://httpbin.org/get')
 >>> print(response.from_cache, response.created_at, response.expires, response.is_expired)
 False None None None
 
 >>> # Values will be populated for cached responses
->>> response = session.get('http://httpbin.org/get')
+>>> response = session.get('https://httpbin.org/get')
 >>> print(response.from_cache, response.created_at, response.expires, response.is_expired)
 True 2021-01-01 18:00:00 2021-01-02 18:00:00 False
 

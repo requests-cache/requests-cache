@@ -76,7 +76,7 @@ exclude_patterns = [
 # Enable automatic links to other projects' Sphinx docs
 intersphinx_mapping = {
     'boto3': ('https://boto3.amazonaws.com/v1/documentation/api/latest/', None),
-    'botocore': ('http://botocore.readthedocs.io/en/latest/', None),
+    'botocore': ('https://botocore.readthedocs.io/en/latest/', None),
     'cryptography': ('https://cryptography.io/en/latest/', None),
     'itsdangerous': ('https://itsdangerous.palletsprojects.com/en/2.0.x/', None),
     'pymongo': ('https://pymongo.readthedocs.io/en/stable/', None),
