@@ -116,7 +116,7 @@ For backend databases, you can install and run them on the host instead of in a 
 as they are running on the default port.
 
 ## Documentation
-[Sphinx](http://www.sphinx-doc.org/en/master/) is used to generate documentation.
+[Sphinx](https://www.sphinx-doc.org/en/master/) is used to generate documentation.
 
 To build the docs locally:
 ```bash

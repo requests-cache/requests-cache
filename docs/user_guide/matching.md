@@ -11,8 +11,8 @@ them separately. To enable this, use `match_headers`:
 ```python
 >>> session = CachedSession(match_headers=True)
 >>> # Both of these requests will be sent and cached separately
->>> session.get('http://httpbin.org/headers', {'Accept': 'text/plain'})
->>> session.get('http://httpbin.org/headers', {'Accept': 'application/json'})
+>>> session.get('https://httpbin.org/headers', {'Accept': 'text/plain'})
+>>> session.get('https://httpbin.org/headers', {'Accept': 'application/json'})
 ```
 
 If you only want to match specific headers and not others, you can provide them as a list:
@@ -32,8 +32,8 @@ In this example, only the first request will be sent, and the second request wil
 due to the ignored parameters:
 ```python
 >>> session = CachedSession(ignored_parameters=['auth-token'])
->>> session.get('http://httpbin.org/get', params={'auth-token': '2F63E5DF4F44'})
->>> r = session.get('http://httpbin.org/get', params={'auth-token': 'D9FAEB3449D3'})
+>>> session.get('https://httpbin.org/get', params={'auth-token': '2F63E5DF4F44'})
+>>> r = session.get('https://httpbin.org/get', params={'auth-token': 'D9FAEB3449D3'})
 >>> assert r.from_cache is True
 ```
 
@@ -42,8 +42,8 @@ due to the ignored parameters:
 This also applies to parameters in a JSON-formatted request body:
 ```python
 >>> session = CachedSession(allowable_methods=('GET', 'POST'), ignored_parameters=['auth-token'])
->>> session.post('http://httpbin.org/post', json={'auth-token': '2F63E5DF4F44'})
->>> r = session.post('http://httpbin.org/post', json={'auth-token': 'D9FAEB3449D3'})
+>>> session.post('https://httpbin.org/post', json={'auth-token': '2F63E5DF4F44'})
+>>> r = session.post('https://httpbin.org/post', json={'auth-token': 'D9FAEB3449D3'})
 >>> assert r.from_cache is True
 ```
 
@@ -52,8 +52,8 @@ This also applies to parameters in a JSON-formatted request body:
 As well as headers, if `match_headers` is also used:
 ```python
 >>> session = CachedSession(ignored_parameters=['auth-token'], match_headers=True)
->>> session.get('http://httpbin.org/get', headers={'auth-token': '2F63E5DF4F44'})
->>> r = session.get('http://httpbin.org/get', headers={'auth-token': 'D9FAEB3449D3'})
+>>> session.get('https://httpbin.org/get', headers={'auth-token': '2F63E5DF4F44'})
+>>> r = session.get('https://httpbin.org/get', headers={'auth-token': 'D9FAEB3449D3'})
 >>> assert r.from_cache is True
 ```
 ```{note}

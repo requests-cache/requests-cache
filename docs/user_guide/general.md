@@ -11,21 +11,21 @@ Basic usage looks like this:
 >>> from requests_cache import CachedSession
 
 >>> session = CachedSession()
->>> session.get('http://httpbin.org/get')
+>>> session.get('https://httpbin.org/get')
 ```
 
 Any {py:class}`requests.Session` method can be used (but see {ref}`http-methods` section for
 options):
 ```python
->>> session.request('GET', 'http://httpbin.org/get')
->>> session.head('http://httpbin.org/get')
+>>> session.request('GET', 'https://httpbin.org/get')
+>>> session.head('https://httpbin.org/get')
 ```
 
 Caching can be temporarily disabled for the session with
 {py:meth}`.CachedSession.cache_disabled`:
 ```python
 >>> with session.cache_disabled():
-...     session.get('http://httpbin.org/get')
+...     session.get('https://httpbin.org/get')
 ```
 
 The best way to clean up your cache is through {ref}`expiration` settings, but you can also
@@ -44,13 +44,13 @@ functions, without the need to modify any existing code:
 >>> import requests_cache
 
 >>> requests_cache.install_cache()
->>> requests.get('http://httpbin.org/get')
+>>> requests.get('https://httpbin.org/get')
 ```
 
 As well as session methods:
 ```python
 >>> session = requests.Session()
->>> session.get('http://httpbin.org/get')
+>>> session.get('https://httpbin.org/get')
 ```
 
 {py:func}`.install_cache` accepts all the same parameters as {py:class}`.CachedSession`:
@@ -61,20 +61,20 @@ As well as session methods:
 It can be temporarily {py:func}`.enabled`:
 ```python
 >>> with requests_cache.enabled():
-...     requests.get('http://httpbin.org/get')  # Will be cached
+...     requests.get('https://httpbin.org/get')  # Will be cached
 ```
 
 Or temporarily {py:func}`.disabled`:
 ```python
 >>> requests_cache.install_cache()
 >>> with requests_cache.disabled():
-...     requests.get('http://httpbin.org/get')  # Will not be cached
+...     requests.get('https://httpbin.org/get')  # Will not be cached
 ```
 
 Or completely removed with {py:func}`.uninstall_cache`:
 ```python
 >>> requests_cache.uninstall_cache()
->>> requests.get('http://httpbin.org/get')
+>>> requests.get('https://httpbin.org/get')
 ```
 
 You can also clear out all responses in the cache with {py:func}`.clear`, and check if

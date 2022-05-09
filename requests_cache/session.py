@@ -290,7 +290,7 @@ class CacheMixin(MIXIN_BASE):
 
             >>> s = CachedSession()
             >>> with s.cache_disabled():
-            ...     s.get('http://httpbin.org/ip')
+            ...     s.get('https://httpbin.org/ip')
 
         """
         if self.settings.disabled:
