@@ -52,7 +52,7 @@ support wrapping an existing session object:
 
 In this case, `FutureSession` must wrap `CachedSession` rather than the other way around, since
 `FutureSession` returns (as you might expect) futures rather than response objects.
-See [issue #135](https://github.com/reclosedev/requests-cache/issues/135) for more notes on this.
+See [issue #135](https://github.com/requests-cache/requests-cache/issues/135) for more notes on this.
 
 ## Requests-OAuthlib
 Usage with [requests-oauthlib](https://github.com/requests/requests-oauthlib) is the same as other

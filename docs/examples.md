@@ -14,7 +14,7 @@ Some articles and blog posts that discuss requests-cache:
 
 ## Scripts
 The following scripts can also be found in the
-[examples/](https://github.com/reclosedev/requests-cache/tree/master/examples) folder on GitHub.
+[examples/](https://github.com/requests-cache/requests-cache/tree/main/examples) folder on GitHub.
 
 ### Basic usage (with sessions)
 ```{include} ../examples/basic_sessions.py

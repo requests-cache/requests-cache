@@ -4,7 +4,7 @@ Here are a few tips for avoiding and debugging some common problems.
 
 ## General Tips
 * Make sure you're using the latest version: `pip install -U requests-cache`
-* Try [searching issues](https://github.com/reclosedev/requests-cache/issues?q=is%3Aissue+label%3Abug)
+* Try [searching issues](https://github.com/requests-cache/requests-cache/issues?q=is%3Aissue+label%3Abug)
   for similar problems
 * Enable debug logging to get more information
 * If you have a problem and [figure it out yourself](https://xkcd.com/979/), it's likely that
@@ -52,8 +52,8 @@ logging.getLogger('requests_cache').setLevel('DEBUG')
   with {py:meth}`CachedSession.cache.clear() <.BaseCache.clear>`.
 * **Library updates:** New releases of `requests`, `urllib3` or `requests-cache` itself can
   potentially change response data, and be incompatible with previously cached responses. See issues
-  [#56](https://github.com/reclosedev/requests-cache/issues/56) and
-  [#102](https://github.com/reclosedev/requests-cache/issues/102).
+  [#56](https://github.com/requests-cache/requests-cache/issues/56) and
+  [#102](https://github.com/requests-cache/requests-cache/issues/102).
   ```{note}
   A cached response that can't be reused will simply be deleted and fetched again. If you get a
   traceback just by reading from the cache, this is **not** intended behavior, so please create a bug
@@ -93,7 +93,7 @@ Here are some error messages you may see either in the logs or (more rarely) in 
     round-trips required for consecutive requests. For more details, see the following issues:
   * [requests/#3912: ResourceWarning: unclosed socket.socket when I run a unittest？](https://github.com/psf/requests/issues/3912)
   * [requests/#2963: ResourceWarning still triggered when warnings enabled](https://github.com/psf/requests/issues/2963#issuecomment-169631513)
-  * [requests-cache/#413](https://github.com/reclosedev/requests-cache/issues/413)
+  * [requests-cache/#413](https://github.com/requests-cache/requests-cache/issues/413)
   * If needed, this warning can be suppressed with:
     ```python
     import warnings
@@ -104,7 +104,7 @@ Here are some error messages you may see either in the logs or (more rarely) in 
 ## Bug Reports
 If you believe you've found a bug, or if you're just having trouble getting requests-cache to work
 the way you want, please
-[create an issue](https://github.com/reclosedev/requests-cache/issues/new/choose) for it on GitHub.
+[create an issue](https://github.com/requests-cache/requests-cache/issues/new/choose) for it on GitHub.
 
 Details that will help your issue get resolved:
 * A complete example to reproduce the issue

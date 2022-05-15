@@ -32,7 +32,7 @@
 * Reduce verbosity of log messages when encountering an invalid JSON request body
 
 ## 0.9.0 (2022-01-01)
-[See all issues and PRs for 0.9](https://github.com/reclosedev/requests-cache/milestone/4?closed=1)
+[See all issues and PRs for 0.9](https://github.com/requests-cache/requests-cache/milestone/4?closed=1)
 
 **Expiration & Headers:**
 * Use `Cache-Control` **request** headers by default
@@ -67,7 +67,7 @@
 * Add some additional aliases for `DbDict`, etc. so fully qualified imports don't break
 
 ## 0.8.0 (2021-09-07)
-[See all issues and PRs for 0.8](https://github.com/reclosedev/requests-cache/milestone/3?closed=1)
+[See all issues and PRs for 0.8](https://github.com/requests-cache/requests-cache/milestone/3?closed=1)
 
 **Expiration & Headers:**
 * Add support for conditional requests and cache validation using:
@@ -156,7 +156,7 @@ The following changes are meant to make certain behaviors more obvious for new u
 * Fix a bug in which Cache-Control headers would be used unexpectedly
 
 ## 0.7.0 (2021-07-07)
-[See all issues and PRs for 0.7](https://github.com/reclosedev/requests-cache/milestone/2?closed=1)
+[See all issues and PRs for 0.7](https://github.com/requests-cache/requests-cache/milestone/2?closed=1)
 
 **Backends:**
 * Add a filesystem backend that stores responses as local files
@@ -246,7 +246,7 @@ Fix a bug in which `filter_fn()` would get called on `response.request` instead 
 * Make integration tests easier to run and/or fail more quickly in environments where Docker isn't available
 
 ## 0.6.0 (2021-04-09)
-[See all issues and PRs for 0.6](https://github.com/reclosedev/requests-cache/milestone/1?closed=1)
+[See all issues and PRs for 0.6](https://github.com/requests-cache/requests-cache/milestone/1?closed=1)
 
 Thanks to [Code Shelter](https://www.codeshelter.co) and [contributors](https://requests-cache.readthedocs.io/en/stable/contributors.html) for making this release possible!
 
@@ -265,7 +265,7 @@ Thanks to [Code Shelter](https://www.codeshelter.co) and [contributors](https://
 
 **Serialization:**
 * **Note:** Due to the following changes, responses cached with previous versions of requests-cache will be invalid. These **old responses will be treated as expired**, and will be refreshed the next time they are requested. They can also be manually converted or removed, if needed (see notes below).
-* Add [example script](https://github.com/reclosedev/requests-cache/blob/master/examples/convert_cache.py) to convert an existing cache from previous serialization format to new one
+* Add [example script](https://github.com/requests-cache/requests-cache/blob/main/examples/convert_cache.py) to convert an existing cache from previous serialization format to new one
 * When running `remove_expired_responses()`, also remove responses that are invalid due to updated serialization format
 * Add `CachedResponse` class to wrap cached `requests.Response` objects, which makes additional cache information available to client code
 * Add `CachedHTTPResponse` class to wrap `urllib3.response.HTTPResponse` objects, available via `CachedResponse.raw`
