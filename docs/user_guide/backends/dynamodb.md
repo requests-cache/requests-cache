@@ -96,7 +96,7 @@ Here are the details you will need:
   - Range key (aka sort key): `key`
 
 ### Example CloudFormation Template
-:::{admonition} Example: [cloudformation.yml](https://github.com/reclosedev/requests-cache/blob/master/examples/cloudformation.yml)
+:::{admonition} Example: [cloudformation.yml](https://github.com/requests-cache/requests-cache/blob/main/examples/cloudformation.yml)
 :class: toggle
 ```{literalinclude} ../../../examples/cloudformation.yml
 :language: yaml

@@ -1,7 +1,7 @@
 # History
 
 ## 1.0.0 (Unreleased)
-[See all unreleased issues and PRs](https://github.com/reclosedev/requests-cache/milestone/5?closed=1)
+[See all unreleased issues and PRs](https://github.com/requests-cache/requests-cache/milestone/5?closed=1)
 
 **Expiration & headers:**
 * Add support for `Cache-Control: min-fresh`
@@ -66,22 +66,21 @@
 * Replace `appdirs` with `platformdirs`
 
 **Breaking changes:**
+
 Some relatively minor breaking changes have been made that are not expected to affect most users.
 If you encounter a problem not listed here after updating to 1.0, please file a bug report!
 
-The following undocumented behaviors have been removed:
-* The arguments `match_headers` and `ignored_parameters` must be passed to `CachedSession`. Previously, these could also be passed to a `BaseCache` instance.
-* The `CachedSession` `backend` argument must be either an instance or string alias. Previously it would also accept a backend class.
-* After initialization, cache settings can only be accesed and modified via
-  `CachedSession.settings`. Previously, some settings could be modified by setting them on either `CachedSession` or `BaseCache`. In some cases this could silently fail or otherwise have undefined behavior.
-
-The following is relevant for users who have made custom backends that extend built-in storage classes:
-* All `BaseStorage` subclasses now have a `serializer` attribute, which will be unused if
-  set to `None`.
-* All serializer-specific `BaseStorage` subclasses have been removed, and merged into their respective parent classes. This includes `SQLitePickleDict`, `MongoPickleDict`, and `GridFSPickleDict`.
-
-Internal utility module changes:
-* The `cache_control` module (added in `0.7`) has been split up into multiple modules in a new `policy` subpackage
+* The following undocumented behaviors have been removed:
+    * The arguments `match_headers` and `ignored_parameters` must be passed to `CachedSession`. Previously, these could also be passed to a `BaseCache` instance.
+    * The `CachedSession` `backend` argument must be either an instance or string alias. Previously it would also accept a backend class.
+    * After initialization, cache settings can only be accesed and modified via
+    `CachedSession.settings`. Previously, some settings could be modified by setting them on either `CachedSession` or `BaseCache`. In some cases this could silently fail or otherwise have undefined behavior.
+* The following is relevant for users who have made custom backends that extend built-in storage classes:
+    * All `BaseStorage` subclasses now have a `serializer` attribute, which will be unused if
+    set to `None`.
+    * All serializer-specific `BaseStorage` subclasses have been removed, and merged into their respective parent classes. This includes `SQLitePickleDict`, `MongoPickleDict`, and `GridFSPickleDict`.
+* Internal utility module changes:
+    * The `cache_control` module (added in `0.7`) has been split up into multiple modules in a new `policy` subpackage
 
 ### 0.9.5 (Unreleased)
 * Fix usage of memory backend with `install_cache()`
@@ -115,7 +114,7 @@ Internal utility module changes:
 * Reduce verbosity of log messages when encountering an invalid JSON request body
 
 ## 0.9.0 (2022-01-01)
-[See all issues and PRs for 0.9](https://github.com/reclosedev/requests-cache/milestone/4?closed=1)
+[See all issues and PRs for 0.9](https://github.com/requests-cache/requests-cache/milestone/4?closed=1)
 
 **Expiration & headers:**
 * Use `Cache-Control` **request** headers by default
@@ -151,7 +150,7 @@ Internal utility module changes:
 * Add some additional aliases for `DbDict`, etc. so fully qualified imports don't break
 
 ## 0.8.0 (2021-09-07)
-[See all issues and PRs for 0.8](https://github.com/reclosedev/requests-cache/milestone/3?closed=1)
+[See all issues and PRs for 0.8](https://github.com/requests-cache/requests-cache/milestone/3?closed=1)
 
 **Expiration & headers:**
 * Add support for conditional requests and cache validation using:
@@ -240,7 +239,7 @@ The following changes are meant to make certain behaviors more obvious for new u
 * Fix a bug in which Cache-Control headers would be used unexpectedly
 
 ## 0.7.0 (2021-07-07)
-[See all issues and PRs for 0.7](https://github.com/reclosedev/requests-cache/milestone/2?closed=1)
+[See all issues and PRs for 0.7](https://github.com/requests-cache/requests-cache/milestone/2?closed=1)
 
 **Backends:**
 * Add a filesystem backend that stores responses as local files
@@ -330,7 +329,7 @@ Fix a bug in which `filter_fn()` would get called on `response.request` instead 
 * Make integration tests easier to run and/or fail more quickly in environments where Docker isn't available
 
 ## 0.6.0 (2021-04-09)
-[See all issues and PRs for 0.6](https://github.com/reclosedev/requests-cache/milestone/1?closed=1)
+[See all issues and PRs for 0.6](https://github.com/requests-cache/requests-cache/milestone/1?closed=1)
 
 Thanks to [Code Shelter](https://www.codeshelter.co) and [contributors](https://requests-cache.readthedocs.io/en/stable/contributors.html) for making this release possible!
 
@@ -350,7 +349,7 @@ Thanks to [Code Shelter](https://www.codeshelter.co) and [contributors](https://
 
 **Serialization:**
 * **Note:** Due to the following changes, responses cached with previous versions of requests-cache will be invalid. These **old responses will be treated as expired**, and will be refreshed the next time they are requested. They can also be manually converted or removed, if needed (see notes below).
-* Add [example script](https://github.com/reclosedev/requests-cache/blob/master/examples/convert_cache.py) to convert an existing cache from previous serialization format to new one
+* Add [example script](https://github.com/requests-cache/requests-cache/blob/main/examples/convert_cache.py) to convert an existing cache from previous serialization format to new one
 * When running `remove_expired_responses()`, also remove responses that are invalid due to updated serialization format
 * Add `CachedResponse` class to wrap cached `requests.Response` objects, which makes additional cache information available to client code
 * Add `CachedHTTPResponse` class to wrap `urllib3.response.HTTPResponse` objects, available via `CachedResponse.raw`
