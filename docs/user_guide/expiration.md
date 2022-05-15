@@ -99,7 +99,7 @@ For better read performance, expired responses won't be removed immediately, but
 (or replaced) the next time they are requested.
 :::{tip}
 Implementing one or more cache eviction algorithms is being considered. If this is something you are
-interested in, please provide feedback via [issues](https://github.com/reclosedev/requests-cache/issues)!
+interested in, please provide feedback via [issues](https://github.com/requests-cache/requests-cache/issues)!
 :::
 
 To manually clear all expired responses, use
