@@ -78,14 +78,14 @@ First, [install docker](https://docs.docker.com/get-docker/) if you haven't alre
 :::{tab} Bash (Linux/macOS)
 ```bash
 pip install -U requests-cache[all] docker-compose
-curl https://raw.githubusercontent.com/reclosedev/requests-cache/master/docker-compose.yml -O docker-compose.yml
+curl https://raw.githubusercontent.com/requests-cache/requests-cache/main/docker-compose.yml -O docker-compose.yml
 docker-compose up -d
 ```
 :::
 :::{tab} Powershell (Windows)
 ```ps1
 pip install -U requests-cache[all] docker-compose
-Invoke-WebRequest -Uri https://raw.githubusercontent.com/reclosedev/requests-cache/master/docker-compose.yml -Outfile docker-compose.yml
+Invoke-WebRequest -Uri https://raw.githubusercontent.com/requests-cache/requests-cache/main/docker-compose.yml -Outfile docker-compose.yml
 docker-compose up -d
 ```
 :::

@@ -2,7 +2,7 @@
 
 ## Bug Reports & Feedback
 If you discover a bug, want to propose a new feature, or have other feedback about requests-cache, please
-[create an issue](https://github.com/reclosedev/requests-cache/issues/new/choose)!
+[create an issue](https://github.com/requests-cache/requests-cache/issues/new/choose)!
 
 ## Project Discussion
 If you want to discuss ideas about the project in general, or if you have an issue or PR that hasn't
@@ -18,9 +18,9 @@ page.
 If you are interested in helping out, here are a few ways to get started:
 
 * Give feedback on open issues
-* Make or suggest improvements for the documentation; see [#355](https://github.com/reclosedev/requests-cache/issues/355) for details.
-* See the [help-wanted](https://github.com/reclosedev/requests-cache/labels/help-wanted) issue label
-* See the [shelved](https://github.com/reclosedev/requests-cache/issues?q=label%3Ashelved) issue
+* Make or suggest improvements for the documentation; see [#355](https://github.com/requests-cache/requests-cache/issues/355) for details.
+* See the [help-wanted](https://github.com/requests-cache/requests-cache/labels/help-wanted) issue label
+* See the [shelved](https://github.com/requests-cache/requests-cache/issues?q=label%3Ashelved) issue
   label for features that have been previously proposed and are not currently planned, but not
   completely ruled out either
 * If you find an issue you want to work on, please comment on it so others know it's in progress
@@ -29,7 +29,7 @@ If you are interested in helping out, here are a few ways to get started:
 To set up for local development (requires [poetry](https://python-poetry.org/docs/#installation)):
 
 ```bash
-git clone https://github.com/reclosedev/requests-cache.git
+git clone https://github.com/requests-cache/requests-cache.git
 cd requests-cache
 poetry install -v -E all
 ```
@@ -63,7 +63,7 @@ pre-commit uninstall
     * Unit tests can be run without any additional setup, and **don't depend on any external services**.
     * Integration tests **depend on additional services**, which are easiest to run using Docker
       (see Integration Tests section below).
-* See [conftest.py](https://github.com/reclosedev/requests-cache/blob/master/tests/conftest.py) for
+* See [conftest.py](https://github.com/requests-cache/requests-cache/blob/main/tests/conftest.py) for
   [pytest fixtures](https://docs.pytest.org/en/stable/fixture.html) that apply the most common
   mocking steps and other test setup.
 
@@ -156,22 +156,22 @@ Here are some general guidelines for submitting a pull request:
 - Otherwise, please submit an issue describing the proposed change prior to submitting a PR
 - Add unit test coverage for your changes
 - If your changes add or modify user-facing behavior, add documentation describing those changes
-- Submit the PR to be merged into the `master` branch
+- Submit the PR to be merged into the `main` branch
 
 ## Notes for Maintainers
 
 ### Releases
 - Releases are built and published to PyPI based on **git tags.**
-- [Milestones](https://github.com/reclosedev/requests-cache/milestones) will be used to track
+- [Milestones](https://github.com/requests-cache/requests-cache/milestones) will be used to track
 progress on major and minor releases.
 - GitHub Actions will build and deploy packages to PyPI on tagged commits
-on the `master` branch.
+on the `main` branch.
 
 Release steps:
 - Update the version in `requests_cache/__init__.py`
 - Update the release notes in `HISTORY.md`
 - Generate a sample cache for the new version (used by unit tests) with `python tests/generate_test_db.py`
-- Merge changes into the `master` branch
+- Merge changes into the `main` branch
 - Push a new tag, e.g.: `git tag v0.1 && git push origin --tags`
 - This will trigger a deployment. Verify that this completes successfully and that the new version
   can be installed from pypi with `pip install`

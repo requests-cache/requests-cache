@@ -397,4 +397,5 @@ def _send_request(session_factory, url, _=None):
     i = randint(1, n_unique_responses)
 
     session = session_factory()
+    sleep(0.1)
     return session.get(url, params={f'key_{i}': f'value_{i}'})

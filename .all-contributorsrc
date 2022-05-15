@@ -1,6 +1,6 @@
 {
   "projectName": "requests-cache",
-  "projectOwner": "reclosedev",
+  "projectOwner": "requests-cache",
   "repoType": "github",
   "repoHost": "https://github.com",
   "files": [
@@ -808,6 +808,33 @@
       "contributions": [
         "bug",
         "ideas"
+      ]
+    },
+    {
+      "login": "imba-tjd",
+      "name": "谭九鼎",
+      "avatar_url": "https://avatars.githubusercontent.com/u/24759802?v=4",
+      "profile": "https://www.zhihu.com/people/tan-jiu-ding",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "pb-jeff-oneill",
+      "name": "Jeff O'Neill",
+      "avatar_url": "https://avatars.githubusercontent.com/u/55557751?v=4",
+      "profile": "https://www.patentbots.com/",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "hlYassine",
+      "name": "yassine",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3386466?v=4",
+      "profile": "https://github.com/hlYassine",
+      "contributions": [
+        "bug"
       ]
     }
   ],

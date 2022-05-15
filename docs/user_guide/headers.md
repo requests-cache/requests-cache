@@ -15,7 +15,7 @@ Here's an example using the [GitHub API](https://docs.github.com/en/rest) to get
 requests-cache repo:
 ```python
 >>> # Cache a response that will expire immediately
->>> url = 'https://api.github.com/repos/reclosedev/requests-cache'
+>>> url = 'https://api.github.com/repos/requests-cache/requests-cache'
 >>> session = CachedSession(expire_after=1)
 >>> session.get(url)
 >>> time.sleep(1)

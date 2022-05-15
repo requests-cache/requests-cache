@@ -1,7 +1,7 @@
 [![](docs/_static/requests-cache-logo-header.png)](https://requests-cache.readthedocs.io)
 
-[![Build](https://github.com/reclosedev/requests-cache/actions/workflows/build.yml/badge.svg)](https://github.com/reclosedev/requests-cache/actions/workflows/build.yml)
-[![Codecov](https://codecov.io/gh/reclosedev/requests-cache/branch/master/graph/badge.svg?token=FnybzVWbt2)](https://codecov.io/gh/reclosedev/requests-cache)
+[![Build](https://github.com/requests-cache/requests-cache/actions/workflows/build.yml/badge.svg)](https://github.com/requests-cache/requests-cache/actions/workflows/build.yml)
+[![Codecov](https://codecov.io/gh/requests-cache/requests-cache/branch/main/graph/badge.svg?token=FnybzVWbt2)](https://codecov.io/gh/requests-cache/requests-cache)
 [![Documentation](https://img.shields.io/readthedocs/requests-cache/stable)](https://requests-cache.readthedocs.io/en/stable/)
 [![Code Shelter](https://www.codeshelter.co/static/badges/badge-flat.svg)](https://www.codeshelter.co/)
 
