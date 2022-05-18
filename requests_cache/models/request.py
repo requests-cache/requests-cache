@@ -1,4 +1,5 @@
 from logging import getLogger
+from urllib.parse import urlsplit
 
 from attr import asdict, define, field, fields_dict
 from requests import PreparedRequest
@@ -27,6 +28,13 @@ class CachedRequest(RichMixin):
         kwargs = {k: getattr(original_request, k, None) for k in fields_dict(cls).keys()}
         kwargs['cookies'] = getattr(original_request, '_cookies', None)
         return cls(**kwargs)  # type: ignore  # False positive in mypy 0.920+?
+
+    @property
+    def path_url(self):
+        p = urlsplit(self.url)
+        url = p.path or '/'
+        url += f'?{p.query}' if p.query else ''
+        return url
 
     def copy(self) -> 'CachedRequest':
         """Return a copy of the CachedRequest"""
