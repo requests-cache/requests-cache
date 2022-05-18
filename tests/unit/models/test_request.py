@@ -10,7 +10,7 @@ def test_from_request(mock_session):
     expected_headers = {**default_headers(), 'Content-Length': '12', 'foo': 'bar'}
 
     assert response.request.body == request.body == b'mock request'
-    assert response.request._cookies == request.cookies == {}
     assert response.request.headers == request.headers == expected_headers
     assert response.request.method == request.method == 'GET'
+    assert response.request.path_url == request.path_url == '/text'
     assert response.request.url == request.url == MOCKED_URL

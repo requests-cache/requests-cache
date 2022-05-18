@@ -2,6 +2,7 @@
 
 ## 0.9.5 (Unreleased)
 * Fix usage of memory backend with `install_cache()`
+* Add `CachedRequest.path_url` property
 * Add compatibility with cattrs 22.1
 
 ## 0.9.4 (2022-04-22)
