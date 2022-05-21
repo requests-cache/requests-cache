@@ -22,7 +22,7 @@ DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S %Z'  # Format used for __str__ only
 logger = getLogger(__name__)
 
 
-@define(auto_attribs=False, slots=False)
+@define(auto_attribs=False, repr=False, slots=False)
 class BaseResponse(Response):
     """Wrapper class for responses returned by :py:class:`.CachedSession`. This mainly exists to
     provide type hints for extra cache-related attributes that are added to non-cached responses.
@@ -58,8 +58,8 @@ class OriginalResponse(BaseResponse):
         return response
 
 
-@define(auto_attribs=False, slots=False)
-class CachedResponse(BaseResponse, RichMixin):
+@define(auto_attribs=False, repr=False, slots=False)
+class CachedResponse(RichMixin, BaseResponse):
     """A class that emulates :py:class:`requests.Response`, optimized for serialization"""
 
     _content: bytes = field(default=None)

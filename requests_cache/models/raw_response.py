@@ -15,8 +15,8 @@ from . import RichMixin
 logger = getLogger(__name__)
 
 
-@define(auto_attribs=False, slots=False)
-class CachedHTTPResponse(HTTPResponse, RichMixin):
+@define(auto_attribs=False, repr=False, slots=False)
+class CachedHTTPResponse(RichMixin, HTTPResponse):
     """A serializable dataclass that emulates :py:class:`~urllib3.response.HTTPResponse`.
     Supports streaming requests and generator usage.
 

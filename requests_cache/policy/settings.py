@@ -15,7 +15,7 @@ DEFAULT_STATUS_CODES = (200,)
 DEFAULT_IGNORED_PARAMS = ('Authorization', 'X-API-KEY', 'access_token', 'api_key')
 
 
-@define
+@define(repr=False)
 class CacheSettings(RichMixin):
     """Class used internally to store settings that affect caching behavior. This allows settings
     to be used across multiple modules, but exposed to the user in a single property

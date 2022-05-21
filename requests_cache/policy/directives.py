@@ -9,7 +9,7 @@ from ..models import RichMixin
 from . import HeaderDict, get_expiration_seconds
 
 
-@define
+@define(repr=False)
 class CacheDirectives(RichMixin):
     """Parses Cache-Control directives and other relevant cache settings from either request or
     response headers

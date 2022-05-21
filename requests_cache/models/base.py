@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 
 from attr import Factory
 
@@ -10,7 +11,8 @@ class RichMixin:
     * Inform rich about all default values so they will be excluded from output
     * Handle default value factories
     * Stringify datetime objects
-    * Does not currently handle positional-only args (since we don't currently have any)
+    * Does not handle positional-only args (since we don't currently have any)
+    * Add a base repr that excludes default values even if rich isn't installed
     """
 
     def __rich_repr__(self):
@@ -20,3 +22,12 @@ class RichMixin:
             value = getattr(self, a.name)
             value = str(value) if isinstance(value, datetime) else value
             yield a.name, value, default
+
+    def __repr__(self):
+        tokens: List[str] = []
+        for arg in self.__rich_repr__():
+            key, value, default = arg
+            tokens.append(f'{key}={value!r}' if value != default else None)
+
+        repr_attrs = ', '.join([t for t in tokens if t])
+        return f'{self.__class__.__name__}({repr_attrs})'
