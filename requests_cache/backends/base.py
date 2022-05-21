@@ -104,13 +104,15 @@ class BaseCache:
         self.responses.close()
         self.redirects.close()
 
-    def create_key(self, request: AnyRequest = None, **kwargs) -> str:
+    def create_key(
+        self, request: AnyRequest = None, match_headers: Iterable[str] = None, **kwargs
+    ) -> str:
         """Create a normalized cache key from a request object"""
         key_fn = self._settings.key_fn or create_key
         return key_fn(
             request=request,
             ignored_parameters=self._settings.ignored_parameters,
-            match_headers=self._settings.match_headers,
+            match_headers=match_headers or self._settings.match_headers,
             serializer=self.responses.serializer,
             **kwargs,
         )
