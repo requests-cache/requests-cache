@@ -12,7 +12,7 @@ from . import RichMixin
 logger = getLogger(__name__)
 
 
-@define(auto_attribs=False)
+@define(repr=False)
 class CachedRequest(RichMixin):
     """A serializable dataclass that emulates :py:class:`requests.PreparedResponse`"""
 

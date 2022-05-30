@@ -74,6 +74,8 @@ def test_optional_dependencies():
         for obj in [bson_serializer, yaml_serializer]:
             with pytest.raises(ImportError):
                 obj.dumps('')
+            with pytest.raises(ImportError):
+                obj.loads('')
 
         with pytest.raises(ImportError):
             safe_pickle_serializer('')

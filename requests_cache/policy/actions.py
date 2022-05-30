@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 logger = getLogger(__name__)
 
 
-@define
+@define(repr=False)
 class CacheActions(RichMixin):
     """Translates cache settings and headers into specific actions to take for a given cache item.
      The resulting actions are then handled in :py:meth:`CachedSession.send`.
@@ -48,7 +48,6 @@ class CacheActions(RichMixin):
     """
 
     # Outputs
-    # TODO: Besides skip read/write, will there always be only one action? Should these be an enum instead?
     cache_key: str = field(default=None, repr=False)
     error_504: bool = field(default=False)
     expire_after: ExpirationTime = field(default=None)

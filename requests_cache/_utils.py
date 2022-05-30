@@ -48,6 +48,9 @@ def get_placeholder_class(original_exception: Exception = None):
         def dumps(self, *args, **kwargs):
             _log_error()
 
+        def loads(self, *args, **kwargs):
+            _log_error()
+
     return Placeholder
 
 

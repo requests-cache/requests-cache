@@ -24,3 +24,9 @@ def test_rich_mixin():
         ('int_attr', 1, None),
         ('list_attr', ['a', 'b'], []),
     ]
+
+
+def test_repr():
+    """Test that regular __repr__ excludes default values"""
+    assert repr(DemoModel() == 'DemoModel()')
+    assert repr(DemoModel(str_attr='str') == "DemoModel(str_attr='str')")

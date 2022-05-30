@@ -3,11 +3,11 @@ from shutil import copyfile
 import pytest
 
 from requests_cache import CachedSession
-from tests.conftest import HTTPBIN_FORMATS, SAMPLE_CACHE_FILES
+from tests.conftest import HTTPBIN_FORMATS, SAMPLE_CACHE_FILES, httpbin
 
 
 # TODO: Debug why this sometimes fails (mostly just on GitHub Actions)
-@pytest.mark.flaky(reruns=3)
+# @pytest.mark.flaky(reruns=3)
 @pytest.mark.parametrize('db_path', SAMPLE_CACHE_FILES)
 def test_version_upgrade(db_path, tempfile_path):
     """Load SQLite cache files created with older versions of requests-cache.
@@ -21,5 +21,5 @@ def test_version_upgrade(db_path, tempfile_path):
     session = CachedSession(tempfile_path)
 
     for response_format in HTTPBIN_FORMATS:
-        session.get(f'https://httpbin.org/{response_format}').from_cache
-        assert session.get(f'https://httpbin.org/{response_format}').from_cache is True
+        session.get(httpbin(response_format)).from_cache
+        assert session.get(httpbin(response_format)).from_cache is True
