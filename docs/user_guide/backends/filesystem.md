@@ -32,15 +32,17 @@ YAML files (requires `pyyaml`):
 ```python
 >>> session = CachedSession('~/http_cache', backend='filesystem', serializer='yaml')
 >>> session.get('https://httpbin.org/get')
->>> print(list(session.cache.paths()))
-> ['/home/user/http_cache/4dc151d95200ec.yaml']
 ```
 
 ## Cache Files
 - See {ref}`files` for general info on specifying cache paths
 - The path for a given response will be in the format `<cache_name>/<cache_key>`
 - Redirects are stored in a separate SQLite database, located at `<cache_name>/redirects.sqlite`
-- Use {py:meth}`.FileCache.paths` to get a list of all cached response paths
+- Use {py:meth}`.FileCache.paths` to get a list of all cached response paths:
+```python
+>>> print(list(session.cache.paths()))
+> ['/home/user/http_cache/4dc151d95200ec.yaml']
+```
 
 ## Performance and Limitations
 - Write performance will vary based on the serializer used, in the range of roughly 1-3ms per write.

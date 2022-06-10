@@ -5,12 +5,10 @@
 ![](../_static/file-yaml_32px.png)
 ![](../_static/file-toml_32px.png)
 
-By default, responses are serialized using {py:mod}`pickle`, but some alternative serializers are
-also included. These are mainly intended for use with {py:class}`.FileCache`, but are compatible
-with the other backends as well.
+Some alternative serializers are included, mainly intended for use with {py:class}`.FileCache`.
 
 :::{note}
-Some serializers require additional dependencies
+Some of these serializers require additional dependencies, listed in the sections below.
 :::
 
 ## Specifying a Serializer
@@ -26,9 +24,15 @@ Usage:
 >>> session = CachedSession('my_cache', serializer='json')
 ```
 
-:::{admonition} Example JSON-serialized Response
+:::{admonition} Example JSON-serialized Response (with decoded JSON content)
 :class: toggle
-```{literalinclude} ../sample_data/sample_response.json
+```{literalinclude} ../sample_data/sample_response_json.json
+:language: JSON
+```
+:::
+:::{admonition} Example JSON-serialized Response (with binary content)
+:class: toggle
+```{literalinclude} ../sample_data/sample_response_binary.json
 :language: JSON
 ```
 :::
@@ -47,9 +51,15 @@ Usage:
 >>> session = CachedSession('my_cache', serializer='yaml')
 ```
 
-:::{admonition} Example YAML-serialized Response
+:::{admonition} Example YAML-serialized Response (with decoded JSON content)
 :class: toggle
-```{literalinclude} ../sample_data/sample_response.yaml
+```{literalinclude} ../sample_data/sample_response_json.yaml
+:language: YAML
+```
+:::
+:::{admonition} Example YAML-serialized Response (with binary content)
+:class: toggle
+```{literalinclude} ../sample_data/sample_response_binary.yaml
 :language: YAML
 ```
 :::
@@ -81,6 +91,15 @@ MongoDB dependencies:
 ```bash
 pip install requests-cache[bson]
 ```
+
+## Response Content Format
+By default, any JSON or text response body will be decoded, so the response is fully
+human-readable/editable. Other content types will be saved as binary data. To save _all_ content as binary, set ``decode_content=False``:
+```python
+>>> backend = FileCache(decode_content=False)
+>>> session = CachedSession('http_cache', backend=backend)
+```
+
 
 ## Serializer Security
 See {ref}`security` for recommended setup steps for more secure cache serialization, particularly
