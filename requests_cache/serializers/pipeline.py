@@ -1,4 +1,5 @@
-"""
+"""Classes for building complex serializers from a sequence of stages.
+
 .. automodsumm:: requests_cache.serializers.pipeline
    :classes-only:
    :nosignatures:
@@ -32,6 +33,10 @@ class Stage:
 class SerializerPipeline:
     """A pipeline of stages chained together to serialize and deserialize response objects.
 
+    Note: Typically, the first stage should be a :py:class:`.CattrStage`, since this does the
+    majority of the non-format-specific work to unstructure a response object into a dict (and
+    vice versa).
+
     Args:
         stages: A sequence of :py:class:`Stage` objects, or any objects with ``dumps()`` and
             ``loads()`` methods
@@ -54,6 +59,16 @@ class SerializerPipeline:
         for step in self.load_stages:
             value = step(value)
         return value
+
+    @property
+    def decode_content(self) -> bool:
+        return getattr(self.stages[0], 'decode_content', False) if self.stages else False
+
+    @decode_content.setter
+    def decode_content(self, value: bool):
+        """Set decode_content, if the pipeline is based on CattrStage"""
+        if self.stages and hasattr(self.stages[0], 'decode_content'):
+            self.stages[0].decode_content = value
 
     def __str__(self) -> str:
         return f'SerializerPipeline(name={self.name}, n_stages={len(self.dump_stages)})'

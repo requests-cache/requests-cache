@@ -8,13 +8,10 @@ from gridfs.errors import CorruptGridFile, FileExists
 
 from requests_cache.backends import GridFSCache, GridFSDict, MongoCache, MongoDict
 from requests_cache.policy import NEVER_EXPIRE
-from requests_cache.serializers import bson_document_serializer
-from tests.conftest import HTTPBIN_FORMATS, HTTPBIN_METHODS, fail_if_no_connection, httpbin
-from tests.integration.base_cache_test import TEST_SERIALIZERS, BaseCacheTest
+from tests.conftest import fail_if_no_connection, httpbin
+from tests.integration.base_cache_test import BaseCacheTest
 from tests.integration.base_storage_test import BaseStorageTest
 
-# Add extra MongoDB-specific format to list of serializers to test against
-MONGODB_SERIALIZERS = [bson_document_serializer] + list(TEST_SERIALIZERS.values())
 logger = getLogger(__name__)
 
 
@@ -50,17 +47,6 @@ class TestMongoDict(BaseStorageTest):
 class TestMongoCache(BaseCacheTest):
     backend_class = MongoCache
     init_kwargs = {'serializer': None}  # Use class default serializer instead of pickle
-
-    @pytest.mark.parametrize('serializer', MONGODB_SERIALIZERS)
-    @pytest.mark.parametrize('method', HTTPBIN_METHODS)
-    @pytest.mark.parametrize('field', ['params', 'data', 'json'])
-    def test_all_methods(self, field, method, serializer):
-        super().test_all_methods(field, method, serializer)
-
-    @pytest.mark.parametrize('serializer', MONGODB_SERIALIZERS)
-    @pytest.mark.parametrize('response_format', HTTPBIN_FORMATS)
-    def test_all_response_formats(self, response_format, serializer):
-        super().test_all_response_formats(response_format, serializer)
 
     def test_ttl(self):
         session = self.init_session()

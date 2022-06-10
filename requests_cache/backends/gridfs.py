@@ -27,9 +27,9 @@ class GridFSCache(BaseCache):
         kwargs: Additional keyword arguments for :py:class:`pymongo.MongoClient`
     """
 
-    def __init__(self, db_name: str, **kwargs):
+    def __init__(self, db_name: str, decode_content: bool = False, **kwargs):
         super().__init__(cache_name=db_name, **kwargs)
-        self.responses = GridFSDict(db_name, **kwargs)
+        self.responses = GridFSDict(db_name, decode_content=decode_content, **kwargs)
         self.redirects = MongoDict(
             db_name,
             collection_name='redirects',

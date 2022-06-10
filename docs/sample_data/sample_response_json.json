@@ -1,0 +1,56 @@
+{
+  "url": "https://httpbin.org/json",
+  "status_code": 200,
+  "reason": "OK",
+  "_decoded_content": {
+    "slideshow": {
+      "author": "Yours Truly",
+      "date": "date of publication",
+      "slides": [
+        {
+          "title": "Wake up to WonderWidgets!",
+          "type": "all"
+        },
+        {
+          "items": [
+            "Why <em>WonderWidgets<\/em> are great",
+            "Who <em>buys<\/em> WonderWidgets"
+          ],
+          "title": "Overview",
+          "type": "all"
+        }
+      ],
+      "title": "Sample Slide Show"
+    }
+  },
+  "cache_key": "4dc151d95200ec91fa77021989f5194e9be47e87f8f228306f3a8d5434b9e547",
+  "created_at": "2021-07-21T22:34:50.343095",
+  "elapsed": 0.242198,
+  "encoding": "utf-8",
+  "headers": {
+    "Date": "Wed, 21 Jul 2021 22:34:50 GMT",
+    "Content-Type": "application/json",
+    "Content-Length": "429",
+    "Connection": "keep-alive",
+    "Server": "gunicorn/19.9.0",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Credentials": "true"
+  },
+  "request": {
+    "body": "PH%2y",
+    "headers": {
+      "User-Agent": "python-requests/2.26.0",
+      "Accept-Encoding": "gzip, deflate",
+      "Accept": "*/*",
+      "Connection": "keep-alive"
+    },
+    "method": "GET",
+    "url": "https://httpbin.org/json"
+  },
+  "raw": {
+    "decode_content": false,
+    "reason": "OK",
+    "status": 200,
+    "version": 11
+  }
+}

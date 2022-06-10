@@ -25,13 +25,22 @@ class FileCache(BaseCache):
         use_cache_dir: Store datebase in a user cache directory (e.g., `~/.cache/`)
         use_temp: Store cache files in a temp directory (e.g., ``/tmp/http_cache/``).
             Note: if ``cache_name`` is an absolute path, this option will be ignored.
+        decode_content: Decode JSON or text response body into a human-readable format
         extension: Extension for cache files. If not specified, the serializer default extension
             will be used.
     """
 
-    def __init__(self, cache_name: AnyPath = 'http_cache', use_temp: bool = False, **kwargs):
+    def __init__(
+        self,
+        cache_name: AnyPath = 'http_cache',
+        use_temp: bool = False,
+        decode_content: bool = True,
+        **kwargs,
+    ):
         super().__init__(cache_name=str(cache_name), **kwargs)
-        self.responses: FileDict = FileDict(cache_name, use_temp=use_temp, **kwargs)
+        self.responses: FileDict = FileDict(
+            cache_name, use_temp=use_temp, decode_content=decode_content, **kwargs
+        )
         self.redirects: SQLiteDict = SQLiteDict(
             self.cache_dir / 'redirects.sqlite', 'redirects', no_serializer=True, **kwargs
         )

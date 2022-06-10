@@ -16,10 +16,13 @@ from typing import Iterable, Iterator, Optional, Tuple
 
 from requests import PreparedRequest, Response
 
+from requests_cache.serializers.cattrs import CattrStage
+from requests_cache.serializers.pipeline import SerializerPipeline
+
 from ..cache_keys import create_key, redact_response
 from ..models import CachedResponse
 from ..policy import DEFAULT_CACHE_NAME, CacheSettings, ExpirationTime
-from ..serializers import SerializerType, init_serializer, pickle_serializer
+from ..serializers import SERIALIZERS, SerializerType, pickle_serializer
 
 # Specific exceptions that may be raised during deserialization
 DESERIALIZE_ERRORS = (AttributeError, ImportError, PickleError, TypeError, ValueError)
@@ -269,23 +272,34 @@ class BaseStorage(MutableMapping, ABC):
         serializer: Custom serializer that provides ``loads`` and ``dumps`` methods
         no_serializer: Explicitly disable serialization, and write values as-is; this is to avoid
             ambiguity with ``serializer=None``
+        decode_content: Decode JSON or text response body into a human-readable format
         kwargs: Additional backend-specific keyword arguments
     """
 
-    # Default serializer to use for responses, if one isn't specified; may be overridden
+    # Default serializer to use for responses, if one isn't specified; may be overridden by subclass
     default_serializer: SerializerType = pickle_serializer
 
-    def __init__(self, serializer: SerializerType = None, no_serializer: bool = False, **kwargs):
-        if no_serializer:
-            self.serializer = None
-        else:
-            self.serializer = init_serializer(serializer or self.default_serializer)
+    def __init__(
+        self,
+        serializer: SerializerType = None,
+        no_serializer: bool = False,
+        decode_content: bool = False,
+        **kwargs,
+    ):
+        # Set a default serializer, unless explicitly disabled
+        self.serializer = None if no_serializer else (serializer or self.default_serializer)
+
+        # Look up a serializer by name, if needed
+        if isinstance(self.serializer, str):
+            self.serializer = SERIALIZERS[self.serializer]
+        if isinstance(self.serializer, (SerializerPipeline, CattrStage)):
+            self.serializer.decode_content = decode_content
         logger.debug(f'Initialized {type(self).__name__} with serializer: {self.serializer}')
 
     def bulk_delete(self, keys: Iterable[str]):
         """Delete multiple keys from the cache, without raising errors for missing keys. This is a
-        naive implementation that subclasses should override with a more efficient backend-specific
-        implementation, if possible.
+        naive, generic implementation that subclasses should override with a more efficient
+        backend-specific implementation, if possible.
         """
         for k in keys:
             try:

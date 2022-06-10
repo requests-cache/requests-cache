@@ -39,11 +39,15 @@
   * Add optional integration with MongoDB TTL to improve performance for removing expired responses
     * Disabled by default. See 'Backends: MongoDB' docs for details.
 * DynamoDB:
+  * Store responses in plain (human-readable) document format instead of fully serialized binary
   * Create default table in on-demand mode instead of provisioned
   * Add optional integration with DynamoDB TTL to improve performance for removing expired responses
     * This is enabled by default, but may be disabled
 * Filesystem:
   * The default file format has been changed from pickle to JSON
+* Filesystem, MongoDB, and DynamoDB:
+  * Decode JSON and text response bodies so the saved response can be fully human-readable/editable.
+    May be disabled with `decode_content=False`.
 * SQLite, Redis, MongoDB, and GridFS: Close open database connections when `CachedSession` is used as a contextmanager, or if `CachedSession.close()` is called
 
 **Request matching & filtering:**
