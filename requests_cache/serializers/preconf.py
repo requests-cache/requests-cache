@@ -1,25 +1,12 @@
 # flake8: noqa: F841
-"""The ``cattrs`` library includes a number of `pre-configured converters
-<https://cattrs.readthedocs.io/en/latest/preconf.html>`_ that perform some pre-serialization steps
-required for specific serialization formats.
-
-This module wraps those converters as serializer :py:class:`.Stage` objects. These are then used as
-stages in a :py:class:`.SerializerPipeline`, which runs after the base converter and before the
-format's ``dumps()`` (or equivalent) method.
-
-For any optional libraries that aren't installed, the corresponding serializer will be a placeholder
-class that raises an ``ImportError`` at initialization time instead of at import time.
+"""Stages and serializers for supported serialization formats.
 
 .. automodsumm:: requests_cache.serializers.preconf
    :nosignatures:
 """
 import pickle
-from datetime import timedelta
-from decimal import Decimal
 from functools import partial
 from importlib import import_module
-
-from cattr import GenConverter
 
 from .._utils import get_placeholder_class
 from .cattrs import CattrStage, make_decimal_timedelta_converter
@@ -89,7 +76,7 @@ except ImportError as e:
     safe_pickle_serializer = get_placeholder_class(e)
 
 
-# BSON serializer
+# BSON/MongoDB document serializers
 def _get_bson_functions():
     """Handle different function names between pymongo's bson and standalone bson"""
     try:
@@ -150,11 +137,12 @@ except ImportError as e:
     yaml_serializer = get_placeholder_class(e)
 
 
+# DynamoDB document serializer
 dynamodb_preconf_stage = CattrStage(
     factory=make_decimal_timedelta_converter, convert_timedelta=False
-)
+)  #: Pre-serialization steps for DynamoDB
 dynamodb_document_serializer = SerializerPipeline(
     [dynamodb_preconf_stage],
     name='dynamodb_document',
     is_binary=False,
-)
+)  #: DynamoDB-compatible document serializer

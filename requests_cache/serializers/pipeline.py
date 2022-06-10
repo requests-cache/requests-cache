@@ -1,4 +1,5 @@
-"""
+"""Classes for building complex serializers from a sequence of stages.
+
 .. automodsumm:: requests_cache.serializers.pipeline
    :classes-only:
    :nosignatures:
