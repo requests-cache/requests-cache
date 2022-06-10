@@ -63,6 +63,7 @@ class CachedResponse(RichMixin, BaseResponse):
     """A class that emulates :py:class:`requests.Response`, optimized for serialization"""
 
     _content: bytes = field(default=None)
+    _decoded_content: str = field(default=None)
     _next: Optional[CachedRequest] = field(default=None)
     cookies: RequestsCookieJar = field(factory=RequestsCookieJar)
     created_at: datetime = field(factory=datetime.utcnow)

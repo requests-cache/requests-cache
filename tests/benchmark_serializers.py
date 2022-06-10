@@ -30,6 +30,8 @@ from time import perf_counter as time
 import ujson
 from cattr.preconf.json import make_converter
 
+from requests_cache.backends.sqlite import SQLiteCache
+
 try:
     from rich import print
 except ImportError:
@@ -45,15 +47,15 @@ from requests_cache import CachedSession
 from requests_cache.serializers import (
     CattrStage,
     bson_serializer,
-    json_serializer,
     pickle_serializer,
 )
 
 ITERATIONS = 10000
 
-session = CachedSession()
-r = session.get('https://httpbin.org/get?x=y')
-r = session.get('https://httpbin.org/get?x=y')
+# Get an initial cached response
+session = CachedSession(SQLiteCache(use_temp=True))
+r = session.get('https://httpbin.org/json')
+r = session.get('https://httpbin.org/json')
 
 
 # def run_jsonpickle():
@@ -65,7 +67,7 @@ def run_pickle():
 
 
 def run_cattrs():
-    run_serialize_deserialize('cattrs', CattrStage)
+    run_serialize_deserialize('cattrs', CattrStage())
 
 
 def run_cattrs_pickle():
@@ -82,8 +84,8 @@ def run_cattrs_pickle():
 
 
 def run_cattrs_ujson():
-    s = CattrStage(converter_factory=make_converter)
-    run_serialize_deserialize('cattrs+ujson', json_serializer)
+    s = CattrStage(factory=make_converter)
+    run_serialize_deserialize('cattrs+ujson', s)
 
 
 def run_cattrs_bson():

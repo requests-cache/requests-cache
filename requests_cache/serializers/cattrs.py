@@ -17,11 +17,17 @@ from typing import Callable, Dict, ForwardRef, MutableMapping
 
 from cattr import GenConverter
 from requests.cookies import RequestsCookieJar, cookiejar_from_dict
+from requests.exceptions import JSONDecodeError
 from requests.structures import CaseInsensitiveDict
 from urllib3._collections import HTTPHeaderDict
 
 from ..models import CachedResponse
 from .pipeline import Stage
+
+try:
+    import ujson as json
+except ImportError:
+    import json  # type: ignore
 
 
 class CattrStage(Stage):
@@ -41,6 +47,53 @@ class CattrStage(Stage):
         if not isinstance(value, MutableMapping):
             return value
         return self.converter.structure(value, cl=CachedResponse)
+
+
+class DecodedBodyStage(CattrStage):
+    """Converter that decodes the response body into a human-readable format (if possible) when
+    serializing, and re-encodes it to reconstruct the original response. Supported Content-Types
+    are ``application/json`` and ``text/*``. All other types will be saved as-is.
+
+    Notes:
+
+    * This needs access to the response object for decoding, so this is used _instead_ of
+      CattrStage, not before/after it.
+    * Decoded responses are saved in a separate ``_decoded_content`` attribute, to ensure that
+      ``_content`` is always binary.
+    """
+
+    def dumps(self, value: CachedResponse) -> Dict:
+        response_dict = super().dumps(value)
+
+        # Decode body as JSON
+        if value.headers.get('Content-Type') == 'application/json':
+            try:
+                response_dict['_decoded_content'] = value.json()
+                response_dict.pop('_content', None)
+            except JSONDecodeError:
+                pass
+
+        # Decode body as text
+        if value.headers.get('Content-Type', '').startswith('text/'):
+            response_dict['_decoded_content'] = value.text
+            response_dict.pop('_content', None)
+
+        # Otherwise, it is most likely a binary body
+        return response_dict
+
+    def loads(self, value: Dict) -> CachedResponse:
+        # Re-encode JSON and text bodies
+        if isinstance(value.get('_decoded_content'), dict):
+            value['_decoded_content'] = json.dumps(value['_decoded_content'])
+
+        if isinstance(value.get('_decoded_content'), str):
+            response = super().loads(value)
+            response._content = response._decoded_content.encode('utf-8')
+            response._decoded_content = ''
+            response.encoding = 'utf-8'  # Set encoding explicitly so requests doesn't have to guess
+            return response
+        else:
+            return super().loads(value)
 
 
 def init_converter(
