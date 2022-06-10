@@ -5,9 +5,29 @@ import pytest
 from platformdirs import user_cache_dir
 
 from requests_cache.backends import FileCache, FileDict
-from requests_cache.serializers import SERIALIZERS, SerializerPipeline
+from requests_cache.serializers import (
+    SERIALIZERS,
+    SerializerPipeline,
+    Stage,
+    json_serializer,
+    safe_pickle_serializer,
+    yaml_serializer,
+)
+from tests.conftest import HTTPBIN_FORMATS, HTTPBIN_METHODS
 from tests.integration.base_cache_test import BaseCacheTest
 from tests.integration.base_storage_test import CACHE_NAME, BaseStorageTest
+
+# Handle optional dependencies if they're not installed,
+# so any skipped tests will explicitly be shown in pytest output
+TEST_SERIALIZERS = SERIALIZERS.copy()
+try:
+    TEST_SERIALIZERS['safe_pickle'] = safe_pickle_serializer(secret_key='hunter2')
+except ImportError:
+    TEST_SERIALIZERS['safe_pickle'] = 'safe_pickle_placeholder'
+
+
+def _valid_serializer(serializer) -> bool:
+    return isinstance(serializer, (SerializerPipeline, Stage))
 
 
 class TestFileDict(BaseStorageTest):
@@ -46,6 +66,32 @@ class TestFileDict(BaseStorageTest):
 class TestFileCache(BaseCacheTest):
     backend_class = FileCache
     init_kwargs = {'use_temp': True}
+
+    @pytest.mark.parametrize('serializer', TEST_SERIALIZERS.values())
+    @pytest.mark.parametrize('method', HTTPBIN_METHODS)
+    @pytest.mark.parametrize('field', ['params', 'data', 'json'])
+    def test_all_methods(self, field, method, serializer):
+        """Test all relevant combinations of methods X data fields X serializers"""
+        if not _valid_serializer(serializer):
+            pytest.skip(f'Dependencies not installed for {serializer}')
+        super().test_all_methods(field, method, serializer)
+
+    @pytest.mark.parametrize('serializer', TEST_SERIALIZERS.values())
+    @pytest.mark.parametrize('response_format', HTTPBIN_FORMATS)
+    def test_all_response_formats(self, response_format, serializer):
+        """Test all relevant combinations of response formats X serializers"""
+        if not _valid_serializer(serializer):
+            pytest.skip(f'Dependencies not installed for {serializer}')
+        super().test_all_response_formats(response_format, serializer)
+
+    @pytest.mark.parametrize('serializer', [json_serializer, yaml_serializer])
+    @pytest.mark.parametrize('response_format', HTTPBIN_FORMATS)
+    def test_all_response_formats__no_decode_content(self, response_format, serializer):
+        """Test with decode_content=False for text-based serialization formats"""
+        if not _valid_serializer(serializer):
+            pytest.skip(f'Dependencies not installed for {serializer}')
+        serializer.decode_content = False
+        self.test_all_response_formats(response_format, serializer)
 
     @pytest.mark.parametrize('serializer_name', SERIALIZERS.keys())
     def test_paths(self, serializer_name):

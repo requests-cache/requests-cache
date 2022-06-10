@@ -6,9 +6,8 @@ import pytest
 from botocore.exceptions import ClientError
 
 from requests_cache.backends import DynamoDbCache, DynamoDbDict
-from requests_cache.serializers import dynamodb_document_serializer
-from tests.conftest import HTTPBIN_FORMATS, HTTPBIN_METHODS, fail_if_no_connection
-from tests.integration.base_cache_test import TEST_SERIALIZERS, BaseCacheTest
+from tests.conftest import fail_if_no_connection
+from tests.integration.base_cache_test import BaseCacheTest
 from tests.integration.base_storage_test import BaseStorageTest
 
 AWS_OPTIONS = {
@@ -21,9 +20,6 @@ DYNAMODB_OPTIONS = {
     **AWS_OPTIONS,
     'serializer': None,  # Use class default serializer
 }
-
-# Add extra DynamoDB-specific format to list of serializers to test against
-DYNAMODB_SERIALIZERS = [dynamodb_document_serializer] + list(TEST_SERIALIZERS.values())
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -89,14 +85,3 @@ class TestDynamoDbDict(BaseStorageTest):
 class TestDynamoDbCache(BaseCacheTest):
     backend_class = DynamoDbCache
     init_kwargs = DYNAMODB_OPTIONS
-
-    @pytest.mark.parametrize('serializer', DYNAMODB_SERIALIZERS)
-    @pytest.mark.parametrize('method', HTTPBIN_METHODS)
-    @pytest.mark.parametrize('field', ['params', 'data', 'json'])
-    def test_all_methods(self, field, method, serializer):
-        super().test_all_methods(field, method, serializer)
-
-    @pytest.mark.parametrize('serializer', DYNAMODB_SERIALIZERS)
-    @pytest.mark.parametrize('response_format', HTTPBIN_FORMATS)
-    def test_all_response_formats(self, response_format, serializer):
-        super().test_all_response_formats(response_format, serializer)
