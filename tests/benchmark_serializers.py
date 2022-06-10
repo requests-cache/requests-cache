@@ -44,11 +44,7 @@ except ImportError:
 sys.path.insert(0, os.path.abspath('..'))
 
 from requests_cache import CachedSession
-from requests_cache.serializers import (
-    CattrStage,
-    bson_serializer,
-    pickle_serializer,
-)
+from requests_cache.serializers import CattrStage, bson_serializer, pickle_serializer
 
 ITERATIONS = 10000
 

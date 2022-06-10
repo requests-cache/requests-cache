@@ -34,6 +34,7 @@ class DynamoDbCache(BaseCache):
         table_name: str = 'http_cache',
         ttl: bool = True,
         connection: ServiceResource = None,
+        decode_content: bool = True,
         **kwargs,
     ):
         super().__init__(cache_name=table_name, **kwargs)
@@ -42,6 +43,7 @@ class DynamoDbCache(BaseCache):
             namespace='responses',
             ttl=ttl,
             connection=connection,
+            decode_content=decode_content,
             **kwargs,
         )
         self.redirects = DynamoDbDict(

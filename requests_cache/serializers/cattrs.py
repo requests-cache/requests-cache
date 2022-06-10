@@ -46,10 +46,11 @@ class CattrStage(Stage):
     * Supported  Content-Types are ``application/json`` and ``text/*``. All other types will be saved as-is.
     * Decoded responses are saved in a separate ``_decoded_content`` attribute, to ensure that
       ``_content`` is always binary.
+    * This is the default behavior for Filesystem, DynamoDB, and MongoDB backends.
     """
 
     def __init__(
-        self, factory: Callable[..., GenConverter] = None, decode_content: bool = True, **kwargs
+        self, factory: Callable[..., GenConverter] = None, decode_content: bool = False, **kwargs
     ):
         self.converter = init_converter(factory, **kwargs)
         self.decode_content = decode_content

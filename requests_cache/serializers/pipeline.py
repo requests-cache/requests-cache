@@ -60,5 +60,15 @@ class SerializerPipeline:
             value = step(value)
         return value
 
+    @property
+    def decode_content(self) -> bool:
+        return getattr(self.stages[0], 'decode_content', False) if self.stages else False
+
+    @decode_content.setter
+    def decode_content(self, value: bool):
+        """Set decode_content, if the pipeline is based on CattrStage"""
+        if self.stages and hasattr(self.stages[0], 'decode_content'):
+            self.stages[0].decode_content = value
+
     def __str__(self) -> str:
         return f'SerializerPipeline(name={self.name}, n_stages={len(self.dump_stages)})'

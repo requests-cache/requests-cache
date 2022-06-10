@@ -48,7 +48,6 @@ __all__ = [
     'pickle_serializer',
     'safe_pickle_serializer',
     'yaml_serializer',
-    'init_serializer',
     'utf8_encoder',
 ]
 
@@ -60,10 +59,3 @@ SERIALIZERS = {
 }
 
 SerializerType = Union[str, SerializerPipeline, Stage]
-
-
-def init_serializer(serializer: SerializerType = None):
-    """Initialize a serializer from a name or instance"""
-    if isinstance(serializer, str):
-        serializer = SERIALIZERS[serializer]
-    return serializer

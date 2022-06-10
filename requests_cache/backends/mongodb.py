@@ -29,12 +29,19 @@ class MongoCache(BaseCache):
         kwargs: Additional keyword arguments for :py:class:`pymongo.mongo_client.MongoClient`
     """
 
-    def __init__(self, db_name: str = 'http_cache', connection: MongoClient = None, **kwargs):
+    def __init__(
+        self,
+        db_name: str = 'http_cache',
+        connection: MongoClient = None,
+        decode_content: bool = True,
+        **kwargs,
+    ):
         super().__init__(cache_name=db_name, **kwargs)
         self.responses: MongoDict = MongoDict(
             db_name,
             collection_name='responses',
             connection=connection,
+            decode_content=decode_content,
             **kwargs,
         )
         self.redirects: MongoDict = MongoDict(
