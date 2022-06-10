@@ -307,17 +307,12 @@ class CacheMixin(MIXIN_BASE):
         super().close()
         self.cache.close()
 
-    def remove_expired_responses(
-        self, expire_after: ExpirationTime = None, older_than: ExpirationTime = None
-    ):
-        """Remove expired and invalid responses from the cache, and optionally reset expiration
+    def remove_expired_responses(self):
+        """Remove expired and invalid responses from the cache
 
-        Args:
-            expire_after: A new expiration value to set on existing cache items (relative to the
-                current time)
-            older_than: Remove all cache items older than this value
+        **Deprecated:** Use ``session.cache.remove(expired=True)`` instead.
         """
-        self.cache.remove_expired_responses(expire_after, older_than)
+        self.cache.remove(expired=True, invalid=True)
 
     def __repr__(self):
         return f'<CachedSession(cache={repr(self.cache)}, settings={self.settings})>'

@@ -55,6 +55,13 @@
 * Always skip both cache read and write for requests excluded by `allowable_methods` (previously only skipped write)
 * Ignore and redact common authentication headers and request parameters by default. This provides some default recommended values for `ignored_parameters`, to avoid accidentally storing common credentials (e.g., OAuth tokens) in the cache. This will have no effect if you are already setting `ignored_parameters`.
 
+**Other features:**
+* Split existing features of `BaseCache.remove_expired_responses()` into multiple methods and arguments:
+  * Add `BaseCache.remove()` method with `expired` and `invalid` arguments
+  * Add `BaseCache.reset_expiration()` method to reset expiration for existing responses
+* Add `older_than` argument to `BaseCache.remove()` to remove responses older than a given value
+* Add `BaseCache.items()` method
+
 **Type hints:**
 * Add `OriginalResponse` type, which adds type hints to `requests.Response` objects for extra attributes added by requests-cache:
   * `cache_key`
@@ -68,6 +75,9 @@
 
 **Dependencies:**
 * Replace `appdirs` with `platformdirs`
+
+**Deprecations:**
+* `BaseCache.remove_expired_responses()` and `CachedSession.remove_expired_responses()` are deprecated in favor of `BaseCache.remove()`
 
 **Breaking changes:**
 

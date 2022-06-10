@@ -12,7 +12,7 @@ from collections.abc import MutableMapping
 from datetime import datetime
 from logging import getLogger
 from pickle import PickleError
-from typing import Iterable, Iterator, Optional, Tuple
+from typing import TYPE_CHECKING, Iterable, Iterator, Optional, Tuple
 
 from requests import PreparedRequest, Response
 
@@ -144,6 +144,11 @@ class BaseCache:
         keys = [self.create_key(method=method, url=url, **kwargs) for url in urls]
         self.bulk_delete(keys)
 
+    def bulk_delete(self, keys: Iterable[str]):
+        """Remove multiple responses and their associated redirects from the cache"""
+        self.responses.bulk_delete(keys)
+        self.remove_invalid_redirects()
+
     def has_key(self, key: str) -> bool:
         """Returns ``True`` if ``key`` is in the cache"""
         return key in self.responses or key in self.redirects
@@ -153,97 +158,107 @@ class BaseCache:
         key = self.create_key(method=method, url=url, **kwargs)
         return self.has_key(key)  # noqa: W601
 
-    def keys(self, check_expiry=False) -> Iterator[str]:
-        """Get all cache keys for redirects and valid responses combined"""
+    def keys(self, include_expired: bool = True) -> Iterator[str]:
+        """Get all cache keys for redirects and responses combined"""
         yield from self.redirects.keys()
-        for key, _ in self._get_valid_responses(check_expiry=check_expiry):
+        for key, _ in self.items(include_expired=include_expired):
             yield key
 
-    def remove_expired_responses(
-        self, expire_after: ExpirationTime = None, older_than: ExpirationTime = None
-    ):
-        """Remove expired and invalid responses from the cache, and optionally reset expiration
+    def values(self, include_expired: bool = True) -> Iterator[CachedResponse]:
+        """Get all response objects from the cache"""
+        for _, response in self.items(include_expired=include_expired):
+            if TYPE_CHECKING:
+                assert response is not None
+            yield response
+
+    def items(
+        self, include_expired: bool = True, include_invalid: bool = False
+    ) -> Iterator[Tuple[str, Optional[CachedResponse]]]:
+        """Get all keys and responses from the cache, and optionally skip any expired or invalid
+        ones
 
         Args:
-            expire_after: A new expiration value to set on existing cache items, **relative to the
-                current time**
+            include_expired: Include expired responses in the results
+            include_invalid: Include invalid responses in the results
+        """
+        for key in self.responses.keys():
+            try:
+                response = self.responses[key]
+                response.cache_key = key
+                if include_expired or not response.is_expired:
+                    yield key, response
+            except DESERIALIZE_ERRORS:
+                if include_invalid:
+                    yield key, None
+
+    def remove(
+        self, expired: bool = False, invalid: bool = True, older_than: ExpirationTime = None
+    ):
+        """Remove responses from the cache according to the specified condition(s).
+
+        Args:
+            expired: Remove all expired responses
+            invalid: Remove all invalid responses (ones that can't be deserialized with current
+                settings)
             older_than: Remove all cache items older than this value, **relative to the cache
                 creation time**
         """
-        logger.info(
-            'Removing expired responses'
-            + (f' and responses older than: {older_than}' if older_than else '')
-            + (f' and resetting expiration with: {expire_after}' if expire_after else '')
-        )
-        keys_to_update = {}
+        if expired:
+            logger.info('Removing expired responses')
+        if older_than:
+            logger.info(f'Removing responses older than {older_than}')
         keys_to_delete = []
 
-        for key, response in self._get_valid_responses(delete=True):
-            # If we're resetting expiration, do that prior to checking if it's expired
-            if expire_after is not None and not response.reset_expiration(expire_after):
-                keys_to_update[key] = response
-            if response.is_expired or (
-                older_than is not None and response.is_older_than(older_than)
+        for key, response in self.items(include_invalid=invalid):
+            if (
+                response is None  # If the response was invalid
+                or (expired and response.is_expired)
+                or (older_than is not None and response.is_older_than(older_than))
             ):
                 keys_to_delete.append(key)
 
-        # Delay updates & deletes until the end, to avoid conflicts with _get_valid_responses()
+        # Delay deletes until the end, to use more efficient bulk_delete
         logger.debug(f'Deleting {len(keys_to_delete)} expired responses')
         self.bulk_delete(keys_to_delete)
-        if expire_after is not None:
-            logger.debug(f'Updating {len(keys_to_update)} response expirations')
-            for key, response in keys_to_update.items():
-                self.responses[key] = response
 
-    def bulk_delete(self, keys: Iterable[str]):
-        """Remove multiple responses and their associated redirects from the cache"""
-        self.responses.bulk_delete(keys)
-        self.remove_invalid_redirects()
+    def remove_expired_responses(self, expire_after: ExpirationTime = None):
+        """Remove expired and invalid responses from the cache
+
+        **Deprecated:** Please use :py:meth:`.remove` with ``expire=True`` instead.
+        """
+        self.remove(expired=True, invalid=True)
+        if expire_after:
+            self.reset_expiration(expire_after)
 
     def remove_invalid_redirects(self):
         """Remove any redirects that no longer point to an existing response"""
         invalid_redirects = [k for k, v in self.redirects.items() if v not in self.responses]
         self.redirects.bulk_delete(invalid_redirects)
 
-    def response_count(self, check_expiry=False) -> int:
-        """Get the number of responses in the cache, excluding invalid (unusable) responses.
+    def reset_expiration(self, expire_after: ExpirationTime = None):
+        """Set a new expiration value to set on existing cache items
+
+        Args:
+            expire_after: New expiration value, **relative to the current time**
+        """
+        logger.info(f'Resetting expiration with: {expire_after}')
+        for key, response in self.items():
+            if TYPE_CHECKING:
+                assert response is not None
+            response.reset_expiration(expire_after)
+            self.responses[key] = response
+
+    def response_count(self, include_expired: bool = True) -> int:
+        """Get the number of responses in the cache, excluding invalid responses.
         Can also optionally exclude expired responses.
         """
-        return len(list(self.values(check_expiry=check_expiry)))
+        return len(list(self.values(include_expired=include_expired)))
 
     def update(self, other: 'BaseCache'):
         """Update this cache with the contents of another cache"""
         logger.debug(f'Copying {len(other.responses)} responses from {repr(other)} to {repr(self)}')
         self.responses.update(other.responses)
         self.redirects.update(other.redirects)
-
-    def values(self, check_expiry=False) -> Iterator[CachedResponse]:
-        """Get all valid response objects from the cache"""
-        for _, response in self._get_valid_responses(check_expiry=check_expiry):
-            yield response
-
-    def _get_valid_responses(
-        self, check_expiry=False, delete=False
-    ) -> Iterator[Tuple[str, CachedResponse]]:
-        """Get all responses from the cache, and skip (+ optionally delete) any invalid ones that
-        can't be deserialized. Can also optionally check response expiry and exclude expired responses.
-        """
-        keys_to_delete = []
-
-        for key in self.responses.keys():
-            try:
-                response = self.responses[key]
-                if check_expiry and response.is_expired:
-                    keys_to_delete.append(key)
-                else:
-                    yield key, response
-            except DESERIALIZE_ERRORS:
-                keys_to_delete.append(key)
-
-        # Delay deletion until the end, to improve responsiveness when used as a generator
-        if delete:
-            logger.debug(f'Deleting {len(keys_to_delete)} invalid/expired responses')
-            self.bulk_delete(keys_to_delete)
 
     def __str__(self):
         """Show a count of total **rows** currently stored in the backend. For performance reasons,

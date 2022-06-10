@@ -38,9 +38,9 @@ class GridFSCache(BaseCache):
             **kwargs
         )
 
-    def remove_expired_responses(self, *args, **kwargs):
+    def remove(self, *args, **kwargs):
         with self.responses._lock:
-            return super().remove_expired_responses(*args, **kwargs)
+            return super().remove(*args, **kwargs)
 
 
 class GridFSDict(BaseStorage):

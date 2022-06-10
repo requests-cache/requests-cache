@@ -75,12 +75,12 @@ class SQLiteCache(BaseCache):
             self.responses.init_db()
             self.redirects.init_db()
 
-    def remove_expired_responses(
-        self, expire_after: ExpirationTime = None, older_than: ExpirationTime = None
+    def remove(
+        self, expired: bool = False, invalid: bool = False, older_than: ExpirationTime = None
     ):
-        if expire_after is not None or older_than is not None:
+        if invalid or older_than is not None:
             with self.responses._lock, self.redirects._lock:
-                return super().remove_expired_responses(expire_after, older_than)
+                return super().remove(expired=expired, invalid=invalid, older_than=older_than)
         else:
             self.responses.clear_expired()
             self.remove_invalid_redirects()

@@ -150,9 +150,9 @@ For better read performance, expired responses won't be removed immediately, but
 (or replaced) the next time they are requested.
 
 To manually clear all expired responses, use
-{py:meth}`.CachedSession.remove_expired_responses`:
+{py:meth}`.BaseCache.remove`:
 ```python
->>> session.remove_expired_responses()
+>>> session.cache.remove(expired=True)
 ```
 
 Or, if you are using {py:func}`.install_cache`:
@@ -162,14 +162,14 @@ Or, if you are using {py:func}`.install_cache`:
 
 You can also remove responses older than a certain time:
 ```python
-# Remove expired responses *and* responses older than 7 days
-remove_expired_responses(older_than=timedelta(days=7))
+# Remove responses older than 7 days
+session.cache.remove(older_than=timedelta(days=7))
 ```
 
 Or apply a new expiration value to previously cached responses:
 ```python
 # Reset expiration for all responses to 30 days from now
->>> session.remove_expired_responses(expire_after=timedelta(days=30))
+>>> session.cache.reset_expiration(timedelta(days=30))
 ```
 
 (ttl)=

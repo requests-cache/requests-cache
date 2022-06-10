@@ -60,9 +60,9 @@ class FileCache(BaseCache):
         self.responses.clear()
         self.redirects.init_db()
 
-    def remove_expired_responses(self, *args, **kwargs):
+    def remove(self, *args, **kwargs):
         with self.responses._lock:
-            return super().remove_expired_responses(*args, **kwargs)
+            return super().remove(*args, **kwargs)
 
 
 class FileDict(BaseStorage):
