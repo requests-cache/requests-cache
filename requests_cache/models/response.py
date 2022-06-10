@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from logging import getLogger
 from time import time
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 import attr
 from attr import define, field
@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from ..policy.actions import CacheActions
 
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S %Z'  # Format used for __str__ only
+DecodedContent = Union[Dict, str, None]
 logger = getLogger(__name__)
 
 
@@ -63,7 +64,7 @@ class CachedResponse(RichMixin, BaseResponse):
     """A class that emulates :py:class:`requests.Response`, optimized for serialization"""
 
     _content: bytes = field(default=None)
-    _decoded_content: str = field(default=None)
+    _decoded_content: DecodedContent = field(default=None)
     _next: Optional[CachedRequest] = field(default=None)
     cookies: RequestsCookieJar = field(factory=RequestsCookieJar)
     created_at: datetime = field(factory=datetime.utcnow)

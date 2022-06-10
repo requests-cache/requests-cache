@@ -33,6 +33,10 @@ class Stage:
 class SerializerPipeline:
     """A pipeline of stages chained together to serialize and deserialize response objects.
 
+    Note: Typically, the first stage should be a :py:class:`.CattrStage`, since this does the
+    majority of the non-format-specific work to unstructure a response object into a dict (and
+    vice versa).
+
     Args:
         stages: A sequence of :py:class:`Stage` objects, or any objects with ``dumps()`` and
             ``loads()`` methods

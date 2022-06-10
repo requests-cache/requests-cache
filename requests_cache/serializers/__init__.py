@@ -21,7 +21,7 @@ class that raises an ``ImportError`` at initialization time instead of at import
 # flake8: noqa: F401
 from typing import Union
 
-from .cattrs import CattrStage, DecodedBodyStage
+from .cattrs import CattrStage
 from .pipeline import SerializerPipeline, Stage
 from .preconf import (
     bson_document_serializer,

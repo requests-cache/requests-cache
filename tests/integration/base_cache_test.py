@@ -108,7 +108,12 @@ class BaseCacheTest:
         r2 = session.get(httpbin(response_format))
         assert r1.from_cache is False
         assert r2.from_cache is True
-        assert r1.content == r2.content
+
+        # For JSON responses, variations like whitespace won't be preserved
+        if r1.text.startswith('{'):
+            assert r1.json() == r2.json()
+        else:
+            assert r1.content == r2.content
 
     def test_response_no_duplicate_read(self):
         """Ensure that response data is read only once per request, whether it's cached or not"""
