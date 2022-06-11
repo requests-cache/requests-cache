@@ -14,7 +14,7 @@ from functools import wraps
 from importlib import import_module
 from logging import basicConfig, getLogger
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
@@ -268,3 +268,7 @@ def skip_missing_deps(module_name: str) -> pytest.Mark:
     return pytest.mark.skipif(
         not is_installed(module_name), reason=f'{module_name} is not installed'
     )
+
+
+# Some tests must disable url normalization to retain the custom `http+mock://` protocol
+patch_normalize_url = patch('requests_cache.cache_keys.normalize_url', side_effect=lambda x, y: x)

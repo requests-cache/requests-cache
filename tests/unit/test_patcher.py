@@ -81,15 +81,15 @@ def test_is_installed():
     assert requests_cache.is_installed() is False
 
 
-@patch.object(BaseCache, 'remove_expired_responses')
-def test_remove_expired_responses(remove_expired_responses):
+@patch.object(BaseCache, 'remove')
+def test_remove_expired_responses(mock_remove):
     requests_cache.install_cache(backend='memory', expire_after=360)
     requests_cache.remove_expired_responses()
-    assert remove_expired_responses.called is True
+    assert mock_remove.called is True
     requests_cache.uninstall_cache()
 
 
-@patch.object(BaseCache, 'remove_expired_responses')
-def test_remove_expired_responses__cache_not_installed(remove_expired_responses):
+@patch.object(BaseCache, 'remove')
+def test_remove_expired_responses__cache_not_installed(mock_remove):
     requests_cache.remove_expired_responses()
-    assert remove_expired_responses.called is False
+    assert mock_remove.called is False

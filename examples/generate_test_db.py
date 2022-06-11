@@ -86,13 +86,13 @@ def get_randomized_response(i=0):
     return new_response
 
 
-def remove_expired_responses(expire_after=None):
+def remove_expired_responses():
     logger.setLevel('DEBUG')
     session = CachedSession(CACHE_NAME)
     total_responses = len(session.cache.responses)
 
     start = time()
-    session.remove_expired_responses(expire_after=expire_after)
+    session.cache.remove(expired=True)
     elapsed = time() - start
     n_removed = total_responses - len(session.cache.responses)
     logger.info(
@@ -121,6 +121,3 @@ if __name__ == '__main__':
 
     # Remove some responses (with randomized expiration)
     # remove_expired_responses()
-
-    # Expire and remove all responses
-    # remove_expired_responses(expire_after=1)

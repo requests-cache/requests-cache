@@ -14,7 +14,6 @@ from typing import Optional, Type
 import requests
 
 from .backends import BackendSpecifier, BaseCache, init_backend
-from .policy import ExpirationTime
 from .session import CachedSession, OriginalSession
 
 logger = getLogger(__name__)
@@ -107,15 +106,11 @@ def clear():
         get_cache().clear()
 
 
-def remove_expired_responses(expire_after: ExpirationTime = None):
-    """Remove expired responses from the cache, and optionally reset expiration
-
-    Args:
-        expire_after: A new expiration time to set on existing cache items
-    """
+def remove_expired_responses():
+    """Remove expired and invalid responses from the cache"""
     session = requests.Session()
     if isinstance(session, CachedSession):
-        session.remove_expired_responses(expire_after)
+        session.cache.remove(expired=True)
 
 
 def _patch_session_factory(session_factory: Type[OriginalSession] = CachedSession):

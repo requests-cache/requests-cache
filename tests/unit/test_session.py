@@ -18,7 +18,6 @@ from requests_cache import ALL_METHODS, CachedSession
 from requests_cache._utils import get_placeholder_class
 from requests_cache.backends import BACKEND_CLASSES, BaseCache, SQLiteDict
 from requests_cache.backends.base import DESERIALIZE_ERRORS
-from requests_cache.models import CachedRequest, CachedResponse
 from requests_cache.policy.expiration import DO_NOT_CACHE, EXPIRE_IMMEDIATELY, NEVER_EXPIRE
 from tests.conftest import (
     MOCKED_URL,
@@ -29,10 +28,8 @@ from tests.conftest import (
     MOCKED_URL_JSON,
     MOCKED_URL_REDIRECT,
     MOCKED_URL_REDIRECT_TARGET,
+    patch_normalize_url,
 )
-
-# Some tests must disable url normalization to retain the custom `http+mock//` protocol
-patch_normalize_url = patch('requests_cache.cache_keys.normalize_url', side_effect=lambda x, y: x)
 
 logger = getLogger(__name__)
 
@@ -633,129 +630,10 @@ def test_url_allowlist(mock_session):
     assert not mock_session.cache.has_url(MOCKED_URL)
 
 
-@patch_normalize_url
-def test_remove_expired_responses(mock_normalize_url, mock_session):
-    """Test BaseCache.remove_expired_responses()"""
-    unexpired_url = f'{MOCKED_URL}?x=1'
-    mock_session.mock_adapter.register_uri(
-        'GET', unexpired_url, status_code=200, text='mock response'
-    )
-    mock_session.settings.expire_after = 1
-    mock_session.get(MOCKED_URL)
-    mock_session.get(MOCKED_URL_JSON)
-    sleep(1)
-    mock_session.get(unexpired_url)
-
-    # At this point we should have 1 unexpired response and 2 expired responses
-    assert len(mock_session.cache.responses) == 3
-    BaseCache.remove_expired_responses(mock_session.cache)
-    assert len(mock_session.cache.responses) == 1
-    cached_response = list(mock_session.cache.responses.values())[0]
-    assert cached_response.url == unexpired_url
-
-    # Now the last response should be expired as well
-    sleep(1)
-    BaseCache.remove_expired_responses(mock_session.cache)
-    assert len(mock_session.cache.responses) == 0
-
-
-def test_remove_expired_responses__error(mock_session):
-    # Start with two cached responses, one of which will raise an error
-    response_1 = mock_session.get(MOCKED_URL)
-    response_2 = mock_session.get(MOCKED_URL_JSON)
-
-    def error_on_key(key):
-        if key == response_2.cache_key:
-            raise PickleError
-        return CachedResponse.from_response(response_1)
-
-    # Test the generic BaseCache implementation, not the SQLite-specific one
-    with patch.object(SQLiteDict, '__getitem__', side_effect=error_on_key):
-        BaseCache.remove_expired_responses(mock_session.cache)
-
-    assert len(mock_session.cache.responses) == 1
-    assert mock_session.get(MOCKED_URL).from_cache is True
-    assert mock_session.get(MOCKED_URL_JSON).from_cache is False
-
-
-def test_remove_expired_responses__extend_expiration(mock_session):
-    # Start with an expired response
-    mock_session.settings.expire_after = datetime.utcnow() - timedelta(seconds=0.01)
-    mock_session.get(MOCKED_URL)
-
-    # Set expiration in the future
-    BaseCache.remove_expired_responses(
-        mock_session.cache, expire_after=datetime.utcnow() + timedelta(seconds=1)
-    )
-    assert len(mock_session.cache.responses) == 1
-    response = mock_session.get(MOCKED_URL)
-    assert response.is_expired is False and response.from_cache is True
-
-
-def test_remove_expired_responses__shorten_expiration(mock_session):
-    # Start with a non-expired response
-    mock_session.settings.expire_after = datetime.utcnow() + timedelta(seconds=1)
-    mock_session.get(MOCKED_URL)
-
-    # Set expiration in the past
-    mock_session.remove_expired_responses(expire_after=datetime.utcnow() - timedelta(seconds=0.01))
-    assert len(mock_session.cache.responses) == 0
-    response = mock_session.get(MOCKED_URL)
-    assert response.is_expired is False and response.from_cache is False
-
-
-def test_remove_expired_responses__per_request(mock_session):
-    # Cache 3 responses with different expiration times
-    second_url = f'{MOCKED_URL}/endpoint_2'
-    third_url = f'{MOCKED_URL}/endpoint_3'
-    mock_session.mock_adapter.register_uri('GET', second_url, status_code=200)
-    mock_session.mock_adapter.register_uri('GET', third_url, status_code=200)
-    mock_session.get(MOCKED_URL)
-    mock_session.get(second_url, expire_after=2)
-    mock_session.get(third_url, expire_after=4)
-
-    # All 3 responses should still be cached
-    mock_session.remove_expired_responses()
-    for response in mock_session.cache.responses.values():
-        logger.info(f'Expires in {response.expires_delta} seconds')
-    assert len(mock_session.cache.responses) == 3
-
-    # One should be expired after 2s, and another should be expired after 4s
-    sleep(2)
-    mock_session.remove_expired_responses()
-    assert len(mock_session.cache.responses) == 2
-    sleep(2)
-    mock_session.remove_expired_responses()
-    assert len(mock_session.cache.responses) == 1
-
-
-def test_remove_expired_responses__older_than(mock_session):
-    # Cache 4 responses with different creation times
-    response_0 = CachedResponse(request=CachedRequest(method='GET', url='https://test.com/test_0'))
-    mock_session.cache.save_response(response_0)
-    response_1 = CachedResponse(request=CachedRequest(method='GET', url='https://test.com/test_1'))
-    response_1.created_at -= timedelta(seconds=1)
-    mock_session.cache.save_response(response_1)
-    response_2 = CachedResponse(request=CachedRequest(method='GET', url='https://test.com/test_2'))
-    response_2.created_at -= timedelta(seconds=2)
-    mock_session.cache.save_response(response_2)
-    response_3 = CachedResponse(request=CachedRequest(method='GET', url='https://test.com/test_3'))
-    response_3.created_at -= timedelta(seconds=3)
-    mock_session.cache.save_response(response_3)
-
-    # Incrementally remove responses older than 3, 2, and 1 seconds
-    assert len(mock_session.cache.responses) == 4
-    mock_session.remove_expired_responses(older_than=timedelta(seconds=3))
-    assert len(mock_session.cache.responses) == 3
-    mock_session.remove_expired_responses(older_than=timedelta(seconds=2))
-    assert len(mock_session.cache.responses) == 2
-    mock_session.remove_expired_responses(older_than=timedelta(seconds=1))
-    assert len(mock_session.cache.responses) == 1
-
-    # Remove the last response after it's 1 second old
-    sleep(1)
-    mock_session.remove_expired_responses(older_than=timedelta(seconds=1))
-    assert len(mock_session.cache.responses) == 0
+def test_remove_expired_responses(mock_session):
+    with patch.object(mock_session.cache, 'remove') as mock_remove:
+        mock_session.remove_expired_responses()
+        mock_remove.assert_called_once_with(expired=True, invalid=True)
 
 
 def test_stale_while_revalidate(mock_session):

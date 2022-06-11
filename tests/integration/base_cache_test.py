@@ -285,7 +285,7 @@ class BaseCacheTest:
         for i in range(5):
             assert session.post(httpbin('post'), files={'file1': BytesIO(b'10' * 1024)}).from_cache
 
-    def test_remove_expired_responses(self):
+    def test_remove_expired(self):
         session = self.init_session(expire_after=1)
 
         # Populate the cache with several responses that should expire immediately
@@ -298,12 +298,20 @@ class BaseCacheTest:
         session.get(httpbin('get'), expire_after=-1)
         session.get(httpbin('redirect/3'), expire_after=-1)
         assert len(session.cache.redirects.keys()) == 4
-        session.cache.remove_expired_responses()
+        session.cache.remove(expired=True)
 
         assert len(session.cache.responses.keys()) == 2
         assert len(session.cache.redirects.keys()) == 3
         assert not session.cache.has_url(httpbin('redirect/1'))
         assert not any([session.cache.has_url(httpbin(f)) for f in HTTPBIN_FORMATS])
+
+    def test_bulk_delete__noop(self):
+        """Just make sure bulk_delete doesn't do anything unexpected if no keys are provided"""
+        session = self.init_session()
+        for i in range(100):
+            session.cache.responses[f'key_{i}'] = f'value_{i}'
+        session.cache.bulk_delete([])
+        assert len(session.cache.responses) == 100
 
     @pytest.mark.parametrize('method', HTTPBIN_METHODS)
     def test_filter_request_headers(self, method):

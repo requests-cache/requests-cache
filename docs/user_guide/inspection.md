@@ -70,10 +70,10 @@ combined keys and responses.
 >>> print(list(session.cache.keys()))
 ```
 
-Both methods also take a `check_expiry` argument to exclude expired responses:
+Both methods also take a `include_expired` argument. Set to `False` to exclude expired responses:
 ```python
 >>> print('All unexpired responses:')
->>> for response in session.cache.values(check_expiry=True):
+>>> for response in session.cache.values(include_expired=False):
 >>>     print(response)
 ```
 
@@ -81,5 +81,5 @@ Similarly, you can get a count of responses with {py:meth}`.BaseCache.response_c
 exclude expired responses:
 ```python
 >>> print(f'Total responses: {session.cache.response_count()}')
->>> print(f'Unexpired responses: {session.cache.response_count(check_expiry=True)}')
+>>> print(f'Unexpired responses: {session.cache.response_count(include_expired=False)}')
 ```
