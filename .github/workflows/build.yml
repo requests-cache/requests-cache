@@ -28,7 +28,7 @@ jobs:
     steps:
       # Set up python + poetry
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - uses: snok/install-poetry@v1.3
@@ -72,7 +72,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: ${{ env.LATEST_PY_VERSION }}
       - name: Run style checks & linting
