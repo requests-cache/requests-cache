@@ -110,7 +110,7 @@ def remove_expired_responses():
     """Remove expired and invalid responses from the cache"""
     session = requests.Session()
     if isinstance(session, CachedSession):
-        session.cache.remove(expired=True)
+        session.cache.delete(expired=True)
 
 
 def _patch_session_factory(session_factory: Type[OriginalSession] = CachedSession):

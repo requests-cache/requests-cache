@@ -8,21 +8,18 @@ from __future__ import annotations
 
 from abc import ABC
 from collections import UserDict
-from collections.abc import MutableMapping
 from datetime import datetime
 from logging import getLogger
 from pickle import PickleError
-from typing import TYPE_CHECKING, Iterable, Iterator, Optional, Tuple
+from typing import TYPE_CHECKING, Iterable, Iterator, List, MutableMapping, Optional, TypeVar
+from warnings import warn
 
-from requests import PreparedRequest, Response
-
-from requests_cache.serializers.cattrs import CattrStage
-from requests_cache.serializers.pipeline import SerializerPipeline
+from requests import Request, Response
 
 from ..cache_keys import create_key, redact_response
-from ..models import CachedResponse
+from ..models import AnyRequest, CachedResponse
 from ..policy import DEFAULT_CACHE_NAME, CacheSettings, ExpirationTime
-from ..serializers import SERIALIZERS, SerializerType, pickle_serializer
+from ..serializers import SERIALIZERS, SerializerPipeline, SerializerType, pickle_serializer
 
 # Specific exceptions that may be raised during deserialization
 DESERIALIZE_ERRORS = (AttributeError, ImportError, PickleError, TypeError, ValueError)
@@ -38,10 +35,12 @@ class BaseCache:
     * Saving and retrieving responses
     * Managing redirect history
     * Convenience methods for general cache info
+    * Dict-like wrapper methods around the underlying storage
 
-    Lower-level storage operations are handled by :py:class:`.BaseStorage`.
+    Notes:
 
-    To extend this with your own custom backend, see :ref:`custom-backends`.
+    * Lower-level storage operations are handled by :py:class:`.BaseStorage`.
+    * To extend this with your own custom backend, see :ref:`custom-backends`.
 
     Args:
         cache_name: Cache prefix or namespace, depending on backend
@@ -51,15 +50,12 @@ class BaseCache:
 
     def __init__(self, cache_name: str = DEFAULT_CACHE_NAME, **kwargs):
         self.cache_name = cache_name
-        self.responses: BaseStorage = DictStorage()
-        self.redirects: BaseStorage = DictStorage()
+        self.responses: BaseStorage[str, CachedResponse] = DictStorage()
+        self.redirects: BaseStorage[str, str] = DictStorage()
         self._settings = CacheSettings()  # Init and public access is done in CachedSession
 
-    @property
-    def urls(self) -> Iterator[str]:
-        """Get all URLs currently in the cache (excluding redirects)"""
-        for response in self.values():
-            yield response.url
+    # Main cache operations
+    # ---------------------
 
     def get_response(self, key: str, default=None) -> Optional[CachedResponse]:
         """Retrieve a response from the cache, if it exists
@@ -77,7 +73,7 @@ class BaseCache:
         except KeyError:
             return default
         except DESERIALIZE_ERRORS as e:
-            logger.error(f'Unable to deserialize response with key {key}: {str(e)}')
+            logger.error(f'Unable to deserialize response {key}: {str(e)}')
             logger.debug(e, exc_info=True)
             return default
 
@@ -108,7 +104,7 @@ class BaseCache:
         self.responses.close()
         self.redirects.close()
 
-    def create_key(self, request: PreparedRequest = None, **kwargs) -> str:
+    def create_key(self, request: AnyRequest = None, **kwargs) -> str:
         """Create a normalized cache key from a request object"""
         key_fn = self._settings.key_fn or create_key
         return key_fn(
@@ -119,121 +115,91 @@ class BaseCache:
             **kwargs,
         )
 
-    def delete(self, key: str):
-        """Delete a response or redirect from the cache, as well any associated redirect history"""
-        # If it's a response key, first delete any associated redirect history
-        try:
-            for r in self.responses[key].history:
-                del self.redirects[create_key(r.request, self._settings.ignored_parameters)]
-        except (KeyError, *DESERIALIZE_ERRORS):
-            pass
-        # Then delete the response itself, or just the redirect if it's a redirect key
-        for cache in [self.responses, self.redirects]:
-            try:
-                del cache[key]
-            except KeyError:
-                pass
+    # Convenience methods
+    # --------------------
 
-    def delete_url(self, url: str, method: str = 'GET', **kwargs):
-        """Delete a cached response for the specified request"""
-        key = self.create_key(method=method, url=url, **kwargs)
-        self.delete(key)
+    def contains(
+        self,
+        key: str = None,
+        request: AnyRequest = None,
+    ):
+        """Check if the specified request is cached
 
-    def delete_urls(self, urls: Iterable[str], method: str = 'GET', **kwargs):
-        """Delete all cached responses for the specified requests"""
-        keys = [self.create_key(method=method, url=url, **kwargs) for url in urls]
-        self.bulk_delete(keys)
-
-    def bulk_delete(self, keys: Iterable[str]):
-        """Remove multiple responses and their associated redirects from the cache"""
-        self.responses.bulk_delete(keys)
-        self.remove_invalid_redirects()
-
-    def has_key(self, key: str) -> bool:
-        """Returns ``True`` if ``key`` is in the cache"""
+        Args:
+            key: Check for a specific cache key
+            request: Check for a matching request, according to current request matching settings
+        """
+        if request and not key:
+            key = self.create_key(request)
         return key in self.responses or key in self.redirects
 
-    def has_url(self, url: str, method: str = 'GET', **kwargs) -> bool:
-        """Returns ``True`` if the specified request is cached"""
-        key = self.create_key(method=method, url=url, **kwargs)
-        return self.has_key(key)  # noqa: W601
-
-    def keys(self, include_expired: bool = True) -> Iterator[str]:
-        """Get all cache keys for redirects and responses combined"""
-        yield from self.redirects.keys()
-        for key, _ in self.items(include_expired=include_expired):
-            yield key
-
-    def values(self, include_expired: bool = True) -> Iterator[CachedResponse]:
-        """Get all response objects from the cache"""
-        for _, response in self.items(include_expired=include_expired):
-            if TYPE_CHECKING:
-                assert response is not None
-            yield response
-
-    def items(
-        self, include_expired: bool = True, include_invalid: bool = False
-    ) -> Iterator[Tuple[str, Optional[CachedResponse]]]:
-        """Get all keys and responses from the cache, and optionally skip any expired or invalid
-        ones
-
-        Args:
-            include_expired: Include expired responses in the results
-            include_invalid: Include invalid responses in the results
-        """
-        for key in self.responses.keys():
-            try:
-                response = self.responses[key]
-                response.cache_key = key
-                if include_expired or not response.is_expired:
-                    yield key, response
-            except DESERIALIZE_ERRORS:
-                if include_invalid:
-                    yield key, None
-
-    def remove(
-        self, expired: bool = False, invalid: bool = True, older_than: ExpirationTime = None
+    def delete(
+        self,
+        *keys: str,
+        expired: bool = False,
+        invalid: bool = False,
+        older_than: ExpirationTime = None,
+        requests: Iterable[AnyRequest] = None,
     ):
-        """Remove responses from the cache according to the specified condition(s).
+        """Remove responses from the cache according one or more conditions.
 
         Args:
+            keys: Remove responses with these cache keys
             expired: Remove all expired responses
-            invalid: Remove all invalid responses (ones that can't be deserialized with current
-                settings)
-            older_than: Remove all cache items older than this value, **relative to the cache
-                creation time**
+            invalid: Remove all invalid responses (that can't be deserialized with current settings)
+            older_than: Remove responses older than this value, relative to ``response.created_at``
+            requests: Remove matching responses, according to current request matching settings
         """
-        if expired:
-            logger.info('Removing expired responses')
-        if older_than:
-            logger.info(f'Removing responses older than {older_than}')
-        keys_to_delete = []
+        delete_keys: List[str] = list(keys) if keys else []
+        if requests:
+            delete_keys += [self.create_key(request) for request in requests]
 
-        for key, response in self.items(include_invalid=invalid):
-            if (
-                response is None  # If the response was invalid
-                or (expired and response.is_expired)
-                or (older_than is not None and response.is_older_than(older_than))
-            ):
-                keys_to_delete.append(key)
+        for response in self.filter(
+            valid=False, expired=expired, invalid=invalid, older_than=older_than
+        ):
+            delete_keys.append(response.cache_key)
 
-        # Delay deletes until the end, to use more efficient bulk_delete
-        logger.debug(f'Deleting {len(keys_to_delete)} expired responses')
-        self.bulk_delete(keys_to_delete)
+        logger.debug(f'Deleting {len(delete_keys)} responses')
+        self.responses.bulk_delete(delete_keys)
+        self._prune_redirects()
 
-    def remove_expired_responses(self, expire_after: ExpirationTime = None):
-        """Remove expired and invalid responses from the cache
-
-        **Deprecated:** Please use :py:meth:`.remove` with ``expire=True`` instead.
-        """
-        self.remove(expired=True, invalid=True)
-        if expire_after:
-            self.reset_expiration(expire_after)
-
-    def remove_invalid_redirects(self):
+    def _prune_redirects(self):
         """Remove any redirects that no longer point to an existing response"""
         invalid_redirects = [k for k, v in self.redirects.items() if v not in self.responses]
         self.redirects.bulk_delete(invalid_redirects)
+
+    def filter(
+        self,
+        valid: bool = True,
+        expired: bool = True,
+        invalid: bool = False,
+        older_than: ExpirationTime = None,
+    ) -> Iterator[CachedResponse]:
+        """Get responses from the cache, with optional filters
+
+        Args:
+            valid: Include valid and unexpired responses; set to ``False`` to get **only**
+                expired/invalid/old responses
+            expired: Include expired responses
+            invalid: Include invalid responses (as an empty ``CachedResponse``)
+            older_than: Get responses older than this value, relative to ``response.created_at``
+        """
+        if not any([valid, expired, invalid, older_than]):
+            return
+        for key in self.responses.keys():
+            response = self.get_response(key)
+
+            # Use an empty response as a placeholder for an invalid response, if specified
+            if invalid and response is None:
+                response = CachedResponse(status_code=504)
+                response.cache_key = key
+                yield response
+            elif response is not None and (
+                (valid and not response.is_expired)
+                or (expired and response.is_expired)
+                or (older_than and response.is_older_than(older_than))
+            ):
+                yield response
 
     def reset_expiration(self, expire_after: ExpirationTime = None):
         """Set a new expiration value to set on existing cache items
@@ -242,35 +208,85 @@ class BaseCache:
             expire_after: New expiration value, **relative to the current time**
         """
         logger.info(f'Resetting expiration with: {expire_after}')
-        for key, response in self.items():
-            if TYPE_CHECKING:
-                assert response is not None
+        for response in self.filter():
             response.reset_expiration(expire_after)
-            self.responses[key] = response
+            self.responses[response.cache_key] = response
 
-    def response_count(self, include_expired: bool = True) -> int:
-        """Get the number of responses in the cache, excluding invalid responses.
-        Can also optionally exclude expired responses.
-        """
-        return len(list(self.values(include_expired=include_expired)))
-
-    def update(self, other: 'BaseCache'):
+    def update(self, other: 'BaseCache'):  # type: ignore
         """Update this cache with the contents of another cache"""
         logger.debug(f'Copying {len(other.responses)} responses from {repr(other)} to {repr(self)}')
         self.responses.update(other.responses)
         self.redirects.update(other.redirects)
 
+    def urls(self, **kwargs) -> List[str]:
+        """Get all unique cached URLs. Optionally takes keyword arguments for :py:meth:`.filter`."""
+        return sorted({response.url for response in self.filter(**kwargs)})
+
     def __str__(self):
-        """Show a count of total **rows** currently stored in the backend. For performance reasons,
-        this does not check for invalid or expired responses.
-        """
         return f'<{self.__class__.__name__}(name={self.cache_name})>'
 
     def __repr__(self):
         return str(self)
 
+    # Deprecated methods
+    # --------------------
 
-class BaseStorage(MutableMapping, ABC):
+    def delete_url(self, url: str, method: str = 'GET', **kwargs):
+        warn(
+            'BaseCache.delete_url() is deprecated; please use .delete() instead', DeprecationWarning
+        )
+        self.delete(requests=[Request(method, url, **kwargs)])
+
+    def delete_urls(self, urls: Iterable[str], method: str = 'GET', **kwargs):
+        warn(
+            'BaseCache.delete_urls() is deprecated; please use .delete() instead',
+            DeprecationWarning,
+        )
+        self.delete(requests=[Request(method, url, **kwargs) for url in urls])
+
+    def has_url(self, url: str, method: str = 'GET', **kwargs) -> bool:
+        warn(
+            'BaseCache.has_url() is deprecated; please use .contains() instead', DeprecationWarning
+        )
+        return self.contains(request=Request(method, url, **kwargs))
+
+    def keys(self, check_expiry: bool = False) -> Iterator[str]:
+        warn(
+            'BaseCache.keys() is deprecated; please use .filter() or '
+            'BaseCache.responses.keys() instead',
+            DeprecationWarning,
+        )
+        yield from self.redirects.keys()
+        for response in self.filter(expired=not check_expiry):
+            yield response.cache_key
+
+    def response_count(self, check_expiry: bool = False) -> int:
+        warn(
+            'BaseCache.response_count() is deprecated; please use .filter() or '
+            'len(BaseCache.responses) instead',
+            DeprecationWarning,
+        )
+        return len(list(self.filter(expired=not check_expiry)))
+
+    def remove_expired_responses(self, expire_after: ExpirationTime = None):
+        warn(
+            'BaseCache.remove_expired_responses() is deprecated; please use .delete() instead',
+            DeprecationWarning,
+        )
+        self.delete(expired=True, invalid=True)
+        if expire_after:
+            self.reset_expiration(expire_after)
+
+    def values(self, check_expiry: bool = False) -> Iterator[CachedResponse]:
+        warn('BaseCache.values() is deprecated; please use .filter() instead', DeprecationWarning)
+        yield from self.filter(expired=not check_expiry)
+
+
+KT = TypeVar('KT')
+VT = TypeVar('VT')
+
+
+class BaseStorage(MutableMapping[KT, VT], ABC):
     """Base class for client-agnostic storage implementations. Notes:
 
     * This provides a common dictionary-like interface for the underlying storage operations
@@ -301,20 +317,28 @@ class BaseStorage(MutableMapping, ABC):
         decode_content: bool = False,
         **kwargs,
     ):
-        # Set a default serializer, unless explicitly disabled
-        self.serializer = None if no_serializer else (serializer or self.default_serializer)
+        self.serializer: Optional[SerializerPipeline] = None
+        if not no_serializer:
+            self._init_serializer(serializer or self.default_serializer, decode_content)
 
+    def _init_serializer(self, serializer: SerializerType, decode_content: bool):
         # Look up a serializer by name, if needed
-        if isinstance(self.serializer, str):
-            self.serializer = SERIALIZERS[self.serializer]
-        if isinstance(self.serializer, (SerializerPipeline, CattrStage)):
-            self.serializer.decode_content = decode_content
+        if isinstance(serializer, str):
+            serializer = SERIALIZERS[serializer]
+
+        # Wrap in a SerializerPipeline, if needed
+        if not isinstance(serializer, SerializerPipeline):
+            serializer = SerializerPipeline([serializer], name=str(serializer))
+        serializer.decode_content = decode_content
+
+        self.serializer = serializer
         logger.debug(f'Initialized {type(self).__name__} with serializer: {self.serializer}')
 
-    def bulk_delete(self, keys: Iterable[str]):
-        """Delete multiple keys from the cache, without raising errors for missing keys. This is a
-        naive, generic implementation that subclasses should override with a more efficient
-        backend-specific implementation, if possible.
+    def bulk_delete(self, keys: Iterable[KT]):
+        """Delete multiple keys from the cache, without raising errors for missing keys.
+
+        This is a naive, generic implementation that subclasses should override with a more
+        efficient backend-specific implementation, if possible.
         """
         for k in keys:
             try:
@@ -325,12 +349,16 @@ class BaseStorage(MutableMapping, ABC):
     def close(self):
         """Close any open backend connections"""
 
-    def serialize(self, value):
+    def serialize(self, value: VT):
         """Serialize value, if a serializer is available"""
+        if TYPE_CHECKING:
+            assert hasattr(self.serializer, 'dumps')
         return self.serializer.dumps(value) if self.serializer else value
 
-    def deserialize(self, value):
+    def deserialize(self, value: VT):
         """Deserialize value, if a serializer is available"""
+        if TYPE_CHECKING:
+            assert hasattr(self.serializer, 'loads')
         return self.serializer.loads(value) if self.serializer else value
 
     def __str__(self):
