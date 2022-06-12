@@ -3,8 +3,6 @@ from time import sleep
 from unittest.mock import patch
 
 import pytest
-from gridfs import GridFS
-from gridfs.errors import CorruptGridFile, FileExists
 
 from requests_cache.backends import GridFSCache, GridFSDict, MongoCache, MongoDict
 from requests_cache.policy import NEVER_EXPIRE
@@ -107,12 +105,18 @@ class TestGridFSDict(BaseStorageTest):
 
     def test_corrupt_file(self):
         """A corrupted file should be handled and raise a KeyError instead"""
+        from gridfs import GridFS
+        from gridfs.errors import CorruptGridFile
+
         cache = self.init_cache()
         cache['key'] = 'value'
         with pytest.raises(KeyError), patch.object(GridFS, 'find_one', side_effect=CorruptGridFile):
             cache['key']
 
     def test_file_exists(self):
+        from gridfs import GridFS
+        from gridfs.errors import FileExists
+
         cache = self.init_cache()
 
         # This write should just quiety fail

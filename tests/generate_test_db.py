@@ -17,7 +17,7 @@ def make_sample_db():
 
     for format in HTTPBIN_FORMATS:
         session.get(f'https://httpbin.org/{format}')
-    print(list(session.cache.urls))
+    print(session.cache.urls())
 
 
 if __name__ == '__main__':

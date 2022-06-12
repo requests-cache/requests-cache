@@ -55,12 +55,14 @@
 * Always skip both cache read and write for requests excluded by `allowable_methods` (previously only skipped write)
 * Ignore and redact common authentication headers and request parameters by default. This provides some default recommended values for `ignored_parameters`, to avoid accidentally storing common credentials (e.g., OAuth tokens) in the cache. This will have no effect if you are already setting `ignored_parameters`.
 
-**Other features:**
-* Split existing features of `BaseCache.remove_expired_responses()` into multiple methods and arguments:
-  * Add `BaseCache.remove()` method with `expired` and `invalid` arguments
-  * Add `BaseCache.reset_expiration()` method to reset expiration for existing responses
-* Add `older_than` argument to `BaseCache.remove()` to remove responses older than a given value
-* Add `BaseCache.items()` method
+**Cache convenience methods:**
+* Add `expired` and `invalid` arguments to `BaseCache.delete()` (to replace `remove_expired_responses()`)
+* Add `older_than` argument to `BaseCache.delete()` to delete responses older than a given value
+* Add `requests` argument to `BaseCache.delete()` to delete responses matching the given requests
+* Add `BaseCache.contains()` method to check for cached requests either by key or by `requests.Request` object
+* Add `BaseCache.filter()` method to get responses from the cache with various filters
+* Add `BaseCache.reset_expiration()` method to reset expiration for existing responses
+* Update `BaseCache.urls` into a method that takes optional filter params, and returns sorted unique URLs
 
 **Type hints:**
 * Add `OriginalResponse` type, which adds type hints to `requests.Response` objects for extra attributes added by requests-cache:
@@ -77,19 +79,30 @@
 * Replace `appdirs` with `platformdirs`
 
 **Deprecations:**
-* `BaseCache.remove_expired_responses()` and `CachedSession.remove_expired_responses()` are deprecated in favor of `BaseCache.remove()`
+
+The following methods are deprecated, and will be removed in a future release. The recommended
+replacements are listed below:
+* `BaseCache.remove_expired_responses()`: `BaseCache.delete()`
+* `CachedSession.remove_expired_responses()`: `BaseCache.delete()`
+* `BaseCache.delete_url()`: `BaseCache.delete()`
+* `BaseCache.delete_urls()`: `BaseCache.delete()`
+* `BaseCache.has_key()`: `BaseCache.contains()`
+* `BaseCache.has_url()`: `BaseCache.contains()`
+* `BaseCache.keys()`: `BaseCache.filter()`
+* `BaseCache.values()`: `BaseCache.filter()`
+* `BaseCache.response_count()`: `BaseCache.filter()`
 
 **Breaking changes:**
 
 Some relatively minor breaking changes have been made that are not expected to affect most users.
-If you encounter a problem not listed here after updating to 1.0, please file a bug report!
+If you encounter a problem not listed here after updating to 1.0, please create a bug report!
 
 * The following undocumented behaviors have been removed:
     * The arguments `match_headers` and `ignored_parameters` must be passed to `CachedSession`. Previously, these could also be passed to a `BaseCache` instance.
     * The `CachedSession` `backend` argument must be either an instance or string alias. Previously it would also accept a backend class.
     * After initialization, cache settings can only be accesed and modified via
     `CachedSession.settings`. Previously, some settings could be modified by setting them on either `CachedSession` or `BaseCache`. In some cases this could silently fail or otherwise have undefined behavior.
-* The following is relevant for users who have made custom backends that extend built-in storage classes:
+* The following is relevant for users who have made **custom backends** that extend built-in storage classes:
     * All `BaseStorage` subclasses now have a `serializer` attribute, which will be unused if
     set to `None`.
     * All serializer-specific `BaseStorage` subclasses have been removed, and merged into their respective parent classes. This includes `SQLitePickleDict`, `MongoPickleDict`, and `GridFSPickleDict`.

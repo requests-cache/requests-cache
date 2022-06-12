@@ -3,7 +3,6 @@ from decimal import Decimal
 from unittest.mock import patch
 
 import pytest
-from botocore.exceptions import ClientError
 
 from requests_cache.backends import DynamoDbCache, DynamoDbDict
 from tests.conftest import fail_if_no_connection
@@ -44,6 +43,8 @@ class TestDynamoDbDict(BaseStorageTest):
 
     def test_create_table_error(self):
         """An error other than 'table already exists' should be reraised"""
+        from botocore.exceptions import ClientError
+
         cache = self.init_cache()
         error = ClientError({'Error': {'Code': 'NullPointerException'}}, 'CreateTable')
         with patch.object(cache.connection.meta.client, 'update_time_to_live', side_effect=error):
@@ -52,6 +53,8 @@ class TestDynamoDbDict(BaseStorageTest):
 
     def test_enable_ttl_error(self):
         """An error other than 'ttl already enabled' should be reraised"""
+        from botocore.exceptions import ClientError
+
         cache = self.init_cache()
         error = ClientError({'Error': {'Code': 'NullPointerException'}}, 'CreateTable')
         with patch.object(cache.connection, 'create_table', side_effect=error):
