@@ -18,7 +18,6 @@ from typing import Collection, Iterator, List, Tuple, Type, Union
 from platformdirs import user_cache_dir
 
 from .._utils import chunkify, get_valid_kwargs
-from ..policy.expiration import ExpirationTime
 from . import BaseCache, BaseStorage
 
 MEMORY_URI = 'file::memory:?cache=shared'
@@ -53,15 +52,6 @@ class SQLiteCache(BaseCache):
     def db_path(self) -> AnyPath:
         return self.responses.db_path
 
-    def bulk_delete(self, keys):
-        """Remove multiple responses and their associated redirects from the cache, with additional cleanup"""
-        self.responses.bulk_delete(keys=keys)
-        self.responses.vacuum()
-
-        self.redirects.bulk_delete(keys=keys)
-        self.redirects.bulk_delete(values=keys)
-        self.redirects.vacuum()
-
     def clear(self):
         """Clear the cache. If this fails due to a corrupted cache or other I/O error, this will
         attempt to delete the cache file and re-initialize.
@@ -75,17 +65,27 @@ class SQLiteCache(BaseCache):
             self.responses.init_db()
             self.redirects.init_db()
 
-    def remove(
-        self, expired: bool = False, invalid: bool = False, older_than: ExpirationTime = None
+    def delete(
+        self,
+        *keys: str,
+        expired: bool = False,
+        **kwargs,
     ):
-        if invalid or older_than is not None:
+        """More efficient implementation of :py:meth:`BaseCache.delete`"""
+        if keys:
+            self.responses.bulk_delete(keys)
+        if expired:
+            self.responses.delete_expired()
+        if kwargs:
             with self.responses._lock, self.redirects._lock:
-                return super().remove(expired=expired, invalid=invalid, older_than=older_than)
+                return super().delete(**kwargs)
         else:
-            self.responses.clear_expired()
-            self.remove_invalid_redirects()
+            self._prune_redirects()
+        self.responses.vacuum()
+        self.redirects.vacuum()
 
-    def remove_invalid_redirects(self):
+    def _prune_redirects(self):
+        """More efficient implementation of :py:meth:`BaseCache.remove_invalid_redirects`"""
         with self.redirects.connection(commit=True) as conn:
             t1 = self.redirects.table_name
             t2 = self.responses.table_name
@@ -260,8 +260,8 @@ class SQLiteDict(BaseStorage):
             self.init_db()
             self.vacuum()
 
-    def clear_expired(self):
-        """Remove expired items from the cache"""
+    def delete_expired(self):
+        """Delete expired items from the cache"""
         with self._lock, self.connection(commit=True) as con:
             con.execute(f"DELETE FROM {self.table_name} WHERE expires <= ?", (round(time()),))
         self.vacuum()

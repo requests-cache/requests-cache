@@ -35,9 +35,9 @@ XDIST_ARGS = '--numprocesses=auto --dist=loadfile'
 def test(session):
     """Run tests in a separate virtualenv per python version"""
     test_paths = session.posargs or [UNIT_TESTS, INTEGRATION_TESTS]
-    session.install('.', 'pytest', 'pytest-xdist', 'requests-mock', 'timeout-decorator')
+    session.install('.', 'pytest', 'pytest-xdist', 'requests-mock', 'rich', 'timeout-decorator')
 
-    cmd = f'pytest -rs -x {XDIST_ARGS}'
+    cmd = f'pytest -rs {XDIST_ARGS}'
     session.run(*cmd.split(' '), *test_paths)
 
 

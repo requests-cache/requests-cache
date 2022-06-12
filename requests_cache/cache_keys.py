@@ -16,7 +16,7 @@ from requests import Request, Session
 from requests.models import CaseInsensitiveDict
 from url_normalize import url_normalize
 
-from ._utils import decode, encode, get_valid_kwargs
+from ._utils import decode, encode
 
 __all__ = ['create_key', 'normalize_request']
 if TYPE_CHECKING:
@@ -32,25 +32,20 @@ logger = getLogger(__name__)
 
 
 def create_key(
-    request: AnyRequest = None,
+    request: AnyRequest,
     ignored_parameters: ParamList = None,
     match_headers: Union[ParamList, bool] = False,
     serializer: Any = None,
     **request_kwargs,
 ) -> str:
-    """Create a normalized cache key from either a request object or :py:class:`~requests.Request`
-    arguments
+    """Create a normalized cache key based on a request object
 
     Args:
         request: Request object to generate a cache key from
         ignored_parameters: Request paramters, headers, and/or JSON body params to exclude
         match_headers: Match only the specified headers, or ``True`` to match all headers
-        request_kwargs: Request arguments to generate a cache key from
+        request_kwargs: Additional keyword arguments for :py:func:`~requests.request`
     """
-    # Convert raw request arguments into a request object, if needed
-    if not request:
-        request = Request(**get_valid_kwargs(Request.__init__, request_kwargs))
-
     # Normalize and gather all relevant request info to match against
     request = normalize_request(request, ignored_parameters)
     key_parts = [

@@ -29,7 +29,7 @@ def main():
     # Get some debugging info about the cache
     print(requests_cache.get_cache())
     print('Cached URLS:')
-    print('\n'.join(requests_cache.get_cache().urls))
+    print('\n'.join(requests_cache.get_cache().urls()))
 
     # Uninstall to remove caching from all requests functions
     requests_cache.uninstall_cache()

@@ -60,15 +60,20 @@ class SerializerPipeline:
             value = step(value)
         return value
 
+    # TODO: I don't love this. Could BaseStorage init be refactored to not need this getter/setter?
     @property
     def decode_content(self) -> bool:
-        return getattr(self.stages[0], 'decode_content', False) if self.stages else False
+        for stage in self.stages:
+            if hasattr(stage, 'decode_content'):
+                return stage.decode_content
+        return False
 
     @decode_content.setter
     def decode_content(self, value: bool):
-        """Set decode_content, if the pipeline is based on CattrStage"""
-        if self.stages and hasattr(self.stages[0], 'decode_content'):
-            self.stages[0].decode_content = value
+        """Set decode_content, if the pipeline contains a CattrStage or compatible object"""
+        for stage in self.stages:
+            if hasattr(stage, 'decode_content'):
+                stage.decode_content = value
 
     def __str__(self) -> str:
         return f'SerializerPipeline(name={self.name}, n_stages={len(self.dump_stages)})'

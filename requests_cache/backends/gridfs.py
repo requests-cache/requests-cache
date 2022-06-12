@@ -38,9 +38,9 @@ class GridFSCache(BaseCache):
             **kwargs
         )
 
-    def remove(self, *args, **kwargs):
+    def delete(self, *args, **kwargs):
         with self.responses._lock:
-            return super().remove(*args, **kwargs)
+            return super().delete(*args, **kwargs)
 
 
 class GridFSDict(BaseStorage):

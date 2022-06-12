@@ -92,7 +92,7 @@ def remove_expired_responses():
     total_responses = len(session.cache.responses)
 
     start = time()
-    session.cache.remove(expired=True)
+    session.cache.delete(expired=True)
     elapsed = time() - start
     n_removed = total_responses - len(session.cache.responses)
     logger.info(

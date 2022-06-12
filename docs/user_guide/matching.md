@@ -77,7 +77,8 @@ cached response:
 ```
 
 If you want to implement your own request matching, you can provide a cache key function which will
-take a {py:class}`~requests.PreparedRequest` plus optional keyword args, and return a string:
+take a {py:class}`~requests.PreparedRequest` plus optional keyword args for
+{py:func}`~requests.request`, and return a string:
 ```python
 def create_key(request: requests.PreparedRequest, **kwargs) -> str:
     """Generate a custom cache key for the given request"""

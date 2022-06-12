@@ -60,9 +60,9 @@ class FileCache(BaseCache):
         self.responses.clear()
         self.redirects.init_db()
 
-    def remove(self, *args, **kwargs):
+    def delete(self, *args, **kwargs):
         with self.responses._lock:
-            return super().remove(*args, **kwargs)
+            return super().delete(*args, **kwargs)
 
 
 class FileDict(BaseStorage):

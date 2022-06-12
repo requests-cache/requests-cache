@@ -185,15 +185,6 @@ def test_response_history(mock_session):
     assert len(mock_session.cache.redirects) == 1
 
 
-@patch_normalize_url
-def test_urls(mock_normalize_url, mock_session):
-    for url in [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_HTTPS]:
-        mock_session.get(url)
-
-    expected_urls = [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_HTTPS]
-    assert set(mock_session.cache.urls) == set(expected_urls)
-
-
 # Request matching
 # -----------------------------------------------------
 
@@ -630,12 +621,6 @@ def test_url_allowlist(mock_session):
     assert not mock_session.cache.has_url(MOCKED_URL)
 
 
-def test_remove_expired_responses(mock_session):
-    with patch.object(mock_session.cache, 'remove') as mock_remove:
-        mock_session.remove_expired_responses()
-        mock_remove.assert_called_once_with(expired=True, invalid=True)
-
-
 def test_stale_while_revalidate(mock_session):
     # Start with expired responses
     mocked_url_2 = f'{MOCKED_URL_ETAG}?k=v'
@@ -862,3 +847,13 @@ def test_request_force_refresh__prepared_request(mock_session):
     assert response_2.from_cache is False
     assert response_3.from_cache is True
     assert response_3.expires is not None
+
+
+# Deprecated methods
+# --------------------
+
+
+def test_remove_expired_responses(mock_session):
+    with patch.object(mock_session.cache, 'delete') as mock_delete:
+        mock_session.remove_expired_responses()
+        mock_delete.assert_called_once_with(expired=True, invalid=True)

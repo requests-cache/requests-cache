@@ -20,12 +20,12 @@ Examples:
 >>> from requests_cache import CachedSession
 >>> session = CachedSession(expire_after=timedelta(days=1))
 
->>> # Placeholders are added for non-cached responses
+>>> # Placeholder attributes are added for non-cached responses
 >>> response = session.get('https://httpbin.org/get')
 >>> print(response.from_cache, response.created_at, response.expires, response.is_expired)
 False None None None
 
->>> # Values will be populated for cached responses
+>>> # These attributes will be populated for cached responses
 >>> response = session.get('https://httpbin.org/get')
 >>> print(response.from_cache, response.created_at, response.expires, response.is_expired)
 True 2021-01-01 18:00:00 2021-01-02 18:00:00 False
@@ -37,49 +37,55 @@ True 2021-01-01 18:00:00 2021-01-02 18:00:00 False
 :::
 
 ## Cache Contents
-You can use `CachedSession.cache.urls` to see all URLs currently in the cache:
+
+### Checking for responses
+Use {py:meth}`.BaseCache.contains` to check if a given request is cached.
+Either check with a {py:class}`~requests.models.Request` object:
+```python
+>>> from requests import Request
+
+>>> request = Request('GET', 'https://httpbin.org/get', params={'k': 'v'})
+>>> print(session.cache.contains(request=request))
+```
+
+Or with a cache key:
+```python
+>>> print(session.cache.contains('d1e666e9fdfb3f86'))
+```
+
+### Filtering responses
+Use {py:meth}`.BaseCache.filter` to get responses with optional filters. By default, it returns all
+responses except any invalid ones that would raise an exception:
+```python
+>>> for response in session.cache.filter():
+>>>     print(response)
+```
+
+Get unexpired responses:
+```python
+>>> for response in session.cache.filter(expired=False):
+>>>     print(response)
+```
+
+Get keys for **only** expired responses:
+```python
+>>> expired_responses = session.cache.filter(valid=False, expired=True)
+>>> keys = [response.cache_key for response in expired_responses]
+```
+
+### Response URLs
+You can use {py:meth}`.BaseCache.urls` to see all URLs currently in the cache:
 ```python
 >>> session = CachedSession()
->>> print(session.cache.urls)
+>>> print(session.cache.urls())
 ['https://httpbin.org/get', 'https://httpbin.org/stream/100']
 ```
 
-If needed, you can get more details on cached responses via `CachedSession.cache.responses`, which
-is a dict-like interface to the cache backend. See {py:class}`.CachedResponse` for a full list of
-attributes available.
-
-For example, if you wanted to to see all URLs requested with a specific method:
+If needed, you can access all responses via `CachedSession.cache.responses`, which is a dict-like
+interface to the cache backend. For example, if you wanted to to see all URLs requested with a specific method:
 ```python
 >>> post_urls = [
 ...     response.url for response in session.cache.responses.values()
 ...     if response.request.method == 'POST'
 ... ]
-```
-
-You can also inspect `CachedSession.cache.redirects`, which maps redirect URLs to keys of the
-responses they redirect to.
-
-Additional `keys()` and `values()` wrapper methods are available on {py:class}`.BaseCache` to get
-combined keys and responses.
-```python
->>> print('All responses:')
->>> for response in session.cache.values():
->>>     print(response)
-
->>> print('All cache keys for redirects and responses combined:')
->>> print(list(session.cache.keys()))
-```
-
-Both methods also take a `include_expired` argument. Set to `False` to exclude expired responses:
-```python
->>> print('All unexpired responses:')
->>> for response in session.cache.values(include_expired=False):
->>>     print(response)
-```
-
-Similarly, you can get a count of responses with {py:meth}`.BaseCache.response_count`, and optionally
-exclude expired responses:
-```python
->>> print(f'Total responses: {session.cache.response_count()}')
->>> print(f'Unexpired responses: {session.cache.response_count(include_expired=False)}')
 ```
