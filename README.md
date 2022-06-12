@@ -12,7 +12,7 @@
 
 ## Summary
 **requests-cache** is a persistent HTTP cache that provides an easy way to get better
-performance with the python [requests](https://python-requests.org) library.
+performance with the python [requests](https://requests.readthedocs.io/) library.
 
 <!-- RTD-IGNORE -->
 Complete project documentation can be found at [requests-cache.readthedocs.io](https://requests-cache.readthedocs.io).
@@ -48,7 +48,7 @@ pip install requests-cache
 
 Then, use [requests_cache.CachedSession](https://requests-cache.readthedocs.io/en/stable/session.html)
 to make your requests. It behaves like a normal
-[requests.Session](https://docs.python-requests.org/en/master/user/advanced/#session-objects),
+[requests.Session](https://requests.readthedocs.io/en/latest/user/advanced/#session-objects),
 but with caching behavior.
 
 To illustrate, we'll call an endpoint that adds a delay of 1 second, simulating a slow or
