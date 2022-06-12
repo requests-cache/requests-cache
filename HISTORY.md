@@ -30,7 +30,7 @@
 
 **Backends:**
 * SQLite:
-  * Improve performance for removing expired items
+  * Improve performance for removing expired responses with `delete()`
   * Add `size()` method to get estimated size of the database (including in-memory databases)
   * Add `sorted()` method with sorting and other query options
   * Add `wal` parameter to enable write-ahead logging
