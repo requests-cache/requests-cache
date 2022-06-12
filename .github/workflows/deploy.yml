@@ -23,13 +23,13 @@ env:
   STRESS_TEST_MULTIPLIER: 5
 
 jobs:
-  # Run tests for all supported requests versions
+  # Run tests for all supported requests versions and minimum supported python version
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: [3.7]
-        requests-version: [2.22, 2.23, 2.24, 2.25, 2.26, latest]
+        requests-version: [2.22, 2.23, 2.24, 2.25, 2.26, 2.27, latest]
       fail-fast: false
     services:
       nginx:

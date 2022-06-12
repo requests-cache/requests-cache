@@ -82,15 +82,16 @@ class TestFileCache(BaseCacheTest):
         """Test all relevant combinations of response formats X serializers"""
         if not _valid_serializer(serializer):
             pytest.skip(f'Dependencies not installed for {serializer}')
+        serializer.set_decode_content(False)
         super().test_all_response_formats(response_format, serializer)
 
     @pytest.mark.parametrize('serializer', [json_serializer, yaml_serializer])
     @pytest.mark.parametrize('response_format', HTTPBIN_FORMATS)
     def test_all_response_formats__no_decode_content(self, response_format, serializer):
-        """Test with decode_content=False for text-based serialization formats"""
+        """Test with decode_content=True for text-based serialization formats"""
         if not _valid_serializer(serializer):
             pytest.skip(f'Dependencies not installed for {serializer}')
-        serializer.decode_content = False
+        serializer.set_decode_content(True)
         self.test_all_response_formats(response_format, serializer)
 
     @pytest.mark.parametrize('serializer_name', SERIALIZERS.keys())

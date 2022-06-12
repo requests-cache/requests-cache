@@ -211,7 +211,7 @@ class TestSQLiteDict(BaseStorageTest):
             cache[f'key_{i}'] = response
 
         # Items should only include unexpired (even numbered) items, and still be in sorted order
-        items = list(cache.sorted(key='expires', exclude_expired=True))
+        items = list(cache.sorted(key='expires', expired=False))
         assert len(items) == 50
         prev_item = None
 
@@ -272,6 +272,13 @@ class TestSQLiteCache(BaseCacheTest):
         session = self.init_session()
         assert session.cache.db_path == session.cache.responses.db_path
 
+    @patch.object(SQLiteDict, 'sorted')
+    def test_filter__expired_only(self, mock_sorted):
+        """Filtering by expired only should use a more efficient SQL query"""
+        session = self.init_session()
+        session.cache.filter(valid=False, expired=True)
+        mock_sorted.assert_called_once_with(expired=True)
+
     def test_sorted(self):
         """Test wrapper method for SQLiteDict.sorted(), with all arguments combined"""
         session = self.init_session(clear=False)
@@ -287,9 +294,7 @@ class TestSQLiteCache(BaseCacheTest):
             session.cache.responses[f'key_{i}'] = response
 
         # Sorted items should be in ascending order by expiration time
-        items = list(
-            session.cache.sorted(key='expires', exclude_expired=True, reversed=True, limit=100)
-        )
+        items = list(session.cache.sorted(key='expires', expired=False, reversed=True, limit=100))
         assert len(items) == 100
 
         prev_item = None

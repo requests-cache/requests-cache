@@ -329,7 +329,7 @@ class BaseStorage(MutableMapping[KT, VT], ABC):
         # Wrap in a SerializerPipeline, if needed
         if not isinstance(serializer, SerializerPipeline):
             serializer = SerializerPipeline([serializer], name=str(serializer))
-        serializer.decode_content = decode_content
+        serializer.set_decode_content(decode_content)
 
         self.serializer = serializer
         logger.debug(f'Initialized {type(self).__name__} with serializer: {self.serializer}')

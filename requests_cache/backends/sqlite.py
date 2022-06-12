@@ -17,6 +17,8 @@ from typing import Collection, Iterator, List, Tuple, Type, Union
 
 from platformdirs import user_cache_dir
 
+from requests_cache.models.response import CachedResponse
+
 from .._utils import chunkify, get_valid_kwargs
 from . import BaseCache, BaseStorage
 
@@ -71,21 +73,31 @@ class SQLiteCache(BaseCache):
         expired: bool = False,
         **kwargs,
     ):
-        """More efficient implementation of :py:meth:`BaseCache.delete`"""
+        """A more efficient SQLite implementation of :py:meth:`BaseCache.delete`"""
         if keys:
             self.responses.bulk_delete(keys)
         if expired:
-            self.responses.delete_expired()
+            self._delete_expired()
+
+        # For any remaining conditions, use base implementation
         if kwargs:
             with self.responses._lock, self.redirects._lock:
                 return super().delete(**kwargs)
         else:
             self._prune_redirects()
+
         self.responses.vacuum()
         self.redirects.vacuum()
 
+    def _delete_expired(self):
+        """A more efficient implementation deleting expired responses in SQL"""
+        with self.responses._lock, self.responses.connection(commit=True) as con:
+            con.execute(
+                f'DELETE FROM {self.responses.table_name} WHERE expires <= ?', (round(time()),)
+            )
+
     def _prune_redirects(self):
-        """More efficient implementation of :py:meth:`BaseCache.remove_invalid_redirects`"""
+        """A more efficient implementation of removing invalid redirects in SQL"""
         with self.redirects.connection(commit=True) as conn:
             t1 = self.redirects.table_name
             t2 = self.responses.table_name
@@ -97,12 +109,23 @@ class SQLiteCache(BaseCache):
                 ')'
             )
 
+    def filter(  # type: ignore
+        self, valid: bool = True, expired: bool = True, **kwargs
+    ) -> Iterator[CachedResponse]:
+        """A more efficient implementation of :py:meth:`BaseCache.filter`, in the case where we want
+        to get **only** expired responses
+        """
+        if expired and not valid and not kwargs:
+            return self.responses.sorted(expired=True)
+        else:
+            return super().filter(valid, expired, **kwargs)
+
     def sorted(
         self,
         key: str = 'expires',
         reversed: bool = False,
         limit: int = None,
-        exclude_expired=False,
+        expired: bool = True,
     ):
         """Get cached responses, with sorting and other query options.
 
@@ -110,9 +133,9 @@ class SQLiteCache(BaseCache):
             key: Key to sort by; either 'expires', 'size', or 'key'
             reversed: Sort in descending order
             limit: Maximum number of responses to return
-            exclude_expired: Only return unexpired responses
+            expired: Set to ``False`` to exclude expired responses
         """
-        return self.responses.sorted(key, reversed, limit, exclude_expired)
+        return self.responses.sorted(key, reversed, limit, expired)
 
 
 class SQLiteDict(BaseStorage):
@@ -260,12 +283,6 @@ class SQLiteDict(BaseStorage):
             self.init_db()
             self.vacuum()
 
-    def delete_expired(self):
-        """Delete expired items from the cache"""
-        with self._lock, self.connection(commit=True) as con:
-            con.execute(f"DELETE FROM {self.table_name} WHERE expires <= ?", (round(time()),))
-        self.vacuum()
-
     def size(self) -> int:
         """Return the size of the database, in bytes. For an in-memory database, this will be an
         estimate based on page size.
@@ -283,7 +300,7 @@ class SQLiteDict(BaseStorage):
             return page_count * page_size
 
     def sorted(
-        self, key: str = 'expires', reversed: bool = False, limit: int = None, exclude_expired=False
+        self, key: str = 'expires', reversed: bool = False, limit: int = None, expired: bool = True
     ):
         """Get cache values in sorted order; see :py:meth:`.SQLiteCache.sorted` for usage details"""
         # Get sort key, direction, and limit
@@ -297,7 +314,7 @@ class SQLiteDict(BaseStorage):
         # Filter out expired items, if specified
         filter_expr = ''
         params: Tuple = ()
-        if exclude_expired:
+        if not expired:
             filter_expr = 'WHERE expires is null or expires > ?'
             params = (time(),)
 
