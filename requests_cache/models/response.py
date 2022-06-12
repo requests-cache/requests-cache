@@ -10,7 +10,6 @@ from attr import define, field
 from requests import PreparedRequest, Response
 from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
-from urllib3._collections import HTTPHeaderDict
 
 from ..policy.expiration import ExpirationTime, get_expiration_datetime
 from . import CachedHTTPResponse, CachedRequest, RichMixin
@@ -73,18 +72,15 @@ class CachedResponse(RichMixin, BaseResponse):
     expires: Optional[datetime] = field(default=None)
     headers: CaseInsensitiveDict = field(factory=CaseInsensitiveDict)
     history: List['CachedResponse'] = field(factory=list)  # type: ignore
-    raw: CachedHTTPResponse = field(factory=CachedHTTPResponse, repr=False)
+    raw: CachedHTTPResponse = None  # type: ignore  # Not serialized; populated from CachedResponse attrs
     reason: str = field(default=None)
     request: CachedRequest = field(factory=CachedRequest)  # type: ignore
     status_code: int = field(default=0)
     url: str = field(default=None)
 
     def __attrs_post_init__(self):
-        """Re-initialize raw response body after deserialization"""
-        if self.raw._body is None and self._content is not None:
-            self.raw.reset(self._content)
-        if not self.raw.headers:
-            self.raw.headers = HTTPHeaderDict(self.headers)
+        """Re-initialize raw (urllib3) response after deserialization"""
+        self.raw = self.raw or CachedHTTPResponse.from_cached_response(self)
 
     @classmethod
     def from_response(cls, response: Response, **kwargs):
@@ -101,8 +97,8 @@ class CachedResponse(RichMixin, BaseResponse):
             setattr(obj, k, getattr(response, k, None))
 
         # Store request, raw response, and next response (if it's a redirect response)
-        obj.request = CachedRequest.from_request(response.request)
         obj.raw = CachedHTTPResponse.from_response(response)
+        obj.request = CachedRequest.from_request(response.request)
         obj._next = CachedRequest.from_request(response.next) if response.next else None
 
         # Store response body, which will have been read & decoded by requests.Response by now

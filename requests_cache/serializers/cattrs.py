@@ -19,7 +19,6 @@ from cattr import GenConverter
 from requests.cookies import RequestsCookieJar, cookiejar_from_dict
 from requests.exceptions import JSONDecodeError
 from requests.structures import CaseInsensitiveDict
-from urllib3._collections import HTTPHeaderDict
 
 from ..models import CachedResponse, DecodedContent
 from .pipeline import Stage
@@ -102,9 +101,6 @@ def init_converter(
     converter.register_structure_hook(
         CaseInsensitiveDict, lambda obj, cls: CaseInsensitiveDict(obj)
     )
-    converter.register_unstructure_hook(HTTPHeaderDict, dict)
-    converter.register_structure_hook(HTTPHeaderDict, lambda obj, cls: HTTPHeaderDict(obj))
-
     # Convert decoded JSON body back to string
     converter.register_structure_hook(
         DecodedContent, lambda obj, cls: json.dumps(obj) if isinstance(obj, dict) else obj
