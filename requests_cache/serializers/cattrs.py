@@ -13,11 +13,12 @@ serialization formats.
 """
 from datetime import datetime, timedelta
 from decimal import Decimal
+from json import JSONDecodeError
 from typing import Callable, Dict, ForwardRef, MutableMapping
 
 from cattr import GenConverter
 from requests.cookies import RequestsCookieJar, cookiejar_from_dict
-from requests.exceptions import JSONDecodeError
+from requests.exceptions import RequestException
 from requests.structures import CaseInsensitiveDict
 
 from ..models import CachedResponse, DecodedContent
@@ -136,7 +137,7 @@ def _decode_content(response: CachedResponse, response_dict: Dict) -> Dict:
         try:
             response_dict['_decoded_content'] = response.json()
             response_dict.pop('_content', None)
-        except JSONDecodeError:
+        except (JSONDecodeError, RequestException):
             pass
 
     # Decode body as text
