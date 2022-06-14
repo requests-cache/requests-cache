@@ -303,7 +303,7 @@ class CacheActions(RichMixin):
 def _log_vary_diff(
     headers_1: MutableMapping[str, str], headers_2: MutableMapping[str, str], vary: List[str]
 ):
-    """Log which specific headers specified by Vary did not match, debug purposes"""
+    """Log which specific headers specified by Vary did not match"""
     if logger.level > DEBUG:
         return
     headers_1 = normalize_headers(headers_1)

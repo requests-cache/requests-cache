@@ -194,15 +194,6 @@ class CacheMixin(MIXIN_BASE):
             cached_response = self.cache.get_response(actions.cache_key)
         actions.update_from_cached_response(cached_response, self.cache.create_key, **kwargs)
 
-        # TODO: Does this fit better here, or in CacheActions?
-        # If response contains Vary, check that the specified request headers match
-        # if cached_response and cached_response.headers.get('Vary'):
-        #     vary = cached_response.headers['Vary']
-        #     new_cache_key = self.cache.create_key(request, match_headers=vary)
-        #     vary_cache_key = self.cache.create_key(cached_response.request, match_headers=vary)
-        #     if new_cache_key != vary_cache_key:
-        #         cached_response = None
-
         # Handle missing and expired responses based on settings and headers
         if actions.error_504:
             response: AnyResponse = get_504_response(request)
@@ -344,8 +335,8 @@ class CachedSession(CacheMixin, OriginalSession):
         allowable_methods: Cache only responses for one of these HTTP methods
         always_revalidate: Revalidate with the server for every request, even if the cached response
             is not expired
-        match_headers: Match request headers when reading from the cache; may be either ``True`` or
-            a list of specific headers to match
+        match_headers: Request headers to match, when `Vary` response header is not available. May
+            be a list of headers, or ``True`` to match all.
         ignored_parameters: Request paramters, headers, and/or JSON body params to exclude from both
             request matching and cached request data
         stale_if_error: Return a stale response if a new request raises an exception. Optionally

@@ -15,7 +15,9 @@ Some of these serializers require additional dependencies, listed in the section
 Similar to {ref}`backends`, you can specify which serializer to use with the `serializer` parameter
 for either {py:class}`.CachedSession` or {py:func}`.install_cache`.
 
-## JSON Serializer
+## Built-in Serializers
+
+### JSON Serializer
 Storing responses as JSON gives you the benefit of making them human-readable and editable, in
 exchange for a minor reduction in read and write speeds.
 
@@ -43,7 +45,7 @@ This will use [ultrajson](https://github.com/ultrajson/ultrajson) if installed, 
 pip install requests-cache[json]
 ```
 
-## YAML Serializer
+### YAML Serializer
 YAML is another option if you need a human-readable/editable format, with the same tradeoffs as JSON.
 
 Usage:
@@ -69,7 +71,7 @@ You can install the extra dependencies for this serializer with:
 pip install requests-cache[yaml]
 ```
 
-## BSON Serializer
+### BSON Serializer
 [BSON](https://www.mongodb.com/json-and-bson) is a serialization format originally created for
 MongoDB, but it can also be used independently. Compared to JSON, it has better performance
 (although still not as fast as `pickle`), and adds support for additional data types. It is not
@@ -99,7 +101,6 @@ human-readable/editable. Other content types will be saved as binary data. To sa
 >>> backend = FileCache(decode_content=False)
 >>> session = CachedSession('http_cache', backend=backend)
 ```
-
 
 ## Serializer Security
 See {ref}`security` for recommended setup steps for more secure cache serialization, particularly
