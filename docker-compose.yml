@@ -29,6 +29,16 @@ services:
     volumes:
       - 'mongodb_data:/data/db'
 
+  postgres:
+    image: postgres
+    container_name: postgres
+    environment:
+      POSTGRES_PASSWORD: hunter2
+    ports:
+      - '5432:5432'
+    volumes:
+      - 'postgres_data:/data/db'
+
   redis:
     container_name: redis
     image: docker.io/bitnami/redis
@@ -41,6 +51,8 @@ services:
 
 volumes:
   mongodb_data:
+    driver: local
+  postgres_data:
     driver: local
   redis_data:
     driver: local
