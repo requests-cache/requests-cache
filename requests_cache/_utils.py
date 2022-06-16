@@ -23,11 +23,15 @@ def decode(value, encoding='utf-8') -> str:
     """Decode a value from bytes, if hasn't already been.
     Note: ``PreparedRequest.body`` is always encoded in utf-8.
     """
+    if not value:
+        return ''
     return value.decode(encoding) if isinstance(value, bytes) else value
 
 
 def encode(value, encoding='utf-8') -> bytes:
     """Encode a value to bytes, if it hasn't already been"""
+    if not value:
+        return b''
     return value if isinstance(value, bytes) else str(value).encode(encoding)
 
 

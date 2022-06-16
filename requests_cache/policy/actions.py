@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta
-from logging import getLogger
-from typing import TYPE_CHECKING, Dict, Optional, Union
+from logging import DEBUG, getLogger
+from typing import TYPE_CHECKING, Dict, List, MutableMapping, Optional, Union
 
 from attr import define, field
 from requests import PreparedRequest, Response
 
 from .._utils import coalesce
+from ..cache_keys import normalize_headers
 from ..models import RichMixin
 from . import (
     DO_NOT_CACHE,
@@ -291,7 +292,22 @@ class CacheActions(RichMixin):
         # Generate a secondary cache key based on Vary for both the cached request and new request
         key_kwargs['match_headers'] = [k.strip() for k in vary.split(',')]
         vary_cache_key = create_key(cached_response.request, **key_kwargs)
-        return create_key(self._request, **key_kwargs) == vary_cache_key
+        headers_match = create_key(self._request, **key_kwargs) == vary_cache_key
+        if not headers_match:
+            _log_vary_diff(
+                self._request.headers, cached_response.request.headers, key_kwargs['match_headers']
+            )
+        return headers_match
+
+
+def _log_vary_diff(
+    headers_1: MutableMapping[str, str], headers_2: MutableMapping[str, str], vary: List[str]
+):
+    """Log which specific headers specified by Vary did not match, debug purposes"""
+    headers_1 = normalize_headers(headers_1)
+    headers_2 = normalize_headers(headers_2)
+    nonmatching = [k for k in vary if headers_1.get(k) != headers_2.get(k)]
+    logger.debug(f'Failed Vary check. Non-matching headers: {", ".join(nonmatching)}')
 
 
 def _log_cache_criteria(operation: str, criteria: Dict):

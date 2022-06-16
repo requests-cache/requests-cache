@@ -28,7 +28,13 @@ from url_normalize import url_normalize
 
 from ._utils import decode, encode
 
-__all__ = ['create_key', 'normalize_request']
+__all__ = [
+    'create_key',
+    'normalize_body',
+    'normalize_headers',
+    'normalize_request',
+    'normalize_url',
+]
 if TYPE_CHECKING:
     from .models import AnyPreparedRequest, AnyRequest, CachedResponse
 
@@ -117,7 +123,7 @@ def normalize_request(
 
 
 def normalize_headers(
-    headers: MutableMapping[str, str], ignored_parameters: ParamList
+    headers: MutableMapping[str, str], ignored_parameters: ParamList = None
 ) -> CaseInsensitiveDict:
     """Sort and filter request headers, and normalize minor variations in multi-value headers"""
     if ignored_parameters:
