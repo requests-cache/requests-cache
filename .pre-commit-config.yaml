@@ -21,6 +21,7 @@ repos:
         additional_dependencies:
           [
             attrs,
+            sqlalchemy,
             types-itsdangerous,
             types-requests,
             types-pyyaml,
