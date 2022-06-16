@@ -44,6 +44,8 @@ boto3                      = {optional=true, version=">=1.15"}
 botocore                   = {optional=true, version=">=1.18"}
 pymongo                    = {optional=true, version=">=3"}
 redis                      = {optional=true, version=">=3"}
+sqlalchemy                 = {optional=true, version=">=1.4"}
+psycopg2-binary            = {optional=true, version=">=2.8"}
 
 # Optional serialization dependencies
 bson                       = {optional=true, version=">=0.5"}
@@ -67,6 +69,7 @@ sphinxext-opengraph        = {optional=true, version=">=0.6"}
 
 [tool.poetry.extras]
 # Package extras for optional backend dependencies
+db       = ["sqlalchemy"]
 dynamodb = ["boto3", "botocore"]
 mongodb  = ["pymongo"]
 redis    = ["redis"]
@@ -77,8 +80,9 @@ json     = ["ujson"]  # Will optionally be used by JSON serializer for improved 
 security = ["itsdangerous"]
 yaml     = ["pyyaml"]
 
-# All optional packages combined, for demo/evaluation purposes
-all      = ["boto3", "botocore", "itsdangerous", "pymongo", "pyyaml", "redis", "ujson"]
+# All optional packages combined, for testing/evaluation purposes
+all      = ["boto3", "botocore", "itsdangerous", "psycopg2-binary", "pymongo", "pyyaml", "redis",
+            "sqlalchemy", "ujson"]
 
 # Documentation
 docs     = ["furo", "linkify-it-py", "myst-parser", "sphinx", "sphinx-autodoc-typehints",

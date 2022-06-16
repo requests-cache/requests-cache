@@ -15,6 +15,11 @@ logger = getLogger(__name__)
 
 # Import all backend classes for which dependencies are installed
 try:
+    from .db import DBCache, DBStorage
+except ImportError as e:
+    DBCache = DBStorage = get_placeholder_class(e)  # type: ignore
+
+try:
     from .dynamodb import DynamoDbCache, DynamoDbDict
 except ImportError as e:
     DynamoDbCache = DynamoDbDict = get_placeholder_class(e)  # type: ignore
@@ -46,6 +51,7 @@ except ImportError as e:
 
 
 BACKEND_CLASSES = {
+    'db': DBCache,
     'dynamodb': DynamoDbCache,
     'filesystem': FileCache,
     'gridfs': GridFSCache,
