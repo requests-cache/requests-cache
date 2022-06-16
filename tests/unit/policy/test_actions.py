@@ -4,6 +4,7 @@ from unittest.mock import patch
 import pytest
 from requests import PreparedRequest, Request
 
+from requests_cache.cache_keys import create_key
 from requests_cache.models import CachedResponse
 from requests_cache.policy.actions import EXPIRE_IMMEDIATELY, CacheActions
 from requests_cache.policy.settings import CacheSettings
@@ -233,6 +234,85 @@ def test_update_from_cached_response__stale_while_revalidate():
     actions = CacheActions.from_request('key', BASIC_REQUEST, settings=settings)
     actions.update_from_cached_response(EXPIRED_RESPONSE)
     assert actions.resend_async is True
+
+
+@pytest.mark.parametrize(
+    'vary, cached_headers, new_headers, expected_match',
+    [
+        ({}, {}, {}, True),
+        ({'Vary': 'Accept'}, {'Accept': 'application/json'}, {'Accept': 'application/json'}, True),
+        ({'Vary': 'Accept'}, {'Accept': 'application/json'}, {}, False),
+        (
+            {'Vary': 'Accept'},
+            {'Accept': 'application/json'},
+            {'Accept': 'application/json', 'Accept-Language': 'en'},
+            True,
+        ),
+        (
+            {'Vary': 'Accept-Encoding'},
+            {'Accept': 'application/json'},
+            {'Accept': 'text/html'},
+            True,
+        ),
+        ({'Vary': 'Accept'}, {'Accept': 'application/json'}, {'Accept': 'text/html'}, False),
+        (
+            {'Vary': 'Accept-Encoding'},
+            {'Accept-Encoding': 'gzip,deflate'},
+            {'Accept-Encoding': 'gzip,deflate'},
+            True,
+        ),
+        # Only basic header normalization is done in create_key() (whitespace, case, order)
+        (
+            {'Vary': 'Accept-Encoding'},
+            {'Accept-Encoding': 'gzip,deflate'},
+            {'Accept-Encoding': 'dEfLaTe,  GZIP, '},
+            True,
+        ),
+        (
+            {'Vary': 'Accept-Encoding'},
+            {'Accept-Encoding': 'gzip,deflate'},
+            {'Accept-Encoding': 'gzip,br'},
+            False,
+        ),
+        (
+            {'Vary': 'Accept, Accept-Encoding'},
+            {'Accept': 'application/json', 'Accept-Encoding': 'gzip,deflate'},
+            {'Accept': 'application/json', 'Accept-Encoding': 'gzip,deflate'},
+            True,
+        ),
+        (
+            {'Vary': 'Accept, Accept-Encoding'},
+            {'Accept': 'application/json', 'Accept-Encoding': 'gzip,deflate'},
+            {'Accept': 'application/json', 'Accept-Encoding': 'br'},
+            False,
+        ),
+        (
+            {'Vary': 'Accept, Accept-Encoding'},
+            {'Accept': 'application/json', 'Accept-Encoding': 'gzip,deflate'},
+            {'Accept': 'text/html', 'Accept-Encoding': 'gzip,deflate'},
+            False,
+        ),
+        (
+            {'Vary': 'Accept, Accept-Encoding'},
+            {'Accept': 'application/json', 'Accept-Encoding': 'gzip,deflate'},
+            {'Accept-Encoding': 'gzip,deflate'},
+            False,
+        ),
+        ({'Vary': '*'}, {}, {}, False),
+        ({'Vary': '*'}, {'Accept': 'application/json'}, {'Accept': 'application/json'}, False),
+    ],
+)
+def test_update_from_cached_response__vary(vary, cached_headers, new_headers, expected_match):
+    cached_response = CachedResponse(
+        headers=vary,
+        request=Request(method='GET', url='https://site.com/img.jpg', headers=cached_headers),
+    )
+    request = Request(method='GET', url='https://site.com/img.jpg', headers=new_headers)
+    actions = CacheActions.from_request('key', request)
+    actions.update_from_cached_response(cached_response, create_key=create_key)
+
+    # If the headers don't match wrt. Vary, expect a new request to be sent (cache miss)
+    assert actions.send_request is not expected_match
 
 
 @pytest.mark.parametrize('max_stale, usable', [(5, False), (15, True)])

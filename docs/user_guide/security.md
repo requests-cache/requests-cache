@@ -66,6 +66,7 @@ Then, if you try to get that cached response again (*with* your key), you will g
 BadSignature: Signature b'iFNmzdUOSw5vqrR9Cb_wfI1EoZ8' does not match
 ```
 
+(default-filter-params)=
 ## Removing Sensitive Info
 The {ref}`ignored_parameters <filter-params>` option can be used to prevent credentials and other
 sensitive info from being saved to the cache. It applies to request parameters, body, and headers.

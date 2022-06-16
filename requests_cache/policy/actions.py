@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta
-from logging import getLogger
-from typing import TYPE_CHECKING, Dict, Optional, Union
+from logging import DEBUG, getLogger
+from typing import TYPE_CHECKING, Dict, List, MutableMapping, Optional, Union
 
 from attr import define, field
 from requests import PreparedRequest, Response
 
 from .._utils import coalesce
+from ..cache_keys import normalize_headers
 from ..models import RichMixin
 from . import (
     DO_NOT_CACHE,
@@ -17,7 +18,7 @@ from . import (
     get_expiration_seconds,
     get_url_expiration,
 )
-from .settings import CacheSettings
+from .settings import CacheSettings, KeyCallback
 
 if TYPE_CHECKING:
     from ..models import CachedResponse
@@ -64,6 +65,7 @@ class CacheActions(RichMixin):
     # Temporary attributes
     _only_if_cached: bool = field(default=False, repr=False)
     _refresh: bool = field(default=False, repr=False)
+    _request: PreparedRequest = field(default=None, repr=False)
     _stale_if_error: Union[bool, ExpirationTime] = field(default=None, repr=False)
     _stale_while_revalidate: Union[bool, ExpirationTime] = field(default=None, repr=False)
     _validation_headers: Dict[str, str] = field(factory=dict, repr=False)
@@ -76,6 +78,10 @@ class CacheActions(RichMixin):
         indicate a user-requested refresh. Typically that's only used in response headers, and
         `max-age=0` would be used by a client to request a refresh. However, this would conflict
         with the `expire_after` option provided in :py:meth:`.CachedSession.request`.
+
+        Args:
+            request: The outgoing request
+            settings: Session-level cache settings
         """
         settings = settings or CacheSettings()
         directives = CacheDirectives.from_headers(request.headers)
@@ -107,15 +113,16 @@ class CacheActions(RichMixin):
 
         actions = cls(
             cache_key=cache_key,
+            directives=directives,
             expire_after=expire_after,
             only_if_cached=only_if_cached,
             refresh=refresh,
+            request=request,
+            settings=settings,
             skip_read=any(read_criteria.values()),
             skip_write=directives.no_store,
             stale_if_error=stale_if_error,
             stale_while_revalidate=stale_while_revalidate,
-            directives=directives,
-            settings=settings,
         )
         return actions
 
@@ -155,11 +162,18 @@ class CacheActions(RichMixin):
 
         return datetime.utcnow() < cached_response.expires + offset
 
-    def update_from_cached_response(self, cached_response: 'CachedResponse'):
+    def update_from_cached_response(
+        self, cached_response: 'CachedResponse', create_key: KeyCallback = None, **key_kwargs
+    ):
         """Determine if we can reuse a cached response, or set headers for a conditional request
         if possible.
 
         Used after fetching a cached response, but before potentially sending a new request.
+
+        Args:
+            cached_response: Cached response to examine
+            create_key: Cache key function, used for validating ``Vary`` headers
+            key_kwargs: Additional keyword arguments for ``create_key``.
         """
         usable_response = self.is_usable(cached_response)
         usable_if_error = self.is_usable(cached_response, error=True)
@@ -169,6 +183,9 @@ class CacheActions(RichMixin):
             self.error_504 = True
         # Send the request for the first time
         elif cached_response is None:
+            self.send_request = True
+        # If response contains Vary and doesn't match, consider it a cache miss
+        elif create_key and not self._validate_vary(cached_response, create_key, **key_kwargs):
             self.send_request = True
         # Resend the request, unless settings permit a stale response
         elif not usable_response and not (self._only_if_cached and usable_if_error):
@@ -262,9 +279,43 @@ class CacheActions(RichMixin):
             self.send_request = True
             self.resend_request = False
 
+    def _validate_vary(
+        self, cached_response: 'CachedResponse', create_key: KeyCallback, **key_kwargs
+    ) -> bool:
+        """If the cached response contains Vary, check that the specified request headers match"""
+        vary = cached_response.headers.get('Vary')
+        if not vary:
+            return True
+        elif vary == '*':
+            return False
+
+        # Generate a secondary cache key based on Vary for both the cached request and new request
+        key_kwargs['match_headers'] = [k.strip() for k in vary.split(',')]
+        vary_cache_key = create_key(cached_response.request, **key_kwargs)
+        headers_match = create_key(self._request, **key_kwargs) == vary_cache_key
+        if not headers_match:
+            _log_vary_diff(
+                self._request.headers, cached_response.request.headers, key_kwargs['match_headers']
+            )
+        return headers_match
+
+
+def _log_vary_diff(
+    headers_1: MutableMapping[str, str], headers_2: MutableMapping[str, str], vary: List[str]
+):
+    """Log which specific headers specified by Vary did not match"""
+    if logger.level > DEBUG:
+        return
+    headers_1 = normalize_headers(headers_1)
+    headers_2 = normalize_headers(headers_2)
+    nonmatching = [k for k in vary if headers_1.get(k) != headers_2.get(k)]
+    logger.debug(f'Failed Vary check. Non-matching headers: {", ".join(nonmatching)}')
+
 
 def _log_cache_criteria(operation: str, criteria: Dict):
     """Log details on any failed checks for cache read or write"""
+    if logger.level > DEBUG:
+        return
     if any(criteria.values()):
         status = ', '.join([k for k, v in criteria.items() if v])
     else:

@@ -9,7 +9,17 @@ from __future__ import annotations
 import json
 from hashlib import blake2b
 from logging import getLogger
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Mapping, Optional, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    MutableMapping,
+    Optional,
+    Union,
+)
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from requests import Request, Session
@@ -18,7 +28,13 @@ from url_normalize import url_normalize
 
 from ._utils import decode, encode
 
-__all__ = ['create_key', 'normalize_request']
+__all__ = [
+    'create_key',
+    'normalize_body',
+    'normalize_headers',
+    'normalize_request',
+    'normalize_url',
+]
 if TYPE_CHECKING:
     from .models import AnyPreparedRequest, AnyRequest, CachedResponse
 
@@ -107,11 +123,15 @@ def normalize_request(
 
 
 def normalize_headers(
-    headers: Mapping[str, str], ignored_parameters: ParamList
+    headers: MutableMapping[str, str], ignored_parameters: ParamList = None
 ) -> CaseInsensitiveDict:
-    """Sort and filter request headers"""
+    """Sort and filter request headers, and normalize minor variations in multi-value headers"""
     if ignored_parameters:
         headers = filter_sort_dict(headers, ignored_parameters)
+    for k, v in headers.items():
+        if ',' in v:
+            values = [v.strip() for v in v.lower().split(',') if v.strip()]
+            headers[k] = ', '.join(sorted(values))
     return CaseInsensitiveDict(headers)
 
 

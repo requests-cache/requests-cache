@@ -9,6 +9,7 @@
 * Add support for `Cache-Control: only-if-cached`
 * Add support for `Cache-Control: stale-if-error`
 * Add support for `Cache-Control: stale-while-error`
+* Add support for `Vary`
 * Revalidate for `Cache-Control: no-cache` request or response header
 * Revalidate for `Cache-Control: max-age=0, must-revalidate` response headers
 * Add an attribute `CachedResponse.revalidated` to indicate if a cached response was revalidated for

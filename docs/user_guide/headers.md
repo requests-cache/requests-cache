@@ -76,3 +76,4 @@ The following headers are currently supported:
 - `Expires`: Used as an absolute expiration datetime
 - `ETag`: Validator used for conditional requests
 - `Last-Modified`: Validator used for conditional requests
+- `Vary`: Used to indicate which request headers to match. See {ref}`matching-headers` for details.

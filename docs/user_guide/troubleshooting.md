@@ -31,8 +31,8 @@ logging.basicConfig(
 )
 ```
 
-If you have other libraries installed with verbose debug logging, you can configure only the loggers
-you want with `logger.setLevel()`:
+If you have other libraries installed that have verbose debug logging, you can configure only the
+loggers you want with `logger.setLevel()`:
 ```python
 import logging
 
@@ -65,17 +65,17 @@ Here are some error messages you may see either in the logs or (more rarely) in 
 
 * **`Unable to deserialize response with key {cache key}`:** This
   usually means that a response was previously cached in a format that isn't compatible with the
-  current version of requests-cache or one of its dependencies. It could also be the result of switching {ref}`serializers`.
+  current version of requests-cache or one of its dependencies.
   * This message is to help with debugging and can generally be ignored. If you prefer, you can
-    either {py:meth}`~.BaseCache.clear` the cache or {py:meth}`~.BaseCache.remove_expired_responses`
-    to get rid of the invalid responses.
+    either {py:meth}`~.BaseCache.remove` the invalid responses or {py:meth}`~.BaseCache.clear` the
+    entire cache.
 * **`Request for URL {url} failed; using cached response`:** This is just a notification that the
-  {ref}`stale_if_error <request-errors>` option is working as intended
+  {ref}`stale_if_error <request-errors>` option is working as intended.
 * **{py:exc}`~requests.RequestException`:** These are general request errors not specific to
   requests-cache. See `requests` documentation on
   [Errors and Exceptions](https://2.python-requests.org/en/master/user/quickstart/#errors-and-exceptions)
   for more details.
-* **{py:exc}`ModuleNotFoundError`**: `No module named 'requests_cache.core'`: This module was deprecated in `v0.6` and removed in `v0.8`. Just import from `requests_cache` instead of `requests_cache.core`.
+* **{py:exc}`ModuleNotFoundError`**: `No module named 'requests_cache.core'`: This module was deprecated in `v0.6` and removed in `v0.8`. Please import from `requests_cache` instead of `requests_cache.core`.
 * **{py:exc}`ImportError`:** Indicates a missing required or optional dependency.
   * If you see this at **import time**, it means that one or more **required** dependencies are not
     installed

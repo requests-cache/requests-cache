@@ -2,21 +2,21 @@
 # {fa}`book` User Guide
 This section covers the main features of requests-cache.
 
-## The Basics
+## Basics
 ```{toctree}
 :maxdepth: 2
 
 user_guide/installation
 user_guide/general
+user_guide/backends
 user_guide/files
 user_guide/troubleshooting
 ```
 
-## Features & Options
+## Advanced Features & Options
 ```{toctree}
 :maxdepth: 2
 
-user_guide/backends
 user_guide/filtering
 user_guide/headers
 user_guide/inspection
