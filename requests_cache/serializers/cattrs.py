@@ -100,10 +100,10 @@ def init_converter(
         converter.register_unstructure_hook(
             timedelta, lambda obj: obj.total_seconds() if obj else None
         )
-        converter.register_structure_hook(timedelta, _to_timedelta)
+        converter.register_structure_hook(timedelta, lambda obj, cls: timedelta(seconds=float(obj)))
 
     # Convert dict-like objects to and from plain dicts
-    converter.register_unstructure_hook(RequestsCookieJar, lambda obj: dict(obj.items()))
+    converter.register_unstructure_hook(RequestsCookieJar, lambda obj: obj.get_dict())
     converter.register_structure_hook(RequestsCookieJar, lambda obj, cls: cookiejar_from_dict(obj))
     converter.register_unstructure_hook(CaseInsensitiveDict, dict)
     converter.register_structure_hook(
@@ -173,8 +173,6 @@ def _to_datetime(obj, cls) -> datetime:
 
 
 def _to_timedelta(obj, cls) -> timedelta:
-    if isinstance(obj, (int, float)):
-        obj = timedelta(seconds=obj)
-    elif isinstance(obj, Decimal):
+    if not isinstance(obj, timedelta):
         obj = timedelta(seconds=float(obj))
     return obj
