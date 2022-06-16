@@ -304,6 +304,8 @@ def _log_vary_diff(
     headers_1: MutableMapping[str, str], headers_2: MutableMapping[str, str], vary: List[str]
 ):
     """Log which specific headers specified by Vary did not match, debug purposes"""
+    if logger.level > DEBUG:
+        return
     headers_1 = normalize_headers(headers_1)
     headers_2 = normalize_headers(headers_2)
     nonmatching = [k for k in vary if headers_1.get(k) != headers_2.get(k)]
@@ -312,6 +314,8 @@ def _log_vary_diff(
 
 def _log_cache_criteria(operation: str, criteria: Dict):
     """Log details on any failed checks for cache read or write"""
+    if logger.level > DEBUG:
+        return
     if any(criteria.values()):
         status = ', '.join([k for k, v in criteria.items() if v])
     else:
