@@ -57,7 +57,6 @@ sphinx-autodoc-typehints   = {optional=true, version="^1.18"}
 sphinx-automodapi          = {optional=true, version=">=0.14"}
 sphinx-copybutton          = {optional=true, version=">=0.5"}
 sphinx-design              = {optional=true, version=">=0.2"}
-sphinx-inline-tabs         = {optional=true, version=">=2022.1.2b11", python=">=3.8"}
 sphinx-notfound-page       = {optional=true, version=">=0.8"}
 sphinxcontrib-apidoc       = {optional=true, version="^0.3"}
 sphinxext-opengraph        = {optional=true, version = ">=0.6"}
@@ -82,8 +81,8 @@ all      = ["boto3", "botocore", "itsdangerous", "pymongo", "pyyaml", "redis", "
 
 # Documentation
 docs     = ["furo", "linkify-it-py", "myst-parser", "sphinx", "sphinx-autodoc-typehints",
-            "sphinx-automodapi", "sphinx-copybutton", "sphinx-design", "sphinx-inline-tabs",
-            "sphinx-notfound-page", "sphinxcontrib-apidoc", "sphinxext-opengraph"]
+            "sphinx-automodapi", "sphinx-copybutton", "sphinx-design", "sphinx-notfound-page",
+            "sphinxcontrib-apidoc", "sphinxext-opengraph"]
 
 [tool.poetry.dev-dependencies]
 # For unit + integration tests

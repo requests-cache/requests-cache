@@ -1,27 +1,29 @@
 # {fas}`download` Installation
 Installation instructions:
 
-:::{tab} Pip
+::::{tab-set}
+:::{tab-item} Pip
 Install the latest stable version from [PyPI](https://pypi.org/project/requests-cache/):
 ```
 pip install requests-cache
 ```
 :::
-:::{tab} Conda
+:::{tab-item} Conda
 Or install from [conda-forge](https://anaconda.org/conda-forge/requests-cache), if you prefer:
 ```
 conda install -c conda-forge requests-cache
 ```
 :::
-:::{tab} Pre-release
+:::{tab-item} Pre-release
 If you would like to use the latest development (pre-release) version:
 ```
 pip install --pre requests-cache
 ```
 :::
-:::{tab} Local development
+:::{tab-item} Local development
 See {ref}`contributing` for setup steps for local development
 :::
+::::
 
 (requirements)=
 ## Requirements

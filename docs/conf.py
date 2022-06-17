@@ -51,7 +51,6 @@ extensions = [
     'sphinx_automodapi.smart_resolver',
     'sphinx_copybutton',
     'sphinx_design',
-    'sphinx_inline_tabs',
     'sphinxcontrib.apidoc',
     'sphinxext.opengraph',
     'myst_parser',

@@ -75,20 +75,24 @@ If you just want to quickly try out all of the available backends for comparison
 [docker-compose](https://docs.docker.com/compose/) config is included for all supported services.
 First, [install docker](https://docs.docker.com/get-docker/) if you haven't already. Then, run:
 
-:::{tab} Bash (Linux/macOS)
+::::{tab-set}
+
+:::{tab-item} Bash (Linux/macOS)
 ```bash
 pip install -U requests-cache[all] docker-compose
 curl https://raw.githubusercontent.com/requests-cache/requests-cache/main/docker-compose.yml -O docker-compose.yml
 docker-compose up -d
 ```
 :::
-:::{tab} Powershell (Windows)
+:::{tab-item} Powershell (Windows)
 ```ps1
 pip install -U requests-cache[all] docker-compose
 Invoke-WebRequest -Uri https://raw.githubusercontent.com/requests-cache/requests-cache/main/docker-compose.yml -Outfile docker-compose.yml
 docker-compose up -d
 ```
 :::
+
+::::
 
 (exporting)=
 ## Exporting To A Different Backend

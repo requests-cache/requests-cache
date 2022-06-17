@@ -38,21 +38,25 @@ If you don't know exactly where you want to put your cache files, your system's 
 or **cache directory** is a good choice. Some options are available as shortcuts for these locations.
 
 Use the default temp directory with the `use_temp` option:
-:::{tab} Linux
+::::{tab-set}
+:::{tab-item} Linux
+:sync: linux
 ```python
 >>> session = CachedSession('http_cache', backend='sqlite', use_temp=True)
 >>> print(session.cache.db_path)
 '/tmp/http_cache.sqlite'
 ```
 :::
-:::{tab} macOS
+:::{tab-item} macOS
+:sync: macos
 ```python
 >>> session = CachedSession('http_cache', backend='sqlite', use_temp=True)
 >>> print(session.cache.db_path)
 '/var/folders/xx/http_cache.sqlite'
 ```
 :::
-:::{tab} Windows
+:::{tab-item} Windows
+:sync: windows
 ```python
 >>> session = CachedSession('http_cache', backend='sqlite', use_temp=True)
 >>> print(session.cache.db_path)
@@ -60,28 +64,35 @@ Use the default temp directory with the `use_temp` option:
 ```
 :::
 
+::::
+
 Or use the default cache directory with the `use_cache_dir` option:
-:::{tab} Linux
+::::{tab-set}
+:::{tab-item} Linux
+:sync: linux
 ```python
 >>> session = CachedSession('http_cache', backend='filesystem', use_cache_dir=True)
 >>> print(session.cache.cache_dir)
 '/home/user/.cache/http_cache/'
 ```
 :::
-:::{tab} macOS
+:::{tab-item} macOS
+:sync: macos
 ```python
 >>> session = CachedSession('http_cache', backend='filesystem', use_cache_dir=True)
 >>> print(session.cache.cache_dir)
 '/Users/user/Library/Caches/http_cache/'
 ```
 :::
-:::{tab} Windows
+:::{tab-item} Windows
+:sync: windows
 ```python
 >>> session = CachedSession('http_cache', backend='filesystem', use_cache_dir=True)
 >>> print(session.cache.cache_dir)
 'C:\\Users\\user\\AppData\\Local\\http_cache\\'
 ```
 :::
+::::
 
 ```{note}
 If the cache name is an absolute path, the `use_temp` and `use_cache_dir` options will be ignored.

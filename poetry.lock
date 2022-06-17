@@ -81,14 +81,14 @@ lxml = ["lxml"]
 
 [[package]]
 name = "boto3"
-version = "1.24.11"
+version = "1.24.12"
 description = "The AWS SDK for Python"
 category = "main"
 optional = true
 python-versions = ">= 3.7"
 
 [package.dependencies]
-botocore = ">=1.27.11,<1.28.0"
+botocore = ">=1.27.12,<1.28.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.6.0,<0.7.0"
 
@@ -97,7 +97,7 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.27.11"
+version = "1.27.12"
 description = "Low-level, data-driven core of boto 3."
 category = "main"
 optional = true
@@ -1024,21 +1024,6 @@ theme_rtd = ["sphinx-rtd-theme (>=1.0,<2.0)"]
 theme_sbt = ["sphinx-book-theme (>=0.3.0,<0.4.0)"]
 
 [[package]]
-name = "sphinx-inline-tabs"
-version = "2022.1.2b11"
-description = "Add inline tabbed content to your Sphinx documentation."
-category = "main"
-optional = true
-python-versions = ">=3.8"
-
-[package.dependencies]
-sphinx = ">=3"
-
-[package.extras]
-doc = ["myst-parser", "furo"]
-test = ["pytest", "pytest-cov", "pytest-xdist"]
-
-[[package]]
 name = "sphinx-notfound-page"
 version = "0.8"
 description = "Sphinx extension to build a 404 page with absolute URLs"
@@ -1273,7 +1258,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [extras]
 all = ["boto3", "botocore", "itsdangerous", "pymongo", "pyyaml", "redis", "ujson"]
 bson = ["bson"]
-docs = ["furo", "linkify-it-py", "myst-parser", "sphinx", "sphinx-autodoc-typehints", "sphinx-automodapi", "sphinx-copybutton", "sphinx-design", "sphinx-inline-tabs", "sphinx-notfound-page", "sphinxcontrib-apidoc", "sphinxext-opengraph"]
+docs = ["furo", "linkify-it-py", "myst-parser", "sphinx", "sphinx-autodoc-typehints", "sphinx-automodapi", "sphinx-copybutton", "sphinx-design", "sphinx-notfound-page", "sphinxcontrib-apidoc", "sphinxext-opengraph"]
 dynamodb = ["boto3", "botocore"]
 json = ["ujson"]
 mongodb = ["pymongo"]
@@ -1284,7 +1269,7 @@ yaml = ["pyyaml"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "9f1a385d623df09563dec18464c5c1509f0b7dad719aa30947de59c804ece065"
+content-hash = "c9ef76333cfb9fb1e8d44ece7049a674d47b17efc84c1f8173b21d1cb54ab4ad"
 
 [metadata.files]
 alabaster = [
@@ -1316,12 +1301,12 @@ beautifulsoup4 = [
     {file = "beautifulsoup4-4.11.1.tar.gz", hash = "sha256:ad9aa55b65ef2808eb405f46cf74df7fcb7044d5cbc26487f96eb2ef2e436693"},
 ]
 boto3 = [
-    {file = "boto3-1.24.11-py3-none-any.whl", hash = "sha256:19d6fb2b5e51f10e7b5d551a111cf9c64b9a5144b2838493ac41be0706e590cf"},
-    {file = "boto3-1.24.11.tar.gz", hash = "sha256:79fc9699006af26de4413105e458af5f1626ba32d1f00fa0b3e8b94c2b16e2dc"},
+    {file = "boto3-1.24.12-py3-none-any.whl", hash = "sha256:0b9757575b8003928defc5fb6e816936fa1bdb1384d0edec6622bb9fb104e96c"},
+    {file = "boto3-1.24.12.tar.gz", hash = "sha256:f39b91a4c3614db8e44912ee82426fb4b16d5df2cd66883f3aff6f76d7f5d310"},
 ]
 botocore = [
-    {file = "botocore-1.27.11-py3-none-any.whl", hash = "sha256:8efab7f85156705cbe532aeb17b065b67ba32addc3270d9000964b98c07bb20a"},
-    {file = "botocore-1.27.11.tar.gz", hash = "sha256:92f099a36df832d7f151682e1efa8e1d47d23a5cedde8692adcaa6420bcb18aa"},
+    {file = "botocore-1.27.12-py3-none-any.whl", hash = "sha256:b8ac156e55267da6e728ea0b806bfcd97adf882801cffe7849c4b88ce4780326"},
+    {file = "botocore-1.27.12.tar.gz", hash = "sha256:17d3ec9f684d21e06b64d9cb224934557bcd95031e2ecb551bf16271e8722fec"},
 ]
 bson = [
     {file = "bson-0.5.10.tar.gz", hash = "sha256:d6511b2ab051139a9123c184de1a04227262173ad593429d21e443d6462d6590"},
@@ -1822,10 +1807,6 @@ sphinx-copybutton = [
 sphinx-design = [
     {file = "sphinx_design-0.2.0-py3-none-any.whl", hash = "sha256:5c7117cb4b566bd769dcb4314a64d72257ae89724b4917a8f2ef55459e1d861b"},
     {file = "sphinx_design-0.2.0.tar.gz", hash = "sha256:b148a5258061a46ee826d57ea0729260f29b4e9131d2a681545e0d4f3c0f19ee"},
-]
-sphinx-inline-tabs = [
-    {file = "sphinx_inline_tabs-2022.1.2b11-py3-none-any.whl", hash = "sha256:bb4e807769ef52301a186d0678da719120b978a1af4fd62a1e9453684e962dbc"},
-    {file = "sphinx_inline_tabs-2022.1.2b11.tar.gz", hash = "sha256:afb9142772ec05ccb07f05d8181b518188fc55631b26ee803c694e812b3fdd73"},
 ]
 sphinx-notfound-page = [
     {file = "sphinx-notfound-page-0.8.tar.gz", hash = "sha256:39bf5b99e1fbf6164631ecac2b58038f08e0ab9278c563076aadd1cf04b6bb7a"},
