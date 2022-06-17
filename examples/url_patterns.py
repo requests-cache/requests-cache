@@ -16,12 +16,12 @@ urls_expire_after = {
 urls = [
     'https://httpbin.org/get',               # Will expire in an hour
     'https://httpbin.org/image/jpeg',        # Will expire in a week
-    'https://www.fillmurray.com/460/300',     # Will never expire
+    'https://www.fillmurray.com/460/300',    # Will never expire
     'https://via.placeholder.com/350x150',   # Will not be cached
 ]
 
 
-def main():
+def send_requests():
     session = CachedSession(
         cache_name='example_cache',
         expire_after=default_expire_after,
@@ -39,11 +39,15 @@ def _expires_str(response):
         return response.expires.isoformat()
 
 
-if __name__ == "__main__":
-    original_responses = main()
-    cached_responses = main()
+def main():
+    send_requests()
+    cached_responses = send_requests()
     for response in cached_responses:
         print(
             f'{response.url:40} From cache: {response.from_cache:}'
             f'\tExpires: {_expires_str(response)}'
         )
+
+
+if __name__ == '__main__':
+    main()

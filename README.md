@@ -112,7 +112,7 @@ session = CachedSession(
 To find out more about what you can do with requests-cache, see:
 
 * [User Guide](https://requests-cache.readthedocs.io/en/stable/user_guide.html)
-* [API Reference](https://requests-cache.readthedocs.io/en/stable/reference.html)
 * [Examples](https://requests-cache.readthedocs.io/en/stable/examples.html)
+* [API Reference](https://requests-cache.readthedocs.io/en/stable/reference.html)
 * [Project Info](https://requests-cache.readthedocs.io/en/stable/project_info.html)
 <!-- END-RTD-IGNORE -->

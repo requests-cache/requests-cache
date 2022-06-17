@@ -10,7 +10,7 @@ with a regular {py:class}`requests.Session` object, or wrapper functions like
 {py:func}`requests.get`, etc.
 ```
 
-(http-methods)=
+(http-method-filtering)=
 ## Filter by HTTP Methods
 To cache additional HTTP methods, specify them with `allowable_methods`:
 ```python
@@ -29,7 +29,7 @@ To cache additional status codes, specify them with `allowable_codes`
 >>> session.get('https://httpbin.org/teapot')
 ```
 
-(selective-caching)=
+(url-filtering)=
 ## Filter by URLs
 You can use {ref}`URL patterns <url-patterns>` to define an allowlist for selective caching, by
 using a expiration value of `requests_cache.DO_NOT_CACHE` for non-matching request URLs:

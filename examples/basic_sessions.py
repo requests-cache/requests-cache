@@ -29,7 +29,7 @@ def main():
     print('\n'.join(session.cache.urls()))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     t = time.time()
     main()
     print('Elapsed: %.3f seconds' % (time.time() - t))

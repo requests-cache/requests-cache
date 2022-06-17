@@ -30,6 +30,7 @@ True
 Also see {ref}`stale-while-revalidate` for a variation of this behavior.
 ```
 
+(cache-control)=
 ## Cache-Control
 `Cache-Control` **request** headers will always be used if present. This is mainly useful if you are
 adding requests-cache to an existing application or library that already sends requests with cache

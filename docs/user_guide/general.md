@@ -14,7 +14,7 @@ Basic usage looks like this:
 >>> session.get('https://httpbin.org/get')
 ```
 
-Any {py:class}`requests.Session` method can be used (but see {ref}`http-methods` section for
+Any {py:class}`requests.Session` method can be used (but see {ref}`http-method-filtering` section for
 options):
 ```python
 >>> session.request('GET', 'https://httpbin.org/get')
