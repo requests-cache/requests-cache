@@ -1,5 +1,5 @@
 (filtering)=
-# {fa}`filter` Cache Filtering
+# {fas}`filter` Cache Filtering
 In many cases you will want to choose what you want to cache instead of just caching everything. By
 default, all **read-only** (`GET` and `HEAD`) **requests with a 200 response code** are cached. A
 few options are available to modify this behavior.

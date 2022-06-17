@@ -1,5 +1,5 @@
 (changelog)=
-# {fa}`history` History
+# {fas}`history` History
 ```{include} ../../HISTORY.md
 :start-line: 1
 ```

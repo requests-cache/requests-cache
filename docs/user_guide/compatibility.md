@@ -1,5 +1,5 @@
 (compatibility)=
-# {fa}`puzzle-piece` Compatibility with other libraries
+# {fas}`puzzle-piece` Compatibility with other libraries
 This library works by patching and/or extending {py:class}`requests.Session`. Many other libraries
 out there do the same thing, making it potentially difficult to combine them.
 

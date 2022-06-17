@@ -1,5 +1,5 @@
 (general)=
-# {fa}`play-circle` General Usage
+# {fas}`play-circle` General Usage
 There are two main ways of using requests-cache:
 - **Sessions:** (recommended) Use {py:class}`.CachedSession` to send your requests
 - **Patching:** Globally patch `requests` using {py:func}`.install_cache()`

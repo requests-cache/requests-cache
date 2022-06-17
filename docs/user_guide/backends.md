@@ -1,5 +1,5 @@
 (backends)=
-# {fa}`database` Backends
+# {fas}`database` Backends
 This page contains general information about the cache backends supported by requests-cache.
 
 The default backend is SQLite, since it requires no extra dependencies or configuration, and has

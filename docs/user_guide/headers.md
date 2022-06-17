@@ -1,5 +1,5 @@
 (headers)=
-# {fa}`file-code` Cache Headers
+# {fas}`file-code` Cache Headers
 Requests-cache supports most common HTTP caching headers, including
 [ETags](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag),
 [Cache-Control](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control),

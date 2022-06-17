@@ -1,5 +1,5 @@
 (files)=
-# {fa}`folder-open` Cache Files
+# {fas}`folder-open` Cache Files
 ```{note}
 This section only applies to the {py:mod}`SQLite <requests_cache.backends.sqlite>` and
 {py:mod}`Filesystem <requests_cache.backends.filesystem>` backends.

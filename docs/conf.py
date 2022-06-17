@@ -123,8 +123,7 @@ html_js_files = ['collapsible_container.js']
 html_css_files = [
     'collapsible_container.css',
     'table.css',
-    'https://use.fontawesome.com/releases/v5.15.3/css/all.css',
-    'https://use.fontawesome.com/releases/v5.15.3/css/v4-shims.css',
+    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css',
 ]
 html_show_copyright = False
 html_show_sphinx = False

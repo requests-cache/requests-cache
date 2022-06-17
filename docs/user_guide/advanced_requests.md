@@ -1,4 +1,4 @@
-# {fa}`info-circle` Advanced Requests
+# {fas}`info-circle` Advanced Requests
 Following are some tips on using requests-cache with some of the more
 [advanced features](https://docs.python-requests.org/en/latest/user/advanced/) of the requests
 library.

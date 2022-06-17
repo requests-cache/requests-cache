@@ -1,5 +1,5 @@
 (expiration)=
-# {fa}`clock` Expiration
+# {fas}`clock` Expiration
 By default, cached responses will be stored indefinitely. There are a number of options for
 specifying how long to store responses, either with a single expiration value, glob patterns,
 or {ref}`cache headers <headers>`.
