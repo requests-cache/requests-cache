@@ -38,7 +38,7 @@ def main():
     assert not response.from_cache
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     t = time.perf_counter()
     main()
     print('Elapsed: %.3f seconds' % (time.perf_counter() - t))
