@@ -74,6 +74,19 @@ The following scripts can also be found in the
 ```
 :::
 
+### PyGithub
+```{include} ../examples/pygithub.py
+:start-line: 2
+:end-line: 25
+```
+
+:::{admonition} Example: [pygithub.py](https://github.com/requests-cache/requests-cache/blob/main/examples/pygithub.py)
+:class: toggle
+```{literalinclude} ../examples/pygithub.py
+:lines: 27-
+```
+:::
+
 ### Multi-threaded requests
 ```{include} ../examples/threads.py
 :start-line: 2
