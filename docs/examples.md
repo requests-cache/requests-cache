@@ -1,5 +1,5 @@
 (examples)=
-# {fa}`laptop-code,style=fas` Examples
+# {fas}`laptop-code` Examples
 This section contains some complete examples that demonstrate the main features of requests-cache.
 
 ## Articles
@@ -28,8 +28,12 @@ The following scripts can also be found in the
 :end-line: 4
 ```
 
-:::{admonition} Example: [basic_sessions.py](https://github.com/requests-cache/requests-cache/blob/main/examples/basic_sessions.py)
-:class: toggle
+:::{dropdown} Example
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
+[basic_sessions.py](https://github.com/requests-cache/requests-cache/blob/main/examples/basic_sessions.py)
 ```{literalinclude} ../examples/basic_sessions.py
 :lines: 6-
 ```
@@ -41,8 +45,12 @@ The following scripts can also be found in the
 :end-line: 4
 ```
 
-:::{admonition} Example: [basic_patching.py](https://github.com/requests-cache/requests-cache/blob/main/examples/basic_patching.py)
-:class: toggle
+:::{dropdown} Example
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
+[basic_patching.py](https://github.com/requests-cache/requests-cache/blob/main/examples/basic_patching.py)
 ```{literalinclude} ../examples/basic_patching.py
 :lines: 6-
 ```
@@ -54,8 +62,12 @@ The following scripts can also be found in the
 :end-line: 3
 ```
 
-:::{admonition} Example: [expiration.py](https://github.com/requests-cache/requests-cache/blob/main/examples/expiration.py)
-:class: toggle
+:::{dropdown} Example
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
+[expiration.py](https://github.com/requests-cache/requests-cache/blob/main/examples/expiration.py)
 ```{literalinclude} ../examples/expiration.py
 :lines: 5-
 ```
@@ -67,8 +79,12 @@ The following scripts can also be found in the
 :end-line: 4
 ```
 
-:::{admonition} Example: [url_patterns.py](https://github.com/requests-cache/requests-cache/blob/main/examples/url_patterns.py)
-:class: toggle
+:::{dropdown} Example
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
+[url_patterns.py](https://github.com/requests-cache/requests-cache/blob/main/examples/url_patterns.py)
 ```{literalinclude} ../examples/url_patterns.py
 :lines: 6-
 ```
@@ -80,8 +96,12 @@ The following scripts can also be found in the
 :end-line: 25
 ```
 
-:::{admonition} Example: [pygithub.py](https://github.com/requests-cache/requests-cache/blob/main/examples/pygithub.py)
-:class: toggle
+:::{dropdown} Example
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
+[pygithub.py](https://github.com/requests-cache/requests-cache/blob/main/examples/pygithub.py)
 ```{literalinclude} ../examples/pygithub.py
 :lines: 27-
 ```
@@ -93,8 +113,12 @@ The following scripts can also be found in the
 :end-line: 4
 ```
 
-:::{admonition} Example: [threads.py](https://github.com/requests-cache/requests-cache/blob/main/examples/threads.py)
-:class: toggle
+:::{dropdown} Example
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
+[threads.py](https://github.com/requests-cache/requests-cache/blob/main/examples/threads.py)
 ```{literalinclude} ../examples/threads.py
 :lines: 6-
 ```
@@ -106,8 +130,12 @@ The following scripts can also be found in the
 :end-line: 3
 ```
 
-:::{admonition} Example: [log_requests.py](https://github.com/requests-cache/requests-cache/blob/main/examples/log_requests.py)
-:class: toggle
+:::{dropdown} Example
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
+[log_requests.py](https://github.com/requests-cache/requests-cache/blob/main/examples/log_requests.py)
 ```{literalinclude} ../examples/log_requests.py
 :lines: 5-
 ```
@@ -119,8 +147,12 @@ The following scripts can also be found in the
 :end-line: 8
 ```
 
-:::{admonition} Example: [external_config.py](https://github.com/requests-cache/requests-cache/blob/main/examples/external_config.py)
-:class: toggle
+:::{dropdown} Example
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
+[external_config.py](https://github.com/requests-cache/requests-cache/blob/main/examples/external_config.py)
 ```{literalinclude} ../examples/external_config.py
 :lines: 10-
 ```
@@ -132,8 +164,12 @@ The following scripts can also be found in the
 :end-line: 8
 ```
 
-:::{admonition} Example: [benchmark.py](https://github.com/requests-cache/requests-cache/blob/main/examples/benchmark.py)
-:class: toggle
+:::{dropdown} Example
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
+[benchmark.py](https://github.com/requests-cache/requests-cache/blob/main/examples/benchmark.py)
 ```{literalinclude} ../examples/benchmark.py
 :lines: 10-
 ```
@@ -145,8 +181,12 @@ The following scripts can also be found in the
 :end-line: 4
 ```
 
-:::{admonition} Example: [convert_cache.py](https://github.com/requests-cache/requests-cache/blob/main/examples/convert_cache.py)
-:class: toggle
+:::{dropdown} Example
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
+[convert_cache.py](https://github.com/requests-cache/requests-cache/blob/main/examples/convert_cache.py)
 ```{literalinclude} ../examples/convert_cache.py
 :lines: 6-
 ```
@@ -159,8 +199,12 @@ The following scripts can also be found in the
 :end-line: 15
 ```
 
-:::{admonition} Example: [custom_request_matcher.py](https://github.com/requests-cache/requests-cache/blob/main/examples/custom_request_matcher.py)
-:class: toggle
+:::{dropdown} Example
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
+[custom_request_matcher.py](https://github.com/requests-cache/requests-cache/blob/main/examples/custom_request_matcher.py)
 ```{literalinclude} ../examples/custom_request_matcher.py
 :lines: 17-
 ```
@@ -173,8 +217,12 @@ The following scripts can also be found in the
 :end-line: 4
 ```
 
-:::{admonition} Example: [time_machine_backtesting.py](https://github.com/requests-cache/requests-cache/blob/main/examples/time_machine_backtesting.py)
-:class: toggle
+:::{dropdown} Example
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
+[time_machine_backtesting.py](https://github.com/requests-cache/requests-cache/blob/main/examples/time_machine_backtesting.py)
 ```{literalinclude} ../examples/time_machine_backtesting.py
 :lines: 6-
 ```
@@ -187,8 +235,12 @@ The following scripts can also be found in the
 :end-line: 5
 ```
 
-:::{admonition} Example: [vcr.py](https://github.com/requests-cache/requests-cache/blob/main/examples/vcr.py)
-:class: toggle
+:::{dropdown} Example
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
+[vcr.py](https://github.com/requests-cache/requests-cache/blob/main/examples/vcr.py)
 ```{literalinclude} ../examples/vcr.py
 :lines: 7-
 ```

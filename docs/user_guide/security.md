@@ -1,5 +1,5 @@
 (security)=
-# {fa}`lock` Security
+# {fas}`lock` Security
 
 ## Pickle Vulnerabilities
 :::{warning}

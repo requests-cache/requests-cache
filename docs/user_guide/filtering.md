@@ -1,5 +1,5 @@
 (filtering)=
-# {fa}`filter` Cache Filtering
+# {fas}`filter` Cache Filtering
 In many cases you will want to choose what you want to cache instead of just caching everything. By
 default, all **read-only** (`GET` and `HEAD`) **requests with a 200 response code** are cached. A
 few options are available to modify this behavior.
@@ -58,8 +58,6 @@ function via the `filter_fn` param. This can by any function that takes a
 should be cached. It will be applied to both new responses (on write) and previously cached
 responses (on read):
 
-:::{admonition} Example code
-:class: toggle
 ```python
 >>> from sys import getsizeof
 >>> from requests_cache import CachedSession
@@ -70,7 +68,6 @@ responses (on read):
 
 >>> session = CachedSession(filter_fn=filter_by_size)
 ```
-:::
 
 ```{note}
 `filter_fn()` will be used **in addition to** other filtering options.

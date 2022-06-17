@@ -50,9 +50,9 @@ extensions = [
     'sphinx_automodapi.automodapi',
     'sphinx_automodapi.smart_resolver',
     'sphinx_copybutton',
-    'sphinx_inline_tabs',
-    'sphinx_panels',
+    'sphinx_design',
     'sphinxcontrib.apidoc',
+    'sphinxext.opengraph',
     'myst_parser',
     'notfound.extension',
 ]
@@ -118,12 +118,9 @@ apidoc_toc_file = False
 
 # HTML general settings
 html_favicon = join('_static', 'favicon.ico')
-html_js_files = ['collapsible_container.js']
 html_css_files = [
-    'collapsible_container.css',
     'table.css',
-    'https://use.fontawesome.com/releases/v5.15.3/css/all.css',
-    'https://use.fontawesome.com/releases/v5.15.3/css/v4-shims.css',
+    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css',
 ]
 html_show_copyright = False
 html_show_sphinx = False

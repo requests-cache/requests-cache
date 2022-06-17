@@ -1,6 +1,6 @@
 <!-- TODO: This could use some more details and examples -->
 (inspection)=
-# {fa}`search` Cache Inspection
+# {fas}`search` Cache Inspection
 Here are some ways to get additional information out of the cache session, backend, and responses:
 
 ## Response Details
@@ -13,9 +13,11 @@ The following attributes are available on responses:
   {ref}`expiration` for details)
 - `is_expired`: indicates if the cached response is expired (if, for example, an old response was returned due to a request error)
 
-Examples:
-:::{admonition} Example code
-:class: toggle
+:::{dropdown} Examples
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
 ```python
 >>> from requests_cache import CachedSession
 >>> session = CachedSession(expire_after=timedelta(days=1))

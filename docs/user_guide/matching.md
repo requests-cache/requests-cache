@@ -1,5 +1,5 @@
 (matching)=
-# {fa}`equals,style=fas` Request Matching
+# {fas}`equals` Request Matching
 Requests are matched according to the request method, URL, parameters and body. All of these values
 are normalized to account for any variations that do not modify response content.
 

@@ -1,4 +1,4 @@
-# {fa}`users` Contributors
+# {fas}`users` Contributors
 ```{include} ../../CONTRIBUTORS.md
 :start-line: 1
 ```

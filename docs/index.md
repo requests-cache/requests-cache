@@ -3,8 +3,11 @@ Pre-release warning to reduce confusion on what '/latest' means;
 TODO: add script to make this conditional
 -->
 <!--
-  ```{admonition} Note
-  :class: warning
+  :::{dropdown} Note
+  :animate: fade-in-slide-down
+  :color: primary
+  :icon: alert
+
   You are viewing the pre-release documentation, which may describe features that are still in development.
   Documentation for the latest stable release can be found at [requests-cache.readthedocs.io](https://requests-cache.readthedocs.io)
   ```
