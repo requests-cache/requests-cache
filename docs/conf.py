@@ -50,9 +50,10 @@ extensions = [
     'sphinx_automodapi.automodapi',
     'sphinx_automodapi.smart_resolver',
     'sphinx_copybutton',
+    'sphinx_design',
     'sphinx_inline_tabs',
-    'sphinx_panels',
     'sphinxcontrib.apidoc',
+    'sphinxext.opengraph',
     'myst_parser',
     'notfound.extension',
 ]

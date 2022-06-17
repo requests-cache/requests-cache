@@ -49,17 +49,18 @@ ujson                      = {optional=true, version=">=4.0"}
 
 # Dependencies for building documentation;
 # defined here because readthedocs doesn't (yet?) support poetry.dev-dependencies
-furo                       = {optional=true, version="^2022.4"}
+furo                       = {optional=true, version="^2022.6"}
 linkify-it-py              = {optional=true, version="^2.0"}
 myst-parser                = {optional=true, version=">=0.17"}
-sphinx                     = {optional=true, version="^4.5.0"}
+sphinx                     = {optional=true, version="^5.0.2"}
 sphinx-autodoc-typehints   = {optional=true, version="^1.18"}
 sphinx-automodapi          = {optional=true, version=">=0.14"}
 sphinx-copybutton          = {optional=true, version=">=0.5"}
+sphinx-design              = {optional=true, version=">=0.2"}
 sphinx-inline-tabs         = {optional=true, version=">=2022.1.2b11", python=">=3.8"}
 sphinx-notfound-page       = {optional=true, version=">=0.8"}
-sphinx-panels              = {optional=true, version="^0.6"}
 sphinxcontrib-apidoc       = {optional=true, version="^0.3"}
+sphinxext-opengraph        = {optional=true, version = ">=0.6"}
 
 # Temporary fix until cattrs 22.2.0 is released
 exceptiongroup = {version = "^1.0.0-rc.3", python = "^3.10.0"}
@@ -81,8 +82,8 @@ all      = ["boto3", "botocore", "itsdangerous", "pymongo", "pyyaml", "redis", "
 
 # Documentation
 docs     = ["furo", "linkify-it-py", "myst-parser", "sphinx", "sphinx-autodoc-typehints",
-            "sphinx-automodapi", "sphinx-copybutton", "sphinx-inline-tabs", "sphinx-panels",
-            "sphinx-notfound-page", "sphinxcontrib-apidoc"]
+            "sphinx-automodapi", "sphinx-copybutton", "sphinx-design", "sphinx-inline-tabs",
+            "sphinx-notfound-page", "sphinxcontrib-apidoc", "sphinxext-opengraph"]
 
 [tool.poetry.dev-dependencies]
 # For unit + integration tests
