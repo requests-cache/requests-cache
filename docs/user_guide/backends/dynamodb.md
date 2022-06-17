@@ -42,15 +42,21 @@ documents. Response data can then be easily viewed via the
 [AWS Console](https://aws.amazon.com/console/).
 
 Here is an example of responses listed under **DynamoDB > Tables > Explore Items:**
-:::{admonition} Screenshot
-:class: toggle
+:::{dropdown} Screenshot
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-media
+
 ```{image} ../../_static/dynamodb_items.png
 ```
 :::
 
 And here is an example response:
-:::{admonition} Screenshot
-:class: toggle
+:::{dropdown} Screenshot
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-media
+
 ```{image} ../../_static/dynamodb_response.png
 ```
 :::
@@ -96,8 +102,12 @@ Here are the details you will need:
   - Range key (aka sort key): `key`
 
 ### Example CloudFormation Template
-:::{admonition} Example: [cloudformation.yml](https://github.com/requests-cache/requests-cache/blob/main/examples/cloudformation.yml)
-:class: toggle
+:::{dropdown} Example
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
+[cloudformation.yml](https://github.com/requests-cache/requests-cache/blob/main/examples/cloudformation.yml)
 ```{literalinclude} ../../../examples/cloudformation.yml
 :language: yaml
 ```

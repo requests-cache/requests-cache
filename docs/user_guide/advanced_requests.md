@@ -8,8 +8,11 @@ Requests has an [event hook](https://requests.readthedocs.io/en/master/user/adva
 system that can be used to add custom behavior into different parts of the request process.
 It can be used, for example, for request throttling:
 
-:::{admonition} Example code
-:class: toggle
+:::{dropdown} Example
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
 ```python
 >>> import time
 >>> import requests
@@ -38,8 +41,11 @@ can use the same code to iterate over both cached and non-cached requests. Cache
 will have already been read (i.e., consumed), but will be available for re-reading so it behaves like
 the original streamed response:
 
-:::{admonition} Example code
-:class: toggle
+:::{dropdown} Example
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
 ```python
 >>> from requests_cache import CachedSession
 

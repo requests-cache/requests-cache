@@ -117,8 +117,11 @@ Or, using backend classes directly:
 ## Custom Backends
 If the built-in backends don't suit your needs, you can create your own by making subclasses of {py:class}`.BaseCache` and {py:class}`.BaseStorage`:
 
-:::{admonition} Example code
-:class: toggle
+:::{dropdown} Example
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
 ```python
 >>> from requests_cache import CachedSession
 >>> from requests_cache.backends import BaseCache, BaseStorage

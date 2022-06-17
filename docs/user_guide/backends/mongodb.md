@@ -41,8 +41,10 @@ Response data can be easily viewed via the
 Here is an example response viewed in
 [MongoDB for VSCode](https://code.visualstudio.com/docs/azure/mongodb):
 
-:::{admonition} Screenshot
-:class: toggle
+:::{dropdown} Screenshot
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-media
 ```{image} ../../_static/mongodb_vscode.png
 ```
 :::

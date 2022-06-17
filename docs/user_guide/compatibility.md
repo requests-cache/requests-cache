@@ -117,8 +117,11 @@ For example, if you are using {py:func}`.install_cache` in your application and 
 requests-mock [pytest fixture](https://requests-mock.readthedocs.io/en/latest/pytest.html) in your
 tests, you could wrap it in another fixture that uses {py:func}`.uninstall_cache` or
 {py:func}`.disabled`:
-:::{admonition} Example: test_requests_mock_disable_cache.py
-:class: toggle
+:::{dropdown} Example
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
 ```{literalinclude} ../../tests/compat/test_requests_mock_disable_cache.py
 ```
 :::
@@ -141,8 +144,12 @@ Or if you use a `CachedSession` object, you could replace it with a regular `Ses
 If you want both caching and mocking features at the same time, you can attach requests-mock's
 [adapter](https://requests-mock.readthedocs.io/en/latest/adapter.html) to a `CachedSession`:
 
-:::{admonition} Example: `test_requests_mock_combine_cache.py`
-:class: toggle
+:::{dropdown} Example
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
+`test_requests_mock_combine_cache.py`
 ```{literalinclude} ../../tests/compat/test_requests_mock_combine_cache.py
 ```
 :::
@@ -157,8 +164,12 @@ This has the advantage of only using request-mock's behavior for
 ```
 
 To turn that into a complete example:
-:::{admonition} Example: `test_requests_mock_load_cache.py`
-:class: toggle
+:::{dropdown} Example
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
+`test_requests_mock_load_cache.py`
 ```{literalinclude} ../../tests/compat/test_requests_mock_load_cache.py
 ```
 :::
@@ -167,8 +178,12 @@ To turn that into a complete example:
 Usage with the [responses](https://github.com/getsentry/responses) library is similar to the
 requests-mock examples above.
 
-:::{admonition} Example: `test_responses_load_cache.py`
-:class: toggle
+:::{dropdown} Example
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
+`test_responses_load_cache.py`
 ```{literalinclude} ../../tests/compat/test_responses_load_cache.py
 ```
 :::
@@ -177,8 +192,13 @@ requests-mock examples above.
 If you would like to reuse your cached response data for unit tests, one option is to convert your
 cache into a format compatible with VCR-vased libraries like
 [vcrpy](https://github.com/kevin1024/vcrpy) and [betamax](https://github.com/betamaxpy/betamax).
-:::{admonition} Example: `vcr.py`
-:class: toggle
+
+:::{dropdown} Example
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
+`vcr.py`
 ```{literalinclude} ../../examples/vcr.py
 :lines: 7-
 ```

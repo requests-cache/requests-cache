@@ -119,9 +119,7 @@ apidoc_toc_file = False
 
 # HTML general settings
 html_favicon = join('_static', 'favicon.ico')
-html_js_files = ['collapsible_container.js']
 html_css_files = [
-    'collapsible_container.css',
     'table.css',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css',
 ]

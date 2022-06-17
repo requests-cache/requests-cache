@@ -26,14 +26,20 @@ Usage:
 >>> session = CachedSession('my_cache', serializer='json')
 ```
 
-:::{admonition} Example JSON-serialized Response (with decoded JSON content)
-:class: toggle
+:::{dropdown} Example JSON-serialized Response (with decoded JSON content)
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
 ```{literalinclude} ../sample_data/sample_response_json.json
 :language: JSON
 ```
 :::
-:::{admonition} Example JSON-serialized Response (with binary content)
-:class: toggle
+:::{dropdown} Example JSON-serialized Response (with binary content)
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
 ```{literalinclude} ../sample_data/sample_response_binary.json
 :language: JSON
 ```
@@ -53,14 +59,20 @@ Usage:
 >>> session = CachedSession('my_cache', serializer='yaml')
 ```
 
-:::{admonition} Example YAML-serialized Response (with decoded JSON content)
-:class: toggle
+:::{dropdown} Example YAML-serialized Response (with decoded JSON content)
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
 ```{literalinclude} ../sample_data/sample_response_json.yaml
 :language: YAML
 ```
 :::
-:::{admonition} Example YAML-serialized Response (with binary content)
-:class: toggle
+:::{dropdown} Example YAML-serialized Response (with binary content)
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
 ```{literalinclude} ../sample_data/sample_response_binary.yaml
 :language: YAML
 ```
@@ -128,8 +140,11 @@ similar methods with different names (e.g. `compress` / `decompress`), those can
 {py:class}`.Stage`.
 
 For example, a compressed pickle serializer can be built as:
-:::{admonition} Example code
-:class: toggle
+:::{dropdown} Example
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
 ```python
 >>> import gzip
 >>> from requests_cache import CachedSession, SerializerPipeline, Stage, pickle_serializer
@@ -151,8 +166,11 @@ the majority of the work here, and some pre-configured converters are included f
 formats in the {py:mod}`.preconf` module.
 
 For example, a compressed JSON pipeline could be built as follows:
-:::{admonition} Example code
-:class: toggle
+:::{dropdown} Example
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
 ```python
 >>> import json, gzip
 >>> from requests_cache import CachedSession, SerializerPipeline, Stage, json_serializer, utf8_encoder

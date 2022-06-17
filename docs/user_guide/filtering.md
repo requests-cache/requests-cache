@@ -58,8 +58,6 @@ function via the `filter_fn` param. This can by any function that takes a
 should be cached. It will be applied to both new responses (on write) and previously cached
 responses (on read):
 
-:::{admonition} Example code
-:class: toggle
 ```python
 >>> from sys import getsizeof
 >>> from requests_cache import CachedSession
@@ -70,7 +68,6 @@ responses (on read):
 
 >>> session = CachedSession(filter_fn=filter_by_size)
 ```
-:::
 
 ```{note}
 `filter_fn()` will be used **in addition to** other filtering options.
