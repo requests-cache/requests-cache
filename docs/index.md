@@ -29,7 +29,7 @@ TODO: add script to make this conditional
 :maxdepth: 2
 
 user_guide
-reference
 examples
+reference
 project_info
 ````

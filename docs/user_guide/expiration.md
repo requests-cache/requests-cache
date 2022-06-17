@@ -84,7 +84,7 @@ You can use `urls_expire_after` to set different expiration values based on URL 
   is equivalent to `http*://site.com/resource/**`
 - If there is more than one match, the first match will be used in the order they are defined
 - If no patterns match a request, `CachedSession.settings.expire_after` will be used as a default
-- See {ref}`selective-caching` for an example of using `urls_expire_after` as an allowlist
+- See {ref}`url-filtering` for an example of using `urls_expire_after` as an allowlist
 
 (request-errors)=
 ## Expiration and Error Handling
