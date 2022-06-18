@@ -1,6 +1,6 @@
 from typing import Dict, Iterable, Union
 
-from attr import define, field
+from attr import asdict, define, field
 
 from .._utils import get_valid_kwargs
 from ..models import RichMixin
@@ -56,3 +56,6 @@ class CacheSettings(RichMixin):
         if 'include_get_headers' in kwargs:
             kwargs['match_headers'] = kwargs.pop('include_get_headers')
         return kwargs
+
+    def to_dict(self):
+        return asdict(self)
