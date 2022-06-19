@@ -62,21 +62,31 @@ def install_cache(
         _patch_session_factory(cls)
     # Patch only for the current module
     elif module_only:
-        modules = get_installed_modules() + [_calling_module()]
-        # _install_modules(
+        if not is_installed:
+            session = ModuleCachedSession(
+                cache_name=cache_name,
+                backend=init_backend(cache_name, backend, **kwargs),
+                **kwargs,
+            )
+            cls = _get_session_wrapper(session)
+            _patch_session_factory(cls)
+        requests.Session._session.enable_module()
+
+        # modules = get_installed_modules() + [_calling_module()]
+        # _enable_module(
         #     cache_name,
         #     init_backend(cache_name, backend, **kwargs),
         #     modules,
         #     **kwargs,
         # )
-        cls = _get_configured_session(
-            ModuleCachedSession,
-            cache_name=cache_name,
-            backend=backend,
-            include_modules=modules,
-            **kwargs,
-        )
-        _patch_session_factory(cls)
+        # cls = _get_configured_session(
+        #     ModuleCachedSession,
+        #     cache_name=cache_name,
+        #     backend=backend,
+        #     include_modules=modules,
+        #     **kwargs,
+        # )
+        # _patch_session_factory(cls)
     # Patch with CachedSession or session_factory
     else:
         cls = _get_configured_session(
@@ -94,8 +104,10 @@ def uninstall_cache(module_only: bool = False):
     Args:
         module_only: Only uninstall the cache for the current module
     """
-    if module_only:
-        _uninstall_module()
+    if not is_installed():
+        return
+    elif module_only:
+        requests.Session._session.disable_module()
     else:
         _patch_session_factory(OriginalSession)
 
@@ -273,44 +285,48 @@ def _stack_modules() -> Iterator[str]:
         yield getattr(module, '__name__', '')
 
 
-def _install_modules(
-    cache_name: str,
-    backend: BackendSpecifier,
-    modules: List[str],
-    **kwargs,
-):
-    """Install the cache for specific modules"""
+# def _enable_module(
+#     cache_name: str,
+#     backend: BackendSpecifier,
+#     modules: List[str],
+#     **kwargs,
+# ):
+#     """Install the cache for specific modules"""
+#     if not is_installed():
+#         return
 
-    class _ConfiguredCachedSession(ModuleCachedSession):  # type: ignore  # See mypy issue #5865
-        def __init__(self):
-            super().__init__(
-                cache_name=cache_name, backend=backend, include_modules=modules, **kwargs
-            )
+#     requests.Session._session.enable_module()
 
-    _patch_session_factory(_ConfiguredCachedSession)
+#     class _ConfiguredCachedSession(ModuleCachedSession):  # type: ignore  # See mypy issue #5865
+#         def __init__(self):
+#             super().__init__(
+#                 cache_name=cache_name, backend=backend, include_modules=modules, **kwargs
+#             )
+
+#     _patch_session_factory(_ConfiguredCachedSession)
 
 
-def _uninstall_module():
-    """Uninstall the cache for the current module"""
-    session = requests.Session()
-    if not isinstance(session, ModuleCachedSession):
-        return
+# def _disable_module():
+#     """Uninstall the cache for the current module"""
+#     session = requests.Session()
+#     if not isinstance(session, ModuleCachedSession):
+#         return
 
-    modules = get_installed_modules()
-    modules.remove(_calling_module())
+#     modules = get_installed_modules()
+#     modules.remove(_calling_module())
 
-    # No enabled modules remaining; restore the original Session
-    if not modules:
-        uninstall_cache()
-    # Reinstall cache with updated modules
-    else:
-        _install_modules(
-            session.cache.cache_name,
-            session.cache,
-            CachedSession,
-            modules,
-            **session.settings.to_dict(),
-        )
+#     # No enabled modules remaining; restore the original Session
+#     if not modules:
+#         uninstall_cache()
+#     # Reinstall cache with updated modules
+#     else:
+#         _enable_module(
+#             session.cache.cache_name,
+#             session.cache,
+#             CachedSession,
+#             modules,
+#             **session.settings.to_dict(),
+#         )
 
 
 def _get_configured_session(
@@ -327,8 +343,12 @@ def _get_session_wrapper(session: CachedSession):
     """Create a wrapper Session class that returns an existing session object when created"""
 
     class _SessionWrapper(OriginalSession):
-        def __new__(self, *args, **kwargs):
-            return session
+        """Wrapper for an existing session object, as a mutable class attribute"""
+
+        _session = session
+
+        def __new__(cls, *args, **kwargs):
+            return cls._session
 
     return _SessionWrapper
 
