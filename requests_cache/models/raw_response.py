@@ -88,11 +88,7 @@ class CachedHTTPResponse(RichMixin, HTTPResponse):
         if 'Content-Encoding' in self.headers and decode_content is False:
             logger.warning('read(decode_content=False) is not supported for cached responses')
 
-        data = self._fp.read(amt)
-        # "close" the file to inform consumers to stop reading from it
-        if not data:
-            self._fp.close()
-        return data
+        return self._fp.read(amt)
 
     def reset(self, body: bytes = None):
         """Reset raw response file pointer, and optionally update content"""
