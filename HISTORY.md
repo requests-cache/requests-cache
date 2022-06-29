@@ -76,6 +76,11 @@
 * `OriginalResponse.cache_key` and `expires` will be populated for any new response that was written to the cache
 * Add request wrapper methods with return type hints for all HTTP methods (`CachedSession.get()`, `head()`, etc.)
 
+**Bugfixes:**
+* Fix usage of memory backend with `install_cache()`
+* Add `CachedRequest.path_url` property for compatibility with `RequestEncodingMixin`
+* Add compatibility with cattrs 22.1+
+
 **Dependencies:**
 * Replace `appdirs` with `platformdirs`
 
@@ -110,10 +115,8 @@ If you encounter a problem not listed here after updating to 1.0, please create 
 * Internal utility module changes:
     * The `cache_control` module (added in `0.7`) has been split up into multiple modules in a new `policy` subpackage
 
-### 0.9.5 (Unreleased)
-* Fix usage of memory backend with `install_cache()`
-* Add `CachedRequest.path_url` property
-* Add compatibility with cattrs 22.1
+### 0.9.5 (2022-06-29)
+* Backport bugfixes from 1.0
 
 ### 0.9.4 (2022-04-22)
 * Fix forwarding connection parameters passed to `RedisCache` for redis-py 4.2 and python <=3.8
