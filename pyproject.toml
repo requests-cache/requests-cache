@@ -59,7 +59,7 @@ sphinx-copybutton          = {optional=true, version=">=0.5"}
 sphinx-design              = {optional=true, version=">=0.2"}
 sphinx-notfound-page       = {optional=true, version=">=0.8"}
 sphinxcontrib-apidoc       = {optional=true, version="^0.3"}
-sphinxext-opengraph        = {optional=true, version = ">=0.6"}
+sphinxext-opengraph        = {optional=true, version=">=0.6"}
 
 # Temporary fix until cattrs 22.2.0 is released
 exceptiongroup = {version = "^1.0.0-rc.3", python = "^3.10.0"}
