@@ -1,14 +1,21 @@
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from logging import getLogger
 from time import sleep
 from unittest.mock import patch
 
 import pytest
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 
 from requests_cache.backends import GridFSCache, GridFSDict, MongoCache, MongoDict
 from requests_cache.policy import NEVER_EXPIRE
-from tests.conftest import fail_if_no_connection, httpbin
+from tests.conftest import N_ITERATIONS, fail_if_no_connection, httpbin
 from tests.integration.base_cache_test import BaseCacheTest
 from tests.integration.base_storage_test import BaseStorageTest
+
+try:
+    from pymongo.errors import ServerSelectionTimeoutError
+except ImportError:
+    pass
 
 logger = getLogger(__name__)
 
@@ -83,6 +90,20 @@ class TestMongoCache(BaseCacheTest):
         # Should attempt to drop non-existent index and ignore error
         session.cache.set_ttl(NEVER_EXPIRE, overwrite=True)
         assert session.cache.get_ttl() is None
+
+    @retry(
+        retry=retry_if_exception_type(ServerSelectionTimeoutError),
+        reraise=True,
+        stop=stop_after_attempt(5),
+        wait=wait_fixed(5),
+    )
+    @pytest.mark.parametrize('executor_class', [ThreadPoolExecutor, ProcessPoolExecutor])
+    @pytest.mark.parametrize('iteration', range(N_ITERATIONS))
+    def test_concurrency(self, iteration, executor_class):
+        """On GitHub runners, sometimes the MongoDB container is not ready yet by the time this,
+        runs, so some retries are added here.
+        """
+        super().test_concurrency(iteration, executor_class)
 
 
 class TestGridFSDict(BaseStorageTest):
