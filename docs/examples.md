@@ -175,6 +175,25 @@ The following scripts can also be found in the
 ```
 :::
 
+### Using with GitHub Actions
+This example shows how to use requests-cache with [GitHub Actions](https://docs.github.com/en/actions).
+Key points:
+* Create the cache file within the CI project directory
+* You can use [actions/cache](https://github.com/actions/cache) to persist the cache file across
+  workflow runs
+    * You can use a constant cache key within this action to let requests-cache handle expiration
+
+
+:::{dropdown} Example
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
+[github_actions.yml](https://github.com/requests-cache/requests-cache/blob/main/examples/github_actions.yml)
+```{literalinclude} ../examples/github_actions.yml
+```
+:::
+
 ### Converting an old cache
 ```{include} ../examples/convert_cache.py
 :start-line: 2

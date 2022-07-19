@@ -1,0 +1,27 @@
+name: Test requests-cache with GitHub Actions
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      # Persist the SQLite file created by requests-cache across workflow runs
+      - id: cache
+        uses: actions/cache@v3
+        with:
+          path: example_cache.sqlite
+          key: none
+
+      # Install and run basic requests-cache example
+      - run: pip install '.'
+      - run: python examples/basic_sessions.py
+      - run: python examples/basic_sessions.py
+      - run: test -f example_cache.sqlite && echo 'Cache file created' || echo 'Cache file missing'
