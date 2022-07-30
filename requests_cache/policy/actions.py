@@ -194,7 +194,7 @@ class CacheActions(RichMixin):
         elif cached_response.is_expired and usable_response and self._stale_while_revalidate:
             self.resend_async = True
 
-        if cached_response is not None:
+        if cached_response is not None and not self._only_if_cached:
             self._update_validation_headers(cached_response)
         logger.debug(f'Post-read cache actions: {self}')
 

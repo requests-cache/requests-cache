@@ -775,6 +775,16 @@ def test_request_only_if_cached__stale_if_error__expired(mock_session):
     assert response.is_expired is True
 
 
+def test_request_only_if_cached__skips_revalidate(mock_session):
+    """only_if_cached should skip other revalidation conditions if the response isn't expired.
+    This includes taking precedence over refresh=True.
+    """
+    mock_session.get(MOCKED_URL)
+    response = mock_session.get(MOCKED_URL, only_if_cached=True, refresh=True)
+    assert response.from_cache is True
+    assert response.is_expired is False
+
+
 def test_request_only_if_cached__prepared_request(mock_session):
     """The only_if_cached option should also work for PreparedRequests with CachedSession.send()"""
     request = Request(method='GET', url=MOCKED_URL, headers={}).prepare()
