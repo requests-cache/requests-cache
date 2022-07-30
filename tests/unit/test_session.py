@@ -160,13 +160,8 @@ def test_response_history(mock_session):
 
 def test_repr(mock_session):
     """Test session and cache string representations"""
-    mock_session.expire_after = 11
-    mock_session.cache.responses['key'] = 'value'
-    mock_session.cache.redirects['key'] = 'value'
-    mock_session.cache.redirects['key_2'] = 'value'
-
-    assert mock_session.cache.cache_name in repr(mock_session) and '11' in repr(mock_session)
-    assert '2 redirects' in str(mock_session.cache) and '1 responses' in str(mock_session.cache)
+    assert repr(mock_session.cache) == '<SQLiteCache(name=http_cache)>'
+    assert str(mock_session.cache) == '<SQLiteCache(name=http_cache)>'
 
 
 def test_urls(mock_session):

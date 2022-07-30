@@ -1,5 +1,8 @@
 # History
 
+## 0.9.6 (Unreleased)
+* Remove potentially problematic row count from `BaseCache.__str__()`
+
 ## 0.9.5 (2022-06-29)
 * Fix usage of memory backend with `install_cache()`
 * Add `CachedRequest.path_url` property
