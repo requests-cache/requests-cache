@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "requests-cache"
-version = "0.9.5"
+version = "0.9.6"
 description = "A transparent persistent cache for the requests library"
 authors = ["Roman Haritonov", "Jordan Cook"]
 license = "BSD-2-Clause"
@@ -25,25 +25,25 @@ include = [
 ]
 
 [tool.poetry.dependencies]
-python        = "^3.7"
+python        = "^3.7"     # requests requires python >=3.7, <4.0
 
 # Required dependencies
-requests      = "^2.22"    # Needs no introduction
-urllib3       = "^1.25.5"  # Use a slightly newer version than required by requests (for bugfixes)
-appdirs       = "^1.4.4"   # For options that use platform-specific user cache dirs
-attrs         = "^21.2"    # For response data models
-cattrs        = ">=1.8,<=22.2" # For response serialization
-url-normalize = "^1.4"     # For improved request matching
+requests      = ">=2.22"   # Needs no introduction
+urllib3       = ">=1.25.5" # Use a slightly newer version than required by requests (for bugfixes)
+appdirs       = ">=1.4.4"  # For options that use platform-specific user cache dirs
+attrs         = ">=21.2"   # For response data models
+cattrs        = ">=1.8"    # For response serialization
+url-normalize = ">=1.4"    # For improved request matching
 
 # Optional backend dependencies
-boto3                      = {optional=true, version="^1.15"}
-botocore                   = {optional=true, version="^1.18"}
+boto3                      = {optional=true, version=">=1.15"}
+botocore                   = {optional=true, version=">=1.18"}
 pymongo                    = {optional=true, version=">=3"}
 redis                      = {optional=true, version=">=3"}
 
 # Optional serialization dependencies
 bson                       = {optional=true, version=">=0.5"}
-itsdangerous               = {optional=true, version="^2.0"}
+itsdangerous               = {optional=true, version=">=2.0"}
 pyyaml                     = {optional=true, version=">=5.4"}
 ujson                      = {optional=true, version=">=4.0"}
 
@@ -57,12 +57,9 @@ sphinx-autodoc-typehints   = {optional=true, version="^1.11"}
 sphinx-automodapi          = {optional=true, version=">=0.13,<0.15"}
 sphinx-copybutton          = {optional=true, version=">=0.3,<0.5"}
 sphinx-inline-tabs         = {optional=true, version=">=2022.1.2b11", python=">=3.8"}
-sphinx-notfound-page       = {optional=true, version="*"}
+sphinx-notfound-page       = {optional=true, version=">=0.8"}
 sphinx-panels              = {optional=true, version="^0.6"}
 sphinxcontrib-apidoc       = {optional=true, version="^0.3"}
-
-# Temporary fix until cattrs 22.2.0 is released
-exceptiongroup             = {version = ">=1.0.0-rc.3", python = "^3.10.0"}
 
 [tool.poetry.extras]
 # Package extras for optional backend dependencies

@@ -1,7 +1,9 @@
 # History
 
-## 0.9.6 (Unreleased)
+## 0.9.6 (2022-08-24)
 * Remove potentially problematic row count from `BaseCache.__str__()`
+* Remove upper version constraints for all non-dev dependencies
+* Make dependency specification consistent between PyPI and Conda-Forge packages
 
 ## 0.9.5 (2022-06-29)
 * Fix usage of memory backend with `install_cache()`
