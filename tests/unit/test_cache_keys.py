@@ -41,6 +41,25 @@ def test_create_key__normalize_key_only_params():
     request_2 = Request(method='GET', url='https://img.site.com/base/img.jpg?param_2')
     assert create_key(request_1) != create_key(request_2)
 
+    request_1 = Request(method='GET', url='https://img.site.com/base/img.jpg?k=v&param_1')
+    request_2 = Request(method='GET', url='https://img.site.com/base/img.jpg?param_1&k=v')
+    assert create_key(request_1) == create_key(request_2)
+
+
+def test_create_key__normalize_duplicate_params():
+    request_1 = Request(method='GET', url='https://img.site.com/base/img.jpg?param_1=a&param_1=b')
+    request_2 = Request(method='GET', url='https://img.site.com/base/img.jpg?param_1=a')
+    request_3 = Request(method='GET', url='https://img.site.com/base/img.jpg?param_1=b')
+    assert create_key(request_1) != create_key(request_2) != create_key(request_3)
+
+    request_1 = Request(
+        method='GET', url='https://img.site.com/base/img.jpg?param_1=a&param_1=b&k=v'
+    )
+    request_2 = Request(
+        method='GET', url='https://img.site.com/base/img.jpg?param_1=b&param_1=a', params={'k': 'v'}
+    )
+    assert create_key(request_1) == create_key(request_2)
+
 
 def test_normalize_request__json_body():
     request = Request(
