@@ -18,6 +18,7 @@ from typing import (
     Mapping,
     MutableMapping,
     Optional,
+    Tuple,
     Union,
 )
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
@@ -33,6 +34,7 @@ __all__ = [
     'normalize_body',
     'normalize_headers',
     'normalize_request',
+    'normalize_params',
     'normalize_url',
 ]
 if TYPE_CHECKING:
@@ -41,6 +43,7 @@ if TYPE_CHECKING:
 # Maximum JSON request body size that will be normalized
 MAX_NORM_BODY_SIZE = 10 * 1024 * 1024
 
+KVList = List[Tuple[str, str]]
 ParamList = Optional[Iterable[str]]
 RequestContent = Union[Mapping, str, bytes]
 
@@ -187,17 +190,20 @@ def normalize_json_body(
         return original_body
 
 
-def normalize_params(value: Union[str, bytes], ignored_parameters: ParamList) -> str:
+def normalize_params(value: Union[str, bytes], ignored_parameters: ParamList = None) -> str:
     """Normalize and filter urlencoded params from either a URL or request body with form data"""
-    query_str = decode(value)
-    params = dict(parse_qsl(query_str))
+    value = decode(value)
+    params = parse_qsl(value)
+    params = filter_sort_multidict(params, ignored_parameters)
+    query_str = urlencode(params)
 
     # parse_qsl doesn't handle key-only params, so add those here
-    key_only_params = [k for k in query_str.split('&') if k and '=' not in k]
-    params.update({k: '' for k in key_only_params})
+    key_only_params = [k for k in value.split('&') if k and '=' not in k]
+    if key_only_params:
+        key_only_param_str = '&'.join(sorted(key_only_params))
+        query_str = f'{query_str}&{key_only_param_str}' if query_str else key_only_param_str
 
-    params = filter_sort_dict(params, ignored_parameters)
-    return urlencode(params)
+    return query_str
 
 
 def redact_response(response: CachedResponse, ignored_parameters: ParamList) -> CachedResponse:
@@ -215,13 +221,17 @@ def filter_sort_json(data: Union[List, Mapping], ignored_parameters: ParamList):
         return filter_sort_list(data, ignored_parameters)
 
 
-def filter_sort_dict(data: Mapping[str, str], ignored_parameters: ParamList) -> Dict[str, str]:
-    if not ignored_parameters:
-        return dict(sorted(data.items()))
-    return {k: v for k, v in sorted(data.items()) if k not in set(ignored_parameters)}
+def filter_sort_dict(
+    data: Mapping[str, str], ignored_parameters: ParamList = None
+) -> Dict[str, str]:
+    return {k: v for k, v in sorted(data.items()) if k not in set(ignored_parameters or [])}
 
 
-def filter_sort_list(data: List, ignored_parameters: ParamList) -> List:
+def filter_sort_multidict(data: KVList, ignored_parameters: ParamList = None) -> KVList:
+    return [(k, v) for k, v in sorted(data) if k not in set(ignored_parameters or [])]
+
+
+def filter_sort_list(data: List, ignored_parameters: ParamList = None) -> List:
     if not ignored_parameters:
         return sorted(data)
-    return [k for k in sorted(data) if k not in set(ignored_parameters)]
+    return [k for k in sorted(data) if k not in set(ignored_parameters or [])]
