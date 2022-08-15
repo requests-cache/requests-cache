@@ -203,6 +203,18 @@ class BaseCache:
             ):
                 yield response
 
+    def recreate_keys(self):
+        """Recreate cache keys for all previously cached responses"""
+        logger.debug('Recreating all cache keys')
+        old_keys = list(self.responses.keys())
+
+        for old_cache_key in old_keys:
+            response = self.responses[old_cache_key]
+            new_cache_key = self.create_key(response.request)
+            if new_cache_key != old_cache_key:
+                self.responses[new_cache_key] = response
+                del self.responses[old_cache_key]
+
     def reset_expiration(self, expire_after: ExpirationTime = None):
         """Set a new expiration value to set on existing cache items
 

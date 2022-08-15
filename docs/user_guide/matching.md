@@ -135,6 +135,21 @@ If you provide a custom key function for a non-empty cache, any responses previo
 different key function will be unused, so it's recommended to clear the cache first.
 ```
 
+### Recreating Cache Keys
+There are several situations where request matching behavior may change, causing previously cached
+responses to become obsolete:
+* You start using a custom cache key
+* You change other settings affecting request matching
+* A new version of requests-cache is released that includes new or changed request matching behavior
+  (typically, most non-patch releases)
+
+In any of these cases, if you want to reuse your existing cache data, you can use the
+`recreate_keys` method:
+```python
+>>> session = CachedSession()
+>>> session.cache.recreate_keys()
+```
+
 ### Custom Header Normalization
 When matching request headers (using `match_headers` or `Vary`), requests-cache will normalize minor
 header variations like order, casing, whitespace, etc. In some cases, you may be able to further
