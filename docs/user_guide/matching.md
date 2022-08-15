@@ -92,6 +92,20 @@ cached response:
 >>> assert response_1.cache_key == response_2.cache_key == response_3.cache_key
 ```
 
+### Recreating Cache Keys
+There are some situations where request matching behavior may change, which causes previously cached
+responses to become obsolete:
+* You start using a custom cache key, or change other settings that affect request matching
+* A new version of requests-cache is released that includes new or changed request matching behavior
+  (typically, most non-patch releases)
+
+In these cases, if you want to keep using your existing cache data, you can use the
+`recreate_keys` method:
+```python
+>>> session = CachedSession()
+>>> session.cache.recreate_keys()
+```
+
 ### Cache Key Functions
 If you want to implement your own request matching, you can provide a cache key function which will
 take a {py:class}`~requests.PreparedRequest` plus optional keyword args for

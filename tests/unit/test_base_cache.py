@@ -9,9 +9,11 @@ import pytest
 from requests import Request
 
 from requests_cache.backends import BaseCache, SQLiteDict
+from requests_cache.cache_keys import create_key
 from requests_cache.models import CachedRequest, CachedResponse
 from tests.conftest import (
     MOCKED_URL,
+    MOCKED_URL_ETAG,
     MOCKED_URL_HTTPS,
     MOCKED_URL_JSON,
     MOCKED_URL_REDIRECT,
@@ -157,6 +159,44 @@ def test_delete__requests(mock_session):
 
     for request in requests:
         assert not mock_session.cache.contains(request=request)
+
+
+def test_recreate_keys(mock_session):
+    # Cache some initial responses with default key function
+    urls = [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_ETAG]
+    for url in urls:
+        mock_session.get(url)
+    old_cache_keys = set(mock_session.cache.responses.keys())
+
+    # Switch to a new key function and recreate keys
+    def new_key_fn(*args, **kwargs):
+        return create_key(*args, **kwargs) + '_suffix'
+
+    # Check that responses are saved with new keys
+    mock_session.settings.key_fn = new_key_fn
+    mock_session.cache.recreate_keys()
+    new_cache_keys = set(mock_session.cache.responses.keys())
+    assert len(old_cache_keys) == len(new_cache_keys) == len(urls)
+    assert old_cache_keys != new_cache_keys
+
+    # Check that responses are returned from the cache correctly using the new key function
+    for url in urls:
+        assert mock_session.get(url).from_cache is True
+
+
+def test_recreate_keys__same_key_fn(mock_session):
+    urls = [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_ETAG]
+    for url in urls:
+        mock_session.get(url)
+    old_cache_keys = set(mock_session.cache.responses.keys())
+
+    mock_session.cache.recreate_keys()
+    new_cache_keys = set(mock_session.cache.responses.keys())
+    assert old_cache_keys == new_cache_keys
+
+    # Check that responses are returned from the cache correctly using the new key function
+    for url in urls:
+        assert mock_session.get(url).from_cache is True
 
 
 def test_reset_expiration__extend_expiration(mock_session):

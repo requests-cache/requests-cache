@@ -55,6 +55,7 @@
 * Add serializer name to cache keys to avoid errors due to switching serializers
 * Always skip both cache read and write for requests excluded by `allowable_methods` (previously only skipped write)
 * Ignore and redact common authentication headers and request parameters by default. This provides some default recommended values for `ignored_parameters`, to avoid accidentally storing common credentials (e.g., OAuth tokens) in the cache. This will have no effect if you are already setting `ignored_parameters`.
+* Support distinct matching for requests that differ by duplicate request params (e.g, `a=1` vs `?a=1&a=2`)
 
 **Cache convenience methods:**
 * Add `expired` and `invalid` arguments to `BaseCache.delete()` (to replace `remove_expired_responses()`)
@@ -63,6 +64,8 @@
 * Add `BaseCache.contains()` method to check for cached requests either by key or by `requests.Request` object
 * Add `BaseCache.filter()` method to get responses from the cache with various filters
 * Add `BaseCache.reset_expiration()` method to reset expiration for existing responses
+* Add `BaseCache.recreate_keys()` method to recreate cache keys for all previously cached responses
+  (e.g., to preserve cache data after an update that changes request matching behavior)
 * Update `BaseCache.urls` into a method that takes optional filter params, and returns sorted unique URLs
 
 **Type hints:**
