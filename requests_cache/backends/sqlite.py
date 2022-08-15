@@ -120,6 +120,11 @@ class SQLiteCache(BaseCache):
         else:
             return super().filter(valid, expired, **kwargs)
 
+    def recreate_keys(self):
+        """A more efficient implementation of :py:meth:`BaseCache.recreate_keys`"""
+        with self.responses.bulk_commit():
+            super().recreate_keys()
+
     def sorted(
         self,
         key: str = 'expires',
