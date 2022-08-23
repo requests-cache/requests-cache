@@ -25,44 +25,44 @@ include = [
 ]
 
 [tool.poetry.dependencies]
-python        = "^3.7"
+python        = "^3.7"     # requests requires python >=3.7, <4.0
 
 # Required dependencies
-requests      = "^2.22"    # Needs no introduction
+requests      = ">=2.22"   # Needs no introduction
 urllib3       = ">=1.25.5" # Use a slightly newer version than required by requests (for bugfixes)
 attrs         = ">=21.2"   # For response data models
 cattrs        = ">=22.1"   # For response serialization
-platformdirs  = "^2.5"     # For features that use platform-specific system directories
-url-normalize = "^1.4"     # For more accurate request matching
+platformdirs  = ">=2.5"    # For features that use platform-specific system directories
+url-normalize = ">=1.4"    # For more accurate request matching
+
+# Temporary workaround until cattrs 22.2.0 is released
+exceptiongroup             = {version=">=1.0.0-rc.8", python="<3.11"}
 
 # Optional backend dependencies
-boto3                      = {optional=true, version="^1.15"}
-botocore                   = {optional=true, version="^1.18"}
+boto3                      = {optional=true, version=">=1.15"}
+botocore                   = {optional=true, version=">=1.18"}
 pymongo                    = {optional=true, version=">=3"}
 redis                      = {optional=true, version=">=3"}
 
 # Optional serialization dependencies
 bson                       = {optional=true, version=">=0.5"}
-itsdangerous               = {optional=true, version="^2.0"}
+itsdangerous               = {optional=true, version=">=2.0"}
 pyyaml                     = {optional=true, version=">=5.4"}
 ujson                      = {optional=true, version=">=5.4"}
 
 # Dependencies for building documentation;
 # defined here because readthedocs doesn't (yet?) support poetry.dev-dependencies
 furo                       = {optional=true, version="^2022.6"}
-linkify-it-py              = {optional=true, version="^2.0"}
+linkify-it-py              = {optional=true, version=">=2.0"}
 myst-parser                = {optional=true, version=">=0.17"}
 sphinx                     = {optional=true, version="^5.0.2"}
-sphinx-autodoc-typehints   = {optional=true, version="^1.19"}
+sphinx-autodoc-typehints   = {optional=true, version=">=1.19"}
 sphinx-automodapi          = {optional=true, version=">=0.14"}
 sphinx-copybutton          = {optional=true, version=">=0.5"}
 sphinx-design              = {optional=true, version=">=0.2"}
 sphinx-notfound-page       = {optional=true, version=">=0.8"}
-sphinxcontrib-apidoc       = {optional=true, version="^0.3"}
+sphinxcontrib-apidoc       = {optional=true, version=">=0.3"}
 sphinxext-opengraph        = {optional=true, version=">=0.6"}
-
-# Temporary fix until cattrs 22.2.0 is released
-exceptiongroup = {version = "^1.0.0-rc.3", python = "^3.10.0"}
 
 [tool.poetry.extras]
 # Package extras for optional backend dependencies

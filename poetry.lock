@@ -81,14 +81,14 @@ lxml = ["lxml"]
 
 [[package]]
 name = "boto3"
-version = "1.24.57"
+version = "1.24.59"
 description = "The AWS SDK for Python"
 category = "dev"
 optional = true
 python-versions = ">= 3.7"
 
 [package.dependencies]
-botocore = ">=1.27.57,<1.28.0"
+botocore = ">=1.27.59,<1.28.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.6.0,<0.7.0"
 
@@ -97,7 +97,7 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.27.57"
+version = "1.27.59"
 description = "Low-level, data-driven core of boto 3."
 category = "dev"
 optional = true
@@ -868,7 +868,7 @@ crt = ["botocore[crt] (>=1.20.29,<2.0a.0)"]
 
 [[package]]
 name = "setuptools"
-version = "65.2.0"
+version = "65.3.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 category = "dev"
 optional = false
@@ -1291,8 +1291,8 @@ yaml = ["pyyaml"]
 
 [metadata]
 lock-version = "1.1"
-python-versions = "^3.7"
-content-hash = "3574d9e8a65d4f894d86af69b663b97fca316cd490e123cf27b38ba2217958e4"
+python-versions = "^3.7"     # requests requires python >=3.7, <4.0
+content-hash = "ea39161c795ec7ea80f5a3f51caedba1bb995f379c31eb4b994295d2d5052c1f"
 
 [metadata.files]
 alabaster = []

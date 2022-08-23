@@ -118,6 +118,11 @@ If you encounter a problem not listed here after updating to 1.0, please create 
 * Internal utility module changes:
     * The `cache_control` module (added in `0.7`) has been split up into multiple modules in a new `policy` subpackage
 
+### 0.9.6 (2022-08-24)
+* Remove potentially problematic row count from `BaseCache.__str__()`
+* Remove upper version constraints for all non-dev dependencies
+* Make dependency specification consistent between PyPI and Conda-Forge packages
+
 ### 0.9.5 (2022-06-29)
 * Backport bugfixes from 1.0
 

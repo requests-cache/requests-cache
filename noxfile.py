@@ -44,7 +44,9 @@ def test(session):
 @session(python=False, name='test-current')
 def test_current(session):
     """Run tests using the current virtualenv"""
-    test(session)
+    test_paths = session.posargs or [UNIT_TESTS, INTEGRATION_TESTS]
+    cmd = f'pytest -rs {XDIST_ARGS}'
+    session.run(*cmd.split(' '), *test_paths)
 
 
 @session(python=False)
