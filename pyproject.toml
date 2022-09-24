@@ -95,7 +95,7 @@ pytest-rerunfailures  = "^10.1"
 pytest-xdist          = ">=2.2"
 requests-mock         = "^1.9"
 responses             = "0.19.0"
-tenacity              = "^8.0"
+tenacity              = "^8.1"
 timeout-decorator     = "^0.5"
 
 # Tools for linting, type checking, etc. are managed with pre-commit
