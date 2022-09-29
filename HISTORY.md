@@ -54,8 +54,12 @@
 **Request matching & filtering:**
 * Add serializer name to cache keys to avoid errors due to switching serializers
 * Always skip both cache read and write for requests excluded by `allowable_methods` (previously only skipped write)
-* Ignore and redact common authentication headers and request parameters by default. This provides some default recommended values for `ignored_parameters`, to avoid accidentally storing common credentials (e.g., OAuth tokens) in the cache. This will have no effect if you are already setting `ignored_parameters`.
-* Support distinct matching for requests that differ by duplicate request params (e.g, `a=1` vs `?a=1&a=2`)
+* Ignore and redact common authentication headers and request parameters by default. This provides
+  some default recommended values for `ignored_parameters`, to avoid accidentally storing common
+  credentials in the cache. This will have no effect if `ignored_parameters` is already set.
+* Support distinct matching for requests that differ only by a parameter in `ignored_parameters`
+  (e.g., for a request sent both with and without authentication)
+* Support distinct matching for requests that differ only by duplicate request params (e.g, `a=1` vs `?a=1&a=2`)
 
 **Cache convenience methods:**
 * Add `expired` and `invalid` arguments to `BaseCache.delete()` (to replace `remove_expired_responses()`)

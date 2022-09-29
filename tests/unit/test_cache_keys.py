@@ -69,7 +69,7 @@ def test_normalize_request__json_body():
         headers={'Content-Type': 'application/json'},
     )
     norm_request = normalize_request(request, ignored_parameters=['param_2'])
-    assert norm_request.body == b'{"param_1": "value_1"}'
+    assert norm_request.body == b'{"param_1": "value_1", "param_2": "REDACTED"}'
 
 
 def test_normalize_request__json_body_list():

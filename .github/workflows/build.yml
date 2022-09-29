@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9, '3.10', 3.11.0-beta.4]
+        python-version: [3.7, 3.8, 3.9, '3.10', 3.11.0-rc.2]
       fail-fast: false
     services:
       nginx:
@@ -33,7 +33,6 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - uses: snok/install-poetry@v1.3
         with:
-          version: 1.2.0b1
           virtualenvs-in-project: true
 
       # Start integration test databases
