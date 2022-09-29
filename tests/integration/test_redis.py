@@ -42,14 +42,14 @@ class TestRedisCache(BaseCacheTest):
     def test_ttl(self, mock_setex):
         session = self.init_session(expire_after=60)
         session.get(httpbin('get'))
-        call_args = mock_setex.mock_calls[0].args
+        call_args = mock_setex.mock_calls[0][1]
         assert call_args[1] == 3660  # Should be expiration + default offset
 
     @patch.object(StrictRedis, 'setex')
     def test_ttl__offset(self, mock_setex):
         session = self.init_session(expire_after=60, ttl_offset=500)
         session.get(httpbin('get'))
-        call_args = mock_setex.mock_calls[0].args
+        call_args = mock_setex.mock_calls[0][1]
         assert call_args[1] == 560  # Should be expiration + custom offset
 
     @patch.object(StrictRedis, 'setex')
