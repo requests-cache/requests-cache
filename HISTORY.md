@@ -35,6 +35,8 @@
   * Add `size()` method to get estimated size of the database (including in-memory databases)
   * Add `sorted()` method with sorting and other query options
   * Add `wal` parameter to enable write-ahead logging
+* Redis:
+  * Add `ttl_offset` argument to add a delay between cache expiration and deletion
 * MongoDB:
   * Store responses in plain (human-readable) document format instead of fully serialized binary
   * Add optional integration with MongoDB TTL to improve performance for removing expired responses
