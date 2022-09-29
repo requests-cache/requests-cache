@@ -165,7 +165,8 @@ To delete expired responses, use {py:meth}`.BaseCache.delete`:
 
 Or, if you have patched ``requests`` using {py:func}`.install_cache`:
 ```python
->>> requests_cache.remove_expired_responses()
+>>> import requests_cache
+>>> requests_cache.delete(expired=True)
 ```
 
 You can also remove responses older than a certain time:
