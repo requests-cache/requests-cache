@@ -38,7 +38,7 @@ jobs:
       # Start integration test databases
       - uses: supercharge/mongodb-github-action@1.8.0
         with:
-          mongodb-version: 4.4
+          mongodb-version: 5.0
       - uses: supercharge/redis-github-action@1.4.0
         with:
           redis-version: 6
