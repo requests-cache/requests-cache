@@ -75,6 +75,10 @@ Get keys for **only** expired responses:
 >>> keys = [response.cache_key for response in expired_responses]
 ```
 
+### Deleting responses
+Use {py:meth}`.BaseCache.delete` to manually delete responses. See {ref}`manual_removal` for
+examples.
+
 ### Response URLs
 You can use {py:meth}`.BaseCache.urls` to see all URLs currently in the cache:
 ```python

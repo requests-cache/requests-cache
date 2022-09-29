@@ -10,6 +10,7 @@
 from contextlib import contextmanager
 from logging import getLogger
 from typing import Optional, Type
+from warnings import warn
 
 import requests
 
@@ -106,11 +107,22 @@ def clear():
         get_cache().clear()
 
 
-def remove_expired_responses():
-    """Remove expired and invalid responses from the cache"""
+def delete(*args, **kwargs):
+    """Remove responses from the cache according one or more conditions.
+    See :py:meth:`.BaseCache.delete for usage details.
+    """
     session = requests.Session()
     if isinstance(session, CachedSession):
-        session.cache.delete(expired=True)
+        session.cache.delete(*args, **kwargs)
+
+
+def remove_expired_responses():
+    """Remove expired responses from the cache"""
+    warn(
+        'remove_expired_responses() is deprecated; please use delete() instead',
+        DeprecationWarning,
+    )
+    delete(expired=True)
 
 
 def _patch_session_factory(session_factory: Type[OriginalSession] = CachedSession):
