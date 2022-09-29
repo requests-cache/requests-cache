@@ -14,26 +14,33 @@ from ..cache_keys import decode, encode
 from ..serializers import utf8_encoder
 from . import BaseCache, BaseStorage
 
+DEFAULT_TTL_OFFSET = 3600
 logger = getLogger(__name__)
 
 
-# TODO: TTL tests
-# TODO: Option to set a TTL offset, for longer expiration than expire_after
 class RedisCache(BaseCache):
     """Redis cache backend.
 
     Args:
         namespace: Redis namespace
         connection: Redis connection instance to use instead of creating a new one
-        ttl: Use Redis TTL to automatically remove expired items
+        ttl: Use Redis TTL to automatically delete expired items
+        ttl_offset: Additional time to wait before deleting expired items, in seconds
         kwargs: Additional keyword arguments for :py:class:`redis.client.Redis`
     """
 
     def __init__(
-        self, namespace='http_cache', connection: Redis = None, ttl: bool = True, **kwargs
+        self,
+        namespace='http_cache',
+        connection: Redis = None,
+        ttl: bool = True,
+        ttl_offset: int = DEFAULT_TTL_OFFSET,
+        **kwargs,
     ):
         super().__init__(cache_name=namespace, **kwargs)
-        self.responses = RedisDict(namespace, connection=connection, ttl=ttl, **kwargs)
+        self.responses = RedisDict(
+            namespace, connection=connection, ttl=ttl, ttl_offset=ttl_offset, **kwargs
+        )
         kwargs.pop('serializer', None)
         self.redirects = RedisHashDict(
             namespace,
@@ -58,6 +65,7 @@ class RedisDict(BaseStorage):
         collection_name: str = None,
         connection=None,
         ttl: bool = True,
+        ttl_offset: int = DEFAULT_TTL_OFFSET,
         **kwargs,
     ):
 
@@ -66,6 +74,7 @@ class RedisDict(BaseStorage):
         self.connection = connection or StrictRedis(**connection_kwargs)
         self.namespace = namespace
         self.ttl = ttl
+        self.ttl_offset = ttl_offset
 
     def _bkey(self, key: str) -> bytes:
         """Get a full hash key as bytes"""
@@ -86,8 +95,9 @@ class RedisDict(BaseStorage):
     def __setitem__(self, key, item):
         """Save an item to the cache, optionally with TTL"""
         expires_delta = getattr(item, 'expires_delta', None)
-        if self.ttl and (expires_delta or 0) > 0:
-            self.connection.setex(self._bkey(key), expires_delta, self.serialize(item))
+        ttl_seconds = (expires_delta or 0) + self.ttl_offset
+        if self.ttl and ttl_seconds > 0:
+            self.connection.setex(self._bkey(key), ttl_seconds, self.serialize(item))
         else:
             self.connection.set(self._bkey(key), self.serialize(item))
 
