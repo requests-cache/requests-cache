@@ -20,7 +20,7 @@ on:
 env:
   LATEST_PY_VERSION: '3.10'
   PYTEST_VERBOSE: 'true'
-  STRESS_TEST_MULTIPLIER: 5
+  STRESS_TEST_MULTIPLIER: 7
 
 jobs:
   # Run tests for all supported requests versions and minimum supported python version
@@ -54,7 +54,7 @@ jobs:
       # Start integration test databases
       - uses: supercharge/mongodb-github-action@1.8.0
         with:
-          mongodb-version: 4.4
+          mongodb-version: 5.0
       - uses: supercharge/redis-github-action@1.4.0
         with:
           redis-version: 6
@@ -73,12 +73,11 @@ jobs:
           poetry add requests@${{ matrix.requests-version }} --lock
           poetry install -v -E all
 
-      # Run unit + integration tests, with additional stress tests
+      # Run unit + integration tests
       - name: Run tests
         run: |
           source $VENV
           nox -e test-current
-          nox -e stress -- ${{ env.STRESS_TEST_MULTIPLIER }}
 
   # Run unit tests without any optional dependencies installed
   test-minimum-deps:
@@ -92,7 +91,6 @@ jobs:
           python-version: ${{ env.LATEST_PY_VERSION }}
       - uses: snok/install-poetry@v1.3
         with:
-          version: 1.2.0b1
           virtualenvs-in-project: true
 
       # Cache packages per python version, and reuse until lockfile changes
@@ -111,17 +109,46 @@ jobs:
           source $VENV
           pytest -n auto tests/unit
 
+  # Run additional stress tests
+  test-stress:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Set up python + poetry
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.LATEST_PY_VERSION }}
+      - uses: snok/install-poetry@v1.3
+        with:
+          virtualenvs-in-project: true
+
+      # Cache packages per python version, and reuse until lockfile changes
+      - name: Cache python packages
+        id: cache
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ env.LATEST_PY_VERSION }}-latest-${{ hashFiles('poetry.lock') }}
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: poetry install -v -E all
+
+      - name: Run stress tests
+        run: |
+          source $VENV
+          nox -e stress -- ${{ env.STRESS_TEST_MULTIPLIER }}
 
   # Deploy stable builds on tags only, and pre-release builds from manual trigger ("workflow_dispatch")
   release:
-    needs: [test, test-minimum-deps]
+    needs: [test, test-minimum-deps, test-stress]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ env.LATEST_PY_VERSION }}
-      - uses: snok/install-psoetry@v1.3
+      - uses: snok/install-poetry@v1.3
         with:
           virtualenvs-in-project: true
 
