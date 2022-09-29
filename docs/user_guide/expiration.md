@@ -143,19 +143,27 @@ Or specify a maximum staleness value you are willing to accept:
 session = CachedSession(stale_while_revalidate=timedelta(minutes=5))
 ```
 
-## Removing Expired Responses
+## Removing Responses
+For better read performance, expired responses won't be removed immediately by default.
+Instead, they will be replaced the next time they are requested.
 
+You can manually delete responses according to various conditions, and some backends support
+automatic removal.
+
+(manual_removal)=
 ### Manual Removal
-For better read performance, expired responses won't be removed immediately, but will be removed
-(or replaced) the next time they are requested.
 
-To manually clear all expired responses, use
-{py:meth}`.BaseCache.remove`:
+To delete **all** cached responses, use {py:meth}`.BaseCache.clear`:
 ```python
->>> session.cache.remove(expired=True)
+>>> session.cache.clear()
 ```
 
-Or, if you are using {py:func}`.install_cache`:
+To delete expired responses, use {py:meth}`.BaseCache.delete`:
+```python
+>>> session.cache.delete(expired=True)
+```
+
+Or, if you have patched ``requests`` using {py:func}`.install_cache`:
 ```python
 >>> requests_cache.remove_expired_responses()
 ```
@@ -163,13 +171,25 @@ Or, if you are using {py:func}`.install_cache`:
 You can also remove responses older than a certain time:
 ```python
 # Remove responses older than 7 days
-session.cache.remove(older_than=timedelta(days=7))
+session.cache.delete(older_than=timedelta(days=7))
 ```
 
 Or apply a new expiration value to previously cached responses:
 ```python
 # Reset expiration for all responses to 30 days from now
 >>> session.cache.reset_expiration(timedelta(days=30))
+```
+
+Finally, you can delete responses matching specific requests or {ref}`cache keys <custom-matching>`:
+```python
+>>> from requests import Request
+>>> request_1 = Request('GET', 'https://httpbin.org/get')
+>>> request_2 = Request('GET', 'https://httpbin.org/get', params={'key': 'value'})
+>>> session.cache.delete(requests=[request_1, request_2])
+```
+
+```python
+>>> session.cache.delete('e25f7e6326966e82')
 ```
 
 (ttl)=
