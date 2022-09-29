@@ -143,10 +143,18 @@ def test_all_methods__ignored_parameters__redacted(field, method, mock_session):
 
     mock_session.request(method, MOCKED_URL, **{field: params_1})
     cached_response = mock_session.request(method, MOCKED_URL, **{field: params_1})
-    assert 'ignored' not in cached_response.url
-    assert 'ignored' not in cached_response.request.url
-    assert 'ignored' not in cached_response.request.headers
-    assert 'ignored' not in cached_response.request.body.decode('utf-8')
+    request_url = cached_response.request.url
+    headers = cached_response.request.headers
+    body = cached_response.request.body.decode('utf-8')
+
+    assert 'ignored' not in cached_response.url or 'ignored=REDACTED' in cached_response.url
+    assert 'ignored' not in request_url or 'ignored=REDACTED' in request_url
+    assert 'ignored' not in headers or headers['ignored'] == 'REDACTED'
+    if field == 'data':
+        assert 'ignored=REDACTED' in body
+    elif field == 'json':
+        body = json.loads(body)
+        assert body['ignored'] == 'REDACTED'
 
 
 # Variations of relevant request arguments
@@ -502,12 +510,19 @@ def test_default_ignored_parameters(mock_session):
         params={'access_token': 'token'},
         headers={'Authorization': 'Bearer token'},
     )
-    response = mock_session.get(MOCKED_URL)
-
+    response = mock_session.get(
+        MOCKED_URL,
+        params={'access_token': 'token'},
+        headers={'Authorization': 'Bearer token'},
+    )
     assert response.from_cache is True
-    assert 'access_token' not in response.url
-    assert 'access_token' not in response.request.url
-    assert 'Authorization' not in response.request.headers
+
+    unauthenticated_response = mock_session.get(MOCKED_URL)
+    assert unauthenticated_response.from_cache is False
+
+    assert 'access_token=REDACTED' in response.url
+    assert 'access_token=REDACTED' in response.request.url
+    assert response.request.headers['Authorization'] == 'REDACTED'
 
 
 @patch_normalize_url

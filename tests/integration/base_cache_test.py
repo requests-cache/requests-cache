@@ -313,7 +313,7 @@ class BaseCacheTest:
         assert response.from_cache is False
         response = session.request(method, url, headers={"Authorization": "<Secret Key>"})
         assert response.from_cache is True
-        assert response.request.headers.get('Authorization') is None
+        assert response.request.headers.get('Authorization') == 'REDACTED'
 
     @pytest.mark.parametrize('method', HTTPBIN_METHODS)
     def test_filter_request_query_parameters(self, method):
@@ -325,23 +325,25 @@ class BaseCacheTest:
         assert response.from_cache is True
         query = urlparse(response.request.url).query
         query_dict = parse_qs(query)
-        assert 'api_key' not in query_dict
+        assert query_dict['api_key'] == ['REDACTED']
 
     @pytest.mark.parametrize('post_type', ['data', 'json'])
     def test_filter_request_post_data(self, post_type):
         method = 'POST'
         url = httpbin(method.lower())
-        session = self.init_session(ignored_parameters=['api_key'])
-        response = session.request(method, url, **{post_type: {"api_key": "<Secret Key>"}})
-        assert response.from_cache is False
-        response = session.request(method, url, **{post_type: {"api_key": "<Secret Key>"}})
-        assert response.from_cache is True
+        body = {"api_key": "<Secret Key>"}
+        headers = {}
         if post_type == 'data':
-            body = parse_qs(response.request.body)
-            assert "api_key" not in body
-        elif post_type == 'json':
-            body = json.loads(response.request.body)
-            assert "api_key" not in body
+            body = json.dumps(body)
+            headers = {'Content-Type': 'application/json'}
+        session = self.init_session(ignored_parameters=['api_key'])
+
+        response = session.request(method, url, headers=headers, **{post_type: body})
+        response = session.request(method, url, headers=headers, **{post_type: body})
+        assert response.from_cache is True
+
+        parsed_body = json.loads(response.request.body)
+        assert parsed_body['api_key'] == 'REDACTED'
 
     @pytest.mark.parametrize('executor_class', [ThreadPoolExecutor, ProcessPoolExecutor])
     @pytest.mark.parametrize('iteration', range(N_ITERATIONS))

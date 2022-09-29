@@ -40,7 +40,7 @@ __all__ = [
 if TYPE_CHECKING:
     from .models import AnyPreparedRequest, AnyRequest, CachedResponse
 
-# Maximum JSON request body size that will be normalized
+# Maximum JSON request body size that will be filtered and normalized
 MAX_NORM_BODY_SIZE = 10 * 1024 * 1024
 
 KVList = List[Tuple[str, str]]
@@ -160,15 +160,16 @@ def normalize_url(url: str, ignored_parameters: ParamList) -> str:
 
 def normalize_body(request: AnyPreparedRequest, ignored_parameters: ParamList) -> bytes:
     """Normalize and filter a request body if possible, depending on Content-Type"""
-    original_body = request.body or b''
+    if not request.body:
+        return b''
     content_type = request.headers.get('Content-Type')
 
     # Filter and sort params if possible
-    filtered_body: Union[str, bytes] = original_body
+    filtered_body: Union[str, bytes] = request.body
     if content_type == 'application/json':
-        filtered_body = normalize_json_body(original_body, ignored_parameters)
+        filtered_body = normalize_json_body(request.body, ignored_parameters)
     elif content_type == 'application/x-www-form-urlencoded':
-        filtered_body = normalize_params(original_body, ignored_parameters)
+        filtered_body = normalize_params(request.body, ignored_parameters)
 
     return encode(filtered_body)
 
@@ -224,14 +225,18 @@ def filter_sort_json(data: Union[List, Mapping], ignored_parameters: ParamList):
 def filter_sort_dict(
     data: Mapping[str, str], ignored_parameters: ParamList = None
 ) -> Dict[str, str]:
-    return {k: v for k, v in sorted(data.items()) if k not in set(ignored_parameters or [])}
+    # Note: Any ignored_parameters present will have their values replaced instead of removing the
+    # parameter, so the cache key will still match whether the parameter was present or not.
+    ignored_parameters = set(ignored_parameters or [])
+    return {k: ('REDACTED' if k in ignored_parameters else v) for k, v in sorted(data.items())}
 
 
 def filter_sort_multidict(data: KVList, ignored_parameters: ParamList = None) -> KVList:
-    return [(k, v) for k, v in sorted(data) if k not in set(ignored_parameters or [])]
+    ignored_parameters = set(ignored_parameters or [])
+    return [(k, 'REDACTED' if k in ignored_parameters else v) for k, v in sorted(data)]
 
 
 def filter_sort_list(data: List, ignored_parameters: ParamList = None) -> List:
     if not ignored_parameters:
         return sorted(data)
-    return [k for k in sorted(data) if k not in set(ignored_parameters or [])]
+    return [k for k in sorted(data) if k not in set(ignored_parameters)]
