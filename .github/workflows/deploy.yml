@@ -16,6 +16,14 @@ on:
         description: 'Version number for pre-releases; defaults to build number'
         required: false
         default: ''
+      skip-stress:
+        description: 'Set to "true" to skip stress tests'
+        required: false
+        default: 'false'
+      skip-publish:
+        description: 'Set to "true" to skip publishing to PyPI'
+        required: false
+        default: 'false'
 
 env:
   LATEST_PY_VERSION: '3.10'
@@ -26,6 +34,7 @@ jobs:
 
   # Run additional integration stress tests
   test-stress:
+    if: ${{ github.event.inputs.skip-stress != 'true' }}
     runs-on: ubuntu-latest
 
     services:
@@ -66,7 +75,9 @@ jobs:
 
       # Run tests
       - name: Run stress tests
-        run: poetry run nox -e stress -- ${{ env.STRESS_TEST_MULTIPLIER }}
+        run: |
+          source $VENV
+          nox -e stress -- ${{ env.STRESS_TEST_MULTIPLIER }}
 
   # Run unit tests without any optional dependencies installed
   test-minimum-deps:
@@ -95,7 +106,9 @@ jobs:
 
       # Run tests
       - name: Run tests with no optional dependencies
-        run: poetry run pytest -n auto tests/unit
+        run: |
+          source $VENV
+          pytest -n auto tests/unit
 
   # Run unit tests for all supported platforms, python versions, and requests versions
   test:
@@ -136,6 +149,7 @@ jobs:
 
   # Deploy stable builds on tags only, and pre-release builds from manual trigger ("workflow_dispatch")
   release:
+    if: ${{ github.event.inputs.skip-publish != 'true' }}
     needs: [test, test-minimum-deps, test-stress]
     runs-on: ubuntu-latest
     steps:
@@ -156,7 +170,7 @@ jobs:
           poetry version $(poetry version -s).${{ env.pre-release-suffix }}${{ env.pre-release-version }}
           poetry version
 
-      - name: Build and publish to pypi
+      - name: Build and publish to PyPI
         run: |
           poetry build
           poetry publish -u  __token__ -p ${{ secrets.PYPI_TOKEN }}
