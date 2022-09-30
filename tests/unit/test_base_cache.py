@@ -59,7 +59,8 @@ def test_delete__expired(mock_normalize_url, mock_session):
     mock_session.settings.expire_after = 1
     mock_session.get(MOCKED_URL)
     mock_session.get(MOCKED_URL_JSON)
-    sleep(1)
+    sleep(1.1)
+    mock_session.settings.expire_after = 2
     mock_session.get(unexpired_url)
 
     # At this point we should have 1 unexpired response and 2 expired responses
@@ -72,7 +73,7 @@ def test_delete__expired(mock_normalize_url, mock_session):
     assert cached_response.url == unexpired_url
 
     # Now the last response should be expired as well
-    sleep(1)
+    sleep(2)
     BaseCache.delete(mock_session.cache, expired=True)
     assert len(mock_session.cache.responses) == 0
 

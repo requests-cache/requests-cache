@@ -66,7 +66,7 @@ class CachedResponse(RichMixin, BaseResponse):
     _decoded_content: DecodedContent = field(default=None)
     _next: Optional[CachedRequest] = field(default=None)
     cookies: RequestsCookieJar = field(factory=RequestsCookieJar)
-    created_at: datetime = field(factory=datetime.utcnow)
+    created_at: datetime = field(default=None)
     elapsed: timedelta = field(factory=timedelta)
     encoding: str = field(default=None)
     expires: Optional[datetime] = field(default=None)
@@ -79,7 +79,9 @@ class CachedResponse(RichMixin, BaseResponse):
     url: str = field(default=None)
 
     def __attrs_post_init__(self):
-        """Re-initialize raw (urllib3) response after deserialization"""
+        # Not using created_at field default due to possible bug on Windows with omit_if_default
+        self.created_at = self.created_at or datetime.utcnow()
+        # Re-initialize raw (urllib3) response after deserialization
         self.raw = self.raw or CachedHTTPResponse.from_cached_response(self)
 
     @classmethod
