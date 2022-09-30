@@ -6,7 +6,7 @@ from requests.sessions import Session as OriginalSession
 import requests_cache
 from requests_cache import CachedSession
 from requests_cache.backends import BaseCache, SQLiteCache
-from tests.conftest import CACHE_NAME
+from tests.conftest import CACHE_NAME, ignore_deprecation
 
 
 def test_install_uninstall():
@@ -98,6 +98,7 @@ def test_delete__cache_not_installed(mock_delete):
 @patch.object(BaseCache, 'delete')
 def test_remove_expired_responses(mock_delete):
     requests_cache.install_cache(backend='memory', expire_after=360)
-    requests_cache.remove_expired_responses()
+    with ignore_deprecation():
+        requests_cache.remove_expired_responses()
     assert mock_delete.called is True
     requests_cache.uninstall_cache()

@@ -9,6 +9,8 @@ Note: The protocol ``http(s)+mock://`` helps :py:class:`requests_mock.Adapter` p
 https://requests-mock.readthedocs.io/en/latest/adapter.html
 """
 import os
+import warnings
+from contextlib import contextmanager
 from datetime import datetime, timedelta
 from functools import wraps
 from importlib import import_module
@@ -276,6 +278,14 @@ def skip_missing_deps(module_name: str) -> pytest.Mark:
     return pytest.mark.skipif(
         not is_installed(module_name), reason=f'{module_name} is not installed'
     )
+
+
+@contextmanager
+def ignore_deprecation():
+    """Temporarily ilence deprecation warnings"""
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', category=DeprecationWarning)
+        yield
 
 
 # Some tests must disable url normalization to retain the custom `http+mock://` protocol

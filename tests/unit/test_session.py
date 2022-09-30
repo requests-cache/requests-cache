@@ -29,6 +29,7 @@ from tests.conftest import (
     MOCKED_URL_REDIRECT,
     MOCKED_URL_REDIRECT_TARGET,
     MOCKED_URL_VARY,
+    ignore_deprecation,
     patch_normalize_url,
 )
 
@@ -895,6 +896,6 @@ def test_request_force_refresh__prepared_request(mock_session):
 
 
 def test_remove_expired_responses(mock_session):
-    with patch.object(mock_session.cache, 'delete') as mock_delete:
+    with ignore_deprecation(), patch.object(mock_session.cache, 'delete') as mock_delete:
         mock_session.remove_expired_responses()
         mock_delete.assert_called_once_with(expired=True, invalid=True)

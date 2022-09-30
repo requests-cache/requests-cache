@@ -247,7 +247,8 @@ class BaseCache:
 
     def delete_url(self, url: str, method: str = 'GET', **kwargs):
         warn(
-            'BaseCache.delete_url() is deprecated; please use .delete() instead', DeprecationWarning
+            'BaseCache.delete_url() is deprecated; please use .delete() instead',
+            DeprecationWarning,
         )
         self.delete(requests=[Request(method, url, **kwargs)])
 
@@ -260,14 +261,15 @@ class BaseCache:
 
     def has_url(self, url: str, method: str = 'GET', **kwargs) -> bool:
         warn(
-            'BaseCache.has_url() is deprecated; please use .contains() instead', DeprecationWarning
+            'BaseCache.has_url() is deprecated; please use .contains() instead',
+            DeprecationWarning,
         )
         return self.contains(request=Request(method, url, **kwargs))
 
     def keys(self, check_expiry: bool = False) -> Iterator[str]:
         warn(
-            'BaseCache.keys() is deprecated; please use .filter() or '
-            'BaseCache.responses.keys() instead',
+            'BaseCache.keys() is deprecated; '
+            'please use .filter() or BaseCache.responses.keys() instead',
             DeprecationWarning,
         )
         yield from self.redirects.keys()
@@ -276,15 +278,16 @@ class BaseCache:
 
     def response_count(self, check_expiry: bool = False) -> int:
         warn(
-            'BaseCache.response_count() is deprecated; please use .filter() or '
-            'len(BaseCache.responses) instead',
+            'BaseCache.response_count() is deprecated; '
+            'please use .filter() or len(BaseCache.responses) instead',
             DeprecationWarning,
         )
         return len(list(self.filter(expired=not check_expiry)))
 
     def remove_expired_responses(self, expire_after: ExpirationTime = None):
         warn(
-            'BaseCache.remove_expired_responses() is deprecated; please use .delete() instead',
+            'BaseCache.remove_expired_responses() is deprecated; '
+            'please use .delete(expired=True) instead',
             DeprecationWarning,
         )
         self.delete(expired=True, invalid=True)

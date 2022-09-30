@@ -89,6 +89,7 @@
 * Fix usage of memory backend with `install_cache()`
 * Add `CachedRequest.path_url` property for compatibility with `RequestEncodingMixin`
 * Add compatibility with cattrs 22.1+
+* Fix issue on Windows with occasional missing `CachedResponse.created_at` timestamp
 
 **Dependencies:**
 * Replace `appdirs` with `platformdirs`
