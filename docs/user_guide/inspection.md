@@ -42,7 +42,14 @@ True 2021-01-01 18:00:00 2021-01-02 18:00:00 False
 
 ### Checking for responses
 Use {py:meth}`.BaseCache.contains` to check if a given request is cached.
-Either check with a {py:class}`~requests.models.Request` object:
+
+Check if a specific URL is cached:
+```python
+>>> print(session.cache.contains(url='https://httpbin.org/get'))
+```
+
+To match additional request values (parameters, headers, etc), you can pass a
+{py:class}`~requests.models.Request` object instead:
 ```python
 >>> from requests import Request
 
@@ -50,7 +57,7 @@ Either check with a {py:class}`~requests.models.Request` object:
 >>> print(session.cache.contains(request=request))
 ```
 
-Or with a cache key:
+You can also check for a specific cache key:
 ```python
 >>> print(session.cache.contains('d1e666e9fdfb3f86'))
 ```

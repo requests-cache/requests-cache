@@ -50,6 +50,12 @@ def test_contains__request(mock_session):
     assert not mock_session.cache.contains(request=request)
 
 
+def test_contains__url(mock_session):
+    mock_session.get(MOCKED_URL)
+    assert mock_session.cache.contains(url=MOCKED_URL)
+    assert not mock_session.cache.contains(url=f'{MOCKED_URL}?foo=bar')
+
+
 @patch_normalize_url
 def test_delete__expired(mock_normalize_url, mock_session):
     unexpired_url = f'{MOCKED_URL}?x=1'
@@ -151,6 +157,17 @@ def test_delete__older_than(mock_session):
     assert len(mock_session.cache.responses) == 0
 
 
+def test_delete__urls(mock_session):
+    urls = [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_REDIRECT]
+    for url in urls:
+        mock_session.get(url)
+
+    mock_session.cache.delete(urls=urls)
+
+    for url in urls:
+        assert not mock_session.cache.contains(url=url)
+
+
 def test_delete__requests(mock_session):
     urls = [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_REDIRECT]
     for url in urls:
@@ -228,8 +245,8 @@ def test_clear(mock_session):
     mock_session.get(MOCKED_URL)
     mock_session.get(MOCKED_URL_REDIRECT)
     mock_session.cache.clear()
-    assert not mock_session.cache.contains(request=Request('GET', MOCKED_URL))
-    assert not mock_session.cache.contains(request=Request('GET', MOCKED_URL_REDIRECT))
+    assert not mock_session.cache.contains(url=MOCKED_URL)
+    assert not mock_session.cache.contains(url=MOCKED_URL_REDIRECT)
 
 
 def test_save_response__manual(mock_session):
