@@ -17,8 +17,8 @@
 
 **Session settings:**
 * All settings that affect cache behavior can now be accessed and modified via `CachedSession.settings`
-* Add `always_revalidate` session setting to always revalidate before using a cached response (if a validator) is available.
-* Add `only_if_cached` settion setting to return only cached results without sending real requests
+* Add `always_revalidate` session setting to always revalidate before using a cached response (if a validator is available).
+* Add `only_if_cached` session setting to return only cached results without sending real requests
 * Add `stale_while_revalidate` session setting to return a stale response initially, while a non-blocking request is sent to refresh the response
 * Make behavior for `stale_if_error` partially consistent with `Cache-Control: stale-if-error`: Add support for time values (int, timedelta, etc.) in addition to `True/False`
 
@@ -65,9 +65,11 @@
 
 **Cache convenience methods:**
 * Add `expired` and `invalid` arguments to `BaseCache.delete()` (to replace `remove_expired_responses()`)
+* Add `urls` and `requests` arguments to `BaseCache.delete()` (to replace `delete_url()`)
 * Add `older_than` argument to `BaseCache.delete()` to delete responses older than a given value
 * Add `requests` argument to `BaseCache.delete()` to delete responses matching the given requests
 * Add `BaseCache.contains()` method to check for cached requests either by key or by `requests.Request` object
+* Add `url` argument to `BaseCache.contains()` method (to replace `has_url()`)
 * Add `BaseCache.filter()` method to get responses from the cache with various filters
 * Add `BaseCache.reset_expiration()` method to reset expiration for existing responses
 * Add `BaseCache.recreate_keys()` method to recreate cache keys for all previously cached responses
@@ -87,9 +89,9 @@
 
 **Bugfixes:**
 * Fix usage of memory backend with `install_cache()`
+* Fix issue on Windows with occasional missing `CachedResponse.created_at` timestamp
 * Add `CachedRequest.path_url` property for compatibility with `RequestEncodingMixin`
 * Add compatibility with cattrs 22.1+
-* Fix issue on Windows with occasional missing `CachedResponse.created_at` timestamp
 
 **Dependencies:**
 * Replace `appdirs` with `platformdirs`
@@ -98,12 +100,12 @@
 
 The following methods are deprecated, and will be removed in a future release. The recommended
 replacements are listed below:
-* `BaseCache.remove_expired_responses()`: `BaseCache.delete()`
-* `CachedSession.remove_expired_responses()`: `BaseCache.delete()`
-* `BaseCache.delete_url()`: `BaseCache.delete()`
-* `BaseCache.delete_urls()`: `BaseCache.delete()`
+* `BaseCache.remove_expired_responses()`: `BaseCache.delete(expired=True)`
+* `CachedSession.remove_expired_responses()`: `BaseCache.delete(expired=True)`
+* `BaseCache.delete_url()`: `BaseCache.delete(urls=[...])`
+* `BaseCache.delete_urls()`: `BaseCache.delete(urls=[...])`
 * `BaseCache.has_key()`: `BaseCache.contains()`
-* `BaseCache.has_url()`: `BaseCache.contains()`
+* `BaseCache.has_url()`: `BaseCache.contains(url=...)`
 * `BaseCache.keys()`: `BaseCache.filter()`
 * `BaseCache.values()`: `BaseCache.filter()`
 * `BaseCache.response_count()`: `BaseCache.filter()`

@@ -453,12 +453,12 @@ def test_allowable_codes(mock_session):
 
     # This request should be cached
     mock_session.get(MOCKED_URL_404)
-    assert mock_session.cache.has_url(MOCKED_URL_404)
+    assert mock_session.cache.contains(url=MOCKED_URL_404)
     assert mock_session.get(MOCKED_URL_404).from_cache is True
 
     # This request should be filtered out on both read and write
     mock_session.get(MOCKED_URL_500)
-    assert not mock_session.cache.has_url(MOCKED_URL_500)
+    assert not mock_session.cache.contains(url=MOCKED_URL_500)
     assert mock_session.get(MOCKED_URL_500).from_cache is False
 
 
@@ -467,20 +467,20 @@ def test_allowable_methods(mock_session):
 
     # This request should be cached
     mock_session.options(MOCKED_URL)
-    assert mock_session.cache.has_url(MOCKED_URL, method='OPTIONS')
+    assert mock_session.cache.contains(request=Request('OPTIONS', MOCKED_URL))
     assert mock_session.options(MOCKED_URL).from_cache is True
 
     # These requests should be filtered out on both read and write
     mock_session.put(MOCKED_URL)
-    assert not mock_session.cache.has_url(MOCKED_URL, method='PUT')
+    assert not mock_session.cache.contains(request=Request('PUT', MOCKED_URL))
     assert mock_session.put(MOCKED_URL).from_cache is False
 
     mock_session.patch(MOCKED_URL)
-    assert not mock_session.cache.has_url(MOCKED_URL, method='PATCH')
+    assert not mock_session.cache.contains(request=Request('PATCH', MOCKED_URL))
     assert mock_session.patch(MOCKED_URL).from_cache is False
 
     mock_session.delete(MOCKED_URL)
-    assert not mock_session.cache.has_url(MOCKED_URL, method='DELETE')
+    assert not mock_session.cache.contains(request=Request('DELETE', MOCKED_URL))
     assert mock_session.delete(MOCKED_URL).from_cache is False
 
 
@@ -532,12 +532,12 @@ def test_filter_fn(mock_normalize_url, mock_session):
 
     # This request should be cached
     mock_session.get(MOCKED_URL)
-    assert mock_session.cache.has_url(MOCKED_URL)
+    assert mock_session.cache.contains(url=MOCKED_URL)
     assert mock_session.get(MOCKED_URL).from_cache is True
 
     # This request should be filtered out on both read and write
     mock_session.get(MOCKED_URL_JSON)
-    assert not mock_session.cache.has_url(MOCKED_URL_JSON)
+    assert not mock_session.cache.contains(url=MOCKED_URL_JSON)
     assert mock_session.get(MOCKED_URL_JSON).from_cache is False
 
 
@@ -547,7 +547,7 @@ def test_filter_fn__retroactive(mock_normalize_url, mock_session):
     mock_session.get(MOCKED_URL_JSON)
     mock_session.settings.filter_fn = lambda r: r.request.url != MOCKED_URL_JSON
     mock_session.get(MOCKED_URL_JSON)
-    assert not mock_session.cache.has_url(MOCKED_URL_JSON)
+    assert not mock_session.cache.contains(url=MOCKED_URL_JSON)
 
 
 def test_key_fn(mock_session):
@@ -586,7 +586,7 @@ def test_expire_after_alias(mock_session):
 def test_do_not_cache(mock_session):
     """DO_NOT_CACHE should bypass the cache on both read and write"""
     mock_session.get(MOCKED_URL)
-    assert mock_session.cache.has_url(MOCKED_URL)
+    assert mock_session.cache.contains(url=MOCKED_URL)
 
     # Skip read
     response = mock_session.get(MOCKED_URL, expire_after=DO_NOT_CACHE)
@@ -595,7 +595,7 @@ def test_do_not_cache(mock_session):
     # Skip write
     mock_session.settings.expire_after = DO_NOT_CACHE
     mock_session.get(MOCKED_URL_JSON)
-    assert not mock_session.cache.has_url(MOCKED_URL_JSON)
+    assert not mock_session.cache.contains(url=MOCKED_URL_JSON)
 
 
 def test_expire_immediately(mock_session):
@@ -604,7 +604,7 @@ def test_expire_immediately(mock_session):
     mock_session.settings.expire_after = EXPIRE_IMMEDIATELY
     mock_session.get(MOCKED_URL)
     response = mock_session.get(MOCKED_URL)
-    assert not mock_session.cache.has_url(MOCKED_URL)
+    assert not mock_session.cache.contains(url=MOCKED_URL)
     assert response.from_cache is False
 
     # With validator
@@ -650,7 +650,7 @@ def test_url_allowlist(mock_session):
     assert mock_session.get(MOCKED_URL_JSON).from_cache is True
     mock_session.get(MOCKED_URL)
     assert mock_session.get(MOCKED_URL).from_cache is False
-    assert not mock_session.cache.has_url(MOCKED_URL)
+    assert not mock_session.cache.contains(url=MOCKED_URL)
 
 
 def test_stale_while_revalidate(mock_session):
@@ -659,7 +659,7 @@ def test_stale_while_revalidate(mock_session):
     mock_session.settings.stale_while_revalidate = True
     mock_session.get(MOCKED_URL_ETAG, expire_after=timedelta(seconds=-2))
     mock_session.get(mocked_url_2, expire_after=timedelta(seconds=-2))
-    assert mock_session.cache.has_url(MOCKED_URL_ETAG)
+    assert mock_session.cache.contains(url=MOCKED_URL_ETAG)
 
     # First, let's just make sure the correct method is called
     mock_session.mock_adapter.register_uri('GET', MOCKED_URL_ETAG, status_code=304)
@@ -677,11 +677,10 @@ def test_stale_while_revalidate(mock_session):
         response = mock_session.get(mocked_url_2, expire_after=60)
         assert response.from_cache is True and response.is_expired is True
         assert time() - start < 0.1
-        sleep(0.1)
+        sleep(0.2)  # Background thread may be a bit slow on CI runner
         mock_send.assert_called()
 
     # Finally, check that the cached response has been refreshed
-    sleep(0.2)  # Background thread may be a bit slow on CI runner
     response = mock_session.get(mocked_url_2)
     assert response.from_cache is True and response.is_expired is False
 
@@ -744,7 +743,7 @@ def test_request_expire_after__disable_expiration(mock_session):
 def test_request_expire_after__prepared_request(mock_session):
     """Pre-request expiration should also work for PreparedRequests with CachedSession.send()"""
     mock_session.settings.expire_after = None
-    request = Request(method='GET', url=MOCKED_URL, headers={}, data=None).prepare()
+    request = Request('GET', MOCKED_URL, headers={}, data=None).prepare()
     response = mock_session.send(request, expire_after=1)
     assert response.from_cache is False
     assert mock_session.send(request).from_cache is True
@@ -803,7 +802,7 @@ def test_request_only_if_cached__skips_revalidate(mock_session):
 
 def test_request_only_if_cached__prepared_request(mock_session):
     """The only_if_cached option should also work for PreparedRequests with CachedSession.send()"""
-    request = Request(method='GET', url=MOCKED_URL, headers={}).prepare()
+    request = Request('GET', MOCKED_URL, headers={}).prepare()
     response = mock_session.send(request, only_if_cached=True)
     assert response.status_code == 504
     with pytest.raises(HTTPError):
@@ -848,7 +847,7 @@ def test_request_refresh__no_validator(mock_session):
 def test_request_refresh__prepared_request(mock_session):
     """The refresh option should also work for PreparedRequests with CachedSession.send()"""
     mock_session.settings.expire_after = 60
-    request = Request(method='GET', url=MOCKED_URL_ETAG, headers={}, data=None).prepare()
+    request = Request('GET', MOCKED_URL_ETAG, headers={}, data=None).prepare()
     response_1 = mock_session.send(request)
     response_2 = mock_session.send(request)
     mock_session.mock_adapter.register_uri('GET', MOCKED_URL_ETAG, status_code=304)
@@ -880,7 +879,7 @@ def test_request_force_refresh(mock_session):
 def test_request_force_refresh__prepared_request(mock_session):
     """The force_refresh option should also work for PreparedRequests with CachedSession.send()"""
     mock_session.settings.expire_after = 60
-    request = Request(method='GET', url=MOCKED_URL, headers={}, data=None)
+    request = Request('GET', MOCKED_URL, headers={}, data=None)
     response_1 = mock_session.send(request.prepare())
     response_2 = mock_session.send(request.prepare(), force_refresh=True)
     response_3 = mock_session.send(request.prepare())
