@@ -17,6 +17,7 @@ from tests.conftest import (
     MOCKED_URL_HTTPS,
     MOCKED_URL_JSON,
     MOCKED_URL_REDIRECT,
+    ignore_deprecation,
     patch_normalize_url,
 )
 
@@ -226,8 +227,8 @@ def test_clear(mock_session):
     mock_session.get(MOCKED_URL)
     mock_session.get(MOCKED_URL_REDIRECT)
     mock_session.cache.clear()
-    assert not mock_session.cache.has_url(MOCKED_URL)
-    assert not mock_session.cache.has_url(MOCKED_URL_REDIRECT)
+    assert not mock_session.cache.contains(request=Request('GET', MOCKED_URL))
+    assert not mock_session.cache.contains(request=Request('GET', MOCKED_URL_REDIRECT))
 
 
 def test_save_response__manual(mock_session):
@@ -273,51 +274,59 @@ def test_urls__error(mock_session):
 
 def test_has_url(mock_session):
     mock_session.get(MOCKED_URL, params={'foo': 'bar'})
-    assert mock_session.cache.has_url(MOCKED_URL, params={'foo': 'bar'})
-    assert not mock_session.cache.has_url(MOCKED_URL)
+    with ignore_deprecation():
+        assert mock_session.cache.has_url(MOCKED_URL, params={'foo': 'bar'})
+        assert not mock_session.cache.has_url(MOCKED_URL)
 
 
 def test_delete_url(mock_session):
     mock_session.get(MOCKED_URL)
-    mock_session.cache.delete_url(MOCKED_URL)
-    assert not mock_session.cache.has_url(MOCKED_URL)
+    with ignore_deprecation():
+        mock_session.cache.delete_url(MOCKED_URL)
+        assert not mock_session.cache.has_url(MOCKED_URL)
 
 
 def test_delete_url__request_args(mock_session):
     mock_session.get(MOCKED_URL, params={'foo': 'bar'})
-    mock_session.cache.delete_url(MOCKED_URL, params={'foo': 'bar'})
-    assert not mock_session.cache.has_url(MOCKED_URL, params={'foo': 'bar'})
+    with ignore_deprecation():
+        mock_session.cache.delete_url(MOCKED_URL, params={'foo': 'bar'})
+        assert not mock_session.cache.has_url(MOCKED_URL, params={'foo': 'bar'})
 
 
 def test_delete_url__nonexistent_response(mock_session):
     """Deleting a response that was either already deleted (or never added) should fail silently"""
-    mock_session.cache.delete_url(MOCKED_URL)
+    with ignore_deprecation():
+        mock_session.cache.delete_url(MOCKED_URL)
 
-    mock_session.get(MOCKED_URL)
-    mock_session.cache.delete_url(MOCKED_URL)
-    assert not mock_session.cache.has_url(MOCKED_URL)
-    mock_session.cache.delete_url(MOCKED_URL)  # Should fail silently
+        mock_session.get(MOCKED_URL)
+        mock_session.cache.delete_url(MOCKED_URL)
+
+        assert not mock_session.cache.has_url(MOCKED_URL)
+        mock_session.cache.delete_url(MOCKED_URL)  # Should fail silently
 
 
 def test_delete_urls(mock_session):
     mock_session.get(MOCKED_URL)
-    mock_session.cache.delete_urls([MOCKED_URL])
-    assert not mock_session.cache.has_url(MOCKED_URL)
+    with ignore_deprecation():
+        mock_session.cache.delete_urls([MOCKED_URL])
+        assert not mock_session.cache.has_url(MOCKED_URL)
 
 
 def test_keys(mock_session):
     for url in [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_REDIRECT]:
         mock_session.get(url)
 
-    all_keys = set(mock_session.cache.responses.keys()) | set(mock_session.cache.redirects.keys())
-    assert set(mock_session.cache.keys()) == all_keys
+    with ignore_deprecation():
+        response_keys = set(mock_session.cache.responses.keys())
+        redirect_keys = set(mock_session.cache.redirects.keys())
+        assert set(mock_session.cache.keys()) == response_keys | redirect_keys
 
 
 def test_remove_expired_responses(mock_session):
     """Test for backwards-compatibility"""
-    with patch.object(mock_session.cache, 'delete') as mock_delete, patch.object(
-        mock_session.cache, 'reset_expiration'
-    ) as mock_reset:
+    with ignore_deprecation(), patch.object(
+        mock_session.cache, 'delete'
+    ) as mock_delete, patch.object(mock_session.cache, 'reset_expiration') as mock_reset:
         mock_session.cache.remove_expired_responses(expire_after=1)
         mock_delete.assert_called_once_with(expired=True, invalid=True)
         mock_reset.assert_called_once_with(1)
@@ -335,14 +344,17 @@ def test_response_count(check_expiry, expected_count, mock_session):
 
     mock_session.cache.responses['expired_response'] = CachedResponse(expires=YESTERDAY)
     mock_session.cache.responses['invalid_response'] = InvalidResponse()
-    assert mock_session.cache.response_count(check_expiry=check_expiry) == expected_count
+    with ignore_deprecation():
+        response_count = mock_session.cache.response_count(check_expiry=check_expiry)
+    assert response_count == expected_count
 
 
 def test_values(mock_session):
     for url in [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_HTTPS]:
         mock_session.get(url)
 
-    responses = list(mock_session.cache.values())
+    with ignore_deprecation():
+        responses = list(mock_session.cache.values())
     assert len(responses) == 3
     assert all([isinstance(response, CachedResponse) for response in responses])
 
@@ -354,7 +366,7 @@ def test_values__with_invalid_responses(check_expiry, expected_count, mock_sessi
     responses[1] = AttributeError
     responses[2] = CachedResponse(expires=YESTERDAY, url='test')
 
-    with patch.object(SQLiteDict, '__getitem__', side_effect=responses):
+    with ignore_deprecation(), patch.object(SQLiteDict, '__getitem__', side_effect=responses):
         values = mock_session.cache.values(check_expiry=check_expiry)
         assert len(list(values)) == expected_count
 
