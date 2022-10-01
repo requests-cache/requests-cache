@@ -302,8 +302,8 @@ class BaseCacheTest:
 
         assert len(session.cache.responses.keys()) == 2
         assert len(session.cache.redirects.keys()) == 3
-        assert not session.cache.has_url(httpbin('redirect/1'))
-        assert not any([session.cache.has_url(httpbin(f)) for f in HTTPBIN_FORMATS])
+        assert not session.cache.contains(url=httpbin('redirect/1'))
+        assert not any([session.cache.contains(url=httpbin(f)) for f in HTTPBIN_FORMATS])
 
     @pytest.mark.parametrize('method', HTTPBIN_METHODS)
     def test_filter_request_headers(self, method):

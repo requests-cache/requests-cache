@@ -181,15 +181,20 @@ Or apply a new expiration value to previously cached responses:
 >>> session.cache.reset_expiration(timedelta(days=30))
 ```
 
-Finally, you can delete responses matching specific requests or {ref}`cache keys <custom-matching>`:
+Finally, you can delete individual responses matching specific requests or
+{ref}`cache keys <custom-matching>`:
 ```python
 >>> from requests import Request
->>> request_1 = Request('GET', 'https://httpbin.org/get')
->>> request_2 = Request('GET', 'https://httpbin.org/get', params={'key': 'value'})
->>> session.cache.delete(requests=[request_1, request_2])
-```
 
-```python
+# Delete a simple GET request by URL
+>>> session.cache.delete(urls=['https://httpbin.org/json'])
+
+# Delete by additional request values
+>>> request_1 = Request('GET', 'https://httpbin.org/get', params={'key': 'value'})
+>>> request_2 = Request('GET', 'https://httpbin.org/get', headers={'header': 'value'})
+>>> session.cache.delete(requests=[request_1, request_2])
+
+# Delete by cache key
 >>> session.cache.delete('e25f7e6326966e82')
 ```
 

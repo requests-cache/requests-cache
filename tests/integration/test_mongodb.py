@@ -61,9 +61,9 @@ class TestMongoCache(BaseCacheTest):
         response = session.get(httpbin('get'))
         assert response.from_cache is True
 
-        # Wait up to 60 seconds for removal background process to run
+        # Wait for removal background process to run
         # Unfortunately there doesn't seem to be a way to manually trigger it
-        for i in range(60):
+        for i in range(70):
             if response.cache_key not in session.cache.responses:
                 logger.debug(f'Removed {response.cache_key} after {i} seconds')
                 break

@@ -124,13 +124,17 @@ class BaseCache:
         self,
         key: str = None,
         request: AnyRequest = None,
+        url: str = None,
     ):
         """Check if the specified request is cached
 
         Args:
             key: Check for a specific cache key
             request: Check for a matching request, according to current request matching settings
+            url: Check for a matching GET request with the specified URL
         """
+        if url:
+            request = Request('GET', url)
         if request and not key:
             key = self.create_key(request)
         return key in self.responses or key in self.redirects
@@ -142,6 +146,7 @@ class BaseCache:
         invalid: bool = False,
         older_than: ExpirationTime = None,
         requests: Iterable[AnyRequest] = None,
+        urls: Iterable[str] = None,
     ):
         """Remove responses from the cache according one or more conditions.
 
@@ -151,8 +156,11 @@ class BaseCache:
             invalid: Remove all invalid responses (that can't be deserialized with current settings)
             older_than: Remove responses older than this value, relative to ``response.created_at``
             requests: Remove matching responses, according to current request matching settings
+            urls: Remove matching GET requests for the specified URL(s)
         """
         delete_keys: List[str] = list(keys) if keys else []
+        if urls:
+            requests = list(requests or []) + [Request('GET', url).prepare() for url in urls]
         if requests:
             delete_keys += [self.create_key(request) for request in requests]
 
@@ -247,21 +255,21 @@ class BaseCache:
 
     def delete_url(self, url: str, method: str = 'GET', **kwargs):
         warn(
-            'BaseCache.delete_url() is deprecated; please use .delete() instead',
+            'BaseCache.delete_url() is deprecated; please use .delete(urls=...) instead',
             DeprecationWarning,
         )
         self.delete(requests=[Request(method, url, **kwargs)])
 
     def delete_urls(self, urls: Iterable[str], method: str = 'GET', **kwargs):
         warn(
-            'BaseCache.delete_urls() is deprecated; please use .delete() instead',
+            'BaseCache.delete_urls() is deprecated; please use .delete(urls=...) instead',
             DeprecationWarning,
         )
         self.delete(requests=[Request(method, url, **kwargs) for url in urls])
 
     def has_url(self, url: str, method: str = 'GET', **kwargs) -> bool:
         warn(
-            'BaseCache.has_url() is deprecated; please use .contains() instead',
+            'BaseCache.has_url() is deprecated; please use .contains(url=...) instead',
             DeprecationWarning,
         )
         return self.contains(request=Request(method, url, **kwargs))
