@@ -16,7 +16,7 @@ from decimal import Decimal
 from json import JSONDecodeError
 from typing import Callable, Dict, ForwardRef, MutableMapping
 
-from cattr import GenConverter
+from cattr import Converter
 from requests.cookies import RequestsCookieJar, cookiejar_from_dict
 from requests.exceptions import RequestException
 from requests.structures import CaseInsensitiveDict
@@ -36,7 +36,7 @@ class CattrStage(Stage):
 
     Args:
         factory: A callable that returns a ``cattrs`` converter to start from instead of a new
-            ``GenConverter``. Mainly useful for preconf converters.
+            ``Converter``. Mainly useful for preconf converters.
         decode_content: Save response body in human-readable format, if possible
 
     Notes on ``decode_content`` option:
@@ -50,7 +50,7 @@ class CattrStage(Stage):
     """
 
     def __init__(
-        self, factory: Callable[..., GenConverter] = None, decode_content: bool = False, **kwargs
+        self, factory: Callable[..., Converter] = None, decode_content: bool = False, **kwargs
     ):
         self.converter = init_converter(factory, **kwargs)
         self.decode_content = decode_content
@@ -68,10 +68,10 @@ class CattrStage(Stage):
 
 
 def init_converter(
-    factory: Callable[..., GenConverter] = None,
+    factory: Callable[..., Converter] = None,
     convert_datetime: bool = True,
     convert_timedelta: bool = True,
-) -> GenConverter:
+) -> Converter:
     """Make a converter to structure and unstructure nested objects within a
     :py:class:`.CachedResponse`
 
@@ -80,7 +80,7 @@ def init_converter(
         convert_datetime: May be set to ``False`` for pre-configured converters that already have
             datetime support
     """
-    factory = factory or GenConverter
+    factory = factory or Converter
     converter = factory(omit_if_default=True)
 
     # Convert datetimes to and from iso-formatted strings
@@ -120,9 +120,9 @@ def init_converter(
     return converter
 
 
-def make_decimal_timedelta_converter(**kwargs) -> GenConverter:
+def make_decimal_timedelta_converter(**kwargs) -> Converter:
     """Make a converter that uses Decimals instead of floats to represent timedelta objects"""
-    converter = GenConverter(**kwargs)
+    converter = Converter(**kwargs)
     converter.register_unstructure_hook(
         timedelta, lambda obj: Decimal(str(obj.total_seconds())) if obj else None
     )

@@ -31,12 +31,9 @@ python        = "^3.7"     # requests requires python >=3.7, <4.0
 requests      = ">=2.22"   # Needs no introduction
 urllib3       = ">=1.25.5" # Use a slightly newer version than required by requests (for bugfixes)
 attrs         = ">=21.2"   # For response data models
-cattrs        = ">=22.1"   # For response serialization
+cattrs        = ">=22.2"   # For response serialization
 platformdirs  = ">=2.5"    # For features that use platform-specific system directories
 url-normalize = ">=1.4"    # For more accurate request matching
-
-# Temporary workaround until cattrs 22.2.0 is released
-exceptiongroup             = {version=">=1.0.0-rc.8", python="<3.11"}
 
 # Optional backend dependencies
 boto3                      = {optional=true, version=">=1.15"}
@@ -86,7 +83,7 @@ docs     = ["furo", "linkify-it-py", "myst-parser", "sphinx", "sphinx-autodoc-ty
 
 [tool.poetry.dev-dependencies]
 # For unit + integration tests
-coverage              = "^6.3"
+coverage              = "^6.5"
 psutil                = "^5.0"
 pytest                = "^7.1"
 pytest-clarity        = "^1.0.1"

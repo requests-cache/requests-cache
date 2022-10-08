@@ -30,28 +30,29 @@
   * The constant `requests_cache.DO_NOT_CACHE` may be used to completely disable caching for a request
 
 **Backends:**
-* SQLite:
+* **SQLite**:
   * Improve performance for removing expired responses with `delete()`
   * Add `size()` method to get estimated size of the database (including in-memory databases)
   * Add `sorted()` method with sorting and other query options
   * Add `wal` parameter to enable write-ahead logging
-* Redis:
+* **Redis**:
   * Add `ttl_offset` argument to add a delay between cache expiration and deletion
-* MongoDB:
+* **MongoDB**:
   * Store responses in plain (human-readable) document format instead of fully serialized binary
   * Add optional integration with MongoDB TTL to improve performance for removing expired responses
     * Disabled by default. See 'Backends: MongoDB' docs for details.
-* DynamoDB:
+* *DynamoDB**:
   * Store responses in plain (human-readable) document format instead of fully serialized binary
   * Create default table in on-demand mode instead of provisioned
   * Add optional integration with DynamoDB TTL to improve performance for removing expired responses
     * This is enabled by default, but may be disabled
-* Filesystem:
+* **Filesystem**:
   * The default file format has been changed from pickle to JSON
-* Filesystem, MongoDB, and DynamoDB:
+* **Filesystem, MongoDB, and DynamoDB**:
   * Decode JSON and text response bodies so the saved response can be fully human-readable/editable.
     May be disabled with `decode_content=False`.
-* SQLite, Redis, MongoDB, and GridFS: Close open database connections when `CachedSession` is used as a contextmanager, or if `CachedSession.close()` is called
+* **SQLite, Redis, MongoDB, and GridFS**:
+    * Close open database connections when `CachedSession` is used as a contextmanager, or if `CachedSession.close()` is called
 
 **Request matching & filtering:**
 * Add serializer name to cache keys to avoid errors due to switching serializers
@@ -92,6 +93,7 @@
 * Fix issue on Windows with occasional missing `CachedResponse.created_at` timestamp
 * Add `CachedRequest.path_url` property for compatibility with `RequestEncodingMixin`
 * Add compatibility with cattrs 22.1+
+* Fix potential `AttributeError` due to undetected imports when requests-cache is bundled in a PyInstaller package
 
 **Dependencies:**
 * Replace `appdirs` with `platformdirs`
