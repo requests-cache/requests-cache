@@ -1,6 +1,7 @@
 # History
 
 ## 0.9.7 (Unreleased)
+* Fix potential `AttributeError` due to undetected imports when requests-cache is bundled in a PyInstaller package
 * Update to cattrs 22.2
 
 ## 0.9.6 (2022-08-24)
