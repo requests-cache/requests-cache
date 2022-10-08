@@ -19,8 +19,6 @@ from decimal import Decimal
 from functools import partial
 from importlib import import_module
 
-from cattr import GenConverter
-
 from .._utils import get_placeholder_class
 from .cattrs import CattrStage
 from .pipeline import SerializerPipeline, Stage

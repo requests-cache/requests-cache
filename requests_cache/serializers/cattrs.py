@@ -14,7 +14,7 @@ serialization format.
 from datetime import datetime, timedelta
 from typing import Callable, Dict, ForwardRef, MutableMapping
 
-from cattr import GenConverter
+from cattr import Converter
 from requests.cookies import RequestsCookieJar, cookiejar_from_dict
 from requests.structures import CaseInsensitiveDict
 from urllib3._collections import HTTPHeaderDict
@@ -28,7 +28,7 @@ class CattrStage(Stage):
     on its own, or as a stage within a :py:class:`.SerializerPipeline`.
     """
 
-    def __init__(self, factory: Callable[..., GenConverter] = None):
+    def __init__(self, factory: Callable[..., Converter] = None):
         self.converter = init_converter(factory)
 
     def dumps(self, value: CachedResponse) -> Dict:
@@ -42,9 +42,9 @@ class CattrStage(Stage):
         return self.converter.structure(value, cl=CachedResponse)
 
 
-def init_converter(factory: Callable[..., GenConverter] = None):
+def init_converter(factory: Callable[..., Converter] = None):
     """Make a converter to structure and unstructure nested objects within a :py:class:`.CachedResponse`"""
-    factory = factory or GenConverter
+    factory = factory or Converter
     converter = factory(omit_if_default=True)
 
     # Convert datetimes to and from iso-formatted strings

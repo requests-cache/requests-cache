@@ -1,5 +1,8 @@
 # History
 
+## 0.9.7 (Unreleased)
+* Update to cattrs 22.2
+
 ## 0.9.6 (2022-08-24)
 * Remove potentially problematic row count from `BaseCache.__str__()`
 * Remove upper version constraints for all non-dev dependencies
