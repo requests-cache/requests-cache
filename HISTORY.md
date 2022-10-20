@@ -88,16 +88,19 @@
 * `OriginalResponse.cache_key` and `expires` will be populated for any new response that was written to the cache
 * Add request wrapper methods with return type hints for all HTTP methods (`CachedSession.get()`, `head()`, etc.)
 
-**Bugfixes:**
+**Compatibility fixes:**
+* Add support for header values as bytes for compatibility with OAuth1 features of `requests-oauthlib`
+* Add compatibility with cattrs 22.1+
+* Fix forwarding connection parameters passed to `RedisCache` for redis-py 4.2 and python <=3.8
+* Fix forwarding connection parameters passed to `MongoCache` for pymongo 4.1 and python <=3.8
+
+**Other Bugfixes:**
 * Fix usage of memory backend with `install_cache()`
 * Fix issue on Windows with occasional missing `CachedResponse.created_at` timestamp
 * Add `CachedRequest.path_url` property for compatibility with `RequestEncodingMixin`
 * Fix potential `AttributeError` due to undetected imports when requests-cache is bundled in a PyInstaller package
 * Fix `AttributeError` when attempting to unpickle a `CachedSession` object, and instead disable
   pickling by raising a `NotImplementedError`
-* Add compatibility with cattrs 22.1+
-* Fix forwarding connection parameters passed to `RedisCache` for redis-py 4.2 and python <=3.8
-* Fix forwarding connection parameters passed to `MongoCache` for pymongo 4.1 and python <=3.8
 
 **Dependencies:**
 * Replace `appdirs` with `platformdirs`
@@ -138,6 +141,7 @@ Backport fixes from 1.0:
 * Fix potential `AttributeError` due to undetected imports when requests-cache is bundled in a PyInstaller package
 * Fix `AttributeError` when attempting to unpickle a `CachedSession` object, and instead disable
   pickling by raising a `NotImplementedError`
+* Add support for header values as bytes for compatibility with OAuth1 features of `requests-oauthlib`
 * Update to cattrs 22.2
 
 ## 0.9.6 (2022-08-24)
