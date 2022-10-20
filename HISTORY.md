@@ -8,6 +8,14 @@ Backport fixes from 1.0:
 * Add support for header values as bytes for compatibility with OAuth1 features of `requests-oauthlib`
 * Update to cattrs 22.2
 
+Add the following for forwards-compatibility with 1.0:
+* `requests_cache.policy` subpackage
+* `BaseCache.contains()`
+* `BaseCache.delete()`
+* `BaseCache.filter()`
+* `CachedSession.settings`
+* `DeprecationWarnings` to give an earlier notice for upcoming changes in 1.0
+
 ## 0.9.6 (2022-08-24)
 Backport fixes from 1.0:
 * Remove potentially problematic row count from `BaseCache.__str__()`
