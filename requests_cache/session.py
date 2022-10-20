@@ -280,6 +280,12 @@ class CacheMixin(MIXIN_BASE):
         """
         self.cache.remove_expired_responses(expire_after)
 
+    def __getstate__(self):
+        # Unlike requests.Session, CachedSession may contain backend connection objects that can't
+        # be pickled. Support for this could be added if necessary, but for now it's explicitly
+        # disabled to avoid confusing errors upon unpickling.
+        raise NotImplementedError('CachedSession cannot be pickled')
+
     def __repr__(self):
         repr_attrs = [
             'cache',

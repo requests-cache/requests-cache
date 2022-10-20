@@ -1,6 +1,7 @@
 """CachedSession + BaseCache tests that use mocked responses only"""
 # TODO: This could be split up into some smaller test modules
 import json
+import pickle
 import time
 from collections import UserDict, defaultdict
 from datetime import datetime, timedelta
@@ -76,6 +77,11 @@ def test_init_backend_class():
     session = CachedSession('test_cache', backend=MyCache)
     assert isinstance(session.cache, MyCache)
     assert session.cache.cache_name == 'test_cache'
+
+
+def test_pickle__disabled():
+    with pytest.raises(NotImplementedError):
+        pickle.dumps(CachedSession(backend='memory'))
 
 
 @pytest.mark.parametrize('method', ALL_METHODS)
