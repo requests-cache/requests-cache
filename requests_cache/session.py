@@ -273,11 +273,7 @@ class CacheMixin(MIXIN_BASE):
                 self._disabled = False
 
     def remove_expired_responses(self, expire_after: ExpirationTime = None):
-        """Remove expired responses from the cache, optionally with revalidation
-
-        Args:
-            expire_after: A new expiration time used to revalidate the cache
-        """
+        # Deprecated; will be replaced by CachedSession.cache.delete(expired=True)
         self.cache.remove_expired_responses(expire_after)
 
     def __getstate__(self):
