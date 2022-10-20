@@ -1,5 +1,6 @@
 """CachedSession tests that use mocked responses only"""
 import json
+import pickle
 from collections import UserDict, defaultdict
 from datetime import datetime, timedelta
 from logging import getLogger
@@ -74,6 +75,11 @@ def test_repr(mock_session):
     assert mock_session.cache.cache_name in repr(mock_session)
     assert 'expire_after=11' in repr(mock_session)
     assert 'cache_control=True' in repr(mock_session)
+
+
+def test_pickle__disabled():
+    with pytest.raises(NotImplementedError):
+        pickle.dumps(CachedSession(backend='memory'))
 
 
 def test_response_defaults(mock_session):
