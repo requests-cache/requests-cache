@@ -185,7 +185,7 @@ class BaseCache:
         invalid: bool = False,
         older_than: ExpirationTime = None,
     ) -> Iterator[CachedResponse]:
-        """Get responses from the cache, with optional filters
+        """Get responses from the cache, with optional filters for which responses to include:
 
         Args:
             valid: Include valid and unexpired responses; set to ``False`` to get **only**
@@ -298,9 +298,9 @@ class BaseCache:
             'please use .delete(expired=True) instead',
             DeprecationWarning,
         )
-        self.delete(expired=True, invalid=True)
         if expire_after:
             self.reset_expiration(expire_after)
+        self.delete(expired=True, invalid=True)
 
     def values(self, check_expiry: bool = False) -> Iterator[CachedResponse]:
         warn('BaseCache.values() is deprecated; please use .filter() instead', DeprecationWarning)
