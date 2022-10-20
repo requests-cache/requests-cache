@@ -5,7 +5,7 @@
 __version__ = '0.9.7'
 
 from .backends import *
-from .cache_control import *
+from .policy import *
 from .cache_keys import *
 from .models import *
 from .patcher import *

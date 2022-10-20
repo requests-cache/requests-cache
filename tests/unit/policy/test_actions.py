@@ -4,13 +4,13 @@ from unittest.mock import MagicMock, patch
 import pytest
 from requests import PreparedRequest
 
-from requests_cache.cache_control import (
+from requests_cache.models.response import CachedResponse
+from requests_cache.policy import (
     DO_NOT_CACHE,
     CacheActions,
     get_expiration_datetime,
     get_url_expiration,
 )
-from requests_cache.models.response import CachedResponse
 from tests.conftest import ETAG, HTTPDATE_DATETIME, HTTPDATE_STR, LAST_MODIFIED
 
 IGNORED_DIRECTIVES = [
@@ -32,7 +32,7 @@ IGNORED_DIRECTIVES = [
         (None, None, 1),
     ],
 )
-@patch('requests_cache.cache_control.get_url_expiration')
+@patch('requests_cache.policy.actions.get_url_expiration')
 def test_init(
     get_url_expiration,
     request_expire_after,
@@ -244,7 +244,7 @@ def test_update_from_response__ignored():
 
 @pytest.mark.parametrize('validator_headers', [{'ETag': ETAG}, {'Last-Modified': LAST_MODIFIED}])
 @pytest.mark.parametrize('cache_headers', [{'Cache-Control': 'max-age=0'}, {'Expires': '0'}])
-@patch('requests_cache.cache_control.datetime')
+@patch('requests_cache.policy.actions.datetime')
 def test_update_from_response__revalidate(mock_datetime, cache_headers, validator_headers):
     """If expiration is 0 and there's a validator, the response should be cached, but with immediate
     expiration
@@ -274,7 +274,7 @@ def test_ignored_headers(directive):
     assert actions.expire_after == 1
 
 
-@patch('requests_cache.cache_control.datetime')
+@patch('requests_cache.policy.actions.datetime')
 def test_get_expiration_datetime__no_expiration(mock_datetime):
     assert get_expiration_datetime(None) is None
     assert get_expiration_datetime(-1) is None

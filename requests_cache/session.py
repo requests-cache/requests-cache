@@ -25,8 +25,8 @@ from urllib3 import filepost
 
 from ._utils import get_valid_kwargs
 from .backends import BackendSpecifier, init_backend
-from .cache_control import CacheActions, ExpirationTime, get_expiration_seconds
 from .models import AnyResponse, CachedResponse, set_response_defaults
+from .policy import CacheActions, ExpirationTime, get_expiration_seconds
 
 __all__ = ['ALL_METHODS', 'CachedSession', 'CacheMixin']
 ALL_METHODS = ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']

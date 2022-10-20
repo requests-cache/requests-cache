@@ -12,9 +12,9 @@ from datetime import datetime
 from logging import getLogger
 from typing import Callable, Iterable, Iterator, Optional, Tuple, Union
 
-from ..cache_control import ExpirationTime
 from ..cache_keys import create_key, redact_response
 from ..models import AnyRequest, AnyResponse, CachedResponse
+from ..policy import ExpirationTime
 from ..serializers import init_serializer
 
 # Specific exceptions that may be raised during deserialization

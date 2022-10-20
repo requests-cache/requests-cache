@@ -20,12 +20,11 @@ from typing import TYPE_CHECKING, Any, Dict, Mapping, Optional, Tuple, Union
 from attr import define, field
 from requests import PreparedRequest, Response
 
-from ._utils import coalesce
+from .._utils import coalesce
 
 if TYPE_CHECKING:
     from .models import CachedResponse
 
-__all__ = ['DO_NOT_CACHE', 'CacheActions']
 
 # May be set by either headers or expire_after param to disable caching or disable expiration
 DO_NOT_CACHE = 0
@@ -150,7 +149,7 @@ class CacheActions:
 
         # If expiration is 0 and there's a validator, save it to the cache and revalidate on use
         # Otherwise, skip writing to the cache if specified by expiration or other headers
-        expire_immediately = try_int(self.expire_after) == DO_NOT_CACHE
+        expire_immediately = _try_int(self.expire_after) == DO_NOT_CACHE
         self.skip_write = (expire_immediately or no_store) and not has_validator
 
 
@@ -160,13 +159,13 @@ def get_expiration_datetime(expire_after: ExpirationTime) -> Optional[datetime]:
     if expire_after is None or expire_after == NEVER_EXPIRE:
         return None
     # Expire immediately
-    elif try_int(expire_after) == DO_NOT_CACHE:
+    elif _try_int(expire_after) == DO_NOT_CACHE:
         return datetime.utcnow()
     # Already a datetime or datetime str
     if isinstance(expire_after, str):
-        return parse_http_date(expire_after)
+        return _parse_http_date(expire_after)
     elif isinstance(expire_after, datetime):
-        return to_utc(expire_after)
+        return _to_utc(expire_after)
 
     # Otherwise, it must be a timedelta or time in seconds
     if not isinstance(expire_after, timedelta):
@@ -193,7 +192,7 @@ def get_cache_directives(headers: Mapping) -> Dict:
             else headers['Cache-Control']
         )
         cache_directives = cache_control.split(',')
-        kv_directives = dict([split_kv_directive(value) for value in cache_directives])
+        kv_directives = dict([_split_kv_directive(value) for value in cache_directives])
 
     if 'Expires' in headers:
         kv_directives['expires'] = headers['Expires']
@@ -208,35 +207,35 @@ def get_url_expiration(
         return None
 
     for pattern, expire_after in (urls_expire_after or {}).items():
-        if url_match(url, pattern):
+        if _url_match(url, pattern):
             logger.debug(f'URL {url} matched pattern "{pattern}": {expire_after}')
             return expire_after
     return None
 
 
-def parse_http_date(value: str) -> Optional[datetime]:
+def _parse_http_date(value: str) -> Optional[datetime]:
     """Attempt to parse an HTTP (RFC 5322-compatible) timestamp"""
     try:
         expire_after = parsedate_to_datetime(value)
-        return to_utc(expire_after)
+        return _to_utc(expire_after)
     except (TypeError, ValueError):
         logger.debug(f'Failed to parse timestamp: {value}')
         return None
 
 
-def split_kv_directive(header_value: str) -> CacheDirective:
+def _split_kv_directive(header_value: str) -> CacheDirective:
     """Split a cache directive into a ``(header_value, int)`` key-value pair, if possible;
     otherwise just ``(header_value, True)``.
     """
     header_value = header_value.strip()
     if '=' in header_value:
         k, v = header_value.split('=', 1)
-        return k, try_int(v)
+        return k, _try_int(v)
     else:
         return header_value, True
 
 
-def to_utc(dt: datetime):
+def _to_utc(dt: datetime):
     """All internal datetimes are UTC and timezone-naive. Convert any user/header-provided
     datetimes to the same format.
     """
@@ -246,7 +245,7 @@ def to_utc(dt: datetime):
     return dt
 
 
-def try_int(value: Any) -> Optional[int]:
+def _try_int(value: Any) -> Optional[int]:
     """Convert a value to an int, if possible, otherwise ``None``"""
     try:
         return int(value)
@@ -254,7 +253,7 @@ def try_int(value: Any) -> Optional[int]:
         return None
 
 
-def url_match(url: str, pattern: str) -> bool:
+def _url_match(url: str, pattern: str) -> bool:
     """Determine if a URL matches a pattern
 
     Args:
