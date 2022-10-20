@@ -92,8 +92,12 @@
 * Fix usage of memory backend with `install_cache()`
 * Fix issue on Windows with occasional missing `CachedResponse.created_at` timestamp
 * Add `CachedRequest.path_url` property for compatibility with `RequestEncodingMixin`
-* Add compatibility with cattrs 22.1+
 * Fix potential `AttributeError` due to undetected imports when requests-cache is bundled in a PyInstaller package
+* Fix `AttributeError` when attempting to unpickle a `CachedSession` object, and instead disable
+  pickling by raising a `NotImplementedError`
+* Add compatibility with cattrs 22.1+
+* Fix forwarding connection parameters passed to `RedisCache` for redis-py 4.2 and python <=3.8
+* Fix forwarding connection parameters passed to `MongoCache` for pymongo 4.1 and python <=3.8
 
 **Dependencies:**
 * Replace `appdirs` with `platformdirs`
@@ -129,15 +133,27 @@ If you encounter a problem not listed here after updating to 1.0, please create 
 * Internal utility module changes:
     * The `cache_control` module (added in `0.7`) has been split up into multiple modules in a new `policy` subpackage
 
-### 0.9.6 (2022-08-24)
+## 0.9.7 (Unreleased)
+Backport fixes from 1.0:
+* Fix potential `AttributeError` due to undetected imports when requests-cache is bundled in a PyInstaller package
+* Fix `AttributeError` when attempting to unpickle a `CachedSession` object, and instead disable
+  pickling by raising a `NotImplementedError`
+* Update to cattrs 22.2
+
+## 0.9.6 (2022-08-24)
+Backport fixes from 1.0:
 * Remove potentially problematic row count from `BaseCache.__str__()`
 * Remove upper version constraints for all non-dev dependencies
 * Make dependency specification consistent between PyPI and Conda-Forge packages
 
 ### 0.9.5 (2022-06-29)
-* Backport bugfixes from 1.0
+Backport fixes from 1.0:
+* Fix usage of memory backend with `install_cache()`
+* Add `CachedRequest.path_url` property
+* Add compatibility with cattrs 22.1
 
 ### 0.9.4 (2022-04-22)
+Backport fixes from 1.0:
 * Fix forwarding connection parameters passed to `RedisCache` for redis-py 4.2 and python <=3.8
 * Fix forwarding connection parameters passed to `MongoCache` for pymongo 4.1 and python <=3.8
 
