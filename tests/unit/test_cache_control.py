@@ -65,6 +65,7 @@ def test_init(
         ({'Expires': HTTPDATE_STR}, None),  # Only valid for response headers
         ({'Cache-Control': 'max-age=60'}, 60),
         ({'Cache-Control': 'public, max-age=60'}, 60),
+        ({'Cache-Control': b'public, max-age=60'}, 60),
         ({'Cache-Control': 'max-age=0'}, DO_NOT_CACHE),
         ({'Cache-Control': 'no-store'}, DO_NOT_CACHE),
     ],

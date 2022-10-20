@@ -187,7 +187,12 @@ def get_cache_directives(headers: Mapping) -> Dict:
 
     kv_directives = {}
     if headers.get('Cache-Control'):
-        cache_directives = headers['Cache-Control'].split(',')
+        cache_control = (
+            headers['Cache-Control'].decode()
+            if isinstance(headers['Cache-Control'], bytes)
+            else headers['Cache-Control']
+        )
+        cache_directives = cache_control.split(',')
         kv_directives = dict([split_kv_directive(value) for value in cache_directives])
 
     if 'Expires' in headers:

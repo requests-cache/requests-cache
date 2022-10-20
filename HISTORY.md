@@ -5,6 +5,7 @@ Backport fixes from 1.0:
 * Fix potential `AttributeError` due to undetected imports when requests-cache is bundled in a PyInstaller package
 * Fix `AttributeError` when attempting to unpickle a `CachedSession` object, and instead disable
   pickling by raising a `NotImplementedError`
+* Add support for header values as bytes for compatibility with OAuth1 features of `requests-oauthlib`
 * Update to cattrs 22.2
 
 ## 0.9.6 (2022-08-24)
