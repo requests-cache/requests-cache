@@ -4,7 +4,7 @@ from typing import Optional
 from attr import define, field
 from requests.models import CaseInsensitiveDict
 
-from .._utils import get_valid_kwargs, try_int
+from .._utils import decode, get_valid_kwargs, try_int
 from ..models import RichMixin
 from . import HeaderDict, get_expiration_seconds
 
@@ -33,7 +33,7 @@ class CacheDirectives(RichMixin):
     def from_headers(cls, headers: HeaderDict):
         """Parse cache directives and other settings from request or response headers"""
         headers = CaseInsensitiveDict(headers)
-        directives = headers.get('Cache-Control', '').split(',')
+        directives = decode(headers.get('Cache-Control', '')).split(',')
         kv_directives = dict(_split_kv_directive(value) for value in directives)
         kwargs = get_valid_kwargs(
             cls.__init__, {k.replace('-', '_'): v for k, v in kv_directives.items()}
