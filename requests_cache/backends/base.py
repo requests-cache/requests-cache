@@ -267,6 +267,13 @@ class BaseCache:
         )
         self.delete(requests=[Request(method, url, **kwargs) for url in urls])
 
+    def has_key(self, key: str) -> bool:
+        warn(
+            'BaseCache.has_key() is deprecated; please use .contains() instead',
+            DeprecationWarning,
+        )
+        return self.contains(key)
+
     def has_url(self, url: str, method: str = 'GET', **kwargs) -> bool:
         warn(
             'BaseCache.has_url() is deprecated; please use .contains(url=...) instead',
