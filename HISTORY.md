@@ -111,20 +111,20 @@
 ⚠️ **Deprecations:**
 
 The following methods are deprecated, and will be removed in a future release. The recommended
-replacements are listed below:
-* `BaseCache.remove_expired_responses()`: `BaseCache.delete(expired=True)`
+replacements are listed below. If this causes problems for you, please open an issue to discuss.
 * `CachedSession.remove_expired_responses()`: `BaseCache.delete(expired=True)`
+* `BaseCache.remove_expired_responses()`: `BaseCache.delete(expired=True)`
 * `BaseCache.delete_url()`: `BaseCache.delete(urls=[...])`
 * `BaseCache.delete_urls()`: `BaseCache.delete(urls=[...])`
 * `BaseCache.has_key()`: `BaseCache.contains()`
 * `BaseCache.has_url()`: `BaseCache.contains(url=...)`
-* `BaseCache.keys()`: `BaseCache.filter()`
-* `BaseCache.values()`: `BaseCache.filter()`
-* `BaseCache.response_count()`: `BaseCache.filter()`
+* `BaseCache.keys()`: `BaseCache.responses.keys()` (for all keys), or `BaseCache.filter()` (for filtering options)
+* `BaseCache.values()`: `BaseCache.responses.values()` (for all values), or `BaseCache.filter()` (for filtering options)
+* `BaseCache.response_count()`: `len(BaseCache.responses)` (for all responses), or `BaseCache.filter()` (for filtering options)
 
 ⚠️ **Breaking changes:**
 
-Some relatively minor breaking changes have been made that are not expected to affect most users.
+Some breaking changes have been made that are not expected to affect most users.
 If you encounter a problem not listed here after updating to 1.0, please create a bug report!
 
 * The `BaseCache.urls` property has been replaced with a method that returns a list of URLs

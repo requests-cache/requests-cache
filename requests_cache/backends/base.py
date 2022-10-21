@@ -251,6 +251,14 @@ class BaseCache:
         return str(self)
 
     # Deprecated methods
+    #
+    # Note: delete_urls(), has_key(), keys(), values(), and response_count() were added relatively
+    # recently and appear to not be widely used, so these will likely be removed within 1 or 2
+    # minor releases.
+    #
+    # The methods delete_url(), has_url() and remove_expired_responses() have been around for longer
+    # and have appeared in various examples in the docs, so these will likely stick around longer
+    # (or could be kept indefinitely if someone really needs them)
     # --------------------
 
     def delete_url(self, url: str, method: str = 'GET', **kwargs):
@@ -310,7 +318,11 @@ class BaseCache:
         self.delete(expired=True, invalid=True)
 
     def values(self, check_expiry: bool = False) -> Iterator[CachedResponse]:
-        warn('BaseCache.values() is deprecated; please use .filter() instead', DeprecationWarning)
+        warn(
+            'BaseCache.values() is deprecated; '
+            'please use .filter() or BaseCache.responses.values() instead',
+            DeprecationWarning,
+        )
         yield from self.filter(expired=not check_expiry)
 
 
