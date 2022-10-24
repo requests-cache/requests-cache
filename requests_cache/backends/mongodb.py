@@ -130,18 +130,22 @@ class MongoDict(BaseStorage):
         value = self.serialize(value)
         if not isinstance(value, Mapping):
             value = {'data': value}
-        self.collection.replace_one({'_id': key}, value, upsert=True)
+        self.collection.replace_one({'_id': key}, replacement=value, upsert=True)
 
     def __delitem__(self, key):
-        result = self.collection.find_one_and_delete({'_id': key}, {'_id': True})
+        result = self.collection.find_one_and_delete({'_id': key}, projection={'_id': True})
         if result is None:
             raise KeyError
 
     def __len__(self):
-        return self.collection.estimated_document_count()
+        # First attempt a fast estimated count, then fallback to full count (compat with mongita)
+        try:
+            return self.collection.estimated_document_count()
+        except NotImplementedError:
+            return self.collection.count_documents({})
 
     def __iter__(self):
-        for d in self.collection.find({}, {'_id': True}):
+        for d in self.collection.find({}, projection={'_id': True}):
             yield d['_id']
 
     def bulk_delete(self, keys: Iterable[str]):
