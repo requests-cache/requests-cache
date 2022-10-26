@@ -26,7 +26,7 @@ Or by alias:
 ```
 
 ## File Formats
-By default, responses are saved as JSON files. If you prefer a deiffernt format, you can use of the
+By default, responses are saved as JSON files. If you prefer a different format, you can use of the
 other available {ref}`serializers` or provide your own. For example, to save responses as
 YAML files (requires `pyyaml`):
 ```python
