@@ -1,7 +1,7 @@
 # History
 
 ## 1.0.0 (Unreleased)
-[See all unreleased issues and PRs](https://github.com/requests-cache/requests-cache/milestone/5?closed=1)
+[See all unreleased issues and PRs](https://github.com/requests-cache/requests-cache/milestone/10?closed=1)
 
 🕗 **Expiration & headers:**
 * Add support for `Cache-Control: min-fresh`
@@ -79,7 +79,7 @@
 * Add `BaseCache.recreate_keys()` method to recreate cache keys for all previously cached responses
   (e.g., to preserve cache data after an update that changes request matching behavior)
 * Update `BaseCache.urls` into a method that takes optional filter params, and returns sorted unique URLs
-󠀽
+
 ℹ️ **Type hints:**
 * Add `OriginalResponse` type, which adds type hints to `requests.Response` objects for extra attributes added by requests-cache:
   * `cache_key`
@@ -92,18 +92,19 @@
 * Add request wrapper methods with return type hints for all HTTP methods (`CachedSession.get()`, `head()`, etc.)
 
 🧩 **Compatibility fixes:**
-* Add support for header values as bytes for compatibility with OAuth1 features of `requests-oauthlib`
-* Add compatibility with cattrs 22.1+
-* Fix forwarding connection parameters passed to `RedisCache` for redis-py 4.2 and python <=3.8
-* Fix forwarding connection parameters passed to `MongoCache` for pymongo 4.1 and python <=3.8
+* **PyInstaller:** Fix potential `AttributeError` due to undetected imports when requests-cache is bundled in a PyInstaller package
+* **requests-oauthlib:** Add support for header values as bytes for compatibility with OAuth1 features
+* **redis-py:** Fix forwarding connection parameters passed to `RedisCache` for redis-py 4.2 and python <=3.8
+* **pymongo:** Fix forwarding connection parameters passed to `MongoCache` for pymongo 4.1 and python <=3.8
+* **cattrs:** Add compatibility with cattrs 22.2
+* **python:** Add tests to ensure compatibility with python 3.11
 
-🪲 **Other Bugfixes:**
+🪲 **Bugfixes:**
 * Fix usage of memory backend with `install_cache()`
 * Fix issue on Windows with occasional missing `CachedResponse.created_at` timestamp
 * Add `CachedRequest.path_url` property for compatibility with `RequestEncodingMixin`
 * Fix potential `AttributeError` due to undetected imports when requests-cache is bundled in a PyInstaller package
-* Fix `AttributeError` when attempting to unpickle a `CachedSession` object, and instead disable
-  pickling by raising a `NotImplementedError`
+* Fix `AttributeError` when attempting to unpickle a `CachedSession` object, and instead disable pickling by raising a `NotImplementedError`
 
 📦 **Dependencies:**
 * Replace `appdirs` with `platformdirs`
@@ -140,21 +141,21 @@ If you encounter a problem not listed here after updating to 1.0, please create 
 * Internal utility module changes:
     * The `cache_control` module (added in `0.7`) has been split up into multiple modules in a new `policy` subpackage
 
-## 0.9.7 (Unreleased)
-Backport fixes from 1.0:
-* Fix potential `AttributeError` due to undetected imports when requests-cache is bundled in a PyInstaller package
-* Fix `AttributeError` when attempting to unpickle a `CachedSession` object, and instead disable
-  pickling by raising a `NotImplementedError`
-* Add support for header values as bytes for compatibility with OAuth1 features of `requests-oauthlib`
-* Update to cattrs 22.2
+## 0.9.7 (2022-10-26)
+Backport compatibility fixes from 1.0:
+* **PyInstaller:** Fix potential `AttributeError` due to undetected imports when requests-cache is bundled in a PyInstaller package
+* **requests-oauthlib:** Add support for header values as bytes for compatibility with OAuth1 features
+* **cattrs:** Add compatibility with cattrs 22.2
+* **python:** Add tests to ensure compatibility with python 3.11
+* Fix `AttributeError` when attempting to unpickle a `CachedSession` object, and instead disable pickling by raising a `NotImplementedError`
 
 Add the following for forwards-compatibility with 1.0:
-* `requests_cache.policy` subpackage
+* `DeprecationWarnings` to give an earlier notice for methods deprecated (not removed) in 1.0
+* `requests_cache.policy` subpackage (will replace `requests_cache.cache_control` module)
 * `BaseCache.contains()`
 * `BaseCache.delete()`
 * `BaseCache.filter()`
 * `CachedSession.settings`
-* `DeprecationWarning`s to give an earlier notice for upcoming changes in 1.0
 
 ## 0.9.6 (2022-08-24)
 Backport fixes from 1.0:
