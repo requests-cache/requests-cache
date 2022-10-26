@@ -18,7 +18,7 @@ on:
         default: ''
 
 env:
-  LATEST_PY_VERSION: '3.10'
+  LATEST_PY_VERSION: '3.11'
   XDIST_ARGS: '--numprocesses=auto --dist=loadfile'
 
 jobs:
@@ -44,7 +44,6 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - uses: snok/install-poetry@v1.3
         with:
-          version: 1.2.0a2
           virtualenvs-in-project: true
 
       # Start integration test databases
@@ -80,7 +79,7 @@ jobs:
   # Deploy stable builds on tags only, and pre-release builds from manual trigger ("workflow_dispatch")
   release:
     needs: [test]
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -88,7 +87,6 @@ jobs:
           python-version: ${{ env.LATEST_PY_VERSION }}
       - uses: snok/install-poetry@v1.3
         with:
-          version: 1.2.0a2
           virtualenvs-in-project: true
 
       - name: Set pre-release version
