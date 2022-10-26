@@ -16,7 +16,7 @@ import requests
 from requests import PreparedRequest, Session
 
 from requests_cache import ALL_METHODS, CachedResponse, CachedSession
-from requests_cache.backends.base import BaseCache
+from requests_cache.backends import BaseCache
 from tests.conftest import (
     CACHE_NAME,
     ETAG,
@@ -99,7 +99,7 @@ class BaseCacheTest:
 
         # Patch storage class to track number of times getitem is called, without changing behavior
         with patch.object(
-            storage_class, '__getitem__', side_effect=storage_class.__getitem__
+            storage_class, '__getitem__', side_effect=lambda k: CachedResponse()
         ) as getitem:
             session.get(httpbin('get'))
             assert getitem.call_count == 1
