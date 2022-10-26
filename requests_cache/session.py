@@ -16,7 +16,7 @@
 from contextlib import contextmanager
 from logging import getLogger
 from threading import RLock
-from typing import TYPE_CHECKING, Callable, Dict, Iterable, Optional
+from typing import TYPE_CHECKING, Callable, Dict, Iterable, Optional, Union
 
 from requests import PreparedRequest, Response
 from requests import Session as OriginalSession
@@ -24,9 +24,9 @@ from requests.hooks import dispatch_hook
 from urllib3 import filepost
 
 from ._utils import get_valid_kwargs
-from .backends import BackendSpecifier, init_backend
-from .cache_control import CacheActions, ExpirationTime, get_expiration_seconds
+from .backends import KEY_FN, BackendSpecifier, init_backend
 from .models import AnyResponse, CachedResponse, set_response_defaults
+from .policy import CacheActions, ExpirationTime, get_expiration_seconds
 
 __all__ = ['ALL_METHODS', 'CachedSession', 'CacheMixin']
 ALL_METHODS = ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
@@ -273,11 +273,7 @@ class CacheMixin(MIXIN_BASE):
                 self._disabled = False
 
     def remove_expired_responses(self, expire_after: ExpirationTime = None):
-        """Remove expired responses from the cache, optionally with revalidation
-
-        Args:
-            expire_after: A new expiration time used to revalidate the cache
-        """
+        # Deprecated; will be replaced by CachedSession.cache.delete(expired=True)
         self.cache.remove_expired_responses(expire_after)
 
     def __getstate__(self):
@@ -298,6 +294,37 @@ class CacheMixin(MIXIN_BASE):
         ]
         attr_strs = [f'{k}={repr(getattr(self, k))}' for k in repr_attrs]
         return f'<CachedSession({", ".join(attr_strs)})>'
+
+    # The following properties exist for partial forwards-compatibility with CacheSettings in 1.0
+    # All settings will be settable via CachedSession.settings, instead of being split between
+    # CachedSession and BaseCache.
+    @property
+    def settings(self):
+        return self
+
+    @property
+    def ignored_parameters(self) -> Iterable[str]:
+        return self.cache.ignored_parameters or []
+
+    @ignored_parameters.setter
+    def ignored_parameters(self, value: Iterable[str]):
+        self.cache.ignored_parameters = value
+
+    @property
+    def match_headers(self) -> Union[Iterable[str], bool]:
+        return self.cache.match_headers or []
+
+    @match_headers.setter
+    def match_headers(self, value: Union[Iterable[str], bool]):
+        self.cache.match_headers = value
+
+    @property
+    def key_fn(self) -> KEY_FN:
+        return self.cache.key_fn or []
+
+    @key_fn.setter
+    def key_fn(self, value: KEY_FN):
+        self.cache.key_fn = value
 
 
 class CachedSession(CacheMixin, OriginalSession):
