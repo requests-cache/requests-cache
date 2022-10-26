@@ -308,7 +308,7 @@ class CacheMixin(MIXIN_BASE):
         self.cache.close()
 
     def remove_expired_responses(self):
-        """**Deprecated:** Use ``session.cache.remove(expired=True)`` instead"""
+        """**Deprecated:** Use ``session.cache.delete(expired=True)`` instead"""
         self.cache.delete(expired=True, invalid=True)
 
     def __getstate__(self):
