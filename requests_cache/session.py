@@ -307,9 +307,9 @@ class CacheMixin(MIXIN_BASE):
         super().close()
         self.cache.close()
 
-    def remove_expired_responses(self):
-        """**Deprecated:** Use ``session.cache.delete(expired=True)`` instead"""
-        self.cache.delete(expired=True, invalid=True)
+    def remove_expired_responses(self, expire_after: ExpirationTime = None):
+        # Deprecated; will be replaced by CachedSession.cache.delete(expired=True)
+        self.cache.remove_expired_responses(expire_after)
 
     def __getstate__(self):
         # Unlike requests.Session, CachedSession may contain backend connection objects that can't

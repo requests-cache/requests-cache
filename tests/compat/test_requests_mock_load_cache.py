@@ -24,7 +24,7 @@ def mock_session():
     adapter = Adapter()
     cache = CachedSession(TEST_DB).cache
 
-    for response in cache.values():
+    for response in cache.responses.values():
         adapter.register_uri(
             response.request.method,
             response.request.url,

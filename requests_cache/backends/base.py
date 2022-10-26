@@ -185,7 +185,7 @@ class BaseCache:
         invalid: bool = False,
         older_than: ExpirationTime = None,
     ) -> Iterator[CachedResponse]:
-        """Get responses from the cache, with optional filters
+        """Get responses from the cache, with optional filters for which responses to include:
 
         Args:
             valid: Include valid and unexpired responses; set to ``False`` to get **only**
@@ -251,6 +251,14 @@ class BaseCache:
         return str(self)
 
     # Deprecated methods
+    #
+    # Note: delete_urls(), has_key(), keys(), values(), and response_count() were added relatively
+    # recently and appear to not be widely used, so these will likely be removed within 1 or 2
+    # minor releases.
+    #
+    # The methods delete_url(), has_url() and remove_expired_responses() have been around for longer
+    # and have appeared in various examples in the docs, so these will likely stick around longer
+    # (or could be kept indefinitely if someone really needs them)
     # --------------------
 
     def delete_url(self, url: str, method: str = 'GET', **kwargs):
@@ -266,6 +274,13 @@ class BaseCache:
             DeprecationWarning,
         )
         self.delete(requests=[Request(method, url, **kwargs) for url in urls])
+
+    def has_key(self, key: str) -> bool:
+        warn(
+            'BaseCache.has_key() is deprecated; please use .contains() instead',
+            DeprecationWarning,
+        )
+        return self.contains(key)
 
     def has_url(self, url: str, method: str = 'GET', **kwargs) -> bool:
         warn(
@@ -298,12 +313,16 @@ class BaseCache:
             'please use .delete(expired=True) instead',
             DeprecationWarning,
         )
-        self.delete(expired=True, invalid=True)
         if expire_after:
             self.reset_expiration(expire_after)
+        self.delete(expired=True, invalid=True)
 
     def values(self, check_expiry: bool = False) -> Iterator[CachedResponse]:
-        warn('BaseCache.values() is deprecated; please use .filter() instead', DeprecationWarning)
+        warn(
+            'BaseCache.values() is deprecated; '
+            'please use .filter() or BaseCache.responses.values() instead',
+            DeprecationWarning,
+        )
         yield from self.filter(expired=not check_expiry)
 
 

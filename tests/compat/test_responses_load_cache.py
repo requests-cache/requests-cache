@@ -27,7 +27,7 @@ def get_responses():
     """
     with RequestsMock() as mocker:
         cache = CachedSession(TEST_DB).cache
-        for response in cache.values():
+        for response in cache.responses.values():
             mocker.add(
                 Response(
                     response.request.method,

@@ -131,7 +131,7 @@ class SQLiteCache(BaseCache):
         reversed: bool = False,
         limit: int = None,
         expired: bool = True,
-    ):
+    ) -> Iterator[CachedResponse]:
         """Get cached responses, with sorting and other query options.
 
         Args:
@@ -306,7 +306,7 @@ class SQLiteDict(BaseStorage):
 
     def sorted(
         self, key: str = 'expires', reversed: bool = False, limit: int = None, expired: bool = True
-    ):
+    ) -> Iterator[CachedResponse]:
         """Get cache values in sorted order; see :py:meth:`.SQLiteCache.sorted` for usage details"""
         # Get sort key, direction, and limit
         if key not in ['expires', 'size', 'key']:

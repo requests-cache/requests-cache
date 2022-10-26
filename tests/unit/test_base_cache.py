@@ -290,6 +290,14 @@ def test_urls__error(mock_session):
 # --------------------
 
 
+def test_has_key(mock_session):
+    response = CachedResponse()
+    mock_session.cache.responses['12345'] = response
+    # flake8: noqa: W601
+    assert mock_session.cache.has_key('12345')
+    assert not mock_session.cache.has_key('1234')
+
+
 def test_has_url(mock_session):
     mock_session.get(MOCKED_URL, params={'foo': 'bar'})
     with ignore_deprecation():
