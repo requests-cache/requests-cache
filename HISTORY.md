@@ -1,20 +1,20 @@
 # History
 
-## 0.9.7 (Unreleased)
-Backport fixes from 1.0:
-* Fix potential `AttributeError` due to undetected imports when requests-cache is bundled in a PyInstaller package
-* Fix `AttributeError` when attempting to unpickle a `CachedSession` object, and instead disable
-  pickling by raising a `NotImplementedError`
-* Add support for header values as bytes for compatibility with OAuth1 features of `requests-oauthlib`
-* Update to cattrs 22.2
+## 0.9.7 (2022-10-26)
+Backport compatibility fixes from 1.0:
+* **PyInstaller:** Fix potential `AttributeError` due to undetected imports when requests-cache is bundled in a PyInstaller package
+* **requests-oauthlib:** Add support for header values as bytes for compatibility with OAuth1 features
+* **cattrs:** Add compatibility with cattrs 22.2
+* **python:** Add tests to ensure compatibility with python 3.11
+* Fix `AttributeError` when attempting to unpickle a `CachedSession` object, and instead disable pickling by raising a `NotImplementedError`
 
 Add the following for forwards-compatibility with 1.0:
-* `requests_cache.policy` subpackage
+* `DeprecationWarnings` to give an earlier notice for methods deprecated (not removed) in 1.0
+* `requests_cache.policy` subpackage (will replace `requests_cache.cache_control` module)
 * `BaseCache.contains()`
 * `BaseCache.delete()`
 * `BaseCache.filter()`
 * `CachedSession.settings`
-* `DeprecationWarnings` to give an earlier notice for upcoming changes in 1.0
 
 ## 0.9.6 (2022-08-24)
 Backport fixes from 1.0:
