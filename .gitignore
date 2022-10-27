@@ -1,17 +1,19 @@
-*.db
-*.py[cod]
-*.sqlite
-*.sqlite-journal
-*.egg
-*.egg-info
 build/
 dist/
 downloads/
 example_cache/
 http_cache/
 venv/
+
+*.db
+*.egg
+*.egg-info
+*.py[cod]
+*.sqlite
+*.sqlite-journal
 .venv
 Pipfile
+profile.json
 
 # JS
 node_modules/
