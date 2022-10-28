@@ -9,10 +9,12 @@ from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
+from cattr import BaseConverter, GenConverter
 
 from requests_cache import (
     CachedResponse,
     CachedSession,
+    CattrStage,
     SerializerPipeline,
     Stage,
     json_serializer,
@@ -128,3 +130,14 @@ def test_plain_pickle(tempfile_path):
     session.cache.responses['key'] = response
     assert session.cache.responses['key'] == response
     assert session.cache.responses['key'].expires is None
+
+
+def test_cattrs_compat():
+    """CattrStage should be compatible with BaseConverter, which doesn't support the omit_if_default
+    keyword arg.
+    """
+    stage_1 = CattrStage()
+    assert isinstance(stage_1.converter, GenConverter)
+
+    stage_2 = CattrStage(factory=BaseConverter)
+    assert isinstance(stage_2.converter, BaseConverter)
