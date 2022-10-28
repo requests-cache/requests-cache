@@ -17,7 +17,7 @@ from requests.structures import CaseInsensitiveDict
 
 from requests_cache import ALL_METHODS, CachedSession
 from requests_cache._utils import get_placeholder_class
-from requests_cache.backends import BACKEND_CLASSES, BaseCache, SQLiteDict
+from requests_cache.backends import BACKEND_CLASSES, BaseCache
 from requests_cache.backends.base import DESERIALIZE_ERRORS
 from requests_cache.policy.expiration import DO_NOT_CACHE, EXPIRE_IMMEDIATELY, NEVER_EXPIRE
 from tests.conftest import (
@@ -351,7 +351,8 @@ def test_include_get_headers():
 def test_cache_error(exception_cls, mock_session):
     """If there is an error while fetching a cached response, a new one should be fetched"""
     mock_session.get(MOCKED_URL)
-    with patch.object(SQLiteDict, '__getitem__', side_effect=exception_cls):
+
+    with patch.object(mock_session.cache.responses.serializer, 'loads', side_effect=exception_cls):
         assert mock_session.get(MOCKED_URL).from_cache is False
 
 
@@ -440,7 +441,7 @@ def test_unpickle_errors(mock_session):
     """If there is an error during deserialization, the request should be made again"""
     assert mock_session.get(MOCKED_URL_JSON).from_cache is False
 
-    with patch.object(SQLiteDict, '__getitem__', side_effect=PickleError):
+    with patch.object(mock_session.cache.responses.serializer, 'loads', side_effect=PickleError):
         resp = mock_session.get(MOCKED_URL_JSON)
         assert resp.from_cache is False
         assert resp.json()['message'] == 'mock json response'

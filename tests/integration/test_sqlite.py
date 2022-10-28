@@ -1,4 +1,5 @@
 import os
+import pickle
 from datetime import datetime, timedelta
 from os.path import join
 from tempfile import NamedTemporaryFile, gettempdir
@@ -8,9 +9,9 @@ from unittest.mock import patch
 import pytest
 from platformdirs import user_cache_dir
 
-from requests_cache.backends.base import BaseCache
-from requests_cache.backends.sqlite import MEMORY_URI, SQLiteCache, SQLiteDict
-from requests_cache.models.response import CachedResponse
+from requests_cache.backends import BaseCache, SQLiteCache, SQLiteDict
+from requests_cache.backends.sqlite import MEMORY_URI
+from requests_cache.models import CachedResponse
 from tests.integration.base_cache_test import BaseCacheTest
 from tests.integration.base_storage_test import CACHE_NAME, BaseStorageTest
 
@@ -60,7 +61,7 @@ class TestSQLiteDict(BaseStorageTest):
         assert len(cache) == 0
 
     def test_use_memory__uri(self):
-        self.init_cache(':memory:').db_path == ':memory:'
+        assert self.init_cache(':memory:').db_path == ':memory:'
 
     def test_non_dir_parent_exists(self):
         """Expect a custom error message if a parent path already exists but isn't a directory"""
@@ -219,6 +220,30 @@ class TestSQLiteDict(BaseStorageTest):
             assert prev_item is None or prev_item.expires < item.expires
             assert item.status_code % 2 == 0
 
+    def test_sorted__error(self):
+        """sorted() should handle deserialization errors and not return invalid responses"""
+
+        class BadSerializer:
+            def loads(self, value):
+                response = pickle.loads(value)
+                if response.cache_key == 'key_42':
+                    raise pickle.PickleError()
+                return response
+
+            def dumps(self, value):
+                return pickle.dumps(value)
+
+        cache = self.init_cache(serializer=BadSerializer())
+
+        for i in range(100):
+            response = CachedResponse(status_code=i)
+            response.cache_key = f'key_{i}'
+            cache[f'key_{i}'] = response
+
+        # Items should only include unexpired (even numbered) items, and still be in sorted order
+        items = list(cache.sorted())
+        assert len(items) == 99
+
     @pytest.mark.parametrize(
         'db_path, use_temp',
         [
@@ -272,12 +297,26 @@ class TestSQLiteCache(BaseCacheTest):
         session = self.init_session()
         assert session.cache.db_path == session.cache.responses.db_path
 
-    @patch.object(SQLiteDict, 'sorted')
-    def test_filter__expired_only(self, mock_sorted):
-        """Filtering by expired only should use a more efficient SQL query"""
+    def test_count(self):
+        """count() should work the same as len(), but with the option to exclude expired responses"""
         session = self.init_session()
-        session.cache.filter(valid=False, expired=True)
-        mock_sorted.assert_called_once_with(expired=True)
+        now = datetime.utcnow()
+        session.cache.responses['key_1'] = CachedResponse(expires=now + timedelta(1))
+        session.cache.responses['key_2'] = CachedResponse(expires=now - timedelta(1))
+
+        assert session.cache.count() == 2
+        assert session.cache.count(expired=False) == 1
+
+    @patch.object(SQLiteDict, 'sorted')
+    def test_filter__expired(self, mock_sorted):
+        """Filtering by expired should use a more efficient SQL query"""
+        session = self.init_session()
+
+        session.cache.filter()
+        mock_sorted.assert_called_with(expired=True)
+
+        session.cache.filter(expired=False)
+        mock_sorted.assert_called_with(expired=False)
 
     def test_sorted(self):
         """Test wrapper method for SQLiteDict.sorted(), with all arguments combined"""
@@ -300,4 +339,5 @@ class TestSQLiteCache(BaseCacheTest):
         prev_item = None
         for i, item in enumerate(items):
             assert prev_item is None or prev_item.expires < item.expires
+            assert item.cache_key
             assert not item.is_expired

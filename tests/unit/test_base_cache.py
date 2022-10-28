@@ -1,4 +1,5 @@
 """BaseCache tests that use mocked responses only"""
+import pickle
 from datetime import datetime, timedelta
 from logging import getLogger
 from pickle import PickleError
@@ -8,9 +9,10 @@ from unittest.mock import patch
 import pytest
 from requests import Request
 
-from requests_cache.backends import BaseCache, SQLiteDict
+from requests_cache.backends import BaseCache, SQLiteCache, SQLiteDict
 from requests_cache.cache_keys import create_key
 from requests_cache.models import CachedRequest, CachedResponse
+from requests_cache.session import CachedSession
 from tests.conftest import (
     MOCKED_URL,
     MOCKED_URL_ETAG,
@@ -18,6 +20,7 @@ from tests.conftest import (
     MOCKED_URL_JSON,
     MOCKED_URL_REDIRECT,
     ignore_deprecation,
+    mount_mock_adapter,
     patch_normalize_url,
 )
 
@@ -109,19 +112,28 @@ def test_delete__expired__per_request(mock_session):
     assert len(mock_session.cache.responses) == 1
 
 
-def test_delete__invalid(mock_session):
+def test_delete__invalid(tempfile_path):
+    class BadSerialzier:
+        def dumps(self, value):
+            return pickle.dumps(value)
+
+        def loads(self, value):
+            response = pickle.loads(value)
+            if response.url.endswith('/json'):
+                raise PickleError
+            return response
+
+    mock_session = CachedSession(
+        cache_name=tempfile_path, backend='sqlite', serializer=BadSerialzier()
+    )
+    mock_session = mount_mock_adapter(mock_session)
+
     # Start with two cached responses, one of which will raise an error
     response_1 = mock_session.get(MOCKED_URL)
     response_2 = mock_session.get(MOCKED_URL_JSON)
 
-    def error_on_key(key):
-        if key == response_2.cache_key:
-            raise PickleError
-        return CachedResponse.from_response(response_1)
-
     # Use the generic BaseCache implementation, not the SQLite-specific one
-    with patch.object(SQLiteDict, '__getitem__', side_effect=error_on_key):
-        BaseCache.delete(mock_session.cache, expired=True, invalid=True)
+    BaseCache.delete(mock_session.cache, expired=True, invalid=True)
 
     assert len(mock_session.cache.responses) == 1
     assert mock_session.get(MOCKED_URL).from_cache is True
@@ -220,7 +232,7 @@ def test_recreate_keys__same_key_fn(mock_session):
 
 def test_reset_expiration__extend_expiration(mock_session):
     # Start with an expired response
-    mock_session.settings.expire_after = datetime.utcnow() - timedelta(seconds=0.01)
+    mock_session.settings.expire_after = datetime.utcnow() - timedelta(seconds=1)
     mock_session.get(MOCKED_URL)
 
     # Set expiration in the future
@@ -236,7 +248,7 @@ def test_reset_expiration__shorten_expiration(mock_session):
     mock_session.get(MOCKED_URL)
 
     # Set expiration in the past
-    mock_session.cache.reset_expiration(datetime.utcnow() - timedelta(seconds=0.01))
+    mock_session.cache.reset_expiration(datetime.utcnow() - timedelta(seconds=1))
     response = mock_session.get(MOCKED_URL)
     assert response.is_expired is False and response.from_cache is False
 
@@ -277,8 +289,8 @@ def test_urls(mock_normalize_url, mock_session):
 
 def test_urls__error(mock_session):
     responses = [mock_session.get(url) for url in [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_HTTPS]]
-    responses[2] = AttributeError
-    with patch.object(SQLiteDict, '__getitem__', side_effect=responses):
+    responses[2] = None
+    with patch.object(SQLiteDict, 'deserialize', side_effect=responses):
         expected_urls = [MOCKED_URL_JSON, MOCKED_URL]
         assert mock_session.cache.urls() == expected_urls
 
@@ -346,6 +358,7 @@ def test_keys(mock_session):
         response_keys = set(mock_session.cache.responses.keys())
         redirect_keys = set(mock_session.cache.redirects.keys())
         assert set(mock_session.cache.keys()) == response_keys | redirect_keys
+        assert len(list(mock_session.cache.keys(check_expiry=True))) == 5
 
 
 def test_remove_expired_responses(mock_session):
@@ -385,16 +398,14 @@ def test_values(mock_session):
     assert all([isinstance(response, CachedResponse) for response in responses])
 
 
-@pytest.mark.parametrize('check_expiry, expected_count', [(True, 1), (False, 2)])
-def test_values__with_invalid_responses(check_expiry, expected_count, mock_session):
-    """values() should always exclude invalid responses, and optionally exclude expired responses"""
+def test_values__with_invalid_responses(mock_session):
     responses = [mock_session.get(url) for url in [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_HTTPS]]
-    responses[1] = AttributeError
+    responses[1] = None
     responses[2] = CachedResponse(expires=YESTERDAY, url='test')
 
-    with ignore_deprecation(), patch.object(SQLiteDict, '__getitem__', side_effect=responses):
-        values = mock_session.cache.values(check_expiry=check_expiry)
-        assert len(list(values)) == expected_count
+    with ignore_deprecation(), patch.object(SQLiteCache, 'filter', side_effect=responses):
+        values = mock_session.cache.values(check_expiry=True)
+        assert len(list(values)) == 1
 
     # The invalid response should be skipped, but remain in the cache for now
     assert len(mock_session.cache.responses.keys()) == 3

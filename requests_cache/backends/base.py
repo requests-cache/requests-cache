@@ -70,11 +70,7 @@ class BaseCache:
                 response = self.responses[self.redirects[key]]
             response.cache_key = key
             return response
-        except KeyError:
-            return default
-        except DESERIALIZE_ERRORS as e:
-            logger.error(f'Unable to deserialize response {key}: {str(e)}')
-            logger.debug(e, exc_info=True)
+        except (AttributeError, KeyError):
             return default
 
     def save_response(self, response: Response, cache_key: str = None, expires: datetime = None):
@@ -296,8 +292,11 @@ class BaseCache:
             DeprecationWarning,
         )
         yield from self.redirects.keys()
-        for response in self.filter(expired=not check_expiry):
-            yield response.cache_key
+        if not check_expiry:
+            yield from self.responses.keys()
+        else:
+            for response in self.filter(expired=False):
+                yield response.cache_key
 
     def response_count(self, check_expiry: bool = False) -> int:
         warn(
@@ -394,16 +393,28 @@ class BaseStorage(MutableMapping[KT, VT], ABC):
         """Close any open backend connections"""
 
     def serialize(self, value: VT):
-        """Serialize value, if a serializer is available"""
+        """Serialize a value, if a serializer is available"""
         if TYPE_CHECKING:
             assert hasattr(self.serializer, 'dumps')
         return self.serializer.dumps(value) if self.serializer else value
 
     def deserialize(self, value: VT):
-        """Deserialize value, if a serializer is available"""
+        """Deserialize a value, if a serializer is available.
+
+        If deserialization fails (usually due to a value saved in an older requests-cache version),
+        ``None`` will be returned.
+        """
+        if not self.serializer:
+            return value
         if TYPE_CHECKING:
             assert hasattr(self.serializer, 'loads')
-        return self.serializer.loads(value) if self.serializer else value
+
+        try:
+            return self.serializer.loads(value)
+        except DESERIALIZE_ERRORS as e:
+            logger.error(f'Unable to deserialize response: {str(e)}')
+            logger.debug(e, exc_info=True)
+            return None
 
     def __str__(self):
         return str(list(self.keys()))
