@@ -45,7 +45,11 @@ class CattrStage(Stage):
 def init_converter(factory: Callable[..., Converter] = None):
     """Make a converter to structure and unstructure nested objects within a :py:class:`.CachedResponse`"""
     factory = factory or Converter
-    converter = factory(omit_if_default=True)
+    try:
+        converter = factory(omit_if_default=True)
+    # Handle previous versions of cattrs (<22.2) that don't support this argument
+    except TypeError:
+        converter = factory()
 
     # Convert datetimes to and from iso-formatted strings
     converter.register_unstructure_hook(datetime, lambda obj: obj.isoformat() if obj else None)  # type: ignore
