@@ -81,7 +81,11 @@ def init_converter(
             datetime support
     """
     factory = factory or Converter
-    converter = factory(omit_if_default=True)
+    try:
+        converter = factory(omit_if_default=True)
+    # Handle previous versions of cattrs (<22.2) that don't support this argument
+    except TypeError:
+        converter = factory()
 
     # Convert datetimes to and from iso-formatted strings
     if convert_datetime:
