@@ -308,11 +308,15 @@ class TestSQLiteCache(BaseCacheTest):
         assert session.cache.count(expired=False) == 1
 
     @patch.object(SQLiteDict, 'sorted')
-    def test_filter__expired_only(self, mock_sorted):
-        """Filtering by expired only should use a more efficient SQL query"""
+    def test_filter__expired(self, mock_sorted):
+        """Filtering by expired should use a more efficient SQL query"""
         session = self.init_session()
-        session.cache.filter(valid=False, expired=True)
-        mock_sorted.assert_called_once_with(expired=True)
+
+        session.cache.filter()
+        mock_sorted.assert_called_with(expired=True)
+
+        session.cache.filter(expired=False)
+        mock_sorted.assert_called_with(expired=False)
 
     def test_sorted(self):
         """Test wrapper method for SQLiteDict.sorted(), with all arguments combined"""

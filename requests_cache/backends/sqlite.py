@@ -19,6 +19,7 @@ from platformdirs import user_cache_dir
 
 from requests_cache.backends.base import VT
 from requests_cache.models.response import CachedResponse
+from requests_cache.policy import ExpirationTime
 
 from .._utils import chunkify, get_valid_kwargs
 from . import BaseCache, BaseStorage
@@ -56,8 +57,8 @@ class SQLiteCache(BaseCache):
         return self.responses.db_path
 
     def clear(self):
-        """Clear the cache. If this fails due to a corrupted cache or other I/O error, this will
-        attempt to delete the cache file and re-initialize.
+        """Delete all items from the cache. If this fails due to a corrupted cache or other I/O
+        error, this will  attempt to delete the cache file and re-initialize.
         """
         try:
             super().clear()
@@ -68,13 +69,13 @@ class SQLiteCache(BaseCache):
             self.responses.init_db()
             self.redirects.init_db()
 
+    # A more efficient SQLite implementation of :py:meth:`BaseCache.delete`
     def delete(
         self,
         *keys: str,
         expired: bool = False,
         **kwargs,
     ):
-        """A more efficient SQLite implementation of :py:meth:`BaseCache.delete`"""
         if keys:
             self.responses.bulk_delete(keys)
         if expired:
@@ -118,19 +119,23 @@ class SQLiteCache(BaseCache):
         """
         return self.responses.count(expired=expired)
 
-    def filter(  # type: ignore
-        self, valid: bool = True, expired: bool = True, **kwargs
+    # A more efficient implementation of :py:meth:`BaseCache.filter` to make use of indexes
+    def filter(
+        self,
+        valid: bool = True,
+        expired: bool = True,
+        invalid: bool = False,
+        older_than: ExpirationTime = None,
     ) -> Iterator[CachedResponse]:
-        """A more efficient implementation of :py:meth:`BaseCache.filter`, in the case where we want
-        to get **only** expired responses
-        """
-        if expired and not valid and not kwargs:
-            return self.responses.sorted(expired=True)
+        if valid and not invalid:
+            return self.responses.sorted(expired=expired)
         else:
-            return super().filter(valid, expired, **kwargs)
+            return super().filter(
+                valid=valid, expired=expired, invalid=invalid, older_than=older_than
+            )
 
+    # A more efficient implementation of :py:meth:`BaseCache.recreate_keys
     def recreate_keys(self):
-        """A more efficient implementation of :py:meth:`BaseCache.recreate_keys`"""
         with self.responses.bulk_commit():
             super().recreate_keys()
 
