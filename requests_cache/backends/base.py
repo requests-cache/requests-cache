@@ -292,8 +292,11 @@ class BaseCache:
             DeprecationWarning,
         )
         yield from self.redirects.keys()
-        for response in self.filter(expired=not check_expiry):
-            yield response.cache_key
+        if not check_expiry:
+            yield from self.responses.keys()
+        else:
+            for response in self.filter(expired=False):
+                yield response.cache_key
 
     def response_count(self, check_expiry: bool = False) -> int:
         warn(
