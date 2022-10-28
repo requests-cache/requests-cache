@@ -162,6 +162,8 @@ class SQLiteDict(BaseStorage):
         self._local_context = threading.local()
         self._lock = threading.RLock()
         self.connection_kwargs = get_valid_kwargs(sqlite_template, kwargs)
+        if use_memory:
+            self.connection_kwargs['uri'] = True
         self.db_path = _get_sqlite_cache_path(db_path, use_cache_dir, use_temp, use_memory)
         self.fast_save = fast_save
         self.table_name = table_name
@@ -172,7 +174,7 @@ class SQLiteDict(BaseStorage):
         """Initialize the database, if it hasn't already been"""
         self.close()
         with self._lock, self.connection() as con:
-            # Add new column to tables created before 0.10
+            # Add new column to tables created before 1.0
             try:
                 con.execute(f'ALTER TABLE {self.table_name} ADD COLUMN expires TEXT')
             except sqlite3.OperationalError:
