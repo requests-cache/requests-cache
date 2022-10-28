@@ -327,11 +327,19 @@ class SQLiteDict(BaseStorage):
 
         with self.connection(commit=True) as con:
             for row in con.execute(
-                f'SELECT value FROM {self.table_name} {filter_expr}'
+                f'SELECT key, value FROM {self.table_name} {filter_expr}'
                 f'  ORDER BY {key} {direction} {limit_expr}',
                 params,
             ):
-                yield self.deserialize(row[0])
+                result = self.deserialize(row[1])
+                # Set cache key, if it's a response object
+                try:
+                    result.cache_key = row[0]
+                except AttributeError:
+                    pass
+                # Omit any results that can't be deserialized
+                if result:
+                    yield result
 
     def vacuum(self):
         with self.connection(commit=True) as con:
