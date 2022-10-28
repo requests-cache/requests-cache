@@ -297,6 +297,16 @@ class TestSQLiteCache(BaseCacheTest):
         session = self.init_session()
         assert session.cache.db_path == session.cache.responses.db_path
 
+    def test_count(self):
+        """count() should work the same as len(), but with the option to exclude expired responses"""
+        session = self.init_session()
+        now = datetime.utcnow()
+        session.cache.responses['key_1'] = CachedResponse(expires=now + timedelta(1))
+        session.cache.responses['key_2'] = CachedResponse(expires=now - timedelta(1))
+
+        assert session.cache.count() == 2
+        assert session.cache.count(expired=False) == 1
+
     @patch.object(SQLiteDict, 'sorted')
     def test_filter__expired_only(self, mock_sorted):
         """Filtering by expired only should use a more efficient SQL query"""

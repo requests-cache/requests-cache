@@ -17,6 +17,7 @@ from typing import Collection, Iterator, List, Tuple, Type, Union
 
 from platformdirs import user_cache_dir
 
+from requests_cache.backends.base import VT
 from requests_cache.models.response import CachedResponse
 
 from .._utils import chunkify, get_valid_kwargs
@@ -109,6 +110,14 @@ class SQLiteCache(BaseCache):
                 ')'
             )
 
+    def count(self, expired: bool = True) -> int:
+        """Count number of responses, optionally excluding expired
+
+        Args:
+            expired: Set to ``False`` to count only unexpired responses
+        """
+        return self.responses.count(expired=expired)
+
     def filter(  # type: ignore
         self, valid: bool = True, expired: bool = True, **kwargs
     ) -> Iterator[CachedResponse]:
@@ -176,7 +185,7 @@ class SQLiteDict(BaseStorage):
         with self._lock, self.connection() as con:
             # Add new column to tables created before 1.0
             try:
-                con.execute(f'ALTER TABLE {self.table_name} ADD COLUMN expires TEXT')
+                con.execute(f'ALTER TABLE {self.table_name} ADD COLUMN expires INTEGER')
             except sqlite3.OperationalError:
                 pass
 
@@ -249,10 +258,8 @@ class SQLiteDict(BaseStorage):
 
     def __setitem__(self, key, value):
         # If available, set expiration as a timestamp in unix format
-        expires = value.expires_unix if getattr(value, 'expires_unix', None) else None
+        expires = getattr(value, 'expires_unix', None)
         value = self.serialize(value)
-        if isinstance(value, bytes):
-            value = sqlite3.Binary(value)
         with self.connection(commit=True) as con:
             con.execute(
                 f'INSERT OR REPLACE INTO {self.table_name} (key,value,expires) VALUES (?,?,?)',
@@ -265,8 +272,7 @@ class SQLiteDict(BaseStorage):
                 yield row[0]
 
     def __len__(self):
-        with self.connection() as con:
-            return con.execute(f'SELECT COUNT(key) FROM {self.table_name}').fetchone()[0]
+        return self.count()
 
     def bulk_delete(self, keys=None, values=None):
         """Delete multiple items from the cache, without raising errors for any missing items.
@@ -289,6 +295,22 @@ class SQLiteDict(BaseStorage):
                 con.execute(f'DROP TABLE IF EXISTS {self.table_name}')
             self.init_db()
             self.vacuum()
+
+    def count(self, expired: bool = True) -> int:
+        """Count number of responses, optionally excluding expired"""
+        filter_expr = ''
+        params: Tuple = ()
+        if not expired:
+            filter_expr = 'WHERE expires is null or expires > ?'
+            params = (time(),)
+        query = f'SELECT COUNT(key) FROM {self.table_name} {filter_expr}'
+
+        with self.connection() as con:
+            return con.execute(query, params).fetchone()[0]
+
+    def serialize(self, value: VT):
+        value = super().serialize(value)
+        return sqlite3.Binary(value) if isinstance(value, bytes) else value
 
     def size(self) -> int:
         """Return the size of the database, in bytes. For an in-memory database, this will be an

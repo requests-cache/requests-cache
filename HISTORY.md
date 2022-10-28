@@ -51,6 +51,7 @@
   * Add `ttl_offset` argument to add a delay between cache expiration and deletion
 * **SQLite**:
   * Improve performance for removing expired responses with `delete()`
+  * Add `count()` method to count responses, with option to exclude expired responses (performs a fast indexed count instead of slower in-memory filtering)
   * Add `size()` method to get estimated size of the database (including in-memory databases)
   * Add `sorted()` method with sorting and other query options
   * Add `wal` parameter to enable write-ahead logging
