@@ -109,6 +109,14 @@ class SQLiteCache(BaseCache):
                 ')'
             )
 
+    def count(self, expired: bool = True) -> int:
+        """Count number of responses, optionally excluding expired
+
+        Args:
+            expired: Set to ``False`` to count only unexpired responses
+        """
+        return self.responses.count(expired=expired)
+
     def filter(  # type: ignore
         self, valid: bool = True, expired: bool = True, **kwargs
     ) -> Iterator[CachedResponse]:
@@ -265,8 +273,7 @@ class SQLiteDict(BaseStorage):
                 yield row[0]
 
     def __len__(self):
-        with self.connection() as con:
-            return con.execute(f'SELECT COUNT(key) FROM {self.table_name}').fetchone()[0]
+        return self.count()
 
     def bulk_delete(self, keys=None, values=None):
         """Delete multiple items from the cache, without raising errors for any missing items.
@@ -289,6 +296,19 @@ class SQLiteDict(BaseStorage):
                 con.execute(f'DROP TABLE IF EXISTS {self.table_name}')
             self.init_db()
             self.vacuum()
+
+    # WIP
+    def count(self, expired: bool = True) -> int:
+        """Count number of responses, optionally excluding expired"""
+        filter_expr = ''
+        params: Tuple = ()
+        if not expired:
+            filter_expr = 'WHERE expires is null or expires > ?'
+            params = (time(),)
+        query = f'SELECT COUNT(key) FROM {self.table_name} {filter_expr}'
+
+        with self.connection() as con:
+            return con.execute(query, params).fetchone()[0]
 
     def size(self) -> int:
         """Return the size of the database, in bytes. For an in-memory database, this will be an
