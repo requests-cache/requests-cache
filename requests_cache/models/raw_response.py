@@ -53,7 +53,7 @@ class CachedHTTPResponse(RichMixin, HTTPResponse):
         kwargs['request_url'] = raw._request_url
 
         # Copy response data and restore response object to its original state
-        if hasattr(raw, '_fp') and not is_fp_closed(raw._fp):
+        if getattr(raw, '_fp', None) and not is_fp_closed(raw._fp):
             body = raw.read(decode_content=False)
             kwargs['body'] = body
             raw._fp = BytesIO(body)
