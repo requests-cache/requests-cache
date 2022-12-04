@@ -24,6 +24,10 @@ include = [
     {format="sdist", path="tests"},
 ]
 
+[tool.poetry.urls]
+"Changelog" = "https://requests-cache.readthedocs.io/en/stable/project_info/history.html"
+"Issues" = "https://github.com/requests-cache/requests-cache/issues"
+
 [tool.poetry.dependencies]
 python        = "^3.7"     # requests requires python >=3.7, <4.0
 
