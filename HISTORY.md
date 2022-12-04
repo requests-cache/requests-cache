@@ -142,7 +142,7 @@ If you encounter a problem not listed here after updating to 1.0, please create 
 * Internal utility module changes:
     * The `cache_control` module (added in `0.7`) has been split up into multiple modules in a new `policy` subpackage
 
-## 0.9.7 (2022-10-26)
+### 0.9.7 (2022-10-26)
 Backport compatibility fixes from 1.0:
 * **PyInstaller:** Fix potential `AttributeError` due to undetected imports when requests-cache is bundled in a PyInstaller package
 * **requests-oauthlib:** Add support for header values as bytes for compatibility with OAuth1 features
@@ -158,7 +158,7 @@ Add the following for forwards-compatibility with 1.0:
 * `BaseCache.filter()`
 * `CachedSession.settings`
 
-## 0.9.6 (2022-08-24)
+### 0.9.6 (2022-08-24)
 Backport fixes from 1.0:
 * Remove potentially problematic row count from `BaseCache.__str__()`
 * Remove upper version constraints for all non-dev dependencies

@@ -24,6 +24,10 @@ include = [
     {format="sdist", path="tests"},
 ]
 
+[tool.poetry.urls]
+"Changelog" = "https://requests-cache.readthedocs.io/en/stable/project_info/history.html"
+"Issues" = "https://github.com/requests-cache/requests-cache/issues"
+
 [tool.poetry.dependencies]
 python        = "^3.7"     # requests requires python >=3.7, <4.0
 
@@ -85,7 +89,7 @@ docs     = ["furo", "linkify-it-py", "myst-parser", "sphinx", "sphinx-autodoc-ty
 # For unit + integration tests
 coverage              = "^6.5"
 psutil                = "^5.0"
-pytest                = "^7.1"
+pytest                = "^7.2"
 pytest-clarity        = "^1.0.1"
 pytest-cov            = ">=3.0"
 pytest-rerunfailures  = "^10.1"
