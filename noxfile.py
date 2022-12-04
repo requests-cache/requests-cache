@@ -7,6 +7,7 @@ Notes:
 * All other commands: the current environment will be used instead of creating new ones
 * Run `nox -l` to see all available commands
 """
+import platform
 from os import getenv
 from os.path import join
 from shutil import rmtree
@@ -22,13 +23,15 @@ LIVE_DOCS_IGNORE = ['*.pyc', '*.tmp', join('**', 'modules', '*')]
 LIVE_DOCS_WATCH = ['requests_cache', 'examples']
 CLEAN_DIRS = ['dist', 'build', join('docs', '_build'), join('docs', 'modules')]
 
-PYTHON_VERSIONS = ['3.7', '3.8', '3.9', '3.10']
+PYTHON_VERSIONS = ['3.7', '3.8', '3.9', '3.10', '3.11', 'pypy3.9']
 UNIT_TESTS = join('tests', 'unit')
 INTEGRATION_TESTS = join('tests', 'integration')
 STRESS_TEST_MULTIPLIER = 10
 DEFAULT_COVERAGE_FORMATS = ['html', 'term']
 # Run tests in parallel, grouped by test module
 XDIST_ARGS = '--numprocesses=auto --dist=loadfile'
+
+IS_PYPY = platform.python_implementation() == 'PyPy'
 
 
 @session(python=PYTHON_VERSIONS)
@@ -60,7 +63,9 @@ def clean(session):
 @session(python=False, name='cov')
 def coverage(session):
     """Run tests and generate coverage report"""
-    cmd = f'pytest {UNIT_TESTS} {INTEGRATION_TESTS} -rs {XDIST_ARGS} --cov'.split(' ')
+    cmd = f'pytest {UNIT_TESTS} {INTEGRATION_TESTS} -rs --cov'.split(' ')
+    if not IS_PYPY:
+        cmd += XDIST_ARGS.split(' ')
 
     # Add coverage formats
     cov_formats = session.posargs or DEFAULT_COVERAGE_FORMATS

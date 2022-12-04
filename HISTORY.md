@@ -100,7 +100,9 @@
 * **redis-py:** Fix forwarding connection parameters passed to `RedisCache` for redis-py 4.2 and python <=3.8
 * **pymongo:** Fix forwarding connection parameters passed to `MongoCache` for pymongo 4.1 and python <=3.8
 * **cattrs:** Add compatibility with cattrs 22.2
-* **python:** Add tests to ensure compatibility with python 3.11
+* **python:**
+  * Add tests and support for python 3.11
+  * Add tests and support for pypy 3.9
 
 🪲 **Bugfixes:**
 * Fix usage of memory backend with `install_cache()`
