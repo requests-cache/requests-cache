@@ -94,8 +94,13 @@ You can use {py:meth}`.BaseCache.urls` to see all URLs currently in the cache:
 ['https://httpbin.org/get', 'https://httpbin.org/stream/100']
 ```
 
+### Other response details
 If needed, you can access all responses via `CachedSession.cache.responses`, which is a dict-like
-interface to the cache backend. For example, if you wanted to to see all URLs requested with a specific method:
+interface to the cache backend, where:
+* Keys are cache keys (a hash of matched request information)
+* Values are {py:class}`.CachedResponse` objects
+
+For example, if you wanted to see URLs only for `POST` requests:
 ```python
 >>> post_urls = [
 ...     response.url for response in session.cache.responses.values()
