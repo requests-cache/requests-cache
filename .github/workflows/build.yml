@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11', 'pypy3.9']
       fail-fast: false
     services:
       nginx:
@@ -56,10 +56,18 @@ jobs:
         run: poetry install -v -E all
 
       # Run tests with coverage report
-      - name: Run tests
+      - name: Run unit + integration tests
+        if: ${{ !contains(matrix.python-version, 'pypy') }}
         run: |
           source $VENV
           nox -e cov -- xml
+
+      # pypy tests aren't run in parallel, so too slow for integration tests
+      - name: Run unit tests only
+        if: ${{ contains(matrix.python-version, 'pypy') }}
+        run: |
+          source $VENV
+          pytest tests/unit
 
       # Latest python version: send coverage report to codecov
       - name: "Upload coverage report to Codecov"
