@@ -63,7 +63,7 @@ class BaseCache:
     @property
     def urls(self) -> Iterator[str]:
         """Get all URLs currently in the cache (excluding redirects)"""
-        for response in self.values():
+        for response in self.responses.values():
             yield response.url
 
     def get_response(self, key: str, default=None) -> Optional[CachedResponse]:
