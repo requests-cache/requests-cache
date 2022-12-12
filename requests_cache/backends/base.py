@@ -73,7 +73,12 @@ class BaseCache:
         except (AttributeError, KeyError):
             return default
 
-    def save_response(self, response: Response, cache_key: str = None, expires: datetime = None):
+    def save_response(
+        self,
+        response: Response,
+        cache_key: Optional[str] = None,
+        expires: Optional[datetime] = None,
+    ):
         """Save a response to the cache
 
         Args:
@@ -101,10 +106,13 @@ class BaseCache:
         self.redirects.close()
 
     def create_key(
-        self, request: AnyRequest = None, match_headers: Iterable[str] = None, **kwargs
+        self,
+        request: AnyRequest,
+        match_headers: Optional[Iterable[str]] = None,
+        **kwargs,
     ) -> str:
         """Create a normalized cache key from a request object"""
-        key_fn = self._settings.key_fn or create_key
+        key_fn = self._settings.key_fn if self._settings.key_fn is not None else create_key
         return key_fn(
             request=request,
             ignored_parameters=self._settings.ignored_parameters,
@@ -118,9 +126,9 @@ class BaseCache:
 
     def contains(
         self,
-        key: str = None,
-        request: AnyRequest = None,
-        url: str = None,
+        key: Optional[str] = None,
+        request: Optional[AnyRequest] = None,
+        url: Optional[str] = None,
     ):
         """Check if the specified request is cached
 
@@ -141,8 +149,8 @@ class BaseCache:
         expired: bool = False,
         invalid: bool = False,
         older_than: ExpirationTime = None,
-        requests: Iterable[AnyRequest] = None,
-        urls: Iterable[str] = None,
+        requests: Optional[Iterable[AnyRequest]] = None,
+        urls: Optional[Iterable[str]] = None,
     ):
         """Remove responses from the cache according one or more conditions.
 
@@ -355,7 +363,7 @@ class BaseStorage(MutableMapping[KT, VT], ABC):
 
     def __init__(
         self,
-        serializer: SerializerType = None,
+        serializer: Optional[SerializerType] = None,
         no_serializer: bool = False,
         decode_content: bool = False,
         **kwargs,

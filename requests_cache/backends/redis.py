@@ -5,7 +5,7 @@
    :nosignatures:
 """
 from logging import getLogger
-from typing import Iterable
+from typing import Iterable, Optional
 
 from redis import Redis, StrictRedis
 
@@ -32,7 +32,7 @@ class RedisCache(BaseCache):
     def __init__(
         self,
         namespace='http_cache',
-        connection: Redis = None,
+        connection: Optional[Redis] = None,
         ttl: bool = True,
         ttl_offset: int = DEFAULT_TTL_OFFSET,
         **kwargs,
@@ -62,7 +62,7 @@ class RedisDict(BaseStorage):
     def __init__(
         self,
         namespace: str,
-        collection_name: str = None,
+        collection_name: Optional[str] = None,
         connection=None,
         ttl: bool = True,
         ttl_offset: int = DEFAULT_TTL_OFFSET,
@@ -144,7 +144,11 @@ class RedisHashDict(BaseStorage):
     """
 
     def __init__(
-        self, namespace: str = 'http_cache', collection_name: str = None, connection=None, **kwargs
+        self,
+        namespace: str = 'http_cache',
+        collection_name: Optional[str] = None,
+        connection=None,
+        **kwargs,
     ):
         super().__init__(**kwargs)
         connection_kwargs = get_valid_kwargs(Redis, kwargs)
