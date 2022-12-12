@@ -11,7 +11,7 @@ from requests import PreparedRequest, Response
 from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
 
-from ..policy.expiration import ExpirationTime, get_expiration_datetime
+from ..policy import ExpirationTime, get_expiration_datetime
 from . import CachedHTTPResponse, CachedRequest, RichMixin
 
 if TYPE_CHECKING:
@@ -47,7 +47,7 @@ class OriginalResponse(BaseResponse):
     """Wrapper class for non-cached responses returned by :py:class:`.CachedSession`"""
 
     @classmethod
-    def wrap_response(cls, response: Response, actions: 'CacheActions'):
+    def wrap_response(cls, response: Response, actions: 'CacheActions') -> 'OriginalResponse':
         """Modify a response object in-place and add extra cache-related attributes"""
         if not isinstance(response, cls):
             response.__class__ = cls
@@ -55,7 +55,7 @@ class OriginalResponse(BaseResponse):
             response.expires = None if actions.skip_write else actions.expires  # type: ignore
             response.cache_key = None if actions.skip_write else actions.cache_key  # type: ignore
             response.created_at = datetime.utcnow()  # type: ignore
-        return response
+        return response  # type: ignore
 
 
 @define(auto_attribs=False, repr=False, slots=False)
@@ -85,7 +85,7 @@ class CachedResponse(RichMixin, BaseResponse):
         self.raw = self.raw or CachedHTTPResponse.from_cached_response(self)
 
     @classmethod
-    def from_response(cls, response: Response, **kwargs):
+    def from_response(cls, response: Response, **kwargs) -> 'CachedResponse':
         """Create a CachedResponse based on an original Response or another CachedResponse object"""
         if isinstance(response, CachedResponse):
             obj = attr.evolve(response, **kwargs)

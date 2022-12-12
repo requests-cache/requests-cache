@@ -13,7 +13,7 @@ from os.path import getsize, isfile
 from pathlib import Path
 from tempfile import gettempdir
 from time import time
-from typing import Collection, Iterator, List, Tuple, Type, Union
+from typing import Collection, Iterator, List, Optional, Tuple, Type, Union
 
 from platformdirs import user_cache_dir
 
@@ -143,7 +143,7 @@ class SQLiteCache(BaseCache):
         self,
         key: str = 'expires',
         reversed: bool = False,
-        limit: int = None,
+        limit: Optional[int] = None,
         expired: bool = True,
     ) -> Iterator[CachedResponse]:
         """Get cached responses, with sorting and other query options.
@@ -334,7 +334,11 @@ class SQLiteDict(BaseStorage):
             return page_count * page_size
 
     def sorted(
-        self, key: str = 'expires', reversed: bool = False, limit: int = None, expired: bool = True
+        self,
+        key: str = 'expires',
+        reversed: bool = False,
+        limit: Optional[int] = None,
+        expired: bool = True,
     ) -> Iterator[CachedResponse]:
         """Get cache values in sorted order; see :py:meth:`.SQLiteCache.sorted` for usage details"""
         # Get sort key, direction, and limit
@@ -420,9 +424,9 @@ def get_cache_path(db_path: AnyPath, use_cache_dir: bool = False, use_temp: bool
 def sqlite_template(
     timeout: float = 5.0,
     detect_types: int = 0,
-    isolation_level: str = None,
+    isolation_level: Optional[str] = None,
     check_same_thread: bool = True,
-    factory: Type = None,
+    factory: Optional[Type] = None,
     cached_statements: int = 100,
     uri: bool = False,
 ):

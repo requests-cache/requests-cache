@@ -1,6 +1,6 @@
 from io import BytesIO
 from logging import getLogger
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from attr import define, field, fields_dict
 from requests import Response
@@ -37,7 +37,7 @@ class CachedHTTPResponse(RichMixin, HTTPResponse):
     strict: int = field(default=0)
     version: int = field(default=0)
 
-    def __init__(self, body: bytes = None, **kwargs):
+    def __init__(self, body: Optional[bytes] = None, **kwargs):
         """First initialize via HTTPResponse, then via attrs"""
         kwargs = {k: v for k, v in kwargs.items() if v is not None}
         super().__init__(body=BytesIO(body or b''), preload_content=False, **kwargs)
@@ -45,7 +45,7 @@ class CachedHTTPResponse(RichMixin, HTTPResponse):
         self.__attrs_init__(**kwargs)  # type: ignore # False positive in mypy 0.920+?
 
     @classmethod
-    def from_response(cls, response: Response):
+    def from_response(cls, response: Response) -> 'CachedHTTPResponse':
         """Create a CachedHTTPResponse based on an original response"""
         # Copy basic attributes
         raw = response.raw
@@ -94,7 +94,7 @@ class CachedHTTPResponse(RichMixin, HTTPResponse):
             self._fp.close()
         return data
 
-    def reset(self, body: bytes = None):
+    def reset(self, body: Optional[bytes] = None):
         """Reset raw response file pointer, and optionally update content"""
         if body is not None:
             self._body = body

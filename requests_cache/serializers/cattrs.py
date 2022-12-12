@@ -14,7 +14,7 @@ serialization formats.
 from datetime import datetime, timedelta
 from decimal import Decimal
 from json import JSONDecodeError
-from typing import Callable, Dict, ForwardRef, MutableMapping
+from typing import Callable, Dict, ForwardRef, MutableMapping, Optional
 
 from cattr import Converter
 from requests.cookies import RequestsCookieJar, cookiejar_from_dict
@@ -50,7 +50,10 @@ class CattrStage(Stage):
     """
 
     def __init__(
-        self, factory: Callable[..., Converter] = None, decode_content: bool = False, **kwargs
+        self,
+        factory: Optional[Callable[..., Converter]] = None,
+        decode_content: bool = False,
+        **kwargs
     ):
         self.converter = init_converter(factory, **kwargs)
         self.decode_content = decode_content
@@ -68,7 +71,7 @@ class CattrStage(Stage):
 
 
 def init_converter(
-    factory: Callable[..., Converter] = None,
+    factory: Optional[Callable[..., Converter]] = None,
     convert_datetime: bool = True,
     convert_timedelta: bool = True,
 ) -> Converter:

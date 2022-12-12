@@ -7,9 +7,9 @@ KwargDict = Dict[str, Any]
 logger = getLogger('requests_cache')
 
 
-def chunkify(iterable: Iterable, max_size: int) -> Iterator[List]:
+def chunkify(iterable: Optional[Iterable], max_size: int) -> Iterator[List]:
     """Split an iterable into chunks of a max size"""
-    iterable = list(iterable)
+    iterable = list(iterable or [])
     for index in range(0, len(iterable), max_size):
         yield iterable[index : index + max_size]
 
@@ -35,7 +35,7 @@ def encode(value, encoding='utf-8') -> bytes:
     return value if isinstance(value, bytes) else str(value).encode(encoding)
 
 
-def get_placeholder_class(original_exception: Exception = None):
+def get_placeholder_class(original_exception: Optional[Exception] = None):
     """Create a placeholder type for a class that does not have dependencies installed.
     This allows delaying ImportErrors until init time, rather than at import time.
     """
@@ -58,14 +58,16 @@ def get_placeholder_class(original_exception: Exception = None):
     return Placeholder
 
 
-def get_valid_kwargs(func: Callable, kwargs: Dict, extras: Iterable[str] = None) -> KwargDict:
+def get_valid_kwargs(
+    func: Callable, kwargs: Dict, extras: Optional[Iterable[str]] = None
+) -> KwargDict:
     """Get the subset of non-None ``kwargs`` that are valid arguments for ``func``"""
     kwargs, _ = split_kwargs(func, kwargs, extras)
     return {k: v for k, v in kwargs.items() if v is not None}
 
 
 def split_kwargs(
-    func: Callable, kwargs: Dict, extras: Iterable[str] = None
+    func: Callable, kwargs: Dict, extras: Optional[Iterable[str]] = None
 ) -> Tuple[KwargDict, KwargDict]:
     """Split ``kwargs`` into two dicts: those that are valid arguments for ``func``,  and those that
     are not

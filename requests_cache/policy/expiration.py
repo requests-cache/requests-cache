@@ -18,7 +18,9 @@ logger = getLogger(__name__)
 
 
 def get_expiration_datetime(
-    expire_after: ExpirationTime, start_time: datetime = None, negative_delta: bool = False
+    expire_after: ExpirationTime,
+    start_time: Optional[datetime] = None,
+    negative_delta: bool = False,
 ) -> Optional[datetime]:
     """Convert an expiration value in any supported format to an absolute datetime"""
     # Never expire (or do not cache, in which case expiration won't be used)
@@ -50,7 +52,7 @@ def get_expiration_seconds(expire_after: ExpirationTime) -> int:
 
 
 def get_url_expiration(
-    url: Optional[str], urls_expire_after: ExpirationPatterns = None
+    url: Optional[str], urls_expire_after: Optional[ExpirationPatterns] = None
 ) -> ExpirationTime:
     """Check for a matching per-URL expiration, if any"""
     if not url:

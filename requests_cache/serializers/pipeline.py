@@ -4,7 +4,7 @@
    :classes-only:
    :nosignatures:
 """
-from typing import Any, Callable, Sequence, Union
+from typing import Any, Callable, Optional, Sequence, Union
 
 from ..models import CachedResponse
 
@@ -43,7 +43,7 @@ class SerializerPipeline:
         is_binary: Indicates whether the serialized content is binary
     """
 
-    def __init__(self, stages: Sequence, name: str = None, is_binary: bool = False):
+    def __init__(self, stages: Sequence, name: Optional[str] = None, is_binary: bool = False):
         self.is_binary = is_binary
         self.stages = stages
         self.dump_stages = [stage.dumps for stage in stages]
