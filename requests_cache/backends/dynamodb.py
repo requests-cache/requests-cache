@@ -4,7 +4,7 @@
    :classes-only:
    :nosignatures:
 """
-from typing import Dict, Iterable
+from typing import Dict, Iterable, Optional
 
 import boto3
 from boto3.dynamodb.types import Binary
@@ -33,7 +33,7 @@ class DynamoDbCache(BaseCache):
         self,
         table_name: str = 'http_cache',
         ttl: bool = True,
-        connection: ServiceResource = None,
+        connection: Optional[ServiceResource] = None,
         decode_content: bool = True,
         **kwargs,
     ):
@@ -75,7 +75,7 @@ class DynamoDbDict(BaseStorage):
         table_name: str,
         namespace: str,
         ttl: bool = True,
-        connection: ServiceResource = None,
+        connection: Optional[ServiceResource] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)

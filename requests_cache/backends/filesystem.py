@@ -10,7 +10,7 @@ from pathlib import Path
 from pickle import PickleError
 from shutil import rmtree
 from threading import RLock
-from typing import Iterator
+from typing import Iterator, Optional
 
 from ..serializers import SERIALIZERS, json_serializer
 from . import BaseCache, BaseStorage
@@ -75,7 +75,7 @@ class FileDict(BaseStorage):
         cache_name: AnyPath,
         use_temp: bool = False,
         use_cache_dir: bool = False,
-        extension: str = None,
+        extension: Optional[str] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -133,7 +133,7 @@ class FileDict(BaseStorage):
             return self.cache_dir.glob(f'*{self.extension}')
 
 
-def _get_extension(extension: str = None, serializer=None) -> str:
+def _get_extension(extension: Optional[str] = None, serializer=None) -> str:
     """Use either the provided file extension, or get the serializer's default extension"""
     if extension:
         return f'.{extension}'
