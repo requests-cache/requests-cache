@@ -53,7 +53,7 @@ ujson                      = {optional=true, version=">=5.4"}
 
 # Dependencies for building documentation;
 # defined here because readthedocs doesn't (yet?) support poetry.dev-dependencies
-furo                       = {optional=true, version="^2022.6"}
+furo                       = {optional=true, version="^2022.12.7"}
 linkify-it-py              = {optional=true, version=">=2.0"}
 myst-parser                = {optional=true, version=">=0.17"}
 sphinx                     = {optional=true, version="^5.0.2"}
