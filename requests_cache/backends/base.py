@@ -173,7 +173,7 @@ class BaseCache:
         ):
             delete_keys.append(response.cache_key)
 
-        logger.debug(f'Deleting {len(delete_keys)} responses')
+        logger.debug(f'Deleting up to {len(delete_keys)} responses')
         self.responses.bulk_delete(delete_keys)
         self._prune_redirects()
 
