@@ -59,27 +59,23 @@ For example, if you wanted to to see all URLs requested with a specific method:
 You can also inspect `CachedSession.cache.redirects`, which maps redirect URLs to keys of the
 responses they redirect to.
 
-Additional `keys()` and `values()` wrapper methods are available on {py:class}`.BaseCache` to get
-combined keys and responses.
-```python
->>> print('All responses:')
->>> for response in session.cache.values():
->>>     print(response)
 
->>> print('All cache keys for redirects and responses combined:')
->>> print(list(session.cache.keys()))
-```
-
-Both methods also take a `check_expiry` argument to exclude expired responses:
+### Filtering responses
+Use {py:meth}`.BaseCache.filter` to get responses with optional filters. By default, it returns all
+responses except any invalid ones that would raise an exception:
 ```python
->>> print('All unexpired responses:')
->>> for response in session.cache.values(check_expiry=True):
+>>> for response in session.cache.filter():
 >>>     print(response)
 ```
 
-Similarly, you can get a count of responses with {py:meth}`.BaseCache.response_count`, and optionally
-exclude expired responses:
+Get unexpired responses:
 ```python
->>> print(f'Total responses: {session.cache.response_count()}')
->>> print(f'Unexpired responses: {session.cache.response_count(check_expiry=True)}')
+>>> for response in session.cache.filter(expired=False):
+>>>     print(response)
+```
+
+Get keys for **only** expired responses:
+```python
+>>> expired_responses = session.cache.filter(valid=False, expired=True)
+>>> keys = [response.cache_key for response in expired_responses]
 ```

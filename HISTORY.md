@@ -1,5 +1,9 @@
 # History
 
+## 0.9.8 (Unreleased)
+* Fix `DeprecationWarning` raised by `BaseCache.urls`
+* Reword ambiguous log message for `BaseCache.delete`
+
 ## 0.9.7 (2022-10-26)
 Backport compatibility fixes from 1.0:
 * **PyInstaller:** Fix potential `AttributeError` due to undetected imports when requests-cache is bundled in a PyInstaller package
