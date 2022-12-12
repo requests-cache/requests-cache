@@ -83,7 +83,7 @@ class MongoDict(BaseStorage):
         self,
         db_name: str,
         collection_name: str = 'http_cache',
-        connection: MongoClient = None,
+        connection: Optional[MongoClient] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)

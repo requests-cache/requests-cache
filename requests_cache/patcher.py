@@ -22,7 +22,7 @@ logger = getLogger(__name__)
 
 def install_cache(
     cache_name: str = 'http_cache',
-    backend: BackendSpecifier = None,
+    backend: Optional[BackendSpecifier] = None,
     session_factory: Type[OriginalSession] = CachedSession,
     **kwargs,
 ):

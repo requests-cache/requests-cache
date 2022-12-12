@@ -56,7 +56,9 @@ BACKEND_CLASSES = {
 }
 
 
-def init_backend(cache_name: str, backend: BackendSpecifier = None, **kwargs) -> BaseCache:
+def init_backend(
+    cache_name: str, backend: Optional[BackendSpecifier] = None, **kwargs
+) -> BaseCache:
     """Initialize a backend from a name, class, or instance"""
     logger.debug(f'Initializing backend: {backend} {cache_name}')
 

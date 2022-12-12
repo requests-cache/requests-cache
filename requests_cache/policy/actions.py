@@ -14,11 +14,12 @@ from . import (
     NEVER_EXPIRE,
     CacheDirectives,
     ExpirationTime,
+    KeyCallback,
     get_expiration_datetime,
     get_expiration_seconds,
     get_url_expiration,
 )
-from .settings import CacheSettings, KeyCallback
+from .settings import CacheSettings
 
 if TYPE_CHECKING:
     from ..models import CachedResponse
@@ -71,7 +72,9 @@ class CacheActions(RichMixin):
     _validation_headers: Dict[str, str] = field(factory=dict, repr=False)
 
     @classmethod
-    def from_request(cls, cache_key: str, request: PreparedRequest, settings: CacheSettings = None):
+    def from_request(
+        cls, cache_key: str, request: PreparedRequest, settings: Optional[CacheSettings] = None
+    ):
         """Initialize from request info and cache settings.
 
         Note on refreshing: `must-revalidate` isn't a standard request header, but is used here to
@@ -133,7 +136,7 @@ class CacheActions(RichMixin):
         """
         return get_expiration_datetime(self.expire_after)
 
-    def is_usable(self, cached_response: 'CachedResponse', error: bool = False):
+    def is_usable(self, cached_response: Optional['CachedResponse'], error: bool = False):
         """Determine whether a given cached response is "fresh enough" to satisfy the request,
         based on:
 
@@ -163,7 +166,10 @@ class CacheActions(RichMixin):
         return datetime.utcnow() < cached_response.expires + offset
 
     def update_from_cached_response(
-        self, cached_response: 'CachedResponse', create_key: KeyCallback = None, **key_kwargs
+        self,
+        cached_response: Optional['CachedResponse'],
+        create_key: Optional[KeyCallback] = None,
+        **key_kwargs,
     ):
         """Determine if we can reuse a cached response, or set headers for a conditional request
         if possible.
