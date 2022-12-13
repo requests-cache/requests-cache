@@ -63,8 +63,11 @@ class BaseCache:
     @property
     def urls(self) -> Iterator[str]:
         """Get all URLs currently in the cache (excluding redirects)"""
-        for response in self.values():
-            yield response.url
+        for key in self.responses:
+            try:
+                yield self.responses[key].url
+            except DESERIALIZE_ERRORS:
+                pass
 
     def get_response(self, key: str, default=None) -> Optional[CachedResponse]:
         """Retrieve a response from the cache, if it exists
@@ -130,6 +133,7 @@ class BaseCache:
         url: str = None,
     ):
         """Check if the specified request is cached
+
         Args:
             key: Check for a specific cache key
             request: Check for a matching request, according to current request matching settings
@@ -150,6 +154,7 @@ class BaseCache:
         urls: Iterable[str] = None,
     ):
         """Remove responses from the cache according one or more conditions.
+
         Args:
             keys: Remove responses with these cache keys
             expired: Remove all expired responses
@@ -167,7 +172,7 @@ class BaseCache:
             if response.cache_key:
                 delete_keys.append(response.cache_key)
 
-        logger.debug(f'Deleting {len(delete_keys)} responses')
+        logger.debug(f'Deleting up to {len(delete_keys)} responses')
         self.responses.bulk_delete(delete_keys)
         self._prune_redirects()
 
@@ -183,6 +188,7 @@ class BaseCache:
         invalid: bool = False,
     ) -> Iterator[CachedResponse]:
         """Get responses from the cache, with optional filters
+
         Args:
             valid: Include valid and unexpired responses; set to ``False`` to get **only**
                 expired/invalid/old responses
@@ -206,6 +212,7 @@ class BaseCache:
 
     def reset_expiration(self, expire_after: ExpirationTime = None):
         """Set a new expiration value on existing cache items
+
         Args:
             expire_after: New expiration value, **relative to the current time**
         """
