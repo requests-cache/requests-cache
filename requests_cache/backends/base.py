@@ -133,6 +133,7 @@ class BaseCache:
         url: str = None,
     ):
         """Check if the specified request is cached
+
         Args:
             key: Check for a specific cache key
             request: Check for a matching request, according to current request matching settings
@@ -153,6 +154,7 @@ class BaseCache:
         urls: Iterable[str] = None,
     ):
         """Remove responses from the cache according one or more conditions.
+
         Args:
             keys: Remove responses with these cache keys
             expired: Remove all expired responses
@@ -186,6 +188,7 @@ class BaseCache:
         invalid: bool = False,
     ) -> Iterator[CachedResponse]:
         """Get responses from the cache, with optional filters
+
         Args:
             valid: Include valid and unexpired responses; set to ``False`` to get **only**
                 expired/invalid/old responses
@@ -209,6 +212,7 @@ class BaseCache:
 
     def reset_expiration(self, expire_after: ExpirationTime = None):
         """Set a new expiration value on existing cache items
+
         Args:
             expire_after: New expiration value, **relative to the current time**
         """

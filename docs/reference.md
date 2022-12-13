@@ -12,18 +12,12 @@ from requests_cache import CachedSession, RedisCache, json_serializer
 :::
 
 ```{toctree}
-:maxdepth: 1
+:maxdepth: 2
 session
 modules/requests_cache.patcher
-```
-```{toctree}
-:maxdepth: 2
 modules/requests_cache.backends
 modules/requests_cache.models
+modules/requests_cache.policy
 modules/requests_cache.serializers
-```
-```{toctree}
-:maxdepth: 1
 modules/requests_cache.cache_keys
-modules/requests_cache.cache_control
 ```
