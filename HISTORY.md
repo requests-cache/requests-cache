@@ -81,7 +81,7 @@
   (e.g., to preserve cache data after an update that changes request matching behavior)
 * Update `BaseCache.urls` into a method that takes optional filter params, and returns sorted unique URLs
 
-ℹ️ **Type hints:**
+ℹ️ **Response attributes and type hints:**
 * Add `OriginalResponse` type, which adds type hints to `requests.Response` objects for extra attributes added by requests-cache:
   * `cache_key`
   * `created_at`
@@ -91,6 +91,8 @@
   * `revalidated`
 * `OriginalResponse.cache_key` and `expires` will be populated for any new response that was written to the cache
 * Add request wrapper methods with return type hints for all HTTP methods (`CachedSession.get()`, `head()`, etc.)
+* Set `CachedResponse.cache_key` attribute for responses read from lower-level storage methods
+  (`items()`, `values()`, etc.)
 
 🧩 **Compatibility fixes:**
 * **PyInstaller:** Fix potential `AttributeError` due to undetected imports when requests-cache is bundled in a PyInstaller package

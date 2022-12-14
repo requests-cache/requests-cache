@@ -6,6 +6,7 @@ import pytest
 from attrs import define, field
 
 from requests_cache.backends import BaseStorage
+from requests_cache.models import CachedResponse
 from tests.conftest import CACHE_NAME
 
 
@@ -61,6 +62,16 @@ class BaseStorageTest:
             assert list(cache.values()) == [f'value_{i}']
             assert list(cache.items()) == [(f'key_{i}', f'value_{i}')]
             assert dict(cache) == {f'key_{i}': f'value_{i}'}
+
+    def test_cache_key(self):
+        """The cache_key attribute should be available on responses returned from all
+        mapping/collection methods
+        """
+        cache = self.init_cache()
+        cache['key'] = CachedResponse()
+        assert cache['key'].cache_key == 'key'
+        assert list(cache.values())[0].cache_key == 'key'
+        assert list(cache.items())[0][1].cache_key == 'key'
 
     def test_del(self):
         """Some more tests to ensure ``delitem`` deletes only the expected items"""

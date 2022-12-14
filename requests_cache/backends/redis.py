@@ -90,7 +90,7 @@ class RedisDict(BaseStorage):
         result = self.connection.get(self._bkey(key))
         if result is None:
             raise KeyError
-        return self.deserialize(result)
+        return self.deserialize(key, result)
 
     def __setitem__(self, key, item):
         """Save an item to the cache, optionally with TTL"""
@@ -132,7 +132,8 @@ class RedisDict(BaseStorage):
         return [(k, self[k]) for k in self.keys()]
 
     def values(self):
-        return [self.deserialize(v) for v in self.connection.mget(*self._bkeys(self.keys()))]
+        for _, v in self.items():
+            yield v
 
 
 class RedisHashDict(BaseStorage):
@@ -162,7 +163,7 @@ class RedisHashDict(BaseStorage):
         result = self.connection.hget(self._hash_key, encode(key))
         if result is None:
             raise KeyError
-        return self.deserialize(result)
+        return self.deserialize(key, result)
 
     def __setitem__(self, key, item):
         self.connection.hset(self._hash_key, encode(key), self.serialize(item))
@@ -191,10 +192,11 @@ class RedisHashDict(BaseStorage):
     def items(self):
         """Get all ``(key, value)`` pairs in the hash"""
         return [
-            (decode(k), self.deserialize(v))
+            (decode(k), self.deserialize(decode(k), v))
             for k, v in self.connection.hgetall(self._hash_key).items()
         ]
 
     def values(self):
         """Get all values in the hash"""
-        return [self.deserialize(v) for v in self.connection.hvals(self._hash_key)]
+        for _, v in self.items():
+            yield v
