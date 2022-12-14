@@ -68,7 +68,6 @@ class BaseCache:
             response = self.responses.get(key)
             if response is None:  # Note: bool(requests.Response) is False if status > 400
                 response = self.responses[self.redirects[key]]
-            response.cache_key = key
             return response
         except (AttributeError, KeyError):
             return default
@@ -406,7 +405,7 @@ class BaseStorage(MutableMapping[KT, VT], ABC):
             assert hasattr(self.serializer, 'dumps')
         return self.serializer.dumps(value) if self.serializer else value
 
-    def deserialize(self, value: VT):
+    def deserialize(self, key, value: VT):
         """Deserialize a value, if a serializer is available.
 
         If deserialization fails (usually due to a value saved in an older requests-cache version),
@@ -418,7 +417,13 @@ class BaseStorage(MutableMapping[KT, VT], ABC):
             assert hasattr(self.serializer, 'loads')
 
         try:
-            return self.serializer.loads(value)
+            obj = self.serializer.loads(value)
+            # Set cache key, if it's a response object
+            try:
+                obj.cache_key = key
+            except AttributeError:
+                pass
+            return obj
         except DESERIALIZE_ERRORS as e:
             logger.error(f'Unable to deserialize response: {str(e)}')
             logger.debug(e, exc_info=True)
@@ -450,4 +455,8 @@ class DictStorage(UserDict, BaseStorage):
         item = super().__getitem__(key)
         if getattr(item, 'raw', None):
             item.raw.reset()
+        try:
+            item.cache_key = key
+        except AttributeError:
+            pass
         return item

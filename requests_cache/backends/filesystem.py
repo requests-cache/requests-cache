@@ -102,7 +102,7 @@ class FileDict(BaseStorage):
         mode = 'rb' if self.is_binary else 'r'
         with self._try_io():
             with self._path(key).open(mode) as f:
-                return self.deserialize(f.read())
+                return self.deserialize(key, f.read())
 
     def __delitem__(self, key):
         with self._try_io():
