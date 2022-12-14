@@ -119,7 +119,7 @@ class MongoDict(BaseStorage):
         if result is None:
             raise KeyError
         value = result['data'] if 'data' in result else result
-        return self.deserialize(value)
+        return self.deserialize(key, value)
 
     def __setitem__(self, key, value):
         """If ``value`` is already a dict, its values will be stored under top-level keys.

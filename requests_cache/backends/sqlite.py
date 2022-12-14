@@ -259,7 +259,7 @@ class SQLiteDict(BaseStorage):
         if not row:
             raise KeyError
 
-        return self.deserialize(row[0])
+        return self.deserialize(key, row[0])
 
     def __setitem__(self, key, value):
         # If available, set expiration as a timestamp in unix format
@@ -362,12 +362,7 @@ class SQLiteDict(BaseStorage):
                 f'  ORDER BY {key} {direction} {limit_expr}',
                 params,
             ):
-                result = self.deserialize(row[1])
-                # Set cache key, if it's a response object
-                try:
-                    result.cache_key = row[0]
-                except AttributeError:
-                    pass
+                result = self.deserialize(row[0], row[1])
                 # Omit any results that can't be deserialized
                 if result:
                     yield result

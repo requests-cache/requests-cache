@@ -146,7 +146,7 @@ class DynamoDbDict(BaseStorage):
         # With a custom serializer, the value may be a Binary object
         raw_value = result['Item']['value']
         value = raw_value.value if isinstance(raw_value, Binary) else raw_value
-        return self.deserialize(value)
+        return self.deserialize(key, value)
 
     def __setitem__(self, key, value):
         item = {**self._composite_key(key), 'value': self.serialize(value)}
