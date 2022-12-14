@@ -67,7 +67,7 @@ class GridFSDict(BaseStorage):
                 result = self.fs.find_one({'_id': key})
                 if result is None:
                     raise KeyError
-                return self.deserialize(result.read())
+                return self.deserialize(key, result.read())
         except CorruptGridFile as e:
             logger.warning(e, exc_info=True)
             raise KeyError
