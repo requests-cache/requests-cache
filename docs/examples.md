@@ -175,6 +175,33 @@ The following scripts can also be found in the
 ```
 :::
 
+
+### Requests per second graph
+```{include} ../examples/rps_graph.py
+:start-line: 2
+:end-line: 7
+```
+
+:::{dropdown} Example
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
+[benchmark.py](https://github.com/requests-cache/requests-cache/blob/main/examples/rps_graph.py)
+```{literalinclude} ../examples/rps_graph.py
+:lines: 9-
+```
+:::
+
+:::{dropdown} Screenshot
+:animate: fade-in-slide-down
+:color: info
+:icon: image
+
+![](../examples/rps_graph.png)
+
+:::
+
 ### Using with GitHub Actions
 This example shows how to use requests-cache with [GitHub Actions](https://docs.github.com/en/actions).
 Key points:
