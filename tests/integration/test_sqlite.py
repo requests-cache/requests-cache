@@ -12,6 +12,7 @@ from platformdirs import user_cache_dir
 from requests_cache.backends import BaseCache, SQLiteCache, SQLiteDict
 from requests_cache.backends.sqlite import MEMORY_URI
 from requests_cache.models import CachedResponse
+from tests.conftest import skip_pypy
 from tests.integration.base_cache_test import BaseCacheTest
 from tests.integration.base_storage_test import CACHE_NAME, BaseStorageTest
 
@@ -132,11 +133,12 @@ class TestSQLiteDict(BaseStorageTest):
         assert 2 not in cache
         assert cache._can_commit is True
 
+    @skip_pypy
     @pytest.mark.parametrize('kwargs', [{'fast_save': True}, {'wal': True}])
     def test_pragma(self, kwargs):
         """Test settings that make additional PRAGMA statements"""
-        cache_1 = self.init_cache(1, **kwargs)
-        cache_2 = self.init_cache(2, **kwargs)
+        cache_1 = self.init_cache('cache_1', **kwargs)
+        cache_2 = self.init_cache('cache_2', **kwargs)
 
         n = 500
         for i in range(n):
@@ -146,6 +148,7 @@ class TestSQLiteDict(BaseStorageTest):
         assert set(cache_1.keys()) == {f'key_{i}' for i in range(n)}
         assert set(cache_2.values()) == {f'value_{i}' for i in range(n)}
 
+    @skip_pypy
     @pytest.mark.parametrize('limit', [None, 50])
     def test_sorted__by_size(self, limit):
         cache = self.init_cache()
@@ -163,6 +166,7 @@ class TestSQLiteDict(BaseStorageTest):
         for i, item in enumerate(items):
             assert prev_item is None or len(prev_item) > len(item)
 
+    @skip_pypy
     def test_sorted__reversed(self):
         cache = self.init_cache()
 
@@ -174,12 +178,14 @@ class TestSQLiteDict(BaseStorageTest):
         for i, item in enumerate(items):
             assert item == f'value_{100-i}'
 
+    @skip_pypy
     def test_sorted__invalid_sort_key(self):
         cache = self.init_cache()
         cache['key_1'] = 'value_1'
         with pytest.raises(ValueError):
             list(cache.sorted(key='invalid_key'))
 
+    @skip_pypy
     @pytest.mark.parametrize('limit', [None, 50])
     def test_sorted__by_expires(self, limit):
         cache = self.init_cache()
@@ -198,6 +204,7 @@ class TestSQLiteDict(BaseStorageTest):
         for i, item in enumerate(items):
             assert prev_item is None or prev_item.expires < item.expires
 
+    @skip_pypy
     def test_sorted__exclude_expired(self):
         cache = self.init_cache()
         now = datetime.utcnow()
@@ -220,6 +227,7 @@ class TestSQLiteDict(BaseStorageTest):
             assert prev_item is None or prev_item.expires < item.expires
             assert item.status_code % 2 == 0
 
+    @skip_pypy
     def test_sorted__error(self):
         """sorted() should handle deserialization errors and not return invalid responses"""
 

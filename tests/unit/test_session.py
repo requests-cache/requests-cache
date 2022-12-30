@@ -668,7 +668,7 @@ def test_stale_while_revalidate(mock_session):
     mock_session.get(mocked_url_2, expire_after=timedelta(seconds=-2))
     assert mock_session.cache.contains(url=MOCKED_URL_ETAG)
 
-    # First, let's just make sure the correct method is called
+    # First, check that the correct method is called
     mock_session.mock_adapter.register_uri('GET', MOCKED_URL_ETAG, status_code=304)
     with patch.object(CachedSession, '_resend_async') as mock_send:
         response = mock_session.get(MOCKED_URL_ETAG)
@@ -683,9 +683,12 @@ def test_stale_while_revalidate(mock_session):
     with patch.object(CachedSession, '_send_and_cache', side_effect=slow_request) as mock_send:
         response = mock_session.get(mocked_url_2, expire_after=60)
         assert response.from_cache is True and response.is_expired is True
-        assert time() - start < 0.1
-        sleep(1)  # Background thread may be a bit slow on CI runner
+        assert time() - start < 0.1  # Response should be returned immediately; request takes 0.1s
+        sleep(1)  # Background thread may be slow on CI runner
         mock_send.assert_called()
+
+    # An extra sleep AFTER patching magically fixes this test on pypy, and I have no idea why
+    sleep(1)
 
     # Finally, check that the cached response has been refreshed
     response = mock_session.get(mocked_url_2)

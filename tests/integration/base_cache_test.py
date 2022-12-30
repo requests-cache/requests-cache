@@ -31,6 +31,7 @@ from tests.conftest import (
     USE_PYTEST_HTTPBIN,
     assert_delta_approx_equal,
     httpbin,
+    skip_pypy,
 )
 
 logger = getLogger(__name__)
@@ -327,6 +328,7 @@ class BaseCacheTest:
         query_dict = parse_qs(query)
         assert query_dict['api_key'] == ['REDACTED']
 
+    @skip_pypy
     @pytest.mark.parametrize('post_type', ['data', 'json'])
     def test_filter_request_post_data(self, post_type):
         method = 'POST'

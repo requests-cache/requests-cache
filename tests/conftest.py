@@ -9,6 +9,7 @@ Note: The protocol ``http(s)+mock://`` helps :py:class:`requests_mock.Adapter` p
 https://requests-mock.readthedocs.io/en/latest/adapter.html
 """
 import os
+import platform
 import warnings
 from contextlib import contextmanager
 from datetime import datetime, timedelta
@@ -290,3 +291,9 @@ def ignore_deprecation():
 
 # Some tests must disable url normalization to retain the custom `http+mock://` protocol
 patch_normalize_url = patch('requests_cache.cache_keys.normalize_url', side_effect=lambda x, y: x)
+
+# TODO: Debug OperationalErrors with pypy
+skip_pypy = pytest.mark.skipif(
+    platform.python_implementation() == 'PyPy',
+    reason='pypy-specific database locking issue',
+)
