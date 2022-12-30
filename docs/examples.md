@@ -202,6 +202,23 @@ The following scripts can also be found in the
 
 :::
 
+### Response history
+```{include} ../examples/history.py
+:start-line: 2
+:end-line: 3
+```
+
+:::{dropdown} Example
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-code
+
+[benchmark.py](https://github.com/requests-cache/requests-cache/blob/main/examples/history.py)
+```{literalinclude} ../examples/history.py
+:lines: 5-
+```
+:::
+
 ### Using with GitHub Actions
 This example shows how to use requests-cache with [GitHub Actions](https://docs.github.com/en/actions).
 Key points:
