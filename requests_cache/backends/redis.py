@@ -11,7 +11,7 @@ from redis import Redis, StrictRedis
 
 from .._utils import get_valid_kwargs
 from ..cache_keys import decode, encode
-from ..serializers import utf8_encoder
+from ..serializers import SerializerType, pickle_serializer, utf8_encoder
 from . import BaseCache, BaseStorage
 
 DEFAULT_TTL_OFFSET = 3600
@@ -33,21 +33,18 @@ class RedisCache(BaseCache):
         self,
         namespace='http_cache',
         connection: Optional[Redis] = None,
+        serializer: Optional[SerializerType] = None,
         ttl: bool = True,
         ttl_offset: int = DEFAULT_TTL_OFFSET,
         **kwargs,
     ):
         super().__init__(cache_name=namespace, **kwargs)
+        skwargs = {'serializer': serializer, **kwargs} if serializer else kwargs
         self.responses = RedisDict(
-            namespace, connection=connection, ttl=ttl, ttl_offset=ttl_offset, **kwargs
+            namespace, connection=connection, ttl=ttl, ttl_offset=ttl_offset, **skwargs
         )
-        kwargs.pop('serializer', None)
         self.redirects = RedisHashDict(
-            namespace,
-            'redirects',
-            connection=self.responses.connection,
-            serializer=utf8_encoder,  # Only needs encoding to/decoding from bytes
-            **kwargs,
+            namespace, collection_name='redirects', connection=self.responses.connection, **kwargs
         )
 
 
@@ -64,12 +61,12 @@ class RedisDict(BaseStorage):
         namespace: str,
         collection_name: Optional[str] = None,
         connection=None,
+        serializer: Optional[SerializerType] = pickle_serializer,
         ttl: bool = True,
         ttl_offset: int = DEFAULT_TTL_OFFSET,
         **kwargs,
     ):
-
-        super().__init__(**kwargs)
+        super().__init__(serializer=serializer, **kwargs)
         connection_kwargs = get_valid_kwargs(Redis.__init__, kwargs)
         self.connection = connection or StrictRedis(**connection_kwargs)
         self.namespace = namespace
@@ -149,9 +146,10 @@ class RedisHashDict(BaseStorage):
         namespace: str = 'http_cache',
         collection_name: Optional[str] = None,
         connection=None,
+        serializer: Optional[SerializerType] = utf8_encoder,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(serializer=serializer, **kwargs)
         connection_kwargs = get_valid_kwargs(Redis, kwargs)
         self.connection = connection or StrictRedis(**connection_kwargs)
         self._hash_key = f'{namespace}-{collection_name}'

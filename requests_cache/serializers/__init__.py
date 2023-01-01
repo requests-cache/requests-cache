@@ -19,7 +19,7 @@ For any optional libraries that aren't installed, the corresponding serializer w
 class that raises an ``ImportError`` at initialization time instead of at import time.
 """
 # flake8: noqa: F401
-from typing import Union
+from typing import Optional, Union
 
 from .cattrs import CattrStage
 from .pipeline import SerializerPipeline, Stage
@@ -39,7 +39,9 @@ __all__ = [
     'SERIALIZERS',
     'CattrStage',
     'SerializerPipeline',
+    'SerializerType',
     'Stage',
+    'init_serializer',
     'bson_serializer',
     'bson_document_serializer',
     'dynamodb_document_serializer',
@@ -59,3 +61,22 @@ SERIALIZERS = {
 }
 
 SerializerType = Union[str, SerializerPipeline, Stage]
+
+
+def init_serializer(
+    serializer: Optional[SerializerType], decode_content: bool
+) -> Optional[SerializerPipeline]:
+    """Intitialze a serializer by name or instance"""
+    if not serializer:
+        return None
+
+    # Look up a serializer by name, if needed
+    if isinstance(serializer, str):
+        serializer = SERIALIZERS[serializer]
+
+    # Wrap in a SerializerPipeline, if needed
+    if not isinstance(serializer, SerializerPipeline):
+        serializer = SerializerPipeline([serializer], name=str(serializer))
+    serializer.set_decode_content(decode_content)
+
+    return serializer

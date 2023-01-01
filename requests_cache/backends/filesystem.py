@@ -12,7 +12,7 @@ from shutil import rmtree
 from threading import RLock
 from typing import Iterator, Optional
 
-from ..serializers import SERIALIZERS, json_serializer
+from ..serializers import SERIALIZERS, SerializerType, json_serializer
 from . import BaseCache, BaseStorage
 from .sqlite import AnyPath, SQLiteDict, get_cache_path
 
@@ -35,11 +35,13 @@ class FileCache(BaseCache):
         cache_name: AnyPath = 'http_cache',
         use_temp: bool = False,
         decode_content: bool = True,
+        serializer: Optional[SerializerType] = None,
         **kwargs,
     ):
         super().__init__(cache_name=str(cache_name), **kwargs)
+        skwargs = {'serializer': serializer, **kwargs} if serializer else kwargs
         self.responses: FileDict = FileDict(
-            cache_name, use_temp=use_temp, decode_content=decode_content, **kwargs
+            cache_name, use_temp=use_temp, decode_content=decode_content, **skwargs
         )
         self.redirects: SQLiteDict = SQLiteDict(
             self.cache_dir / 'redirects.sqlite', 'redirects', no_serializer=True, **kwargs
@@ -68,17 +70,16 @@ class FileCache(BaseCache):
 class FileDict(BaseStorage):
     """A dictionary-like interface to files on the local filesystem"""
 
-    default_serializer = json_serializer
-
     def __init__(
         self,
         cache_name: AnyPath,
         use_temp: bool = False,
         use_cache_dir: bool = False,
         extension: Optional[str] = None,
+        serializer: Optional[SerializerType] = json_serializer,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(serializer=serializer, **kwargs)
         self.cache_dir = get_cache_path(cache_name, use_cache_dir=use_cache_dir, use_temp=use_temp)
         self.extension = _get_extension(extension, self.serializer)
         self.is_binary = getattr(self.serializer, 'is_binary', False)
