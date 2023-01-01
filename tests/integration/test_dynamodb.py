@@ -15,10 +15,6 @@ AWS_OPTIONS = {
     'aws_access_key_id': 'placeholder',
     'aws_secret_access_key': 'placeholder',
 }
-DYNAMODB_OPTIONS = {
-    **AWS_OPTIONS,
-    'serializer': None,  # Use class default serializer
-}
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -33,7 +29,7 @@ def ensure_connection():
 
 class TestDynamoDbDict(BaseStorageTest):
     storage_class = DynamoDbDict
-    init_kwargs = DYNAMODB_OPTIONS
+    init_kwargs = AWS_OPTIONS
 
     @patch('requests_cache.backends.dynamodb.boto3.resource')
     def test_connection_kwargs(self, mock_resource):
@@ -87,4 +83,4 @@ class TestDynamoDbDict(BaseStorageTest):
 
 class TestDynamoDbCache(BaseCacheTest):
     backend_class = DynamoDbCache
-    init_kwargs = DYNAMODB_OPTIONS
+    init_kwargs = AWS_OPTIONS

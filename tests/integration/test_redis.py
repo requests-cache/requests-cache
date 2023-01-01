@@ -33,6 +33,7 @@ class TestRedisHashDict(TestRedisDict):
     storage_class = RedisHashDict
     num_instances: int = 10  # Supports multiple instances, since this stores items under hash keys
     picklable = True
+    init_kwargs = {'serializer': 'pickle'}
 
 
 class TestRedisCache(BaseCacheTest):

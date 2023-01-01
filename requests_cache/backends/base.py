@@ -19,7 +19,7 @@ from requests import Request, Response
 from ..cache_keys import create_key, redact_response
 from ..models import AnyRequest, CachedResponse
 from ..policy import DEFAULT_CACHE_NAME, CacheSettings, ExpirationTime
-from ..serializers import SERIALIZERS, SerializerPipeline, SerializerType, pickle_serializer
+from ..serializers import SerializerType, init_serializer
 
 # Specific exceptions that may be raised during deserialization
 DESERIALIZE_ERRORS = (AttributeError, ImportError, PickleError, TypeError, ValueError)
@@ -350,38 +350,16 @@ class BaseStorage(MutableMapping[KT, VT], ABC):
       for details.
 
     Args:
-        serializer: Custom serializer that provides ``loads`` and ``dumps`` methods
-        no_serializer: Explicitly disable serialization, and write values as-is; this is to avoid
-            ambiguity with ``serializer=None``
-        decode_content: Decode JSON or text response body into a human-readable format
+        serializer: Custom serializer that provides ``loads`` and ``dumps`` methods.
+            If not provided, values will be written as-is.
+        decode_content: Decode response body JSON or text into a human-readable format
         kwargs: Additional backend-specific keyword arguments
     """
 
-    # Default serializer to use for responses, if one isn't specified; may be overridden by subclass
-    default_serializer: SerializerType = pickle_serializer
-
     def __init__(
-        self,
-        serializer: Optional[SerializerType] = None,
-        no_serializer: bool = False,
-        decode_content: bool = False,
-        **kwargs,
+        self, serializer: Optional[SerializerType] = None, decode_content: bool = False, **kwargs
     ):
-        self.serializer: Optional[SerializerPipeline] = None
-        if not no_serializer:
-            self._init_serializer(serializer or self.default_serializer, decode_content)
-
-    def _init_serializer(self, serializer: SerializerType, decode_content: bool):
-        # Look up a serializer by name, if needed
-        if isinstance(serializer, str):
-            serializer = SERIALIZERS[serializer]
-
-        # Wrap in a SerializerPipeline, if needed
-        if not isinstance(serializer, SerializerPipeline):
-            serializer = SerializerPipeline([serializer], name=str(serializer))
-        serializer.set_decode_content(decode_content)
-
-        self.serializer = serializer
+        self.serializer = init_serializer(serializer, decode_content)
         logger.debug(f'Initialized {type(self).__name__} with serializer: {self.serializer}')
 
     def bulk_delete(self, keys: Iterable[KT]):
