@@ -12,7 +12,7 @@ from boto3.resources.base import ServiceResource
 from botocore.exceptions import ClientError
 
 from .._utils import get_valid_kwargs
-from ..serializers import dynamodb_document_serializer
+from ..serializers import SerializerType, dynamodb_document_serializer
 from . import BaseCache, BaseStorage
 
 
@@ -35,23 +35,25 @@ class DynamoDbCache(BaseCache):
         ttl: bool = True,
         connection: Optional[ServiceResource] = None,
         decode_content: bool = True,
+        serializer: Optional[SerializerType] = None,
         **kwargs,
     ):
         super().__init__(cache_name=table_name, **kwargs)
+        skwargs = {'serializer': serializer, **kwargs} if serializer else kwargs
         self.responses = DynamoDbDict(
             table_name,
             namespace='responses',
             ttl=ttl,
             connection=connection,
             decode_content=decode_content,
-            **kwargs,
+            **skwargs,
         )
         self.redirects = DynamoDbDict(
             table_name,
             namespace='redirects',
             ttl=False,
             connection=self.responses.connection,
-            no_serializer=True,
+            serialzier=None,
             **kwargs,
         )
 
@@ -68,17 +70,16 @@ class DynamoDbDict(BaseStorage):
         kwargs: Additional keyword arguments for :py:meth:`~boto3.session.Session.resource`
     """
 
-    default_serializer = dynamodb_document_serializer
-
     def __init__(
         self,
         table_name: str,
         namespace: str,
         ttl: bool = True,
         connection: Optional[ServiceResource] = None,
+        serializer: Optional[SerializerType] = dynamodb_document_serializer,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(serializer=serializer, **kwargs)
         connection_kwargs = get_valid_kwargs(
             boto3.Session.__init__, kwargs, extras=['endpoint_url']
         )

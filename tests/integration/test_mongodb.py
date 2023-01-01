@@ -51,7 +51,6 @@ class TestMongoDict(BaseStorageTest):
 
 class TestMongoCache(BaseCacheTest):
     backend_class = MongoCache
-    init_kwargs = {'serializer': None}  # Use class default serializer instead of pickle
 
     def test_ttl(self):
         session = self.init_session()
