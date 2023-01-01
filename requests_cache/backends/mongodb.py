@@ -13,7 +13,7 @@ from pymongo.errors import OperationFailure
 
 from .._utils import get_valid_kwargs
 from ..policy.expiration import NEVER_EXPIRE, get_expiration_seconds
-from ..serializers import bson_document_serializer
+from ..serializers import SerializerType, bson_document_serializer
 from . import BaseCache, BaseStorage
 
 logger = getLogger(__name__)
@@ -34,21 +34,23 @@ class MongoCache(BaseCache):
         db_name: str = 'http_cache',
         connection: MongoClient = None,
         decode_content: bool = True,
+        serializer: Optional[SerializerType] = None,
         **kwargs,
     ):
         super().__init__(cache_name=db_name, **kwargs)
+        skwargs = {'serializer': serializer, **kwargs} if serializer else kwargs
         self.responses: MongoDict = MongoDict(
             db_name,
             collection_name='responses',
             connection=connection,
             decode_content=decode_content,
-            **kwargs,
+            **skwargs,
         )
         self.redirects: MongoDict = MongoDict(
             db_name,
             collection_name='redirects',
             connection=self.responses.connection,
-            no_serializer=True,
+            serialzier=None,
             **kwargs,
         )
 
@@ -77,16 +79,15 @@ class MongoDict(BaseStorage):
         kwargs: Additional keyword arguments for :py:class:`pymongo.MongoClient`
     """
 
-    default_serializer = bson_document_serializer
-
     def __init__(
         self,
         db_name: str,
         collection_name: str = 'http_cache',
         connection: Optional[MongoClient] = None,
+        serializer: Optional[SerializerType] = bson_document_serializer,
         **kwargs,
     ):
-        super().__init__(**kwargs)
+        super().__init__(serializer=serializer, **kwargs)
         connection_kwargs = get_valid_kwargs(MongoClient.__init__, kwargs)
         self.connection = connection or MongoClient(**connection_kwargs)
         self.collection = self.connection[db_name][collection_name]

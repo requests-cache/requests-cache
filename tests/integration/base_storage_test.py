@@ -19,7 +19,6 @@ class BaseStorageTest:
 
     def init_cache(self, cache_name=CACHE_NAME, index=0, clear=True, **kwargs):
         kwargs = {**self.init_kwargs, **kwargs}
-        kwargs.setdefault('serializer', 'pickle')
         cache = self.storage_class(cache_name, f'table_{index}', **kwargs)
         if clear:
             cache.clear()
@@ -136,8 +135,8 @@ class BaseStorageTest:
         cache_2 = self.init_cache(connection=getattr(cache_1, 'connection', None))
 
         for i in range(5):
-            cache_1[i] = i
-            cache_2[i] = i
+            cache_1[i] = f'value_{i}'
+            cache_2[i] = f'value_{i}'
 
         assert len(cache_1) == len(cache_2) == 5
         cache_1.clear()
@@ -147,8 +146,8 @@ class BaseStorageTest:
     def test_same_settings(self):
         cache_1 = self.init_cache()
         cache_2 = self.init_cache(connection=getattr(cache_1, 'connection', None))
-        cache_1['key_1'] = 1
-        cache_2['key_2'] = 2
+        cache_1['key_1'] = 'value_1'
+        cache_2['key_2'] = 'value_2'
         assert cache_1 == cache_2
 
     def test_str(self):
