@@ -46,11 +46,11 @@ support wrapping an existing session object:
 >>> from requests_cache import CachedSession
 >>> from requests_futures.sessions import FuturesSession
 
->>> session = FutureSession(session=CachedSession())
+>>> session = FuturesSession(session=CachedSession())
 ```
 
-In this case, `FutureSession` must wrap `CachedSession` rather than the other way around, since
-`FutureSession` returns (as you might expect) futures rather than response objects.
+In this case, `FuturesSession` must wrap `CachedSession` rather than the other way around, since
+`FuturesSession` returns (as you might expect) futures rather than response objects.
 See [issue #135](https://github.com/requests-cache/requests-cache/issues/135) for more notes on this.
 
 ## Requests-OAuthlib
