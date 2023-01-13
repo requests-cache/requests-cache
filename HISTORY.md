@@ -110,6 +110,8 @@
 * Add `CachedRequest.path_url` property for compatibility with `RequestEncodingMixin`
 * Fix potential `AttributeError` due to undetected imports when requests-cache is bundled in a PyInstaller package
 * Fix `AttributeError` when attempting to unpickle a `CachedSession` object, and instead disable pickling by raising a `NotImplementedError`
+* Raise an error for invalid expiration string values (except for headers containing httpdates)
+  * Previously, this would be quietly ignored, and the response would be cached indefinitely
 
 📦 **Dependencies:**
 * Replace `appdirs` with `platformdirs`

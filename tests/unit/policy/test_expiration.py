@@ -41,7 +41,9 @@ def test_get_expiration_datetime__tzinfo():
 
 def test_get_expiration_datetime__httpdate():
     assert get_expiration_datetime(HTTPDATE_STR) == HTTPDATE_DATETIME
-    assert get_expiration_datetime('P12Y34M56DT78H90M12.345S') is None
+    assert get_expiration_datetime('P12Y34M56DT78H90M12.345S', ignore_invalid_httpdate=True) is None
+    with pytest.raises(ValueError):
+        get_expiration_datetime('P12Y34M56DT78H90M12.345S')
 
 
 @pytest.mark.parametrize(
