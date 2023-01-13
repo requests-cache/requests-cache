@@ -5,7 +5,7 @@ from unittest.mock import patch
 import pytest
 
 from requests_cache.backends import DynamoDbCache, DynamoDbDict
-from tests.conftest import fail_if_no_connection
+from tests.conftest import CACHE_NAME, fail_if_no_connection
 from tests.integration.base_cache_test import BaseCacheTest
 from tests.integration.base_storage_test import BaseStorageTest
 
@@ -31,10 +31,18 @@ class TestDynamoDbDict(BaseStorageTest):
     storage_class = DynamoDbDict
     init_kwargs = AWS_OPTIONS
 
+    def init_cache(self, cache_name=CACHE_NAME, index=0, clear=True, **kwargs):
+        """For tests that use multiple tables, make index part of the table name"""
+        kwargs = {**self.init_kwargs, **kwargs}
+        cache = self.storage_class(f'{cache_name}_{index}', **kwargs)
+        if clear:
+            cache.clear()
+        return cache
+
     @patch('requests_cache.backends.dynamodb.boto3.resource')
     def test_connection_kwargs(self, mock_resource):
         """A spot check to make sure optional connection kwargs gets passed to connection"""
-        DynamoDbDict('test_table', 'namespace', region_name='us-east-2', invalid_kwarg='???')
+        DynamoDbDict('test_table', region_name='us-east-2', invalid_kwarg='???')
         mock_resource.assert_called_with('dynamodb', region_name='us-east-2')
 
     def test_create_table_error(self):
@@ -69,7 +77,7 @@ class TestDynamoDbDict(BaseStorageTest):
 
         # 'ttl' is a reserved word, so to retrieve it we need to alias it
         item = cache._table.get_item(
-            Key=cache._composite_key('key'),
+            Key={'key': 'key'},
             ProjectionExpression='#t',
             ExpressionAttributeNames={'#t': 'ttl'},
         )

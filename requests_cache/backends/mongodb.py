@@ -50,7 +50,7 @@ class MongoCache(BaseCache):
             db_name,
             collection_name='redirects',
             connection=self.responses.connection,
-            serialzier=None,
+            serializer=None,
             **kwargs,
         )
 
