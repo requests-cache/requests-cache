@@ -660,6 +660,21 @@ def test_url_allowlist(mock_session):
     assert not mock_session.cache.contains(url=MOCKED_URL)
 
 
+def test_invalid_expiration(mock_session):
+    mock_session.settings.expire_after = 'tomorrow'
+    with pytest.raises(ValueError):
+        mock_session.get(MOCKED_URL)
+
+    mock_session.settings.expire_after = object()
+    with pytest.raises(TypeError):
+        mock_session.get(MOCKED_URL)
+
+    mock_session.settings.expire_after = None
+    mock_session.settings.urls_expire_after = {'*': 'tomorrow'}
+    with pytest.raises(ValueError):
+        mock_session.get(MOCKED_URL)
+
+
 def test_stale_while_revalidate(mock_session):
     # Start with expired responses
     mocked_url_2 = f'{MOCKED_URL_ETAG}?k=v'

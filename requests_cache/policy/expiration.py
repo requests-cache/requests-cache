@@ -21,6 +21,7 @@ def get_expiration_datetime(
     expire_after: ExpirationTime,
     start_time: Optional[datetime] = None,
     negative_delta: bool = False,
+    ignore_invalid_httpdate: bool = False,
 ) -> Optional[datetime]:
     """Convert an expiration value in any supported format to an absolute datetime"""
     # Never expire (or do not cache, in which case expiration won't be used)
@@ -29,9 +30,12 @@ def get_expiration_datetime(
     # Expire immediately
     elif try_int(expire_after) == EXPIRE_IMMEDIATELY:
         return start_time or datetime.utcnow()
-    # Already a datetime or datetime str
+    # Already a datetime or httpdate str (allowed for headers only)
     if isinstance(expire_after, str):
-        return _parse_http_date(expire_after)
+        expire_after_dt = _parse_http_date(expire_after)
+        if not expire_after_dt and not ignore_invalid_httpdate:
+            raise ValueError(f'Invalid HTTP date: {expire_after}')
+        return expire_after_dt
     elif isinstance(expire_after, datetime):
         return _to_utc(expire_after)
 
@@ -47,7 +51,7 @@ def get_expiration_seconds(expire_after: ExpirationTime) -> int:
     """Convert an expiration value in any supported format to an expiration time in seconds"""
     if expire_after == DO_NOT_CACHE:
         return DO_NOT_CACHE
-    expires = get_expiration_datetime(expire_after)
+    expires = get_expiration_datetime(expire_after, ignore_invalid_httpdate=True)
     return ceil((expires - datetime.utcnow()).total_seconds()) if expires else NEVER_EXPIRE
 
 
