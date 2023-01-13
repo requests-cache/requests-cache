@@ -153,7 +153,9 @@ class CacheActions:
         self.skip_write = (expire_immediately or no_store) and not has_validator
 
 
-def get_expiration_datetime(expire_after: ExpirationTime) -> Optional[datetime]:
+def get_expiration_datetime(
+    expire_after: ExpirationTime, ignore_invalid_httpdate: bool = False
+) -> Optional[datetime]:
     """Convert an expiration value in any supported format to an absolute datetime"""
     # Never expire
     if expire_after is None or expire_after == NEVER_EXPIRE:
@@ -161,9 +163,13 @@ def get_expiration_datetime(expire_after: ExpirationTime) -> Optional[datetime]:
     # Expire immediately
     elif _try_int(expire_after) == DO_NOT_CACHE:
         return datetime.utcnow()
-    # Already a datetime or datetime str
+    # Httpdate str (allowed for headers only)
     if isinstance(expire_after, str):
-        return _parse_http_date(expire_after)
+        expire_after_dt = _parse_http_date(expire_after)
+        if not expire_after_dt and not ignore_invalid_httpdate:
+            raise ValueError(f'Invalid HTTP date: {expire_after}')
+        return expire_after_dt
+    # Already a datetime
     elif isinstance(expire_after, datetime):
         return _to_utc(expire_after)
 

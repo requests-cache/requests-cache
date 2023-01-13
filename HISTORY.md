@@ -1,9 +1,12 @@
 # History
 
-## 0.9.8 (Unreleased)
+## 0.9.8 (2023-01-13)
 * Fix `DeprecationWarning` raised by `BaseCache.urls`
 * Reword ambiguous log message for `BaseCache.delete`
+
+Backport fixes from 1.0:
 * For custom serializers, handle using a cattrs converter that doesn't support `omit_if_default`
+* Raise an error for invalid expiration string values (except for headers containing httpdates)
 
 ## 0.9.7 (2022-10-26)
 Backport compatibility fixes from 1.0:

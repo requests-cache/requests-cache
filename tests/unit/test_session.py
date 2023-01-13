@@ -659,6 +659,21 @@ def test_remove_expired_responses(mock_session):
     assert len(mock_session.cache.responses) == 0
 
 
+def test_invalid_expiration(mock_session):
+    mock_session.settings.expire_after = 'tomorrow'
+    with pytest.raises(ValueError):
+        mock_session.get(MOCKED_URL)
+
+    mock_session.settings.expire_after = object()
+    with pytest.raises(TypeError):
+        mock_session.get(MOCKED_URL)
+
+    mock_session.settings.expire_after = None
+    mock_session.settings.urls_expire_after = {'*': 'tomorrow'}
+    with pytest.raises(ValueError):
+        mock_session.get(MOCKED_URL)
+
+
 def test_remove_expired_responses__error(mock_session):
     # Start with two cached responses, one of which will raise an error
     mock_session.get(MOCKED_URL)
