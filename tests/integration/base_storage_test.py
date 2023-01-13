@@ -135,8 +135,8 @@ class BaseStorageTest:
         cache_2 = self.init_cache(connection=getattr(cache_1, 'connection', None))
 
         for i in range(5):
-            cache_1[i] = f'value_{i}'
-            cache_2[i] = f'value_{i}'
+            cache_1[f'key_{i}'] = f'value_{i}'
+            cache_2[f'key_{i}'] = f'value_{i}'
 
         assert len(cache_1) == len(cache_2) == 5
         cache_1.clear()
