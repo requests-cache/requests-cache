@@ -156,7 +156,7 @@ jobs:
   # Deploy stable builds on tags only, and pre-release builds from manual trigger ("workflow_dispatch")
   release:
     if: ${{ github.event.inputs.skip-publish != 'true' }}
-    needs: [test, test-minimum-deps, test-stress]
+    needs: [test, test-minimum-deps]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
