@@ -148,6 +148,14 @@ If you encounter a problem not listed here after updating to 1.0, please create 
 * Internal utility module changes:
     * The `cache_control` module (added in `0.7`) has been split up into multiple modules in a new `policy` subpackage
 
+### 0.9.8 (2023-01-13)
+* Fix `DeprecationWarning` raised by `BaseCache.urls`
+* Reword ambiguous log message for `BaseCache.delete`
+
+Backport fixes from 1.0:
+* For custom serializers, handle using a cattrs converter that doesn't support `omit_if_default`
+* Raise an error for invalid expiration string values (except for headers containing httpdates)
+
 ### 0.9.7 (2022-10-26)
 Backport compatibility fixes from 1.0:
 * **PyInstaller:** Fix potential `AttributeError` due to undetected imports when requests-cache is bundled in a PyInstaller package
