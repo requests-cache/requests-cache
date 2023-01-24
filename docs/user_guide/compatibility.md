@@ -85,10 +85,11 @@ _after_ caching, you get the added benefit of not counting cache hits against yo
 >>> # Limit non-cached requests to 5 requests per second, with unlimited cached requests
 >>> # Optionally use Redis as both the bucket backend and the cache backend
 >>> session = CachedLimiterSession(
-...     rates=RequestRate(5, Duration.SECOND),
+...     per_second=5,
 ...     bucket_class=RedisBucket,
 ...     backend=RedisCache(),
 ... )
+
 ```
 
 ## Internet Archive
