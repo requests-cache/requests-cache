@@ -78,6 +78,7 @@ MOCKED_URL_REDIRECT_TARGET = 'http+mock://requests-cache.com/redirect_target'
 MOCKED_URL_VARY = 'http+mock://requests-cache.com/vary'
 MOCKED_URL_404 = 'http+mock://requests-cache.com/nonexistent'
 MOCKED_URL_500 = 'http+mock://requests-cache.com/answer?q=this-statement-is-false'
+MOCKED_URL_200_404 = 'http+mock://requests-cache.com/200-404'
 MOCK_PROTOCOLS = ['mock://', 'http+mock://', 'https+mock://']
 
 CACHE_NAME = 'pytest_cache'
@@ -219,6 +220,9 @@ def get_mock_adapter() -> Adapter:
     )
     adapter.register_uri(ANY_METHOD, MOCKED_URL_404, status_code=404)
     adapter.register_uri(ANY_METHOD, MOCKED_URL_500, status_code=500)
+    adapter.register_uri(
+        ANY_METHOD, MOCKED_URL_200_404, [{"status_code": 200}, {"status_code": 404}]
+    )
     return adapter
 
 
