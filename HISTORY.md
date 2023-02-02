@@ -112,6 +112,7 @@
 * Fix `AttributeError` when attempting to unpickle a `CachedSession` object, and instead disable pickling by raising a `NotImplementedError`
 * Raise an error for invalid expiration string values (except for headers containing httpdates)
   * Previously, this would be quietly ignored, and the response would be cached indefinitely
+* Fix behavior for `stale_if_error` if an error response code is added to `allowable_codes`
 
 📦 **Dependencies:**
 * Replace `appdirs` with `platformdirs`
