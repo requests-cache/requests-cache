@@ -1486,14 +1486,14 @@ test = ["pytest", "pytest-cov"]
 
 [[package]]
 name = "sphinx-autodoc-typehints"
-version = "1.21.8"
+version = "1.22"
 description = "Type hints (PEP 484) support for the Sphinx autodoc extension"
 category = "main"
 optional = true
 python-versions = ">=3.7"
 files = [
-    {file = "sphinx_autodoc_typehints-1.21.8-py3-none-any.whl", hash = "sha256:b8d15c05ced5e9fbe46a6dfd2ff194b6e508a64c9229bc7eaa08ee7089b9e6d3"},
-    {file = "sphinx_autodoc_typehints-1.21.8.tar.gz", hash = "sha256:68e7136403ca67359d7beaab4d358cea518623abe749cc4e0639609aebf2f5c7"},
+    {file = "sphinx_autodoc_typehints-1.22-py3-none-any.whl", hash = "sha256:ef4a8b9d52de66065aa7d3adfabf5a436feb8a2eff07c2ddc31625d8807f2b69"},
+    {file = "sphinx_autodoc_typehints-1.22.tar.gz", hash = "sha256:71fca2d5eee9b034204e4c686ab20b4d8f5eb9409396216bcae6c87c38e18ea6"},
 ]
 
 [package.dependencies]
@@ -1984,5 +1984,5 @@ yaml = ["pyyaml"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = "^3.7"     # requests requires python >=3.7, <4.0
+python-versions = "^3.7"
 content-hash = "49eab0c62e4848d76c3e3375225e62bdbaf9cc1b61e934e546a3a68ba2d91648"
