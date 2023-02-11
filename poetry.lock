@@ -1730,14 +1730,14 @@ sphinx = ">=4.0"
 
 [[package]]
 name = "tenacity"
-version = "8.1.0"
+version = "8.2.1"
 description = "Retry code until it succeeds"
 category = "dev"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "tenacity-8.1.0-py3-none-any.whl", hash = "sha256:35525cd47f82830069f0d6b73f7eb83bc5b73ee2fff0437952cedf98b27653ac"},
-    {file = "tenacity-8.1.0.tar.gz", hash = "sha256:e48c437fdf9340f5666b92cd7990e96bc5fc955e1298baf4a907e3972067a445"},
+    {file = "tenacity-8.2.1-py3-none-any.whl", hash = "sha256:dd1b769ca7002fda992322939feca5bee4fa11f39146b0af14e0b8d9f27ea854"},
+    {file = "tenacity-8.2.1.tar.gz", hash = "sha256:c7bb4b86425b977726a7b49971542d4f67baf72096597d283f3ffd01f33b92df"},
 ]
 
 [package.extras]
@@ -1984,5 +1984,5 @@ yaml = ["pyyaml"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = "^3.7"     # requests requires python >=3.7, <4.0
-content-hash = "49eab0c62e4848d76c3e3375225e62bdbaf9cc1b61e934e546a3a68ba2d91648"
+python-versions = "^3.7"
+content-hash = "f3a13d79eef3a1649b46c78199358e20b552939ee02f941d5857d06db5572368"
