@@ -43,6 +43,7 @@ pickle_serializer = SerializerPipeline(
     [base_stage, Stage(pickle)], name='pickle', is_binary=True
 )  #: Pickle serializer
 
+
 # Safe pickle serializer
 def signer_stage(secret_key=None, salt='requests-cache') -> Stage:
     """Create a stage that uses ``itsdangerous`` to add a signature to responses on write, and
