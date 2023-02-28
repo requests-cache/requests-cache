@@ -31,6 +31,10 @@
 
 💾 **Backends:**
 * **DynamoDB**:
+  * For better read performance and usage of read throughput:
+    * The cache key is now used as the partition key
+    * Redirects are now cached only in-memory and not persisted
+    * Cache size (`len()`) now uses a fast table estimate instead of a full scan
   * Store responses in plain (human-readable) document format instead of fully serialized binary
   * Create default table in on-demand mode instead of provisioned
   * Add optional integration with DynamoDB TTL to improve performance for removing expired responses
@@ -132,7 +136,6 @@ replacements are listed below. If this causes problems for you, please open an i
 
 ⚠️ **Breaking changes:**
 
-Some breaking changes have been made that are not expected to affect most users.
 If you encounter a problem not listed here after updating to 1.0, please create a bug report!
 
 * The `BaseCache.urls` property has been replaced with a method that returns a list of URLs
@@ -141,6 +144,7 @@ If you encounter a problem not listed here after updating to 1.0, please create 
     * The `CachedSession` `backend` argument must be either an instance or string alias. Previously it would also accept a backend class.
     * After initialization, cache settings can only be accesed and modified via
     `CachedSession.settings`. Previously, some settings could be modified by setting them on either `CachedSession` or `BaseCache`. In some cases this could silently fail or otherwise have undefined behavior.
+* DynamoDB table structure has changed. If you are using DynamoDB, you will need to create a new table when upgrading to 1.0. See [DynamoDB backend docs](https://requests-cache.readthedocs.io/en/stable/user_guide/backends/dynamodb.html#dynamodb) for more details.
 * The following is relevant for **custom backends** that extend built-in storage classes:
     * All serializer-specific `BaseStorage` subclasses have been removed, and merged into their respective parent classes. This includes `SQLitePickleDict`, `MongoPickleDict`, and `GridFSPickleDict`.
     * All `BaseStorage` subclasses now have a `serializer` attribute, which will be unused if

@@ -61,7 +61,12 @@ And here is an example response:
 ```
 :::
 
-It is also possible query these responses with the [AWS CLI](https://aws.amazon.com/cli), for example:
+It is also possible query these responses with the [AWS CLI](https://aws.amazon.com/cli), for
+example:
+```bash
+aws dynamodb query --table-name http_cache > responses.json
+```
+
 ```bash
 aws dynamodb query \
     --table-name http_cache \
@@ -91,15 +96,23 @@ want to quickly test out DynamoDB as a cache backend, but in a production enviro
 likely want to create the tables yourself, for example with
 [CloudFormation](https://aws.amazon.com/cloudformation/) or [Terraform](https://www.terraform.io/).
 
-Here are the details you will need:
-
+You just need a table with a single partition key. A `value` attribute (containing response data)
+will be created dynamically once items are added to the table.
 - Table: `http_cache` (or any other name, as long as it matches the `table_name` parameter for `DynamoDbCache`)
 - Attributes:
-  - `namespace`: String
   - `key`: String
 - Keys:
-  - Partition key (aka namespace): `namespace`
-  - Range key (aka sort key): `key`
+  - Partition key (aka hash key): `key`
+
+Example of manually creating a table in the console:
+:::{dropdown} Screenshot
+:animate: fade-in-slide-down
+:color: primary
+:icon: file-media
+
+```{image} ../../_static/dynamodb_create_table.png
+```
+:::
 
 ### Example CloudFormation Template
 :::{dropdown} Example
