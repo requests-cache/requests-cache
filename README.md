@@ -75,7 +75,7 @@ for i in range(60):
 With caching, the response will be fetched once, saved to `demo_cache.sqlite`, and subsequent
 requests will return the cached response near-instantly.
 
-**Patching:**
+### Patching
 If you don't want to manage a session object, or just want to quickly test it out in your
 application without modifying any code, requests-cache can also be installed globally, and all
 requests will be transparently cached:
@@ -87,7 +87,40 @@ requests_cache.install_cache('demo_cache')
 requests.get('https://httpbin.org/delay/1')
 ```
 
-**Settings:**
+### Headers and Expiration
+By default, requests-cache will keep cached responses indefinitely. In most cases, you will want to
+use one of the two following strategies to balance cache freshness and performance:
+
+**Define exactly how long to keep responses:**
+
+Use the `expire_after` parameter to set a fixed expiration time for all responses.
+```python
+from requests_cache import CachedSession
+from datetime import timedelta
+
+# Keep responses for 360 seconds
+session = CachedSession('demo_cache', expire_after=360)
+
+# Use timedelta objects for more precise control
+session = CachedSession('demo_cache', expire_after=timedelta(hours=1))
+```
+See [Expiration](https://requests-cache.readthedocs.io/en/stable/user_guide/expiration.html) for
+more features and settings.
+
+**Use Cache-Control headers:**
+
+Use the `cache_control` parameter to enable automatic expiration based on `Cache-Control` and other
+standard HTTP headers sent by the server.
+```python
+from requests_cache import CachedSession
+
+session = CachedSession('demo_cache', cache_control=True)
+```
+See [Headers](https://requests-cache.readthedocs.io/en/stable/user_guide/headers.html) for more
+details.
+
+
+### Settings
 The default settings work well for most use cases, but there are plenty of ways to customize
 caching behavior when needed. Here is a quick example of some of the options available:
 ```python
