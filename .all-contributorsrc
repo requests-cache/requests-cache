@@ -836,6 +836,107 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "DavidSchmidt00",
+      "name": "David Schmidt",
+      "avatar_url": "https://avatars.githubusercontent.com/u/43894937?v=4",
+      "profile": "https://github.com/DavidSchmidt00",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "ValueRaider",
+      "name": "ValueRaider",
+      "avatar_url": "https://avatars.githubusercontent.com/u/96923577?v=4",
+      "profile": "https://github.com/ValueRaider",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "masavini",
+      "name": "masavini",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6315187?v=4",
+      "profile": "https://github.com/masavini",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "eserdk",
+      "name": "eserdk",
+      "avatar_url": "https://avatars.githubusercontent.com/u/16106844?v=4",
+      "profile": "https://github.com/eserdk",
+      "contributions": [
+        "ideas"
+      ]
+    },
+    {
+      "login": "gsalvatella",
+      "name": "gsalvatella ",
+      "avatar_url": "https://avatars.githubusercontent.com/u/42438361?v=4",
+      "profile": "https://github.com/gsalvatella",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "dericke",
+      "name": "Evan D",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3587185?v=4",
+      "profile": "https://github.com/dericke",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "gismaps",
+      "name": "David GIS",
+      "avatar_url": "https://avatars.githubusercontent.com/u/65092729?v=4",
+      "profile": "https://github.com/gismaps",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "pfmoore",
+      "name": "Paul Moore",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1110419?v=4",
+      "profile": "https://github.com/pfmoore",
+      "contributions": [
+        "ideas"
+      ]
+    },
+    {
+      "login": "carlosal1015",
+      "name": "Oromion",
+      "avatar_url": "https://avatars.githubusercontent.com/u/21283014?v=4",
+      "profile": "https://github.com/carlosal1015",
+      "contributions": [
+        "bug",
+        "platform"
+      ]
+    },
+    {
+      "login": "aaronsteers",
+      "name": "Aaron (\"AJ\") Steers",
+      "avatar_url": "https://avatars.githubusercontent.com/u/18150651?v=4",
+      "profile": "https://meltano.com/",
+      "contributions": [
+        "ideas"
+      ]
+    },
+    {
+      "login": "TheTechromancer",
+      "name": "TheTechromancer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/20261699?v=4",
+      "profile": "https://github.com/TheTechromancer",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
