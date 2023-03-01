@@ -1,4 +1,5 @@
 """Common tests to run for all backends (BaseStorage subclasses)"""
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from typing import Dict, Type
 
@@ -7,7 +8,7 @@ from attrs import define, field
 
 from requests_cache.backends import BaseStorage
 from requests_cache.models import CachedResponse
-from tests.conftest import CACHE_NAME
+from tests.conftest import CACHE_NAME, N_ITERATIONS, N_REQUESTS_PER_ITERATION, N_WORKERS
 
 
 class BaseStorageTest:
@@ -157,6 +158,17 @@ class BaseStorageTest:
             cache[f'key_{i}'] = f'value_{i}'
         for i in range(10):
             assert f'key_{i}' in str(cache)
+
+    def test_concurrency(self):
+        """Test a large number of concurrent write operations for each backend"""
+        cache = self.init_cache()
+
+        def write(i):
+            cache[f'key_{i}'] = f'value_{i}'
+
+        n_iterations = N_ITERATIONS * N_REQUESTS_PER_ITERATION * 10
+        with ThreadPoolExecutor(max_workers=N_WORKERS * 2) as executor:
+            _ = list(executor.map(write, range(n_iterations)))
 
 
 @define

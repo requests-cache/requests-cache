@@ -43,7 +43,7 @@ logger = getLogger(__name__)
 
 # Allow running longer stress tests with an environment variable
 STRESS_TEST_MULTIPLIER = int(os.getenv('STRESS_TEST_MULTIPLIER', '1'))
-N_WORKERS = 2 * STRESS_TEST_MULTIPLIER
+N_WORKERS = 5 * STRESS_TEST_MULTIPLIER
 N_ITERATIONS = 4 * STRESS_TEST_MULTIPLIER
 N_REQUESTS_PER_ITERATION = 10 + 10 * STRESS_TEST_MULTIPLIER
 
