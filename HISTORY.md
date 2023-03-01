@@ -55,6 +55,7 @@
   * Add `ttl_offset` argument to add a delay between cache expiration and deletion
 * **SQLite**:
   * Improve performance for removing expired responses with `delete()`
+  * Improve performance (slightly) with a large number of threads and high request rate
   * Add `count()` method to count responses, with option to exclude expired responses (performs a fast indexed count instead of slower in-memory filtering)
   * Add `size()` method to get estimated size of the database (including in-memory databases)
   * Add `sorted()` method with sorting and other query options
@@ -110,6 +111,7 @@
 
 🪲 **Bugfixes:**
 * Fix usage of memory backend with `install_cache()`
+* Fix an uncommon `OperationalError: database is locked` in SQLite backend
 * Fix issue on Windows with occasional missing `CachedResponse.created_at` timestamp
 * Add `CachedRequest.path_url` property for compatibility with `RequestEncodingMixin`
 * Fix potential `AttributeError` due to undetected imports when requests-cache is bundled in a PyInstaller package

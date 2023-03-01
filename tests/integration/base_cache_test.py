@@ -13,7 +13,7 @@ from urllib.parse import parse_qs, urlparse
 
 import pytest
 import requests
-from requests import PreparedRequest, Session
+from requests import ConnectionError, PreparedRequest, Session
 
 from requests_cache import ALL_METHODS, CachedResponse, CachedSession
 from requests_cache.backends import BaseCache
@@ -35,6 +35,7 @@ from tests.conftest import (
 )
 
 logger = getLogger(__name__)
+
 
 VALIDATOR_HEADERS = [{'ETag': ETAG}, {'Last-Modified': LAST_MODIFIED}]
 
@@ -355,10 +356,14 @@ class BaseCacheTest:
         """
         start = time()
         url = httpbin('anything')
-        self.init_session(clear=True)
 
-        session_factory = partial(self.init_session, clear=False)
-        request_func = partial(_send_request, session_factory, url)
+        # For multithreading, we can share a session object, but we can't for multiprocessing
+        session = self.init_session(clear=True, expire_after=1)
+        if executor_class is ProcessPoolExecutor:
+            session = None
+        session_factory = partial(self.init_session, clear=False, expire_after=1)
+
+        request_func = partial(_send_request, session, session_factory, url)
         with executor_class(max_workers=N_WORKERS) as executor:
             _ = list(executor.map(request_func, range(N_REQUESTS_PER_ITERATION)))
 
@@ -373,7 +378,7 @@ class BaseCacheTest:
         )
 
 
-def _send_request(session_factory, url, _=None):
+def _send_request(session, session_factory, url, _=None):
     """Concurrent request function for stress tests. Defined in module scope so it can be serialized
     to multiple processes.
     """
@@ -381,6 +386,15 @@ def _send_request(session_factory, url, _=None):
     n_unique_responses = int(N_REQUESTS_PER_ITERATION / 4)
     i = randint(1, n_unique_responses)
 
-    session = session_factory()
-    sleep(0.1)
-    return session.get(url, params={f'key_{i}': f'value_{i}'})
+    # Threads can share a session object, but processes will create their own session because it
+    # can't be serialized
+    if session is None:
+        session = session_factory()
+
+    sleep(0.01)
+    try:
+        return session.get(url, params={f'key_{i}': f'value_{i}'})
+    # Sometimes the local http server is the bottleneck here; just retry once
+    except ConnectionError:
+        sleep(0.1)
+        return session.get(url, params={f'key_{i}': f'value_{i}'})

@@ -173,7 +173,14 @@ class BaseCache:
             delete_keys.append(response.cache_key)
 
         logger.debug(f'Deleting up to {len(delete_keys)} responses')
-        self.responses.bulk_delete(delete_keys)
+        # For some backends, we don't want to use bulk_delete if there's only one key
+        if len(delete_keys) == 1:
+            try:
+                del self.responses[delete_keys[0]]
+            except KeyError:
+                pass
+        else:
+            self.responses.bulk_delete(delete_keys)
         self._prune_redirects()
 
     def _prune_redirects(self):
