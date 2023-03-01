@@ -93,7 +93,7 @@ use one of the two following strategies to balance cache freshness and performan
 
 **Define exactly how long to keep responses:**
 
-Use the `expire_after` parameter to set a fixed expiration time for all responses.
+Use the `expire_after` parameter to set a fixed expiration time for all responses:
 ```python
 from requests_cache import CachedSession
 from datetime import timedelta
@@ -101,7 +101,7 @@ from datetime import timedelta
 # Keep responses for 360 seconds
 session = CachedSession('demo_cache', expire_after=360)
 
-# Use timedelta objects for more precise control
+# Or use timedelta objects to specify other units of time
 session = CachedSession('demo_cache', expire_after=timedelta(hours=1))
 ```
 See [Expiration](https://requests-cache.readthedocs.io/en/stable/user_guide/expiration.html) for
@@ -110,14 +110,14 @@ more features and settings.
 **Use Cache-Control headers:**
 
 Use the `cache_control` parameter to enable automatic expiration based on `Cache-Control` and other
-standard HTTP headers sent by the server.
+standard HTTP headers sent by the server:
 ```python
 from requests_cache import CachedSession
 
 session = CachedSession('demo_cache', cache_control=True)
 ```
-See [Headers](https://requests-cache.readthedocs.io/en/stable/user_guide/headers.html) for more
-details.
+See [Cache Headers](https://requests-cache.readthedocs.io/en/stable/user_guide/headers.html)
+for more details.
 
 
 ### Settings
