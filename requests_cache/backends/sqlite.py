@@ -99,7 +99,7 @@ class SQLiteCache(BaseCache):
         self.redirects.vacuum()
 
     def _delete_expired(self):
-        """A more efficient implementation deleting expired responses in SQL"""
+        """A more efficient implementation of deleting expired responses in SQL"""
         with self.responses.connection(commit=True) as con:
             con.execute(
                 f'DELETE FROM {self.responses.table_name} WHERE expires <= ?', (round(time()),)

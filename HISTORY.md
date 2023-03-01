@@ -1,6 +1,6 @@
 # History
 
-## 1.0.0 (Unreleased)
+## 1.0.0 (2023-03-01)
 [See all unreleased issues and PRs](https://github.com/requests-cache/requests-cache/milestone/10?closed=1)
 
 🕗 **Expiration & headers:**
@@ -118,6 +118,7 @@
 * Fix `AttributeError` when attempting to unpickle a `CachedSession` object, and instead disable pickling by raising a `NotImplementedError`
 * Raise an error for invalid expiration string values (except for headers containing httpdates)
   * Previously, this would be quietly ignored, and the response would be cached indefinitely
+* Fix behavior for `stale_if_error` if an error response code is added to `allowable_codes`
 
 📦 **Dependencies:**
 * Replace `appdirs` with `platformdirs`
@@ -138,21 +139,18 @@ replacements are listed below. If this causes problems for you, please open an i
 
 ⚠️ **Breaking changes:**
 
-If you encounter a problem not listed here after updating to 1.0, please create a bug report!
+* After initialization, cache settings can only be accesed and modified via `CachedSession.settings`. Previously, some settings could be modified by setting them on either `CachedSession` or `BaseCache`. In some cases this could silently fail or otherwise have undefined behavior.
+* `BaseCache.urls` has been replaced with a method that returns a list of URLs.
+* DynamoDB table structure has changed. If you are using the DynamoDB backend, you will need to create a new table when upgrading to 1.0. See [DynamoDB backend docs](https://requests-cache.readthedocs.io/en/stable/user_guide/backends/dynamodb.html#dynamodb) for more details.
 
-* The `BaseCache.urls` property has been replaced with a method that returns a list of URLs
-* The following **undocumented behaviors** have been removed:
-    * The arguments `match_headers` and `ignored_parameters` must be passed to `CachedSession`. Previously, these could also be passed to a `BaseCache` instance.
-    * The `CachedSession` `backend` argument must be either an instance or string alias. Previously it would also accept a backend class.
-    * After initialization, cache settings can only be accesed and modified via
-    `CachedSession.settings`. Previously, some settings could be modified by setting them on either `CachedSession` or `BaseCache`. In some cases this could silently fail or otherwise have undefined behavior.
-* DynamoDB table structure has changed. If you are using DynamoDB, you will need to create a new table when upgrading to 1.0. See [DynamoDB backend docs](https://requests-cache.readthedocs.io/en/stable/user_guide/backends/dynamodb.html#dynamodb) for more details.
-* The following is relevant for **custom backends** that extend built-in storage classes:
-    * All serializer-specific `BaseStorage` subclasses have been removed, and merged into their respective parent classes. This includes `SQLitePickleDict`, `MongoPickleDict`, and `GridFSPickleDict`.
-    * All `BaseStorage` subclasses now have a `serializer` attribute, which will be unused if
-    set to `None`.
-* Internal utility module changes:
-    * The `cache_control` module (added in `0.7`) has been split up into multiple modules in a new `policy` subpackage
+**Minor breaking changes:**
+
+The following changes only affect advanced or undocumented usage, and are not expected to impact most users:
+* The arguments `match_headers` and `ignored_parameters` must be passed to `CachedSession`. Previously, these could also be passed to a `BaseCache` instance.
+* The `CachedSession` `backend` argument must be either an instance or string alias. Previously it would also accept a backend class.
+* All serializer-specific `BaseStorage` subclasses have been removed, and merged into their respective parent classes. This includes `SQLitePickleDict`, `MongoPickleDict`, and `GridFSPickleDict`.
+  * All `BaseStorage` subclasses now have a `serializer` attribute, which will be unused if set to `None`.
+* The `cache_control` module (added in `0.7`) has been split up into multiple modules in a new `policy` subpackage
 
 ### 0.9.8 (2023-01-13)
 * Fix `DeprecationWarning` raised by `BaseCache.urls`

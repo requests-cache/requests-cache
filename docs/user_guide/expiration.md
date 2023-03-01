@@ -20,7 +20,7 @@ request, the following order of precedence is used:
 2. Cache-Control request headers
 3. Per-request expiration (`expire_after` argument for {py:meth}`.CachedSession.request`)
 4. Per-URL expiration (`urls_expire_after` argument for {py:class}`.CachedSession`)
-5. Per-session expiration (`expire_after` argument for {py:class}`.CacheBackend`)
+5. Per-session expiration (`expire_after` argument for {py:class}`.CachedSession`)
 
 ## Expiration Values
 `expire_after` can be any of the following time values:
