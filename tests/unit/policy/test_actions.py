@@ -184,24 +184,33 @@ def test_update_from_cached_response__revalidate(response_headers, expected_vali
 
 
 @pytest.mark.parametrize(
-    'request_headers, response_headers',
+    'response_headers',
     [
-        ({}, {'Cache-Control': 'no-cache'}),
-        ({}, {'Cache-Control': 'max-age=0,must-revalidate'}),
+        {'Cache-Control': 'no-cache'},
+        {'Cache-Control': 'max-age=0,must-revalidate'},
     ],
 )
-def test_update_from_cached_response__refresh(request_headers, response_headers):
+@pytest.mark.parametrize('cache_control', [True, False])
+def test_update_from_cached_response__force_revalidate(cache_control, response_headers):
     """Conditional request headers should be added if requested by response headers, even if the
     response is not expired
     """
     actions = CacheActions.from_request(
-        'key', Request(url='https://img.site.com/base/img.jpg', headers=request_headers)
+        'key',
+        request=Request(url='https://img.site.com/base/img.jpg', headers={}),
+        settings=CacheSettings(cache_control=cache_control),
     )
     cached_response = CachedResponse(headers={'ETag': ETAG, **response_headers}, expires=None)
 
     actions.update_from_cached_response(cached_response)
-    assert actions.send_request is True
-    assert actions._validation_headers == {'If-None-Match': ETAG}
+
+    # cache_control=False overrides revalidation in this case
+    if cache_control is False:
+        assert actions.send_request is False
+        assert not actions._validation_headers
+    else:
+        assert actions.send_request is True
+        assert actions._validation_headers == {'If-None-Match': ETAG}
 
 
 def test_update_from_cached_response__no_revalidation():

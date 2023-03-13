@@ -268,16 +268,17 @@ class CacheActions(RichMixin):
         triggered by a stale response, request headers, or cached response headers.
         """
         directives = CacheDirectives.from_headers(cached_response.headers)
+        # These conditions always apply
         revalidate = directives.has_validator and (
-            cached_response.is_expired
-            or self._refresh
-            or directives.no_cache
-            or directives.must_revalidate
-            or (self._settings.always_revalidate and directives.has_validator)
+            cached_response.is_expired or self._refresh or self._settings.always_revalidate
+        )
+        # These conditions only apply if cache_control=True
+        cc_revalidate = self._settings.cache_control and (
+            directives.no_cache or directives.must_revalidate
         )
 
         # Add the appropriate validation headers, if needed
-        if revalidate:
+        if revalidate or cc_revalidate:
             if directives.etag:
                 self._validation_headers['If-None-Match'] = directives.etag
             if directives.last_modified:
