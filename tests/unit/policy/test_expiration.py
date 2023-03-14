@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
@@ -56,6 +57,8 @@ def test_get_expiration_datetime__httpdate():
         ('http://site_2.com/resource_1/index.html', 60 * 60 * 2),
         ('http://site_2.com/resource_2/', 60 * 60 * 24),
         ('http://site_2.com/static/', -1),
+        ('http://site_2.com/api/resource/123', 60 * 60 * 24 * 7),
+        ('http://site_2.com/api/resource/xyz', None),
         ('http://site_2.com/static/img.jpg', -1),
         ('site_2.com', None),
         ('some_other_site.com', None),
@@ -67,6 +70,7 @@ def test_get_url_expiration(url, expected_expire_after, mock_session):
         '*.site_1.com': 60 * 60,
         'site_2.com/resource_1': 60 * 60 * 2,
         'site_2.com/resource_2': 60 * 60 * 24,
+        re.compile(r'site_2\.com/api/resource/\d+'): 60 * 60 * 24 * 7,
         'site_2.com/static': -1,
     }
     assert get_url_expiration(url, urls_expire_after) == expected_expire_after
