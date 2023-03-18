@@ -1,5 +1,8 @@
 # History
 
+## Unreleased
+* Add support for regular expressions when using `urls_expire_after`
+
 ## 1.0.0 (2023-03-01)
 [See all unreleased issues and PRs](https://github.com/requests-cache/requests-cache/milestone/10?closed=1)
 

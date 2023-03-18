@@ -65,23 +65,25 @@ Examples:
 ```
 
 (url-patterns)=
-## Expiration With URL Patterns
-You can use `urls_expire_after` to set different expiration values based on URL glob patterns:
 ```python
 >>> urls_expire_after = {
 ...     '*.site_1.com': 30,
 ...     'site_2.com/resource_1': 60 * 2,
 ...     'site_2.com/resource_2': 60 * 60 * 24,
+...     re.compile(r'site_2.com/resource_\d'): 60 * 60 * 24 * 7,
+...     'site_2.com/resource_*': 60 * 60,
 ...     'site_2.com/static': NEVER_EXPIRE,
 ... }
 >>> session = CachedSession(urls_expire_after=urls_expire_after)
 ```
 
 **Notes:**
-- `urls_expire_after` should be a dict in the format `{'pattern': expire_after}`
+- `urls_expire_after` should be a dict in the format `{pattern': expire_after}`
 - `expire_after` accepts the same types as `CachedSession.settings.expire_after`
-- Patterns will match request **base URLs without the protocol**, so the pattern `site.com/resource/`
-  is equivalent to `http*://site.com/resource/**`
+- **Glob patterns** will match request **base URLs without the protocol**, so the pattern `site.com/resource/`
+  is equivalent to `http*://site.com/resource/**`.
+  For **regex patterns**, the **whole URL** will be matched, so you _can_ put restrictions on the protocol, e.g.
+  `re.compile(r'https://site.com/.*')`.
 - If there is more than one match, the first match will be used in the order they are defined
 - If no patterns match a request, `CachedSession.settings.expire_after` will be used as a default
 - See {ref}`url-filtering` for an example of using `urls_expire_after` as an allowlist

@@ -4,12 +4,16 @@ additional settings and features specific to requests-cache.
 # flake8: noqa: E402,F401
 # isort: skip_file
 from datetime import datetime, timedelta
-from typing import Callable, Dict, Union, MutableMapping
+from typing import Callable, Dict, Pattern as RegexPattern, Union, MutableMapping
 
 from requests import Response
 
 ExpirationTime = Union[None, int, float, str, datetime, timedelta]
-ExpirationPatterns = Dict[str, ExpirationTime]
+ExpirationPattern = Union[  # Either a glob expression as str or a compiled regex pattern
+    str,
+    RegexPattern,
+]
+ExpirationPatterns = Dict[ExpirationPattern, ExpirationTime]
 FilterCallback = Callable[[Response], bool]
 KeyCallback = Callable[..., str]
 HeaderDict = MutableMapping[str, str]

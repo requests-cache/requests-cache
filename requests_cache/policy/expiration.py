@@ -5,9 +5,10 @@ from fnmatch import fnmatch
 from logging import getLogger
 from math import ceil
 from typing import Optional
+from typing import Pattern as RegexPattern
 
 from .._utils import try_int
-from . import ExpirationPatterns, ExpirationTime
+from . import ExpirationPattern, ExpirationPatterns, ExpirationTime
 
 # Special expiration values that may be set by either headers or keyword args
 DO_NOT_CACHE = 0x0D0E0200020704  # Per RFC 4824
@@ -89,7 +90,7 @@ def _to_utc(dt: datetime):
     return dt
 
 
-def _url_match(url: str, pattern: str) -> bool:
+def _url_match(url: str, pattern: ExpirationPattern) -> bool:
     """Determine if a URL matches a pattern
 
     Args:
@@ -103,7 +104,15 @@ def _url_match(url: str, pattern: str) -> bool:
         True
         >>> url_match('https://httpbin.org/stream/2', 'httpbin.org/*/1')
         False
+        >>> url_match('https://httpbin.org/stream/2', re.compile('httpbin.org/*/\\d+'))
+        True
+        >>> url_match('https://httpbin.org/stream/x', re.compile('httpbin.org/*/\\d+'))
+        False
     """
-    url = url.split('://')[-1]
-    pattern = pattern.split('://')[-1].rstrip('*') + '**'
-    return fnmatch(url, pattern)
+    if isinstance(pattern, RegexPattern):
+        match = pattern.search(url)
+        return match is not None
+    else:
+        url = url.split('://')[-1]
+        pattern = pattern.split('://')[-1].rstrip('*') + '**'
+        return fnmatch(url, pattern)
