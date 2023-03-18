@@ -937,6 +937,16 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "sleiner",
+      "name": "Simon Leiner",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6379313?v=4",
+      "profile": "https://github.com/sleiner",
+      "contributions": [
+        "code",
+        "feature"
+      ]
     }
   ],
   "contributorsPerLine": 7,
