@@ -4,7 +4,7 @@ from attr import define, field
 
 from .._utils import get_valid_kwargs
 from ..models import RichMixin
-from . import ExpirationTime, FilterCallback, KeyCallback
+from . import ExpirationPattern, ExpirationTime, FilterCallback, KeyCallback
 
 ALL_METHODS = ('GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE')
 DEFAULT_CACHE_NAME = 'http_cache'
@@ -36,7 +36,7 @@ class CacheSettings(RichMixin):
     only_if_cached: bool = field(default=False)
     stale_if_error: Union[bool, ExpirationTime] = field(default=False)
     stale_while_revalidate: Union[bool, ExpirationTime] = field(default=False)
-    urls_expire_after: Dict[str, ExpirationTime] = field(factory=dict)
+    urls_expire_after: Dict[ExpirationPattern, ExpirationTime] = field(factory=dict)
 
     @classmethod
     def from_kwargs(cls, **kwargs):
