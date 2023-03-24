@@ -3,6 +3,9 @@
 ## Unreleased
 * Add support for regular expressions when using `urls_expire_after`
 
+## 1.0.1 (2023-03-24)
+* Ignore `Cache-Control: must-revalidate` and `no-cache` response headers with `cache_control=False`
+
 ## 1.0.0 (2023-03-01)
 [See all unreleased issues and PRs](https://github.com/requests-cache/requests-cache/milestone/10?closed=1)
 
