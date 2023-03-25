@@ -11,7 +11,7 @@ https://requests-mock.readthedocs.io/en/latest/adapter.html
 import os
 import platform
 import warnings
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from datetime import datetime, timedelta
 from functools import wraps
 from importlib import import_module
@@ -29,6 +29,13 @@ from rich.logging import RichHandler
 from timeout_decorator import timeout
 
 from requests_cache import ALL_METHODS, CachedSession, install_cache, uninstall_cache
+
+# ignore missing time-travel library on PyPy
+try:
+    from time_machine import travel as time_travel
+except ImportError:
+    time_travel = nullcontext
+
 
 # Configure logging to show log output when tests fail (or with pytest -s)
 basicConfig(
@@ -68,6 +75,8 @@ HTTPDATE_DATETIME = datetime(2021, 4, 16, 21, 13)
 EXPIRED_DT = datetime.utcnow() - timedelta(1)
 ETAG = '"644b5b0155e6404a9cc4bd9d8b1ae730"'
 LAST_MODIFIED = 'Thu, 05 Jul 2012 15:31:30 GMT'
+START_DT = datetime.utcnow()
+YESTERDAY = datetime.utcnow() - timedelta(days=1)
 
 MOCKED_URL = 'http+mock://requests-cache.com/text'
 MOCKED_URL_ETAG = 'http+mock://requests-cache.com/etag'

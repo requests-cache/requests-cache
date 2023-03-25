@@ -31,8 +31,11 @@ from tests.conftest import (
     MOCKED_URL_REDIRECT,
     MOCKED_URL_REDIRECT_TARGET,
     MOCKED_URL_VARY,
+    START_DT,
     ignore_deprecation,
     patch_normalize_url,
+    skip_pypy,
+    time_travel,
 )
 
 logger = getLogger(__name__)
@@ -357,33 +360,39 @@ def test_cache_error(exception_cls, mock_session):
         assert mock_session.get(MOCKED_URL).from_cache is False
 
 
+@skip_pypy
 def test_expired_request_error(mock_session):
     """Without stale_if_error (default), if there is an error while re-fetching an expired
     response, the request should be re-raised
     """
     mock_session.settings.stale_if_error = False
     mock_session.settings.expire_after = 1
-    mock_session.get(MOCKED_URL)
-    sleep(1)
+
+    with time_travel(START_DT):
+        mock_session.get(MOCKED_URL)
 
     with patch.object(mock_session.cache, 'save_response', side_effect=ValueError):
-        with pytest.raises(ValueError):
-            mock_session.get(MOCKED_URL)
+        with time_travel(START_DT + timedelta(seconds=1.1)):
+            with pytest.raises(ValueError):
+                mock_session.get(MOCKED_URL)
 
 
+@skip_pypy
 def test_stale_if_error__exception(mock_session):
     """With stale_if_error, expect to get old cache data if there is an exception during a request"""
     mock_session.settings.stale_if_error = True
     mock_session.settings.expire_after = 1
+    with time_travel(START_DT):
+        assert mock_session.get(MOCKED_URL).from_cache is False
+        assert mock_session.get(MOCKED_URL).from_cache is True
 
-    assert mock_session.get(MOCKED_URL).from_cache is False
-    assert mock_session.get(MOCKED_URL).from_cache is True
-    sleep(1)
     with patch.object(mock_session.cache, 'save_response', side_effect=RequestException):
-        response = mock_session.get(MOCKED_URL)
-        assert response.from_cache is True and response.is_expired is True
+        with time_travel(START_DT + timedelta(seconds=1.1)):
+            response = mock_session.get(MOCKED_URL)
+            assert response.from_cache is True and response.is_expired is True
 
 
+@skip_pypy
 def test_stale_if_error__error_code(mock_session):
     """With stale_if_error, expect to get old cache data if a response has an error status code,
     that is not in allowable_codes.
@@ -392,16 +401,18 @@ def test_stale_if_error__error_code(mock_session):
     mock_session.settings.expire_after = 1
     mock_session.settings.allowable_codes = (200,)
 
-    assert mock_session.get(MOCKED_URL_200_404).status_code == 200
+    with time_travel(START_DT):
+        assert mock_session.get(MOCKED_URL_200_404).status_code == 200
 
-    sleep(1)
+    with time_travel(START_DT + timedelta(seconds=1.1)):
+        response = mock_session.get(MOCKED_URL_200_404)
 
-    response = mock_session.get(MOCKED_URL_200_404)
     assert response.status_code == 200
     assert response.from_cache is True
     assert response.is_expired is True
 
 
+@skip_pypy
 def test_stale_if_error__error_code_in_allowable_codes(mock_session):
     """With stale_if_error, expect to get the failed response if a response has an error status code,
     that is in allowable_codes.
@@ -410,11 +421,12 @@ def test_stale_if_error__error_code_in_allowable_codes(mock_session):
     mock_session.settings.expire_after = 1
     mock_session.settings.allowable_codes = (200, 404)
 
-    assert mock_session.get(MOCKED_URL_200_404).status_code == 200
+    with time_travel(START_DT):
+        assert mock_session.get(MOCKED_URL_200_404).status_code == 200
 
-    sleep(1)
+    with time_travel(START_DT + timedelta(seconds=1.1)):
+        response = mock_session.get(MOCKED_URL_200_404)
 
-    response = mock_session.get(MOCKED_URL_200_404)
     assert response.status_code == 404
     assert response.from_cache is False
     assert response.is_expired is False
@@ -769,16 +781,18 @@ def test_stale_while_revalidate__refresh(mock_session):
 # -----------------------------------------------------
 
 
+@skip_pypy  # time-machine doesn't work on PyPy
 def test_request_expire_after__enable_expiration(mock_session):
     """No per-session expiration is set, but then overridden for a single request"""
     mock_session.settings.expire_after = None
-    response = mock_session.get(MOCKED_URL, expire_after=1)
-    assert response.from_cache is False
-    assert mock_session.get(MOCKED_URL).from_cache is True
+    with time_travel(START_DT):
+        response = mock_session.get(MOCKED_URL, expire_after=1)
+        assert response.from_cache is False
+        assert mock_session.get(MOCKED_URL).from_cache is True
 
-    sleep(1)
-    response = mock_session.get(MOCKED_URL)
-    assert response.from_cache is False
+    with time_travel(START_DT + timedelta(seconds=1.1)):
+        response = mock_session.get(MOCKED_URL)
+        assert response.from_cache is False
 
 
 def test_request_expire_after__disable_expiration(mock_session):
@@ -790,17 +804,19 @@ def test_request_expire_after__disable_expiration(mock_session):
     assert response.expires is None
 
 
+@skip_pypy
 def test_request_expire_after__prepared_request(mock_session):
     """Pre-request expiration should also work for PreparedRequests with CachedSession.send()"""
     mock_session.settings.expire_after = None
-    request = Request('GET', MOCKED_URL, headers={}, data=None).prepare()
-    response = mock_session.send(request, expire_after=1)
-    assert response.from_cache is False
-    assert mock_session.send(request).from_cache is True
+    with time_travel(START_DT):
+        request = Request('GET', MOCKED_URL, headers={}, data=None).prepare()
+        response = mock_session.send(request, expire_after=1)
+        assert response.from_cache is False
+        assert mock_session.send(request).from_cache is True
 
-    sleep(1)
-    response = mock_session.get(MOCKED_URL)
-    assert response.from_cache is False
+    with time_travel(START_DT + timedelta(seconds=1.1)):
+        response = mock_session.get(MOCKED_URL)
+        assert response.from_cache is False
 
 
 def test_request_only_if_cached__cached(mock_session):
@@ -819,22 +835,26 @@ def test_request_only_if_cached__uncached(mock_session):
         response.raise_for_status()
 
 
+@skip_pypy
 def test_request_only_if_cached__expired(mock_session):
     """By default, only_if_cached will not return an expired response"""
-    mock_session.get(MOCKED_URL, expire_after=1)
-    sleep(1)
+    with time_travel(START_DT):
+        mock_session.get(MOCKED_URL, expire_after=1)
 
-    response = mock_session.get(MOCKED_URL, only_if_cached=True)
+    with time_travel(START_DT + timedelta(seconds=1.1)):
+        response = mock_session.get(MOCKED_URL, only_if_cached=True)
     assert response.status_code == 504
 
 
+@skip_pypy
 def test_request_only_if_cached__stale_if_error__expired(mock_session):
     """only_if_cached *will* return an expired response if stale_if_error is also set"""
-    mock_session.get(MOCKED_URL, expire_after=1)
-    sleep(1)
+    with time_travel(START_DT):
+        mock_session.get(MOCKED_URL, expire_after=1)
 
-    mock_session.settings.stale_if_error = True
-    response = mock_session.get(MOCKED_URL, only_if_cached=True)
+    with time_travel(START_DT + timedelta(seconds=1.1)):
+        mock_session.settings.stale_if_error = True
+        response = mock_session.get(MOCKED_URL, only_if_cached=True)
     assert response.status_code == 200
     assert response.from_cache is True
     assert response.is_expired is True
