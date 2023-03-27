@@ -3,7 +3,6 @@ import pickle
 from datetime import datetime, timedelta
 from logging import getLogger
 from pickle import PickleError
-from time import sleep
 from unittest.mock import patch
 
 import pytest
@@ -19,12 +18,15 @@ from tests.conftest import (
     MOCKED_URL_HTTPS,
     MOCKED_URL_JSON,
     MOCKED_URL_REDIRECT,
+    START_DT,
+    YESTERDAY,
     ignore_deprecation,
     mount_mock_adapter,
     patch_normalize_url,
+    skip_pypy,
+    time_travel,
 )
 
-YESTERDAY = datetime.utcnow() - timedelta(days=1)
 logger = getLogger(__name__)
 
 
@@ -59,6 +61,7 @@ def test_contains__url(mock_session):
     assert not mock_session.cache.contains(url=f'{MOCKED_URL}?foo=bar')
 
 
+@skip_pypy  # time-machine doesn't work on PyPy
 @patch_normalize_url
 def test_delete__expired(mock_normalize_url, mock_session):
     unexpired_url = f'{MOCKED_URL}?x=1'
@@ -66,49 +69,58 @@ def test_delete__expired(mock_normalize_url, mock_session):
         'GET', unexpired_url, status_code=200, text='mock response'
     )
     mock_session.settings.expire_after = 1
-    mock_session.get(MOCKED_URL)
-    mock_session.get(MOCKED_URL_JSON)
-    sleep(1.1)
+
+    with time_travel(START_DT):
+        mock_session.get(MOCKED_URL)
+        mock_session.get(MOCKED_URL_JSON)
+
     mock_session.settings.expire_after = 2
-    mock_session.get(unexpired_url)
+    with time_travel(START_DT + timedelta(seconds=1.1)):
+        mock_session.get(unexpired_url)
 
     # At this point we should have 1 unexpired response and 2 expired responses
     assert len(mock_session.cache.responses) == 3
 
     # Use the generic BaseCache implementation, not the SQLite-specific one
-    BaseCache.delete(mock_session.cache, expired=True)
+    with time_travel(START_DT + timedelta(seconds=2)):
+        BaseCache.delete(mock_session.cache, expired=True)
     assert len(mock_session.cache.responses) == 1
+
     cached_response = list(mock_session.cache.responses.values())[0]
     assert cached_response.url == unexpired_url
 
     # Now the last response should be expired as well
-    sleep(2)
-    BaseCache.delete(mock_session.cache, expired=True)
+    with time_travel(START_DT + timedelta(seconds=4)):
+        BaseCache.delete(mock_session.cache, expired=True)
     assert len(mock_session.cache.responses) == 0
 
 
+@skip_pypy
 def test_delete__expired__per_request(mock_session):
-    # Cache 3 responses with different expiration times
     second_url = f'{MOCKED_URL}/endpoint_2'
     third_url = f'{MOCKED_URL}/endpoint_3'
     mock_session.mock_adapter.register_uri('GET', second_url, status_code=200)
     mock_session.mock_adapter.register_uri('GET', third_url, status_code=200)
-    mock_session.get(MOCKED_URL)
-    mock_session.get(second_url, expire_after=2)
-    mock_session.get(third_url, expire_after=4)
 
-    # All 3 responses should still be cached
-    mock_session.cache.delete(expired=True)
-    for response in mock_session.cache.responses.values():
-        logger.info(f'Expires in {response.expires_delta} seconds')
+    # Cache 3 responses with different expiration times
+    with time_travel(START_DT):
+        mock_session.get(MOCKED_URL)
+        mock_session.get(second_url, expire_after=2)
+        mock_session.get(third_url, expire_after=4)
+
+        # All 3 responses should still be cached
+        mock_session.cache.delete(expired=True)
+        for response in mock_session.cache.responses.values():
+            logger.info(f'Expires in {response.expires_delta} seconds')
+
     assert len(mock_session.cache.responses) == 3
 
     # One should be expired after 2s, and another should be expired after 4s
-    sleep(2)
-    mock_session.cache.delete(expired=True)
+    with time_travel(START_DT + timedelta(seconds=2)):
+        mock_session.cache.delete(expired=True)
     assert len(mock_session.cache.responses) == 2
-    sleep(2)
-    mock_session.cache.delete(expired=True)
+    with time_travel(START_DT + timedelta(seconds=4)):
+        mock_session.cache.delete(expired=True)
     assert len(mock_session.cache.responses) == 1
 
 
@@ -140,32 +152,35 @@ def test_delete__invalid(tempfile_path):
     assert mock_session.get(MOCKED_URL_JSON).from_cache is False
 
 
+@skip_pypy
 def test_delete__older_than(mock_session):
     # Cache 4 responses with different creation times
-    response_0 = CachedResponse(request=CachedRequest(method='GET', url='https://test.com/test_0'))
-    mock_session.cache.save_response(response_0)
-    response_1 = CachedResponse(request=CachedRequest(method='GET', url='https://test.com/test_1'))
-    response_1.created_at -= timedelta(seconds=1)
-    mock_session.cache.save_response(response_1)
-    response_2 = CachedResponse(request=CachedRequest(method='GET', url='https://test.com/test_2'))
-    response_2.created_at -= timedelta(seconds=2)
-    mock_session.cache.save_response(response_2)
-    response_3 = CachedResponse(request=CachedRequest(method='GET', url='https://test.com/test_3'))
-    response_3.created_at -= timedelta(seconds=3)
-    mock_session.cache.save_response(response_3)
+    with time_travel(START_DT):
+        request = CachedRequest(method='GET', url='https://test.com/test_0')
+        mock_session.cache.save_response(CachedResponse(request=request))
+    with time_travel(START_DT - timedelta(seconds=1)):
+        request = CachedRequest(method='GET', url='https://test.com/test_1')
+        mock_session.cache.save_response(CachedResponse(request=request))
+    with time_travel(START_DT - timedelta(seconds=2)):
+        request = CachedRequest(method='GET', url='https://test.com/test_2')
+        mock_session.cache.save_response(CachedResponse(request=request))
+    with time_travel(START_DT - timedelta(seconds=3)):
+        request = CachedRequest(method='GET', url='https://test.com/test_3')
+        mock_session.cache.save_response(CachedResponse(request=request))
 
     # Incrementally remove responses older than 3, 2, and 1 seconds
-    assert len(mock_session.cache.responses) == 4
-    mock_session.cache.delete(older_than=timedelta(seconds=3))
-    assert len(mock_session.cache.responses) == 3
-    mock_session.cache.delete(older_than=timedelta(seconds=2))
-    assert len(mock_session.cache.responses) == 2
-    mock_session.cache.delete(older_than=timedelta(seconds=1))
-    assert len(mock_session.cache.responses) == 1
+    with time_travel(START_DT):
+        assert len(mock_session.cache.responses) == 4
+        mock_session.cache.delete(older_than=timedelta(seconds=3))
+        assert len(mock_session.cache.responses) == 3
+        mock_session.cache.delete(older_than=timedelta(seconds=2))
+        assert len(mock_session.cache.responses) == 2
+        mock_session.cache.delete(older_than=timedelta(seconds=1))
+        assert len(mock_session.cache.responses) == 1
 
     # Remove the last response after it's 1 second old
-    sleep(1)
-    mock_session.cache.delete(older_than=timedelta(seconds=1))
+    with time_travel(START_DT + timedelta(seconds=1.1)):
+        mock_session.cache.delete(older_than=timedelta(seconds=1))
     assert len(mock_session.cache.responses) == 0
 
 
