@@ -4,9 +4,14 @@ This just contains tests for some extra edge cases not covered elsewhere.
 import json
 
 import pytest
-from requests import Request
+from requests import Request, Response
 
-from requests_cache.cache_keys import MAX_NORM_BODY_SIZE, create_key, normalize_request
+from requests_cache.cache_keys import (
+    MAX_NORM_BODY_SIZE,
+    create_key,
+    normalize_request,
+    redact_response,
+)
 
 CACHE_KEY = 'e25f7e6326966e82'
 
@@ -59,6 +64,19 @@ def test_create_key__normalize_duplicate_params():
         method='GET', url='https://img.site.com/base/img.jpg?param_1=b&param_1=a', params={'k': 'v'}
     )
     assert create_key(request_1) == create_key(request_2)
+
+
+def test_redact_response__escaped_params():
+    """Test that redact_response() handles escaped request parameters"""
+    request = Request(
+        method='GET',
+        url='https://img.site.com/base/img.jpg?ignored_param=value_1&param_2=value_2',
+    )
+    response = Response()
+    response.url = 'https://img.site.com/base/img.jpg?where=code%3D123'
+    response.request = request
+    redacted_response = redact_response(response, [])
+    assert redacted_response.url == 'https://img.site.com/base/img.jpg?where=code%3D123'
 
 
 def test_normalize_request__json_body():
