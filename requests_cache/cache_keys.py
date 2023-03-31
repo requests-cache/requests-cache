@@ -142,19 +142,7 @@ def normalize_url(url: str, ignored_parameters: ParamList) -> str:
     """Normalize and filter a URL. This includes request parameters, IDN domains, scheme, host,
     port, etc.
     """
-    # Strip query params from URL, sort and filter, and reassemble into a complete URL
-    url_tokens = urlparse(url)
-    url = urlunparse(
-        (
-            url_tokens.scheme,
-            url_tokens.netloc,
-            url_tokens.path,
-            url_tokens.params,
-            normalize_params(url_tokens.query, ignored_parameters),
-            url_tokens.fragment,
-        )
-    )
-
+    url = filter_url(url, ignored_parameters)
     return url_normalize(url)
 
 
@@ -210,7 +198,7 @@ def normalize_params(value: Union[str, bytes], ignored_parameters: ParamList = N
 def redact_response(response: CachedResponse, ignored_parameters: ParamList) -> CachedResponse:
     """Redact any ignored parameters (potentially containing sensitive info) from a cached request"""
     if ignored_parameters:
-        response.url = normalize_url(response.url, ignored_parameters)
+        response.url = filter_url(response.url, ignored_parameters)
         response.request = normalize_request(response.request, ignored_parameters)  # type: ignore
     return response
 
@@ -240,3 +228,19 @@ def filter_sort_list(data: List, ignored_parameters: ParamList = None) -> List:
     if not ignored_parameters:
         return sorted(data)
     return [k for k in sorted(data) if k not in set(ignored_parameters)]
+
+
+def filter_url(url: str, ignored_parameters: ParamList) -> str:
+    """Filter ignored parameters out of a URL"""
+    # Strip query params from URL, sort and filter, and reassemble into a complete URL
+    url_tokens = urlparse(url)
+    return urlunparse(
+        (
+            url_tokens.scheme,
+            url_tokens.netloc,
+            url_tokens.path,
+            url_tokens.params,
+            normalize_params(url_tokens.query, ignored_parameters),
+            url_tokens.fragment,
+        )
+    )

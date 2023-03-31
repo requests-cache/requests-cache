@@ -3,6 +3,9 @@
 ## Unreleased
 * Add support for regular expressions when using `urls_expire_after`
 
+## 1.0.2 (2023-TBD)
+* Revert normalizing `CachedResponse.url` so it matches the original request URL
+
 ## 1.0.1 (2023-03-24)
 * Ignore `Cache-Control: must-revalidate` and `no-cache` response headers with `cache_control=False`
 
