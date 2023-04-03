@@ -187,7 +187,7 @@ The following scripts can also be found in the
 :color: primary
 :icon: file-code
 
-[benchmark.py](https://github.com/requests-cache/requests-cache/blob/main/examples/rps_graph.py)
+[rps_graph.py](https://github.com/requests-cache/requests-cache/blob/main/examples/rps_graph.py)
 ```{literalinclude} ../examples/rps_graph.py
 :lines: 9-
 ```
