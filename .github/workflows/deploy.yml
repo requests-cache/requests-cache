@@ -147,6 +147,8 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           poetry add requests@${{ matrix.requests-version }} --lock
+          poetry lock --check
+          poetry lock --no-update
           poetry install -v -E all
 
       # Run tests
