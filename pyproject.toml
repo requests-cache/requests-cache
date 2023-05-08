@@ -156,3 +156,10 @@ known_first_party = ['tests']
 
 [tool.mypy]
 ignore_missing_imports = true
+
+
+[tool.ruff]
+format = 'grouped'
+line-length = 120
+select = ['C4','C90', 'E', 'F']
+ignore = ['B023']
