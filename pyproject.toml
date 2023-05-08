@@ -89,7 +89,7 @@ docs     = ["furo", "linkify-it-py", "myst-parser", "sphinx", "sphinx-autodoc-ty
 # For unit + integration tests
 coverage              = "^7.1"
 psutil                = "^5.0"
-pytest                = "^7.2"
+pytest                = "^7.3"
 pytest-clarity        = "^1.0.1"
 pytest-cov            = ">=3.0"
 pytest-rerunfailures  = "^10.1"
@@ -104,7 +104,7 @@ time-machine          = {version = "^2.9", markers = "implementation_name != 'py
 pre-commit            = "^2.19"
 
 # For convenience in local development
-nox                   = "^2022.1.7"
+nox                   = "^2023.4"
 nox-poetry            = "^1.0.0"
 rich                  = ">=10.0"
 sphinx-autobuild      = "^2021.3.14"
