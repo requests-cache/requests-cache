@@ -57,7 +57,7 @@ class CachedHTTPResponse(RichMixin, HTTPResponse):
             body = raw.read(decode_content=False)
             kwargs['body'] = body
             raw._fp = BytesIO(body)
-            response.content  # This property reads, decodes, and stores response content
+            _ = response.content  # This property reads, decodes, and stores response content
 
             # After reading, reset file pointer on original raw response
             raw._fp = BytesIO(body)

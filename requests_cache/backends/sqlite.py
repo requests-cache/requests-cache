@@ -426,7 +426,7 @@ def get_cache_path(db_path: AnyPath, use_cache_dir: bool = False, use_temp: bool
         raise FileExistsError(
             f'Parent path exists and is not a directory: {db_path.parent}.'
             'Please either delete the file or choose a different path.'
-        )
+        ) from None
     return db_path
 
 

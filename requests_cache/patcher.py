@@ -121,6 +121,7 @@ def remove_expired_responses():
     warn(
         'remove_expired_responses() is deprecated; please use delete() instead',
         DeprecationWarning,
+        stacklevel=2,
     )
     delete(expired=True)
 

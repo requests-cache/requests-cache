@@ -19,5 +19,5 @@ def test_version_upgrade(db_path, tempfile_path):
     session = CachedSession(tempfile_path)
 
     for response_format in HTTPBIN_FORMATS:
-        session.get(httpbin(response_format)).from_cache
+        session.get(httpbin(response_format))
         assert session.get(httpbin(response_format)).from_cache is True
