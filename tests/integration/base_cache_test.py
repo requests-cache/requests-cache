@@ -25,12 +25,15 @@ from tests.conftest import (
     HTTPBIN_METHODS,
     HTTPDATE_STR,
     LAST_MODIFIED,
+    MOCKED_URL_JSON,
+    MOCKED_URL_JSON_LIST,
     N_ITERATIONS,
     N_REQUESTS_PER_ITERATION,
     N_WORKERS,
     USE_PYTEST_HTTPBIN,
     assert_delta_approx_equal,
     httpbin,
+    mount_mock_adapter,
     skip_pypy,
 )
 
@@ -259,9 +262,9 @@ class BaseCacheTest:
         assert response.is_expired is False
 
     @pytest.mark.parametrize('stream', [True, False])
-    def test_response_decode(self, stream):
+    def test_decode_gzip_response(self, stream):
         """Test that gzip-compressed raw responses (including streamed responses) can be manually
-        decompressed with decode_content=True
+        decompressed with `decode_content=True`
         """
         session = self.init_session()
         response = session.get(httpbin('gzip'), stream=stream)
@@ -273,6 +276,18 @@ class BaseCacheTest:
         cached_response = CachedResponse.from_response(response)
         assert b'gzipped' in cached_response.content
         assert b'gzipped' in cached_response.raw.read(None, decode_content=True)
+
+    @pytest.mark.parametrize('decode_content', [True, False])
+    @pytest.mark.parametrize('url', [MOCKED_URL_JSON, MOCKED_URL_JSON_LIST])
+    def test_decode_json_response(self, decode_content, url):
+        """Test that JSON responses (with both dict and list root) are correctly returned from the
+        cache, regardless of `decode_content` setting"""
+        session = self.init_session(decode_content=decode_content)
+        session = mount_mock_adapter(session)
+
+        r1 = session.get(url)
+        r2 = session.get(url)
+        assert r1.json() == r2.json()
 
     def test_multipart_upload(self):
         session = self.init_session()

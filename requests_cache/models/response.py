@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from ..policy.actions import CacheActions
 
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S %Z'  # Format used for __str__ only
-DecodedContent = Union[Dict, str, None]
+DecodedContent = Union[Dict, List, str, None]
 logger = getLogger(__name__)
 
 

@@ -82,6 +82,7 @@ MOCKED_URL = 'http+mock://requests-cache.com/text'
 MOCKED_URL_ETAG = 'http+mock://requests-cache.com/etag'
 MOCKED_URL_HTTPS = 'https+mock://requests-cache.com/text'
 MOCKED_URL_JSON = 'http+mock://requests-cache.com/json'
+MOCKED_URL_JSON_LIST = 'http+mock://requests-cache.com/json_list'
 MOCKED_URL_REDIRECT = 'http+mock://requests-cache.com/redirect'
 MOCKED_URL_REDIRECT_TARGET = 'http+mock://requests-cache.com/redirect_target'
 MOCKED_URL_VARY = 'http+mock://requests-cache.com/vary'
@@ -204,6 +205,13 @@ def get_mock_adapter() -> Adapter:
         MOCKED_URL_JSON,
         headers={'Content-Type': 'application/json'},
         json={'message': 'mock json response'},
+        status_code=200,
+    )
+    adapter.register_uri(
+        ANY_METHOD,
+        MOCKED_URL_JSON_LIST,
+        headers={'Content-Type': 'application/json'},
+        json=['item_1', 'item_2', {'message': 'mock json response'}],
         status_code=200,
     )
     adapter.register_uri(
