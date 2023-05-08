@@ -239,14 +239,14 @@ def get_mock_response(
     method='GET',
     url='https://img.site.com/base/img.jpg',
     status_code=200,
-    headers={},
-    request_headers={},
+    headers=None,
+    request_headers=None,
 ):
     return MagicMock(
         url=url,
         status_code=status_code,
-        headers=headers,
-        request=Request(method=method, url=url, headers=request_headers),
+        headers=headers or {},
+        request=Request(method=method, url=url, headers=request_headers or {}),
     )
 
 

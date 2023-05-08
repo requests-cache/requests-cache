@@ -87,7 +87,7 @@ class GridFSDict(BaseStorage):
                 return self.deserialize(key, result.read())
         except CorruptGridFile as e:
             logger.warning(e, exc_info=True)
-            raise KeyError
+            raise KeyError from e
 
     def __setitem__(self, key, item):
         value = self.serialize(item)

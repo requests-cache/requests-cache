@@ -439,7 +439,7 @@ def test_stale_if_error__max_stale(mock_session):
     mock_session.settings.stale_if_error = timedelta(seconds=15)
     mock_session.settings.expire_after = datetime.utcnow() - timedelta(seconds=10)
     mock_session.settings.allowable_codes = (200,)
-    mock_session.get(MOCKED_URL_200_404).from_cache
+    mock_session.get(MOCKED_URL_200_404)
 
     response = mock_session.get(MOCKED_URL_200_404)
     assert response.from_cache is True
@@ -459,7 +459,7 @@ def test_old_data_on_error():
 def test_cache_disabled(mock_session):
     mock_session.get(MOCKED_URL)
     with mock_session.cache_disabled():
-        for i in range(2):
+        for _ in range(2):
             assert mock_session.get(MOCKED_URL).from_cache is False
     assert mock_session.get(MOCKED_URL).from_cache is True
 
@@ -469,7 +469,7 @@ def test_cache_disabled__nested(mock_session):
     with mock_session.cache_disabled():
         mock_session.get(MOCKED_URL)
         with mock_session.cache_disabled():
-            for i in range(2):
+            for _ in range(2):
                 assert mock_session.get(MOCKED_URL).from_cache is False
     assert mock_session.get(MOCKED_URL).from_cache is True
 
@@ -616,7 +616,7 @@ def test_hooks(mock_session):
             assert r.from_cache is True
             return r
 
-        for i in range(5):
+        for _ in range(5):
             mock_session.get(MOCKED_URL, hooks={hook: hook_func})
         assert state[hook] == 5
 

@@ -94,7 +94,7 @@ class FileDict(BaseStorage):
                 yield
         except (EOFError, IOError, OSError, PickleError) as e:
             if not ignore_errors:
-                raise KeyError(e)
+                raise KeyError from e
 
     def _path(self, key) -> Path:
         return self.cache_dir / f'{key}{self.extension}'

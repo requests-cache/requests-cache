@@ -29,7 +29,7 @@ def test_history(mock_session):
     original_response.history = [mock_session.get(MOCKED_URL)] * 3
     response = CachedResponse.from_response(original_response)
     assert len(response.history) == 3
-    assert all([isinstance(r, CachedResponse) for r in response.history])
+    assert all(isinstance(r, CachedResponse) for r in response.history)
 
 
 @pytest.mark.parametrize(
@@ -118,7 +118,7 @@ def test_str(mock_session):
     response = CachedResponse.from_response(mock_session.get(MOCKED_URL))
     response._content = b'1010'
     expected_values = ['GET', MOCKED_URL, 200, '4 bytes', 'created', 'expires', 'fresh']
-    assert all([str(v) in str(response) for v in expected_values])
+    assert all(str(v) in str(response) for v in expected_values)
 
 
 def test_repr(mock_session):
@@ -127,7 +127,7 @@ def test_repr(mock_session):
     expected_values = ['GET', MOCKED_URL, 200, 'ISO-8859-1', response.headers]
     print(repr(response))
     assert repr(response).startswith('CachedResponse(') and repr(response).endswith(')')
-    assert all([str(v) in repr(response) for v in expected_values])
+    assert all(str(v) in repr(response) for v in expected_values)
 
 
 @pytest.mark.parametrize(

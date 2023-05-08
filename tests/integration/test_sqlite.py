@@ -163,7 +163,7 @@ class TestSQLiteDict(BaseStorageTest):
         assert len(items) == limit or 100
 
         prev_item = None
-        for i, item in enumerate(items):
+        for item in items:
             assert prev_item is None or len(prev_item) > len(item)
 
     @skip_pypy
@@ -201,7 +201,7 @@ class TestSQLiteDict(BaseStorageTest):
         assert len(items) == limit or 100
 
         prev_item = None
-        for i, item in enumerate(items):
+        for item in items:
             assert prev_item is None or prev_item.expires < item.expires
 
     @skip_pypy
@@ -223,7 +223,7 @@ class TestSQLiteDict(BaseStorageTest):
         assert len(items) == 50
         prev_item = None
 
-        for i, item in enumerate(items):
+        for item in items:
             assert prev_item is None or prev_item.expires < item.expires
             assert item.status_code % 2 == 0
 
@@ -345,7 +345,7 @@ class TestSQLiteCache(BaseCacheTest):
         assert len(items) == 100
 
         prev_item = None
-        for i, item in enumerate(items):
+        for item in items:
             assert prev_item is None or prev_item.expires < item.expires
             assert item.cache_key
             assert not item.is_expired

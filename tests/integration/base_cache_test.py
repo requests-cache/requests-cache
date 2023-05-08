@@ -252,15 +252,9 @@ class BaseCacheTest:
         assert response.from_cache is True
         assert response.is_expired is False
 
-        # Make sure an immediate subsequent request will be served from the cache for another max-age==60 secondss
-        try:
-            with patch.object(Session, 'send', side_effect=AssertionError):
-                response = session.get(url, params=first_response_headers)
-        except AssertionError:
-            assert False, (
-                "Session tried to perform re-validation although cached response should have been "
-                "refreshened."
-            )
+        # Make sure an immediate subsequent request will be served from the cache for another 60 seconds
+        with patch.object(Session, 'send', side_effect=AssertionError):
+            response = session.get(url, params=first_response_headers)
         assert response.from_cache is True
         assert response.is_expired is False
 
@@ -283,7 +277,7 @@ class BaseCacheTest:
     def test_multipart_upload(self):
         session = self.init_session()
         session.post(httpbin('post'), files={'file1': BytesIO(b'10' * 1024)})
-        for i in range(5):
+        for _ in range(5):
             assert session.post(httpbin('post'), files={'file1': BytesIO(b'10' * 1024)}).from_cache
 
     def test_delete__expired(self):
@@ -304,7 +298,7 @@ class BaseCacheTest:
         assert len(session.cache.responses.keys()) == 2
         assert len(session.cache.redirects.keys()) == 3
         assert not session.cache.contains(url=httpbin('redirect/1'))
-        assert not any([session.cache.contains(url=httpbin(f)) for f in HTTPBIN_FORMATS])
+        assert not any(session.cache.contains(url=httpbin(f)) for f in HTTPBIN_FORMATS)
 
     @pytest.mark.parametrize('method', HTTPBIN_METHODS)
     def test_filter_request_headers(self, method):

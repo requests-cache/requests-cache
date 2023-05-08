@@ -57,7 +57,7 @@ def test_clear__not_installed(mock_clear):
 @patch.object(CachedSession, 'request')
 def test_disabled(cached_request, original_request, installed_session):
     with requests_cache.disabled():
-        for i in range(3):
+        for _ in range(3):
             requests.get('some_url')
     assert cached_request.call_count == 0
     assert original_request.call_count == 3
@@ -67,7 +67,7 @@ def test_disabled(cached_request, original_request, installed_session):
 @patch.object(CachedSession, 'request')
 def test_enabled(cached_request, original_request, tempfile_path):
     with requests_cache.enabled(tempfile_path):
-        for i in range(3):
+        for _ in range(3):
             requests.get('some_url')
     assert cached_request.call_count == 3
     assert original_request.call_count == 0
