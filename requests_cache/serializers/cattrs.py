@@ -109,9 +109,12 @@ def init_converter(
     converter.register_structure_hook(
         CaseInsensitiveDict, lambda obj, cls: CaseInsensitiveDict(obj)
     )
-    # Convert decoded JSON body back to string
+
+    # Convert decoded JSON body back to a string. If the object is a valid JSON root (dict or list),
+    # that means it was previously saved in human-readable format due to `decode_content=True`.
+    # After this hook runs, the body will also be re-encoded with `_encode_content()`.
     converter.register_structure_hook(
-        DecodedContent, lambda obj, cls: json.dumps(obj) if isinstance(obj, dict) else obj
+        DecodedContent, lambda obj, cls: json.dumps(obj) if isinstance(obj, (dict, list)) else obj
     )
 
     # Resolve forward references (required for CachedResponse.history)
@@ -157,7 +160,9 @@ def _decode_content(response: CachedResponse, response_dict: Dict) -> Dict:
 
 
 def _encode_content(response: CachedResponse) -> CachedResponse:
-    """Re-encode response body if saved as JSON or text; has no effect for a binary response body"""
+    """Re-encode response body if saved as JSON or text (via ``decode_content=True``).
+    This has no effect for a binary response body.
+    """
     if isinstance(response._decoded_content, str):
         response._content = response._decoded_content.encode('utf-8')
         response._decoded_content = None
