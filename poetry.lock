@@ -1856,24 +1856,24 @@ code-style = ["pre-commit (==2.12.1)"]
 rtd = ["ipython", "myst-nb", "sphinx", "sphinx-book-theme", "sphinx-examples"]
 
 [[package]]
-name = "sphinx_design"
-version = "0.3.0"
+name = "sphinx-design"
+version = "0.4.1"
 description = "A sphinx extension for designing beautiful, view size responsive web components."
 category = "main"
 optional = true
 python-versions = ">=3.7"
 files = [
-    {file = "sphinx_design-0.3.0-py3-none-any.whl", hash = "sha256:823c1dd74f31efb3285ec2f1254caefed29d762a40cd676f58413a1e4ed5cc96"},
-    {file = "sphinx_design-0.3.0.tar.gz", hash = "sha256:7183fa1fae55b37ef01bda5125a21ee841f5bbcbf59a35382be598180c4cefba"},
+    {file = "sphinx_design-0.4.1-py3-none-any.whl", hash = "sha256:23bf5705eb31296d4451f68b0222a698a8a84396ffe8378dfd9319ba7ab8efd9"},
+    {file = "sphinx_design-0.4.1.tar.gz", hash = "sha256:5b6418ba4a2dc3d83592ea0ff61a52a891fe72195a4c3a18b2fa1c7668ce4708"},
 ]
 
 [package.dependencies]
-sphinx = ">=4,<6"
+sphinx = ">=4,<7"
 
 [package.extras]
 code-style = ["pre-commit (>=2.12,<3.0)"]
-rtd = ["myst-parser (>=0.18.0,<0.19.0)"]
-testing = ["myst-parser (>=0.18.0,<0.19.0)", "pytest (>=7.1,<8.0)", "pytest-cov", "pytest-regressions"]
+rtd = ["myst-parser (>=0.18.0,<2)"]
+testing = ["myst-parser (>=0.18.0,<2)", "pytest (>=7.1,<8.0)", "pytest-cov", "pytest-regressions"]
 theme-furo = ["furo (>=2022.06.04,<2022.07)"]
 theme-pydata = ["pydata-sphinx-theme (>=0.9.0,<0.10.0)"]
 theme-rtd = ["sphinx-rtd-theme (>=1.0,<2.0)"]
