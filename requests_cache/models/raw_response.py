@@ -34,7 +34,6 @@ class CachedHTTPResponse(RichMixin, HTTPResponse):
     reason: str = field(default=None)
     request_url: str = field(default=None)
     status: int = field(default=0)
-    strict: int = field(default=0)
     version: int = field(default=0)
 
     def __init__(self, body: Optional[bytes] = None, **kwargs):
@@ -52,17 +51,27 @@ class CachedHTTPResponse(RichMixin, HTTPResponse):
         kwargs = {k: getattr(raw, k, None) for k in fields_dict(cls).keys()}
         kwargs['request_url'] = raw._request_url
 
-        # Copy response data and restore response object to its original state
+        # Read and copy raw response data, and then restore response object to its previous state
+        # This is necessary so streaming responses behave consistently with or without the cache
         if getattr(raw, '_fp', None) and not is_fp_closed(raw._fp):
-            body = raw.read(decode_content=False)
-            kwargs['body'] = body
-            raw._fp = BytesIO(body)
-            _ = response.content  # This property reads, decodes, and stores response content
+            # Body has already been read & decoded by requests
+            if getattr(raw, '_has_decoded_content', False):
+                body = response.content
+                kwargs['body'] = body
+                raw._fp = BytesIO(body)
+                raw._fp_bytes_read = 0
+                raw.length_remaining = len(body)
+            # Body has not yet been read
+            else:
+                body = raw.read(decode_content=False)
+                kwargs['body'] = body
+                raw._fp = BytesIO(body)
+                _ = response.content  # This property reads, decodes, and stores response content
 
-            # After reading, reset file pointer on original raw response
-            raw._fp = BytesIO(body)
-            raw._fp_bytes_read = 0
-            raw.length_remaining = len(body)
+                # After reading, reset file pointer on original raw response
+                raw._fp = BytesIO(body)
+                raw._fp_bytes_read = 0
+                raw.length_remaining = len(body)
 
         return cls(**kwargs)  # type: ignore  # False positive in mypy 0.920+?
 
