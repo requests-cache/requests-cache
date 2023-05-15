@@ -89,7 +89,7 @@ cached response:
 >>> response_1 = session.get('https://example.com')          # cache miss
 >>> response_2 = session.get('https://example.com?foo=bar')  # cache hit
 >>> response_3 = session.get('https://example.com?foo=qux')  # cache hit
->>> assert response_1.cache_key == response_2.cache_key == response_3.cache_key
+>>> assert response_2.cache_key == response_3.cache_key
 ```
 
 ### Recreating Cache Keys
