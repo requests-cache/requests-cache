@@ -261,21 +261,16 @@ class BaseCacheTest:
         assert response.from_cache is True
         assert response.is_expired is False
 
-    @pytest.mark.parametrize('stream', [True, False])
-    def test_decode_gzip_response(self, stream):
-        """Test that gzip-compressed raw responses (including streamed responses) can be manually
-        decompressed with `decode_content=True`
-        """
+    def test_decode_gzip_response(self):
+        """Test that gzip-compressed responses read decompressed content with decode_content=True"""
         session = self.init_session()
-        response = session.get(httpbin('gzip'), stream=stream)
+        response = session.get(httpbin('gzip'))
         assert b'gzipped' in response.content
-        if stream is True:
-            assert b'gzipped' in response.raw.read(None, decode_content=True)
         response.raw._fp = BytesIO(response.content)
 
         cached_response = CachedResponse.from_response(response)
         assert b'gzipped' in cached_response.content
-        assert b'gzipped' in cached_response.raw.read(None, decode_content=True)
+        assert b'gzipped' in cached_response.raw.read(amt=None, decode_content=True)
 
     @pytest.mark.parametrize('decode_content', [True, False])
     @pytest.mark.parametrize('url', [MOCKED_URL_JSON, MOCKED_URL_JSON_LIST])

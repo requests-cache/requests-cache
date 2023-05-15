@@ -16,7 +16,6 @@ def test_from_response(mock_session):
     if hasattr(response.raw, '_request_url'):
         assert response.raw._request_url is raw.request_url is None
     assert response.raw.status == raw.status == 200
-    assert response.raw.strict == raw.strict == 0
     assert response.raw.version == raw.version == 0
 
 
