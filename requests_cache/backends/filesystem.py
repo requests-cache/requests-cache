@@ -44,7 +44,7 @@ class FileCache(BaseCache):
             cache_name, use_temp=use_temp, decode_content=decode_content, **skwargs
         )
         self.redirects: SQLiteDict = SQLiteDict(
-            self.cache_dir / 'redirects.sqlite', 'redirects', no_serializer=True, **kwargs
+            self.cache_dir / 'redirects.sqlite', 'redirects', serializer=None, **kwargs
         )
 
     @property
