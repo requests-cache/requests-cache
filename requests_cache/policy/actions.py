@@ -296,9 +296,15 @@ class CacheActions(RichMixin):
         elif vary == '*':
             return False
 
-        # Generate a secondary cache key based on Vary for both the cached request and new request
+        # Generate a secondary cache key based on Vary for both the cached request and new request.
+        # If there are redirects, compare the new request against the last request in the chain.
         key_kwargs['match_headers'] = [k.strip() for k in vary.split(',')]
-        vary_cache_key = create_key(cached_response.request, **key_kwargs)
+        vary_request = (
+            cached_response.history[-1].request
+            if cached_response.history
+            else cached_response.request
+        )
+        vary_cache_key = create_key(vary_request, **key_kwargs)
         headers_match = create_key(self._request, **key_kwargs) == vary_cache_key
         if not headers_match:
             _log_vary_diff(

@@ -13,6 +13,7 @@
 * Fix loading cached JSON content when `decode_content=True` and the root element is a list
 * Fix `BaseCache.recreate_keys()` to normalize response bodies with `b'None'`
 * Fix potential `OperationalError: database is locked` during bulk delete operations
+* Fix request matching with `Vary` and redirects
 * Add compatibility with urllib3 2.0
 
 ## 1.0.1 (2023-03-24)
