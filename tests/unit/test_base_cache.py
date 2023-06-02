@@ -105,23 +105,22 @@ def test_delete__expired__per_request(mock_session):
     # Cache 3 responses with different expiration times
     with time_travel(START_DT):
         mock_session.get(MOCKED_URL)
-        mock_session.get(second_url, expire_after=2)
-        mock_session.get(third_url, expire_after=4)
+        mock_session.get(second_url, expire_after=5)
+        mock_session.get(third_url, expire_after=10)
 
         # All 3 responses should still be cached
         mock_session.cache.delete(expired=True)
         for response in mock_session.cache.responses.values():
             logger.info(f'Expires in {response.expires_delta} seconds')
+        assert len(mock_session.cache.responses) == 3
 
-    assert len(mock_session.cache.responses) == 3
-
-    # One should be expired after 2s, and another should be expired after 4s
-    with time_travel(START_DT + timedelta(seconds=2)):
+    # One should be expired after 5s, and another should be expired after 10s
+    with time_travel(START_DT + timedelta(seconds=6)):
         mock_session.cache.delete(expired=True)
-    assert len(mock_session.cache.responses) == 2
-    with time_travel(START_DT + timedelta(seconds=4)):
+        assert len(mock_session.cache.responses) == 2
+    with time_travel(START_DT + timedelta(seconds=11)):
         mock_session.cache.delete(expired=True)
-    assert len(mock_session.cache.responses) == 1
+        assert len(mock_session.cache.responses) == 1
 
 
 def test_delete__invalid(tempfile_path):
