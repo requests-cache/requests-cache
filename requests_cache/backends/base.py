@@ -228,6 +228,9 @@ class BaseCache:
 
         for old_cache_key in old_keys:
             response = self.responses[old_cache_key]
+            # Adjust empty request body for reponses cached before 1.0
+            if response.request.body == b'None':
+                response.request.body = b''
             new_cache_key = self.create_key(response.request)
             if new_cache_key != old_cache_key:
                 self.responses[new_cache_key] = response

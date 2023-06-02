@@ -245,6 +245,27 @@ def test_recreate_keys__same_key_fn(mock_session):
         assert mock_session.get(url).from_cache is True
 
 
+def test_recreate_keys__empty_response_body(mock_session):
+    # Cache some initial responses with default key function, and modify request body (pre-1.0)
+    urls = [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_ETAG]
+    for url in urls:
+        r = mock_session.get(url)
+        r = CachedResponse.from_response(r)
+        r.request.body = b'None'
+        mock_session.cache.responses[r.cache_key] = r
+
+    # Switch to a new key function and recreate keys
+    def new_key_fn(*args, **kwargs):
+        return create_key(*args, **kwargs) + '_suffix'
+
+    mock_session.settings.key_fn = new_key_fn
+    mock_session.cache.recreate_keys()
+
+    # Check that responses are returned from the cache correctly using the new key function
+    for url in urls:
+        assert mock_session.get(url).from_cache is True
+
+
 def test_reset_expiration__extend_expiration(mock_session):
     # Start with an expired response
     mock_session.settings.expire_after = datetime.utcnow() - timedelta(seconds=1)
