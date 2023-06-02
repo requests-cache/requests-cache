@@ -1,0 +1,18 @@
+# Run CodeQL security analysis; see https://codeql.github.com
+name: CodeQL
+
+on:
+  schedule:
+    - cron: '0 5 * * SUN'
+
+jobs:
+  codeql:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@v3
+      - uses: github/codeql-action/init@v2
+        with:
+          languages: python
+      - uses: github/codeql-action/analyze@v2
