@@ -100,7 +100,7 @@ class SQLiteCache(BaseCache):
 
     def _delete_expired(self):
         """A more efficient implementation of deleting expired responses in SQL"""
-        with self.responses.connection(commit=True) as con:
+        with self.responses._lock, self.responses.connection(commit=True) as con:
             con.execute(
                 f'DELETE FROM {self.responses.table_name} WHERE expires <= ?', (round(time()),)
             )
@@ -301,7 +301,7 @@ class SQLiteDict(BaseStorage):
             return
 
         column = 'key' if keys else 'value'
-        with self.connection(commit=True) as con:
+        with self._lock, self.connection(commit=True) as con:
             # Split into small enough chunks for SQLite to handle
             for chunk in chunkify(keys or values, max_size=SQLITE_MAX_VARIABLE_NUMBER):
                 marks, args = _format_sequence(chunk)

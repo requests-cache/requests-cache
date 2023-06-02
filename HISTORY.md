@@ -1,12 +1,18 @@
 # History
 
-## Unreleased
-* Add support for regular expressions when using `urls_expire_after`
+## 1.1.0 (TBD)
+* ⚠️ Remove `CachedSession` and `BaseCache` methods [deprecated in 1.0](#deprecations-1-0)
 
 ## 1.0.2 (2023-TBD)
+
+⭐ **Features:**
+* Add support for regular expressions when using `urls_expire_after`
+
+🪲 **Bugfixes:**
 * Revert normalizing `CachedResponse.url` so it matches the original request URL
 * Fix loading cached JSON content when `decode_content=True` and the root element is a list
 * Fix `BaseCache.recreate_keys()` to normalize response bodies with `b'None'`
+* Fix potential `OperationalError: database is locked` during bulk delete operations
 * Add compatibility with urllib3 2.0
 
 ## 1.0.1 (2023-03-24)
@@ -135,9 +141,9 @@
 📦 **Dependencies:**
 * Replace `appdirs` with `platformdirs`
 
-⚠️ **Deprecations:**
+⚠️ <a id="deprecations-1-0">**Deprecations:**</a>
 
-The following methods are deprecated, and will be removed in a future release. The recommended
+The following methods are deprecated, and will be removed in **1.1**. The recommended
 replacements are listed below. If this causes problems for you, please open an issue to discuss.
 * `CachedSession.remove_expired_responses()`: `BaseCache.delete(expired=True)`
 * `BaseCache.remove_expired_responses()`: `BaseCache.delete(expired=True)`
