@@ -947,6 +947,16 @@
         "code",
         "feature"
       ]
+    },
+    {
+      "login": "mportesdev",
+      "name": "Michal Porteš",
+      "avatar_url": "https://avatars.githubusercontent.com/u/43098013?v=4",
+      "profile": "https://github.com/mportesdev",
+      "contributions": [
+        "bug",
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
