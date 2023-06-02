@@ -6,6 +6,7 @@
 ## 1.0.2 (2023-TBD)
 * Revert normalizing `CachedResponse.url` so it matches the original request URL
 * Fix loading cached JSON content when `decode_content=True` and the root element is a list
+* Fix `BaseCache.recreate_keys()` to normalize response bodies with `b'None'`
 * Add compatibility with urllib3 2.0
 
 ## 1.0.1 (2023-03-24)
