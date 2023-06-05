@@ -19,6 +19,7 @@ from requests_cache import ALL_METHODS, CachedSession
 from requests_cache._utils import get_placeholder_class
 from requests_cache.backends import BACKEND_CLASSES, BaseCache
 from requests_cache.backends.base import DESERIALIZE_ERRORS
+from requests_cache.models import CachedResponse
 from requests_cache.policy.expiration import DO_NOT_CACHE, EXPIRE_IMMEDIATELY, NEVER_EXPIRE
 from tests.conftest import (
     MOCKED_URL,
@@ -31,6 +32,8 @@ from tests.conftest import (
     MOCKED_URL_REDIRECT,
     MOCKED_URL_REDIRECT_TARGET,
     MOCKED_URL_VARY,
+    MOCKED_URL_VARY_REDIRECT,
+    MOCKED_URL_VARY_REDIRECT_TARGET,
     START_DT,
     ignore_deprecation,
     patch_normalize_url,
@@ -198,11 +201,19 @@ def test_verify(mock_session):
 
 
 def test_response_history(mock_session):
+    """When a request results in redirects:
+    * An alias for the redirect should be added to 'redirects' table/collection
+    * Both the original and target URLs should be retrievable from the cache
+    * CachedResponse.history should be populated with CachedResponse objects
+    """
     mock_session.get(MOCKED_URL_REDIRECT)
     r = mock_session.get(MOCKED_URL_REDIRECT_TARGET)
 
     assert r.from_cache is True
     assert len(mock_session.cache.redirects) == 1
+
+    r2 = mock_session.get(MOCKED_URL_REDIRECT)
+    assert isinstance(r2.history[0], CachedResponse)
 
 
 # Request matching
@@ -330,15 +341,39 @@ def test_match_headers__vary(mock_session):
     """Vary should be used to validate headers, if available.
     It should also override `match_headers` for the secondary cache key, if both are provided.
     """
-    # mock_session.settings.match_headers = ['Accept-Encoding']
     headers_1 = {'Accept': 'application/json', 'User-Agent': 'qutebrowser'}
     headers_2 = {'Accept': 'application/json', 'User-Agent': 'Firefox'}
     headers_3 = {'Accept': 'text/plain', 'User-Agent': 'qutebrowser'}
+    mock_session.get(MOCKED_URL_VARY, headers=headers_1)
 
-    assert mock_session.get(MOCKED_URL_VARY, headers=headers_1).from_cache is False
     assert mock_session.get(MOCKED_URL_VARY, headers=headers_1).from_cache is True
     assert mock_session.get(MOCKED_URL_VARY, headers=headers_2).from_cache is True
     assert mock_session.get(MOCKED_URL_VARY, headers=headers_3).from_cache is False
+
+
+@pytest.mark.parametrize(
+    'headers, expected_from_cache',
+    [
+        ({'Accept': 'text/plain', 'Accept-Language': 'en-US'}, True),
+        ({'Accept-Language': 'en-US'}, True),
+        ({'Accept-Language': 'en-GB'}, False),
+        ({'Accept': 'application/json'}, False),
+        ({}, False),
+    ],
+)
+def test_match_headers__vary_with_redirects(headers, expected_from_cache, mock_session):
+    """With Vary + redirects, Vary should match against the last request in the redirect chain.
+    * 1st response has `Vary: Accept` (shouldn't be matched)
+    * 2nd response has `Vary: Accept-Language` (should be matched)
+    """
+    r = mock_session.get(
+        MOCKED_URL_VARY_REDIRECT,
+        headers={'Accept': 'text/plain', 'Accept-Language': 'en-US'},
+    )
+    assert r.url == MOCKED_URL_VARY_REDIRECT_TARGET
+
+    r2 = mock_session.get(MOCKED_URL_VARY_REDIRECT, headers=headers)
+    assert r2.from_cache is expected_from_cache
 
 
 def test_include_get_headers():

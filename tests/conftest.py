@@ -86,6 +86,8 @@ MOCKED_URL_JSON_LIST = 'http+mock://requests-cache.com/json_list'
 MOCKED_URL_REDIRECT = 'http+mock://requests-cache.com/redirect'
 MOCKED_URL_REDIRECT_TARGET = 'http+mock://requests-cache.com/redirect_target'
 MOCKED_URL_VARY = 'http+mock://requests-cache.com/vary'
+MOCKED_URL_VARY_REDIRECT = 'http+mock://requests-cache.com/vary-redirect'
+MOCKED_URL_VARY_REDIRECT_TARGET = 'http+mock://requests-cache.com/vary-redirect-target'
 MOCKED_URL_404 = 'http+mock://requests-cache.com/nonexistent'
 MOCKED_URL_500 = 'http+mock://requests-cache.com/answer?q=this-statement-is-false'
 MOCKED_URL_200_404 = 'http+mock://requests-cache.com/200-404'
@@ -218,14 +220,14 @@ def get_mock_adapter() -> Adapter:
         ANY_METHOD,
         MOCKED_URL_REDIRECT,
         headers={'Content-Type': 'text/plain', 'Location': MOCKED_URL_REDIRECT_TARGET},
-        text='mock redirect response',
+        text='mock redirect response (1/2)',
         status_code=302,
     )
     adapter.register_uri(
         ANY_METHOD,
         MOCKED_URL_REDIRECT_TARGET,
         headers={'Content-Type': 'text/plain'},
-        text='mock redirected response',
+        text='mock redirect response (2/2)',
         status_code=200,
     )
     adapter.register_uri(
@@ -233,6 +235,24 @@ def get_mock_adapter() -> Adapter:
         MOCKED_URL_VARY,
         headers={'Content-Type': 'text/plain', 'Vary': 'Accept'},
         text='mock response with Vary header',
+        status_code=200,
+    )
+    adapter.register_uri(
+        ANY_METHOD,
+        MOCKED_URL_VARY_REDIRECT,
+        headers={
+            'Content-Type': 'text/plain',
+            'Vary': 'Accept',
+            'Location': MOCKED_URL_VARY_REDIRECT_TARGET,
+        },
+        text='mock redirect response with Vary header (1/2)',
+        status_code=302,
+    )
+    adapter.register_uri(
+        ANY_METHOD,
+        MOCKED_URL_VARY_REDIRECT_TARGET,
+        headers={'Content-Type': 'text/plain', 'Vary': 'Accept-Language'},
+        text='mock redirect response with Vary header (2/2)',
         status_code=200,
     )
     adapter.register_uri(ANY_METHOD, MOCKED_URL_404, status_code=404)
