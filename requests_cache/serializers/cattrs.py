@@ -117,6 +117,12 @@ def init_converter(
         DecodedContent, lambda obj, cls: json.dumps(obj) if isinstance(obj, (dict, list)) else obj
     )
 
+    def structure_fwd_ref(obj, cls):
+        # python<=3.8: ForwardRef may not have been evaluated yet
+        if not cls.__forward_evaluated__:  # pragma: no cover
+            cls._evaluate(globals(), locals())
+        return converter.structure(obj, cls.__forward_value__)
+
     # Resolve forward references (required for CachedResponse.history)
     converter.register_unstructure_hook_func(
         lambda cls: cls.__class__ is ForwardRef,
@@ -124,7 +130,7 @@ def init_converter(
     )
     converter.register_structure_hook_func(
         lambda cls: cls.__class__ is ForwardRef,
-        lambda obj, cls: converter.structure(obj, cls.__forward_value__),
+        structure_fwd_ref,
     )
 
     return converter

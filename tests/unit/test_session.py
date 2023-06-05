@@ -19,6 +19,7 @@ from requests_cache import ALL_METHODS, CachedSession
 from requests_cache._utils import get_placeholder_class
 from requests_cache.backends import BACKEND_CLASSES, BaseCache
 from requests_cache.backends.base import DESERIALIZE_ERRORS
+from requests_cache.models import CachedResponse
 from requests_cache.policy.expiration import DO_NOT_CACHE, EXPIRE_IMMEDIATELY, NEVER_EXPIRE
 from tests.conftest import (
     MOCKED_URL,
@@ -200,11 +201,19 @@ def test_verify(mock_session):
 
 
 def test_response_history(mock_session):
+    """When a request results in redirects:
+    * An alias for the redirect should be added to 'redirects' table/collection
+    * Both the original and target URLs should be retrievable from the cache
+    * CachedResponse.history should be populated with CachedResponse objects
+    """
     mock_session.get(MOCKED_URL_REDIRECT)
     r = mock_session.get(MOCKED_URL_REDIRECT_TARGET)
 
     assert r.from_cache is True
     assert len(mock_session.cache.redirects) == 1
+
+    r2 = mock_session.get(MOCKED_URL_REDIRECT)
+    assert isinstance(r2.history[0], CachedResponse)
 
 
 # Request matching
