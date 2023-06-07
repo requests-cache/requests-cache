@@ -160,6 +160,8 @@ jobs:
     if: ${{ github.event.inputs.skip-publish != 'true' }}
     needs: [test, test-minimum-deps]
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
@@ -178,7 +180,7 @@ jobs:
           poetry version $(poetry version -s).${{ env.pre-release-suffix }}${{ env.pre-release-version }}
           poetry version
 
-      - name: Build and publish to PyPI
-        run: |
-          poetry build
-          poetry publish -u  __token__ -p ${{ secrets.PYPI_TOKEN }}
+      - name: Build package distributions
+        run: poetry build
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
