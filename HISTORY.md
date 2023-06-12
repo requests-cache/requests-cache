@@ -15,6 +15,7 @@
 * Fix potential `OperationalError: database is locked` during bulk delete operations
 * Fix `CachedResponse.history` not being fully deserialized on python<=3.8
 * Fix request matching with `Vary` and redirects
+* Avoid unnecessary cache writes for revalidation requests if headers and expiration are unchanged
 * Add compatibility with urllib3 2.0
 
 ## 1.0.1 (2023-03-24)
