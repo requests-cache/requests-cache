@@ -219,13 +219,14 @@ class SQLiteDict(BaseStorage):
     @contextmanager
     def connection(self, commit=False) -> Iterator[sqlite3.Connection]:
         """Get a thread-local database connection"""
-        if not self._connection:
-            logger.debug(f'Opening connection to {self.db_path}:{self.table_name}')
-            self._connection = sqlite3.connect(self.db_path, **self.connection_kwargs)
-            if self.fast_save:
-                self._connection.execute('PRAGMA synchronous = 0;')
-            if self.wal:
-                self._connection.execute('PRAGMA journal_mode = wal')
+        with self._lock:
+            if not self._connection:
+                logger.debug(f'Opening connection to {self.db_path}:{self.table_name}')
+                self._connection = sqlite3.connect(self.db_path, **self.connection_kwargs)
+                if self.fast_save:
+                    self._connection.execute('PRAGMA synchronous = 0;')
+                if self.wal:
+                    self._connection.execute('PRAGMA journal_mode = wal')
 
         # Any write operations need to be run in serial
         if commit and self._can_commit:
@@ -237,9 +238,10 @@ class SQLiteDict(BaseStorage):
 
     def close(self):
         """Close any active connections"""
-        if self._connection:
-            self._connection.close()
-            self._connection = None
+        with self._lock:
+            if self._connection:
+                self._connection.close()
+                self._connection = None
 
     @contextmanager
     def bulk_commit(self):
