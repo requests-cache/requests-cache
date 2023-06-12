@@ -274,12 +274,13 @@ class SQLiteDict(BaseStorage):
 
     def __getitem__(self, key):
         with self.connection() as con:
-            row = con.execute(f'SELECT value FROM {self.table_name} WHERE key=?', (key,)).fetchone()
-        # raise error after the with block, otherwise the connection will be locked
-        if not row:
-            raise KeyError
+            cur = con.execute(f'SELECT value FROM {self.table_name} WHERE key=?', (key,))
+            row = cur.fetchone()
+            cur.close()
+            if not row:
+                raise KeyError(key)
 
-        return self.deserialize(key, row[0])
+            return self.deserialize(key, row[0])
 
     def __setitem__(self, key, value):
         # If available, set expiration as a timestamp in unix format
