@@ -56,7 +56,11 @@ class SQLiteCache(BaseCache):
         skwargs = {'serializer': serializer, **kwargs} if serializer else kwargs
         self.responses: SQLiteDict = SQLiteDict(db_path, table_name='responses', **skwargs)
         self.redirects: SQLiteDict = SQLiteDict(
-            db_path, table_name='redirects', serializer=None, **kwargs
+            db_path,
+            table_name='redirects',
+            lock=self.responses._lock,
+            serializer=None,
+            **kwargs,
         )
 
     @property
@@ -90,7 +94,7 @@ class SQLiteCache(BaseCache):
 
         # For any remaining conditions, use base implementation
         if kwargs:
-            with self.responses._lock, self.redirects._lock:
+            with self.responses._lock:
                 return super().delete(**kwargs)
         else:
             self._prune_redirects()
@@ -182,7 +186,7 @@ class SQLiteDict(BaseStorage):
         super().__init__(serializer=serializer, **kwargs)
         self._can_commit = True
         self._connection: Optional[sqlite3.Connection] = None
-        self._lock = threading.RLock()
+        self._lock = kwargs.pop('lock', None) or threading.RLock()
         self.connection_kwargs = get_valid_kwargs(sqlite_template, kwargs)
         self.connection_kwargs.setdefault('check_same_thread', False)
         if use_memory:
