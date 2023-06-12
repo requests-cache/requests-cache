@@ -228,13 +228,14 @@ class SQLiteDict(BaseStorage):
                 if self.wal:
                     self._connection.execute('PRAGMA journal_mode = wal')
 
-        # Any write operations need to be run in serial
+        # Multithreaded write operations must be run in serial
         if commit and self._can_commit:
-            self._lock.acquire()
-        yield self._connection
-        if commit and self._can_commit:
-            self._connection.commit()
-            self._lock.release()
+            with self._lock:
+                yield self._connection
+                self._connection.commit()
+        # Read operations can be run in parallel (no lock or COMMIT)
+        else:
+            yield self._connection
 
     def close(self):
         """Close any active connections"""

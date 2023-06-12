@@ -13,6 +13,7 @@
 * Fix loading cached JSON content when `decode_content=True` and the root element is a list
 * Fix `BaseCache.recreate_keys()` to normalize response bodies with `b'None'`
 * Fix potential `OperationalError: database is locked` during bulk delete operations
+* Fix deadlock in multithreaded SQLite usage if a thread encounters an error during COMMIT
 * Fix `CachedResponse.history` not being fully deserialized on python<=3.8
 * Fix request matching with `Vary` and redirects
 * Avoid unnecessary cache writes for revalidation requests if headers and expiration are unchanged
