@@ -134,7 +134,7 @@ class TestSQLiteDict(BaseStorageTest):
         assert cache._can_commit is True
 
     @skip_pypy
-    @pytest.mark.parametrize('kwargs', [{'fast_save': True}, {'wal': True}])
+    @pytest.mark.parametrize('kwargs', [{'busy_timeout': 5}, {'fast_save': True}, {'wal': True}])
     def test_pragma(self, kwargs):
         """Test settings that make additional PRAGMA statements"""
         cache_1 = self.init_cache('cache_1', **kwargs)
@@ -147,6 +147,12 @@ class TestSQLiteDict(BaseStorageTest):
 
         assert set(cache_1.keys()) == {f'key_{i}' for i in range(n)}
         assert set(cache_2.values()) == {f'value_{i}' for i in range(n)}
+
+    def test_busy_timeout(self):
+        cache = self.init_cache(busy_timeout=5)
+        with cache.connection() as con:
+            r = con.execute('PRAGMA busy_timeout').fetchone()
+            assert r[0] == 5
 
     @skip_pypy
     @pytest.mark.parametrize('limit', [None, 50])

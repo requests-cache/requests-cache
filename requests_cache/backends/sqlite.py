@@ -38,6 +38,9 @@ class SQLiteCache(BaseCache):
         use_cache_dir: Store datebase in a user cache directory (e.g., `~/.cache/http_cache.sqlite`)
         use_temp: Store database in a temp directory (e.g., ``/tmp/http_cache.sqlite``)
         use_memory: Store database in memory instead of in a file
+        busy_timeout: Timeout in milliseconds for SQLite to wait if a table is locked.
+            See `pragma: busy_timeout <https://www.sqlite.org/pragma.html#pragma_busy_timeout>`_
+            for details.
         fast_save: Significantly increases cache write performance, but with the possibility of data
             loss. See `pragma: synchronous <https://www.sqlite.org/pragma.html#pragma_synchronous>`_
             for details.
@@ -173,9 +176,10 @@ class SQLiteDict(BaseStorage):
 
     def __init__(
         self,
-        db_path,
-        table_name='http_cache',
-        fast_save=False,
+        db_path: AnyPath,
+        table_name: str = 'http_cache',
+        busy_timeout: Optional[int] = None,
+        fast_save: bool = False,
         serializer: Optional[SerializerType] = pickle_serializer,
         use_cache_dir: bool = False,
         use_memory: bool = False,
@@ -192,6 +196,7 @@ class SQLiteDict(BaseStorage):
         if use_memory:
             self.connection_kwargs['uri'] = True
         self.db_path = _get_sqlite_cache_path(db_path, use_cache_dir, use_temp, use_memory)
+        self.busy_timeout = busy_timeout
         self.fast_save = fast_save
         self.table_name = table_name
         self.wal = wal
@@ -223,8 +228,11 @@ class SQLiteDict(BaseStorage):
             if not self._connection:
                 logger.debug(f'Opening connection to {self.db_path}:{self.table_name}')
                 self._connection = sqlite3.connect(self.db_path, **self.connection_kwargs)
+                if self.busy_timeout is not None:
+                    # Note: DBAPI doesn't support integer placeholders
+                    self._connection.execute(f'PRAGMA busy_timeout = {self.busy_timeout}')
                 if self.fast_save:
-                    self._connection.execute('PRAGMA synchronous = 0;')
+                    self._connection.execute('PRAGMA synchronous = 0')
                 if self.wal:
                     self._connection.execute('PRAGMA journal_mode = wal')
 

@@ -6,13 +6,14 @@
 ## 1.0.2 (2023-TBD)
 
 ⭐ **Features:**
-* Add support for regular expressions when using `urls_expire_after`
+* Add support for regular expressions with `urls_expire_after`
+* Add `busy_timeout` argument for `SQLiteCache` (see [SQLite docs](https://www.sqlite.org/pragma.html#pragma_busy_timeout) for details)
 
 🪲 **Bugfixes:**
 * Revert normalizing `CachedResponse.url` so it matches the original request URL
 * Fix loading cached JSON content when `decode_content=True` and the root element is a list
 * Fix `BaseCache.recreate_keys()` to normalize response bodies with `b'None'`
-* Fix potential `OperationalError: database is locked` during bulk delete operations
+* Fix potential `OperationalError: database is locked` in multithreaded SQLite usage during bulk delete operations
 * Fix deadlock in multithreaded SQLite usage if a thread encounters an error during COMMIT
 * Fix `CachedResponse.history` not being fully deserialized on python<=3.8
 * Fix request matching with `Vary` and redirects
