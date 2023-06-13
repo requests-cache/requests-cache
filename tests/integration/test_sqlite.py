@@ -154,6 +154,19 @@ class TestSQLiteDict(BaseStorageTest):
             r = con.execute('PRAGMA busy_timeout').fetchone()
             assert r[0] == 5
 
+    def test_wal_sync_mode(self):
+        # Should default to 'NORMAL' (1)
+        cache = self.init_cache(wal=True)
+        with cache.connection() as con:
+            r = con.execute('PRAGMA synchronous').fetchone()
+            assert r[0] == 1
+
+        # Not recommended, but should still work
+        cache = self.init_cache(wal=True, fast_save=True)
+        with cache.connection() as con:
+            r = con.execute('PRAGMA synchronous').fetchone()
+            assert r[0] == 0
+
     @skip_pypy
     @pytest.mark.parametrize('limit', [None, 50])
     def test_sorted__by_size(self, limit):

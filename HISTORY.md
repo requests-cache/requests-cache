@@ -5,22 +5,25 @@
 
 ## 1.0.2 (2023-TBD)
 
-⭐ **Features:**
+⚙️ **Session settings:**
 * Add support for regular expressions with `urls_expire_after`
-* Add `busy_timeout` argument for `SQLiteCache` (see [SQLite docs](https://www.sqlite.org/pragma.html#pragma_busy_timeout) for details)
 
-🪲 **Bugfixes:**
-* Revert normalizing `CachedResponse.url` so it matches the original request URL
-* Fix loading cached JSON content when `decode_content=True` and the root element is a list
-* Fix `BaseCache.recreate_keys()` to normalize response bodies with `b'None'`
+💾 **SQLite Backend:**
+* Add `busy_timeout` argument (see [SQLite docs](https://www.sqlite.org/pragma.html#pragma_busy_timeout) for details)
+* In WAL journaling mode (`wal=True`), default to 'normal' synchronous mode instead of 'full'
 * Fix potential `OperationalError: database is locked` in multithreaded SQLite usage during bulk delete operations
 * Fix deadlock in multithreaded SQLite usage if a thread encounters an error during COMMIT
+
+🪲 **Bugfixes:**
+* Fix loading cached JSON content with `decode_content=True` when the root element is a list
+* Fix `BaseCache.recreate_keys()` to normalize response bodies with `b'None'`
 * Fix `CachedResponse.history` not being fully deserialized on python<=3.8
 * Fix request matching with `Vary` and redirects
+* Skip normalizing `CachedResponse.url` so it always matches the original request URL
 * Avoid unnecessary cache writes for revalidation requests if headers and expiration are unchanged
 * Add compatibility with urllib3 2.0
 
-## 1.0.1 (2023-03-24)
+### 1.0.1 (2023-03-24)
 * Ignore `Cache-Control: must-revalidate` and `no-cache` response headers with `cache_control=False`
 
 ## 1.0.0 (2023-03-01)

@@ -228,13 +228,16 @@ class SQLiteDict(BaseStorage):
             if not self._connection:
                 logger.debug(f'Opening connection to {self.db_path}:{self.table_name}')
                 self._connection = sqlite3.connect(self.db_path, **self.connection_kwargs)
+                # Note: DBAPI doesn't support integer placeholders
                 if self.busy_timeout is not None:
-                    # Note: DBAPI doesn't support integer placeholders
-                    self._connection.execute(f'PRAGMA busy_timeout = {self.busy_timeout}')
+                    self._connection.execute(f'PRAGMA busy_timeout={self.busy_timeout}')
                 if self.fast_save:
-                    self._connection.execute('PRAGMA synchronous = 0')
+                    self._connection.execute('PRAGMA synchronous=OFF')
                 if self.wal:
-                    self._connection.execute('PRAGMA journal_mode = wal')
+                    self._connection.execute('PRAGMA journal_mode=WAL')
+                # In WAL mode, default to normal sync mode (best balance between safety/performance)
+                if self.wal and not self.fast_save:
+                    self._connection.execute('PRAGMA synchronous=NORMAL')
 
         # Multithreaded write operations must be run in serial
         if commit and self._can_commit:
