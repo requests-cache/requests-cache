@@ -1,9 +1,9 @@
 # History
 
-## 1.1.0 (TBD)
+## 1.2.0 (TBD)
 * ⚠️ Remove `CachedSession` and `BaseCache` methods [deprecated in 1.0](#deprecations-1-0)
 
-## 1.0.2 (2023-TBD)
+## 1.1.0 (2023-06-TBD)
 
 ⚙️ **Session settings:**
 * Add support for regular expressions with `urls_expire_after`
@@ -151,7 +151,7 @@
 
 ⚠️ <a id="deprecations-1-0">**Deprecations:**</a>
 
-The following methods are deprecated, and will be removed in **1.1**. The recommended
+The following methods are deprecated, and will be removed in **1.2**. The recommended
 replacements are listed below. If this causes problems for you, please open an issue to discuss.
 * `CachedSession.remove_expired_responses()`: `BaseCache.delete(expired=True)`
 * `BaseCache.remove_expired_responses()`: `BaseCache.delete(expired=True)`
