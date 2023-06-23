@@ -38,6 +38,9 @@ class SQLiteCache(BaseCache):
         use_cache_dir: Store datebase in a user cache directory (e.g., `~/.cache/http_cache.sqlite`)
         use_temp: Store database in a temp directory (e.g., ``/tmp/http_cache.sqlite``)
         use_memory: Store database in memory instead of in a file
+        busy_timeout: Timeout in milliseconds for SQLite to wait if a table is locked.
+            See `pragma: busy_timeout <https://www.sqlite.org/pragma.html#pragma_busy_timeout>`_
+            for details.
         fast_save: Significantly increases cache write performance, but with the possibility of data
             loss. See `pragma: synchronous <https://www.sqlite.org/pragma.html#pragma_synchronous>`_
             for details.
@@ -56,7 +59,11 @@ class SQLiteCache(BaseCache):
         skwargs = {'serializer': serializer, **kwargs} if serializer else kwargs
         self.responses: SQLiteDict = SQLiteDict(db_path, table_name='responses', **skwargs)
         self.redirects: SQLiteDict = SQLiteDict(
-            db_path, table_name='redirects', serializer=None, **kwargs
+            db_path,
+            table_name='redirects',
+            lock=self.responses._lock,
+            serializer=None,
+            **kwargs,
         )
 
     @property
@@ -90,7 +97,7 @@ class SQLiteCache(BaseCache):
 
         # For any remaining conditions, use base implementation
         if kwargs:
-            with self.responses._lock, self.redirects._lock:
+            with self.responses._lock:
                 return super().delete(**kwargs)
         else:
             self._prune_redirects()
@@ -169,9 +176,10 @@ class SQLiteDict(BaseStorage):
 
     def __init__(
         self,
-        db_path,
-        table_name='http_cache',
-        fast_save=False,
+        db_path: AnyPath,
+        table_name: str = 'http_cache',
+        busy_timeout: Optional[int] = None,
+        fast_save: bool = False,
         serializer: Optional[SerializerType] = pickle_serializer,
         use_cache_dir: bool = False,
         use_memory: bool = False,
@@ -182,12 +190,14 @@ class SQLiteDict(BaseStorage):
         super().__init__(serializer=serializer, **kwargs)
         self._can_commit = True
         self._connection: Optional[sqlite3.Connection] = None
-        self._lock = threading.RLock()
+        self._lock = kwargs.pop('lock', None) or threading.RLock()
+        self._retries = 3
         self.connection_kwargs = get_valid_kwargs(sqlite_template, kwargs)
         self.connection_kwargs.setdefault('check_same_thread', False)
         if use_memory:
             self.connection_kwargs['uri'] = True
         self.db_path = _get_sqlite_cache_path(db_path, use_cache_dir, use_temp, use_memory)
+        self.busy_timeout = busy_timeout
         self.fast_save = fast_save
         self.table_name = table_name
         self.wal = wal
@@ -215,27 +225,36 @@ class SQLiteDict(BaseStorage):
     @contextmanager
     def connection(self, commit=False) -> Iterator[sqlite3.Connection]:
         """Get a thread-local database connection"""
-        if not self._connection:
-            logger.debug(f'Opening connection to {self.db_path}:{self.table_name}')
-            self._connection = sqlite3.connect(self.db_path, **self.connection_kwargs)
-            if self.fast_save:
-                self._connection.execute('PRAGMA synchronous = 0;')
-            if self.wal:
-                self._connection.execute('PRAGMA journal_mode = wal')
+        with self._lock:
+            if not self._connection:
+                logger.debug(f'Opening connection to {self.db_path}:{self.table_name}')
+                self._connection = sqlite3.connect(self.db_path, **self.connection_kwargs)
+                # Note: DBAPI doesn't support integer placeholders
+                if self.busy_timeout is not None:
+                    self._connection.execute(f'PRAGMA busy_timeout={self.busy_timeout}')
+                if self.fast_save:
+                    self._connection.execute('PRAGMA synchronous=OFF')
+                if self.wal:
+                    self._connection.execute('PRAGMA journal_mode=WAL')
+                # In WAL mode, default to normal sync mode (best balance between safety/performance)
+                if self.wal and not self.fast_save:
+                    self._connection.execute('PRAGMA synchronous=NORMAL')
 
-        # Any write operations need to be run in serial
+        # Multithreaded write operations must be run in serial
         if commit and self._can_commit:
-            self._lock.acquire()
-        yield self._connection
-        if commit and self._can_commit:
-            self._connection.commit()
-            self._lock.release()
+            with self._lock:
+                yield self._connection
+                self._connection.commit()
+        # Read operations can be run in parallel (no lock or COMMIT)
+        else:
+            yield self._connection
 
     def close(self):
         """Close any active connections"""
-        if self._connection:
-            self._connection.close()
-            self._connection = None
+        with self._lock:
+            if self._connection:
+                self._connection.close()
+                self._connection = None
 
     @contextmanager
     def bulk_commit(self):
@@ -268,14 +287,27 @@ class SQLiteDict(BaseStorage):
 
     def __getitem__(self, key):
         with self.connection() as con:
-            row = con.execute(f'SELECT value FROM {self.table_name} WHERE key=?', (key,)).fetchone()
-        # raise error after the with block, otherwise the connection will be locked
-        if not row:
-            raise KeyError
+            cur = con.execute(f'SELECT value FROM {self.table_name} WHERE key=?', (key,))
+            row = cur.fetchone()
+            cur.close()
+            if not row:
+                raise KeyError(key)
 
-        return self.deserialize(key, row[0])
+            return self.deserialize(key, row[0])
 
     def __setitem__(self, key, value):
+        # Even with WAL mode, rarely a write may fail with SQLITE_BUSY; if so, retry up to n times.
+        for i in range(1, self._retries + 1):
+            try:
+                self._write(key, value)
+                break
+            except sqlite3.OperationalError as e:
+                if 'database is locked' in str(e) and i < self._retries:
+                    logger.warning(f'Database is locked; retrying ({i}/{self._retries})')
+                else:
+                    raise
+
+    def _write(self, key, value):
         # If available, set expiration as a timestamp in unix format
         expires = getattr(value, 'expires_unix', None)
         value = self.serialize(value)

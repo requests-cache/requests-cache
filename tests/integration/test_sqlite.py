@@ -1,5 +1,6 @@
 import os
 import pickle
+import sqlite3
 from datetime import datetime, timedelta
 from os.path import join
 from tempfile import NamedTemporaryFile, gettempdir
@@ -134,7 +135,7 @@ class TestSQLiteDict(BaseStorageTest):
         assert cache._can_commit is True
 
     @skip_pypy
-    @pytest.mark.parametrize('kwargs', [{'fast_save': True}, {'wal': True}])
+    @pytest.mark.parametrize('kwargs', [{'busy_timeout': 5}, {'fast_save': True}, {'wal': True}])
     def test_pragma(self, kwargs):
         """Test settings that make additional PRAGMA statements"""
         cache_1 = self.init_cache('cache_1', **kwargs)
@@ -147,6 +148,62 @@ class TestSQLiteDict(BaseStorageTest):
 
         assert set(cache_1.keys()) == {f'key_{i}' for i in range(n)}
         assert set(cache_2.values()) == {f'value_{i}' for i in range(n)}
+
+    def test_busy_timeout(self):
+        cache = self.init_cache(busy_timeout=5)
+        with cache.connection() as con:
+            r = con.execute('PRAGMA busy_timeout').fetchone()
+            assert r[0] == 5
+
+    def test_wal_sync_mode(self):
+        # Should default to 'NORMAL' (1)
+        cache = self.init_cache(wal=True)
+        with cache.connection() as con:
+            r = con.execute('PRAGMA synchronous').fetchone()
+            assert r[0] == 1
+
+        # Not recommended, but should still work
+        cache = self.init_cache(wal=True, fast_save=True)
+        with cache.connection() as con:
+            r = con.execute('PRAGMA synchronous').fetchone()
+            assert r[0] == 0
+
+    def test_write_retry(self):
+        cache = self.init_cache()
+        locked_error = sqlite3.OperationalError('database is locked')
+        with patch.object(cache, '_write', side_effect=[locked_error, 1]) as mock_write:
+            cache['key_1'] = 'value_1'
+            assert mock_write.call_count == 2
+
+    def test_write_retry__exceeded_retries(self):
+        cache = self.init_cache()
+        locked_error = sqlite3.OperationalError('database is locked')
+
+        with patch.object(cache, '_write', side_effect=locked_error) as mock_write:
+            with pytest.raises(sqlite3.OperationalError):
+                cache['key_1'] = 'value_1'
+            assert mock_write.call_count == 3
+
+        # Should be able to set a custom number of retries
+        cache._retries = 5
+        with patch.object(cache, '_write', side_effect=locked_error) as mock_write:
+            with pytest.raises(sqlite3.OperationalError):
+                cache['key_1'] = 'value_1'
+            assert mock_write.call_count == 5
+
+    def test_write_retry__other_errors(self):
+        """Errors other than OperationalError: database is locked should not be retried"""
+        cache = self.init_cache()
+
+        error_1 = sqlite3.OperationalError('no more rows available')
+        with patch.object(cache, '_write', side_effect=error_1):
+            with pytest.raises(sqlite3.OperationalError):
+                cache['key_1'] = 'value_1'
+
+        error_2 = sqlite3.DatabaseError('hard drive is on fire')
+        with patch.object(cache, '_write', side_effect=error_2):
+            with pytest.raises(sqlite3.DatabaseError):
+                cache['key_1'] = 'value_1'
 
     @skip_pypy
     @pytest.mark.parametrize('limit', [None, 50])

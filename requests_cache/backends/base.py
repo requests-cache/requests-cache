@@ -89,8 +89,11 @@ class BaseCache:
         cached_response = CachedResponse.from_response(response, expires=expires)
         cached_response = redact_response(cached_response, self._settings.ignored_parameters)
         self.responses[cache_key] = cached_response
-        for r in response.history:
-            self.redirects[self.create_key(r.request)] = cache_key
+
+        # Save redirect aliases, unless this is a revalidation (i.e., it was saved previously)
+        if response.history and not cached_response.revalidated:
+            for r in response.history:
+                self.redirects[self.create_key(r.request)] = cache_key
 
     def clear(self):
         """Delete all items from the cache"""

@@ -243,6 +243,14 @@ class CacheActions(RichMixin):
     ) -> 'CachedResponse':
         """After revalidation, update the cached response's expiration and headers"""
         logger.debug(f'Response for URL {response.request.url} has not been modified')
+
+        # Skip updating the cached response if expiration and headers are unchanged
+        # Ignore validators missing from new response, since they may be omitted
+        headers_changed = any(
+            cached_response.headers.get(k) != v for k, v in response.headers.items()
+        )
+        self.skip_write = self.expires == cached_response.expires and not headers_changed
+
         cached_response.expires = self.expires
         cached_response.headers.update(response.headers)
         cached_response.revalidated = True

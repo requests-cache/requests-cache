@@ -914,6 +914,48 @@ def test_request_only_if_cached__prepared_request(mock_session):
         response.raise_for_status()
 
 
+def test_revalidation__skip_update(mock_session):
+    """After a revalidation request, the response should not be updated in the cache if expiration
+    and headers are unchanged.
+    """
+    # With no expiration (NEVER_EXPIRE), the expiration value in the cache will not change.
+    mock_session.settings.expire_after = NEVER_EXPIRE
+    response_1 = mock_session.get(MOCKED_URL_ETAG)
+    mock_session.mock_adapter.register_uri('GET', MOCKED_URL_ETAG, status_code=304)
+
+    with patch.object(mock_session.cache, 'save_response') as mock_save:
+        response_2 = mock_session.get(MOCKED_URL_ETAG, refresh=True)
+        mock_save.assert_not_called()
+
+    assert response_2.from_cache is True and response_2.revalidated is True
+    assert response_1.expires == response_2.expires
+
+
+def test_revalidation__update_cache(mock_session):
+    """After a revalidation request, the response should be updated in the cache with new expiration
+    and/or headers (if either changed).
+    """
+    mock_session.settings.expire_after = -1
+    response_1 = mock_session.get(MOCKED_URL_ETAG)
+    assert response_1.expires is None
+    mock_session.mock_adapter.register_uri('GET', MOCKED_URL_ETAG, status_code=304)
+
+    # Expiration has changed
+    with patch.object(mock_session.cache, 'save_response') as mock_save:
+        response_2 = mock_session.get(MOCKED_URL_ETAG, refresh=True, expire_after=60)
+        mock_save.assert_called()
+    assert response_2.expires is not None
+
+    # Headers have changed
+    mock_session.mock_adapter.register_uri(
+        'GET', MOCKED_URL_ETAG, headers={'new_header': 'true'}, status_code=304
+    )
+    with patch.object(mock_session.cache, 'save_response') as mock_save:
+        response_3 = mock_session.get(MOCKED_URL_ETAG, refresh=True, expire_after=60)
+        mock_save.assert_called()
+    assert response_3.headers['new_header'] == 'true'
+
+
 def test_request_refresh(mock_session):
     """The refresh option should send a conditional request, if possible"""
     response_1 = mock_session.get(MOCKED_URL_ETAG, expire_after=60)

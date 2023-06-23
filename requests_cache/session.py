@@ -234,7 +234,8 @@ class CacheMixin(MIXIN_BASE):
             self.cache.save_response(response, actions.cache_key, actions.expires)
         elif cached_response is not None and response.status_code == 304:
             cached_response = actions.update_revalidated_response(response, cached_response)
-            self.cache.save_response(cached_response, actions.cache_key, actions.expires)
+            if not actions.skip_write:
+                self.cache.save_response(cached_response, actions.cache_key, actions.expires)
             return cached_response
         else:
             logger.debug(f'Skipping cache write for URL: {request.url}')

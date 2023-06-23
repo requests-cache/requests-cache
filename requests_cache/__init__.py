@@ -2,7 +2,7 @@
 
 # Version is defined in pyproject.toml.
 # It's copied here to make it easier for client code to check the installed version.
-__version__ = '1.0.1'
+__version__ = '1.1.0'
 
 from .backends import *
 from .cache_keys import *
