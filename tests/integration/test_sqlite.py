@@ -1,5 +1,6 @@
 import os
 import pickle
+import sqlite3
 from datetime import datetime, timedelta
 from os.path import join
 from tempfile import NamedTemporaryFile, gettempdir
@@ -166,6 +167,43 @@ class TestSQLiteDict(BaseStorageTest):
         with cache.connection() as con:
             r = con.execute('PRAGMA synchronous').fetchone()
             assert r[0] == 0
+
+    def test_write_retry(self):
+        cache = self.init_cache()
+        locked_error = sqlite3.OperationalError('database is locked')
+        with patch.object(cache, '_write', side_effect=[locked_error, 1]) as mock_write:
+            cache['key_1'] = 'value_1'
+            assert mock_write.call_count == 2
+
+    def test_write_retry__exceeded_retries(self):
+        cache = self.init_cache()
+        locked_error = sqlite3.OperationalError('database is locked')
+
+        with patch.object(cache, '_write', side_effect=locked_error) as mock_write:
+            with pytest.raises(sqlite3.OperationalError):
+                cache['key_1'] = 'value_1'
+            assert mock_write.call_count == 3
+
+        # Should be able to set a custom number of retries
+        cache._retries = 5
+        with patch.object(cache, '_write', side_effect=locked_error) as mock_write:
+            with pytest.raises(sqlite3.OperationalError):
+                cache['key_1'] = 'value_1'
+            assert mock_write.call_count == 5
+
+    def test_write_retry__other_errors(self):
+        """Errors other than OperationalError: database is locked should not be retried"""
+        cache = self.init_cache()
+
+        error_1 = sqlite3.OperationalError('no more rows available')
+        with patch.object(cache, '_write', side_effect=error_1):
+            with pytest.raises(sqlite3.OperationalError):
+                cache['key_1'] = 'value_1'
+
+        error_2 = sqlite3.DatabaseError('hard drive is on fire')
+        with patch.object(cache, '_write', side_effect=error_2):
+            with pytest.raises(sqlite3.DatabaseError):
+                cache['key_1'] = 'value_1'
 
     @skip_pypy
     @pytest.mark.parametrize('limit', [None, 50])

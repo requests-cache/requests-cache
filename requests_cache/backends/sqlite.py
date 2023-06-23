@@ -191,6 +191,7 @@ class SQLiteDict(BaseStorage):
         self._can_commit = True
         self._connection: Optional[sqlite3.Connection] = None
         self._lock = kwargs.pop('lock', None) or threading.RLock()
+        self._retries = 3
         self.connection_kwargs = get_valid_kwargs(sqlite_template, kwargs)
         self.connection_kwargs.setdefault('check_same_thread', False)
         if use_memory:
@@ -295,6 +296,18 @@ class SQLiteDict(BaseStorage):
             return self.deserialize(key, row[0])
 
     def __setitem__(self, key, value):
+        # Even with WAL mode, rarely a write may fail with SQLITE_BUSY; if so, retry up to n times.
+        for i in range(1, self._retries + 1):
+            try:
+                self._write(key, value)
+                break
+            except sqlite3.OperationalError as e:
+                if 'database is locked' in str(e) and i < self._retries:
+                    logger.warning(f'Database is locked; retrying ({i}/{self._retries})')
+                else:
+                    raise
+
+    def _write(self, key, value):
         # If available, set expiration as a timestamp in unix format
         expires = getattr(value, 'expires_unix', None)
         value = self.serialize(value)
