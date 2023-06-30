@@ -180,19 +180,29 @@ class TestSQLiteDict(BaseStorageTest):
         locked_error = sqlite3.OperationalError('database is locked')
 
         with patch.object(cache, '_write', side_effect=locked_error) as mock_write:
-            with pytest.raises(sqlite3.OperationalError):
-                cache['key_1'] = 'value_1'
+            cache['key_1'] = 'value_1'
             assert mock_write.call_count == 3
+            assert 'key_1' not in cache
 
-        # Should be able to set a custom number of retries
-        cache._retries = 5
+        # Set a custom number of retries
+        cache = self.init_cache(retries=5)
+        with patch.object(cache, '_write', side_effect=locked_error) as mock_write:
+            cache['key_1'] = 'value_1'
+            assert mock_write.call_count == 5
+
+        # Set retries to 0 to disable retrying
+        cache = self.init_cache(retries=0)
         with patch.object(cache, '_write', side_effect=locked_error) as mock_write:
             with pytest.raises(sqlite3.OperationalError):
                 cache['key_1'] = 'value_1'
-            assert mock_write.call_count == 5
+            assert mock_write.call_count == 1
+
+        # Expect no change to behavior if retrying is disabled and there are no errors
+        cache['key_1'] = 'value_1'
+        assert 'key_1' in cache
 
     def test_write_retry__other_errors(self):
-        """Errors other than OperationalError: database is locked should not be retried"""
+        """Errors other than 'OperationalError: database is locked' should not be retried"""
         cache = self.init_cache()
 
         error_1 = sqlite3.OperationalError('no more rows available')
