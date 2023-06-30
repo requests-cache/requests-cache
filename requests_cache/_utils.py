@@ -1,7 +1,10 @@
 """Minor internal utility functions that don't really belong anywhere else"""
+from contextlib import contextmanager
 from inspect import signature
 from logging import getLogger
 from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional, Tuple
+
+from urllib3 import filepost
 
 KwargDict = Dict[str, Any]
 logger = getLogger('requests_cache')
@@ -64,6 +67,18 @@ def get_valid_kwargs(
     """Get the subset of non-None ``kwargs`` that are valid arguments for ``func``"""
     kwargs, _ = split_kwargs(func, kwargs, extras)
     return {k: v for k, v in kwargs.items() if v is not None}
+
+
+@contextmanager
+def patch_form_boundary():
+    """If the ``files`` param is present, patch the form boundary used to separate multipart
+    uploads. ``requests`` does not provide a way to pass a custom boundary to urllib3, so this just
+    monkey-patches it instead.
+    """
+    original_boundary = filepost.choose_boundary
+    filepost.choose_boundary = lambda: '##requests-cache-form-boundary##'
+    yield
+    filepost.choose_boundary = original_boundary
 
 
 def split_kwargs(

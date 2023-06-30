@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import json
+from contextlib import nullcontext
 from hashlib import blake2b
 from logging import getLogger
 from typing import (
@@ -27,7 +28,7 @@ from requests import Request, Session
 from requests.models import CaseInsensitiveDict
 from url_normalize import url_normalize
 
-from ._utils import decode, encode
+from ._utils import decode, encode, patch_form_boundary
 
 __all__ = [
     'create_key',
@@ -114,7 +115,10 @@ def normalize_request(
         ignored_parameters: Request paramters, headers, and/or JSON body params to exclude
     """
     if isinstance(request, Request):
-        norm_request: AnyPreparedRequest = Session().prepare_request(request)
+        # For a multipart POST request that hasn't been prepared, we need to patch the form boundary
+        # so the request body will have a consistent hash
+        with patch_form_boundary() if request.files else nullcontext():
+            norm_request: AnyPreparedRequest = Session().prepare_request(request)
     else:
         norm_request = request.copy()
 

@@ -55,6 +55,16 @@ def test_contains__request(mock_session):
     assert not mock_session.cache.contains(request=request)
 
 
+def test_contains__multipart_request(mock_session):
+    files = [('file', ('test.txt', b'content'))]
+    mock_session.settings.allowable_methods = ('GET', 'POST')
+    mock_session.post(MOCKED_URL, files=files)
+    request = Request('POST', MOCKED_URL, files=files)
+    assert mock_session.cache.contains(request=request)
+    request.files = None
+    assert not mock_session.cache.contains(request=request)
+
+
 def test_contains__url(mock_session):
     mock_session.get(MOCKED_URL)
     assert mock_session.cache.contains(url=MOCKED_URL)
