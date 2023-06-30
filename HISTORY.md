@@ -3,7 +3,7 @@
 ## 1.2.0 (TBD)
 * ⚠️ Remove `CachedSession` and `BaseCache` methods [deprecated in 1.0](#deprecations-1-0)
 
-## 1.1.0 (2023-06-TBD)
+## 1.1.0 (2023-06-30)
 
 ⚙️ **Session settings:**
 * Add support for regular expressions with `urls_expire_after`
