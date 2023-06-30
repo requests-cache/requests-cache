@@ -157,13 +157,13 @@ def test_delete__older_than(mock_session):
     with time_travel(START_DT):
         request = CachedRequest(method='GET', url='https://test.com/test_0')
         mock_session.cache.save_response(CachedResponse(request=request))
-    with time_travel(START_DT - timedelta(seconds=1)):
+    with time_travel(START_DT - timedelta(seconds=1.1)):
         request = CachedRequest(method='GET', url='https://test.com/test_1')
         mock_session.cache.save_response(CachedResponse(request=request))
-    with time_travel(START_DT - timedelta(seconds=2)):
+    with time_travel(START_DT - timedelta(seconds=2.1)):
         request = CachedRequest(method='GET', url='https://test.com/test_2')
         mock_session.cache.save_response(CachedResponse(request=request))
-    with time_travel(START_DT - timedelta(seconds=3)):
+    with time_travel(START_DT - timedelta(seconds=3.1)):
         request = CachedRequest(method='GET', url='https://test.com/test_3')
         mock_session.cache.save_response(CachedResponse(request=request))
 
