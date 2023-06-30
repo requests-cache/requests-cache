@@ -65,6 +65,7 @@ Examples:
 ```
 
 (url-patterns)=
+## Expiration With URL Patterns
 ```python
 >>> urls_expire_after = {
 ...     '*.site_1.com': 30,
