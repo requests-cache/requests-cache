@@ -7,9 +7,8 @@ from typing import TYPE_CHECKING, Iterable, MutableMapping, Optional, Union
 from requests import PreparedRequest
 from requests import Session as OriginalSession
 from requests.hooks import dispatch_hook
-from urllib3 import filepost
 
-from ._utils import get_valid_kwargs
+from ._utils import get_valid_kwargs, patch_form_boundary
 from .backends import BackendSpecifier, init_backend
 from .models import AnyResponse, CachedResponse, OriginalResponse
 from .policy import (
@@ -368,15 +367,3 @@ def get_504_response(request: PreparedRequest) -> CachedResponse:
         reason='Not Cached',
         request=request,  # type: ignore
     )
-
-
-@contextmanager
-def patch_form_boundary():
-    """If the ``files`` param is present, patch the form boundary used to separate multipart
-    uploads. ``requests`` does not provide a way to pass a custom boundary to urllib3, so this just
-    monkey-patches it instead.
-    """
-    original_boundary = filepost.choose_boundary
-    filepost.choose_boundary = lambda: '##requests-cache-form-boundary##'
-    yield
-    filepost.choose_boundary = original_boundary
