@@ -12,7 +12,7 @@ from os import unlink
 from os.path import getsize, isfile
 from pathlib import Path
 from tempfile import gettempdir
-from time import time
+from time import sleep, time
 from typing import Collection, Iterator, List, Optional, Tuple, Type, Union
 
 from platformdirs import user_cache_dir
@@ -26,6 +26,8 @@ from .base import VT
 
 MEMORY_URI = 'file::memory:?cache=shared'
 SQLITE_MAX_VARIABLE_NUMBER = 999
+DEFAULT_WRITE_RETRIES = 3
+
 AnyPath = Union[Path, str]
 logger = getLogger(__name__)
 
@@ -180,6 +182,7 @@ class SQLiteDict(BaseStorage):
         table_name: str = 'http_cache',
         busy_timeout: Optional[int] = None,
         fast_save: bool = False,
+        retries: Optional[int] = DEFAULT_WRITE_RETRIES,
         serializer: Optional[SerializerType] = pickle_serializer,
         use_cache_dir: bool = False,
         use_memory: bool = False,
@@ -190,8 +193,7 @@ class SQLiteDict(BaseStorage):
         super().__init__(serializer=serializer, **kwargs)
         self._can_commit = True
         self._connection: Optional[sqlite3.Connection] = None
-        self._lock = kwargs.pop('lock', None) or threading.RLock()
-        self._retries = 3
+        self._lock = kwargs.pop('lock', threading.RLock())
         self.connection_kwargs = get_valid_kwargs(sqlite_template, kwargs)
         self.connection_kwargs.setdefault('check_same_thread', False)
         if use_memory:
@@ -199,6 +201,8 @@ class SQLiteDict(BaseStorage):
         self.db_path = _get_sqlite_cache_path(db_path, use_cache_dir, use_temp, use_memory)
         self.busy_timeout = busy_timeout
         self.fast_save = fast_save
+        # Provisional option: number of times to retry writing if db is locked. Set to 0 to disable.
+        self.retries = retries
         self.table_name = table_name
         self.wal = wal
         self.init_db()
@@ -296,16 +300,28 @@ class SQLiteDict(BaseStorage):
             return self.deserialize(key, row[0])
 
     def __setitem__(self, key, value):
-        # Even with WAL mode, rarely a write may fail with SQLITE_BUSY; if so, retry up to n times.
-        for i in range(1, self._retries + 1):
+        if not self.retries:
+            self._write(key, value)
+            return
+
+        for i in range(self.retries):
             try:
                 self._write(key, value)
-                break
+                return
+            # Even with WAL mode, rarely a write may fail with SQLITE_BUSY; if so, retry up to
+            # self._retries times. Any other errors will be re-raised.
             except sqlite3.OperationalError as e:
-                if 'database is locked' in str(e) and i < self._retries:
-                    logger.warning(f'Database is locked; retrying ({i}/{self._retries})')
-                else:
+                if 'database is locked' not in str(e):
                     raise
+                elif i < self.retries - 1:
+                    logger.warning(
+                        f'Database is locked in thread {threading.get_ident()}; '
+                        f'retrying ({i+1}/{self.retries})'
+                    )
+                    sleep(0.1)
+                # On last retry, log the error and abort the write
+                else:
+                    logger.error(e)
 
     def _write(self, key, value):
         # If available, set expiration as a timestamp in unix format
