@@ -48,7 +48,7 @@ redis                      = {optional=true, version=">=3"}
 # Optional serialization dependencies
 bson                       = {optional=true, version=">=0.5"}
 itsdangerous               = {optional=true, version=">=2.0"}
-pyyaml                     = {optional=true, version=">=5.4"}
+pyyaml                     = {optional=true, version=">=6.0.1"}
 ujson                      = {optional=true, version=">=5.4"}
 
 # Dependencies for building documentation;
@@ -63,7 +63,7 @@ sphinx-copybutton          = {optional=true, version=">=0.5"}
 sphinx-design              = {optional=true, version=">=0.2"}
 sphinx-notfound-page       = {optional=true, version=">=0.8"}
 sphinxcontrib-apidoc       = {optional=true, version=">=0.3"}
-sphinxext-opengraph        = {optional=true, version=">=0.6"}
+sphinxext-opengraph        = {optional=true, version=">=0.6", python=">=3.8"}
 
 [tool.poetry.extras]
 # Package extras for optional backend dependencies
@@ -81,7 +81,7 @@ yaml     = ["pyyaml"]
 all      = ["boto3", "botocore", "itsdangerous", "pymongo", "pyyaml", "redis", "ujson"]
 
 # Documentation
-docs     = ["furo", "linkify-it-py", "myst-parser", "sphinx", "sphinx-autodoc-typehints",
+docs     = ["matplotlib","furo", "linkify-it-py", "myst-parser", "sphinx", "sphinx-autodoc-typehints",
             "sphinx-automodapi", "sphinx-copybutton", "sphinx-design", "sphinx-notfound-page",
             "sphinxcontrib-apidoc", "sphinxext-opengraph"]
 
