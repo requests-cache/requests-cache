@@ -36,10 +36,10 @@ jobs:
           virtualenvs-in-project: true
 
       # Start integration test databases
-      - uses: supercharge/mongodb-github-action@1.9.0
+      - uses: supercharge/mongodb-github-action@v1.10.0
         with:
           mongodb-version: 5.0
-      - uses: supercharge/redis-github-action@1.5.0
+      - uses: supercharge/redis-github-action@1.6.0
         with:
           redis-version: 6
       - uses: rrainn/dynamodb-action@v3.0.0
@@ -84,3 +84,8 @@ jobs:
           python-version: ${{ env.LATEST_PY_VERSION }}
       - name: Run style checks & linting
         uses: pre-commit/action@v3.0.0
+      - name: Scan dependencies for known vulnerabilities
+        uses: pypa/gh-action-pip-audit@v1.0.8
+        with:
+          vulnerability-service: osv
+          ignore-vulns: PYSEC-2022-43012  # older setuptools used by the action itself
