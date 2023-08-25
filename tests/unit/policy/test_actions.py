@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from unittest.mock import patch
 
 import pytest
@@ -18,7 +18,7 @@ IGNORED_DIRECTIVES = [
     's-maxage=<seconds>',
 ]
 BASIC_REQUEST = Request(method='GET', url='https://site.com/img.jpg', headers={})
-EXPIRED_RESPONSE = CachedResponse(expires=datetime.utcnow() - timedelta(1))
+EXPIRED_RESPONSE = CachedResponse(expires=datetime.now(UTC) - timedelta(1))
 
 
 @pytest.mark.parametrize(
@@ -175,7 +175,7 @@ def test_update_from_cached_response__revalidate(response_headers, expected_vali
     """Conditional request headers should be added if the cached response is expired"""
     actions = CacheActions.from_request('key', BASIC_REQUEST)
     cached_response = CachedResponse(
-        headers=response_headers, expires=datetime.utcnow() - timedelta(1)
+        headers=response_headers, expires=datetime.now(UTC) - timedelta(1)
     )
 
     actions.update_from_cached_response(cached_response)
@@ -335,7 +335,7 @@ def test_is_usable__max_stale(max_stale, usable):
         headers={'Cache-Control': f'max-stale={max_stale}'},
     )
     actions = CacheActions.from_request('key', request)
-    cached_response = CachedResponse(expires=datetime.utcnow() - timedelta(seconds=10))
+    cached_response = CachedResponse(expires=datetime.now(UTC) - timedelta(seconds=10))
     assert actions.is_usable(cached_response) is usable
 
 
@@ -349,7 +349,7 @@ def test_is_usable__min_fresh(min_fresh, usable):
         headers={'Cache-Control': f'min-fresh={min_fresh}'},
     )
     actions = CacheActions.from_request('key', request)
-    cached_response = CachedResponse(expires=datetime.utcnow() + timedelta(seconds=10))
+    cached_response = CachedResponse(expires=datetime.now(UTC) + timedelta(seconds=10))
     assert actions.is_usable(cached_response) is usable
 
 
@@ -370,7 +370,7 @@ def test_is_usable__stale_if_error(stale_if_error, error, usable):
         headers={'Cache-Control': f'stale-if-error={stale_if_error}'},
     )
     actions = CacheActions.from_request('key', request)
-    cached_response = CachedResponse(expires=datetime.utcnow() - timedelta(seconds=10))
+    cached_response = CachedResponse(expires=datetime.now(UTC) - timedelta(seconds=10))
     assert actions.is_usable(cached_response, error=error) is usable
 
 
@@ -390,7 +390,7 @@ def test_is_usable__stale_while_revalidate(stale_while_revalidate, usable):
         headers={'Cache-Control': f'stale-while-revalidate={stale_while_revalidate}'},
     )
     actions = CacheActions.from_request('key', request)
-    cached_response = CachedResponse(expires=datetime.utcnow() - timedelta(seconds=10))
+    cached_response = CachedResponse(expires=datetime.now(UTC) - timedelta(seconds=10))
     assert actions.is_usable(cached_response=cached_response) is usable
 
 
@@ -441,7 +441,7 @@ def test_update_from_response__revalidate(mock_datetime, cache_headers, validato
     response = get_mock_response(headers={**cache_headers, **validator_headers})
     actions.update_from_response(response)
 
-    assert actions.expires == mock_datetime.utcnow()
+    assert actions.expires == mock_datetime.now(UTC)
     assert actions.skip_write is False
 
 

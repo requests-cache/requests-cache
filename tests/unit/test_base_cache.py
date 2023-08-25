@@ -1,6 +1,6 @@
 """BaseCache tests that use mocked responses only"""
 import pickle
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from logging import getLogger
 from pickle import PickleError
 from unittest.mock import patch
@@ -277,11 +277,11 @@ def test_recreate_keys__empty_response_body(mock_session):
 
 def test_reset_expiration__extend_expiration(mock_session):
     # Start with an expired response
-    mock_session.settings.expire_after = datetime.utcnow() - timedelta(seconds=1)
+    mock_session.settings.expire_after = datetime.now(UTC) - timedelta(seconds=1)
     mock_session.get(MOCKED_URL)
 
     # Set expiration in the future
-    mock_session.cache.reset_expiration(datetime.utcnow() + timedelta(seconds=1))
+    mock_session.cache.reset_expiration(datetime.now(UTC) + timedelta(seconds=1))
     assert len(mock_session.cache.responses) == 1
     response = mock_session.get(MOCKED_URL)
     assert response.is_expired is False and response.from_cache is True
@@ -289,11 +289,11 @@ def test_reset_expiration__extend_expiration(mock_session):
 
 def test_reset_expiration__shorten_expiration(mock_session):
     # Start with a non-expired response
-    mock_session.settings.expire_after = datetime.utcnow() + timedelta(seconds=1)
+    mock_session.settings.expire_after = datetime.now(UTC) + timedelta(seconds=1)
     mock_session.get(MOCKED_URL)
 
     # Set expiration in the past
-    mock_session.cache.reset_expiration(datetime.utcnow() - timedelta(seconds=1))
+    mock_session.cache.reset_expiration(datetime.now(UTC) - timedelta(seconds=1))
     response = mock_session.get(MOCKED_URL)
     assert response.is_expired is False and response.from_cache is False
 

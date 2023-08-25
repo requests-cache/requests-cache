@@ -1,5 +1,5 @@
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, UTC
 from unittest.mock import patch
 
 import pytest
@@ -16,7 +16,7 @@ from tests.conftest import HTTPDATE_DATETIME, HTTPDATE_STR
 def test_get_expiration_datetime__no_expiration(mock_datetime):
     assert get_expiration_datetime(None) is None
     assert get_expiration_datetime(-1) is None
-    assert get_expiration_datetime(EXPIRE_IMMEDIATELY) == mock_datetime.utcnow()
+    assert get_expiration_datetime(EXPIRE_IMMEDIATELY) == mock_datetime.now(UTC)
 
 
 @pytest.mark.parametrize(
@@ -29,7 +29,7 @@ def test_get_expiration_datetime__no_expiration(mock_datetime):
 )
 def test_get_expiration_datetime__relative(expire_after, expected_expiration_delta):
     expires = get_expiration_datetime(expire_after)
-    expected_expiration = datetime.utcnow() + expected_expiration_delta
+    expected_expiration = datetime.now(UTC) + expected_expiration_delta
     # Instead of mocking datetime (which adds some complications), check for approximate value
     assert abs((expires - expected_expiration).total_seconds()) <= 1
 

@@ -1,7 +1,7 @@
 """Common tests to run for all backends (BaseCache subclasses)"""
 import json
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
-from datetime import datetime
+from datetime import datetime, UTC
 from functools import partial
 from io import BytesIO
 from logging import getLogger
@@ -180,7 +180,7 @@ class BaseCacheTest:
         if expected_expiration is None:
             assert response.expires is None
         else:
-            assert_delta_approx_equal(datetime.utcnow(), response.expires, expected_expiration)
+            assert_delta_approx_equal(datetime.now(UTC), response.expires, expected_expiration)
 
     @pytest.mark.parametrize(
         'cached_response_headers, expected_from_cache',

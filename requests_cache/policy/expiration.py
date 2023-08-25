@@ -1,5 +1,5 @@
 """Utility functions for parsing and converting expiration values"""
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, UTC
 from email.utils import parsedate_to_datetime
 from fnmatch import fnmatch
 from logging import getLogger
@@ -30,7 +30,7 @@ def get_expiration_datetime(
         return None
     # Expire immediately
     elif try_int(expire_after) == EXPIRE_IMMEDIATELY:
-        return start_time or datetime.utcnow()
+        return start_time or datetime.now(UTC)
     # Already a datetime or httpdate str (allowed for headers only)
     if isinstance(expire_after, str):
         expire_after_dt = _parse_http_date(expire_after)
@@ -45,7 +45,7 @@ def get_expiration_datetime(
         expire_after = timedelta(seconds=expire_after)
     if negative_delta:
         expire_after = -expire_after
-    return (start_time or datetime.utcnow()) + expire_after
+    return (start_time or datetime.now(UTC)) + expire_after
 
 
 def get_expiration_seconds(expire_after: ExpirationTime) -> int:
@@ -53,7 +53,7 @@ def get_expiration_seconds(expire_after: ExpirationTime) -> int:
     if expire_after == DO_NOT_CACHE:
         return DO_NOT_CACHE
     expires = get_expiration_datetime(expire_after, ignore_invalid_httpdate=True)
-    return ceil((expires - datetime.utcnow()).total_seconds()) if expires else NEVER_EXPIRE
+    return ceil((expires - datetime.now(UTC)).total_seconds()) if expires else NEVER_EXPIRE
 
 
 def get_url_expiration(
