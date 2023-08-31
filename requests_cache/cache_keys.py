@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 from contextlib import nullcontext
-from hashlib import blake2b
+from hashlib import sha256
 from logging import getLogger
 from typing import (
     TYPE_CHECKING,
@@ -78,7 +78,7 @@ def create_key(
     ]
 
     # Generate a hash based on this info
-    key = blake2b(digest_size=8)
+    key = sha256()
     for part in key_parts:
         key.update(encode(part))
     return key.hexdigest()
