@@ -133,13 +133,12 @@ def create_key(
     """Generate a custom cache key for the given request"""
 ```
 
-See {py:func}`.create_key` for the reference implementation, and see the rest of the
-{py:mod}`.cache_keys` module for some potentially useful helper functions.
+Reference:
+* See {py:func}`.create_key` for the reference implementation.
+* See the rest of the {py:mod}`.cache_keys` module for some useful helper functions.
+* See {ref}`Examples<custom_keys>` for a complete example of custom request matching.
 
 
-```{tip}
-See {ref}`Examples<custom_keys>` for a complete example for custom request matching.
-```
 ```{tip}
 As a general rule, if you include less information in your cache keys, you will have more cache hits
 and use less storage space, but risk getting incorrect response data back.
@@ -162,7 +161,7 @@ from requests import PreparedRequest
 from requests_cache import CachedSession, create_key
 
 
-def create_key(request: PreparedRequest, **kwargs) -> str:
+def create_custom_key(request: PreparedRequest, **kwargs) -> str:
     # Don't modify the original request that's about to be sent
     request = request.copy()
 
