@@ -12,7 +12,7 @@ from urllib.parse import urlencode
 
 import pytest
 import requests
-from requests import HTTPError, Request, RequestException
+from requests import HTTPError, Request, RequestException, Session
 from requests.structures import CaseInsensitiveDict
 
 from requests_cache import ALL_METHODS, CachedSession
@@ -72,6 +72,22 @@ def test_init_missing_backend_dependency():
     """Test that the correct error is thrown when a user does not have a dependency installed"""
     with pytest.raises(ImportError):
         CachedSession(backend='mongodb')
+
+
+def test_wrap():
+    vanilla_session = Session()
+    vanilla_session.auth = ('user', 'pass')
+    vanilla_session.cookies = {'user-id': '123'}
+    vanilla_session.headers = {'Accept-Encoding': 'gzip'}
+    vanilla_session.verify = False
+
+    session = CachedSession.wrap(vanilla_session, expire_after=60)
+    assert isinstance(session, CachedSession)
+    assert session.auth == ('user', 'pass')
+    assert session.cookies == {'user-id': '123'}
+    assert session.headers == {'Accept-Encoding': 'gzip'}
+    assert session.verify is False
+    assert session.settings.expire_after == 60
 
 
 def test_repr(mock_session):
