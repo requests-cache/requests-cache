@@ -90,9 +90,17 @@ class SQLiteCache(BaseCache):
         self,
         *keys: str,
         expired: bool = False,
+        vacuum: bool = True,
         **kwargs,
     ):
-        if keys:
+        # If deleting a single key, skip bulk delete + vacuum and ignore any KeyErrors
+        if len(keys) == 1:
+            try:
+                del self.responses[keys[0]]
+            except KeyError:
+                pass
+        # Bulk delete multiple keys and/or all expired responses in SQL
+        elif keys:
             self.responses.bulk_delete(keys)
         if expired:
             self._delete_expired()
@@ -104,8 +112,9 @@ class SQLiteCache(BaseCache):
         else:
             self._prune_redirects()
 
-        self.responses.vacuum()
-        self.redirects.vacuum()
+        # Skip vacuuming if only one key was deleted, or if explicitly disabled
+        if vacuum and (expired or kwargs or len(keys) > 1):
+            self.responses.vacuum()
 
     def _delete_expired(self):
         """A more efficient implementation of deleting expired responses in SQL"""

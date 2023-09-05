@@ -382,6 +382,25 @@ class TestSQLiteCache(BaseCacheTest):
         assert session.cache.count() == 2
         assert session.cache.count(expired=False) == 1
 
+    def test_delete__single_key(self):
+        """Vacuum should not be used after delete if there is only a single key"""
+        session = self.init_session()
+        session.cache.responses['key_1'] = 'value_1'
+
+        with patch.object(SQLiteDict, 'vacuum') as mock_vacuum:
+            session.cache.delete('key_1')
+            mock_vacuum.assert_not_called()
+
+    def test_delete__skip_vacuum(self):
+        """Vacuum should not be used after delete if disabled"""
+        session = self.init_session()
+        session.cache.responses['key_1'] = 'value_1'
+        session.cache.responses['key_2'] = 'value_2'
+
+        with patch.object(SQLiteDict, 'vacuum') as mock_vacuum:
+            session.cache.delete('key_1', 'key_2', vacuum=False)
+            mock_vacuum.assert_not_called()
+
     @patch.object(SQLiteDict, 'sorted')
     def test_filter__expired(self, mock_sorted):
         """Filtering by expired should use a more efficient SQL query"""
