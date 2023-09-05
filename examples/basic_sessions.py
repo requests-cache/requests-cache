@@ -12,11 +12,11 @@ def main():
     session = CachedSession('example_cache', backend='sqlite')
 
     # The real request will only be made once; afterward, the cached response is used
-    for i in range(5):
+    for _ in range(5):
         response = session.get('https://httpbin.org/get')
 
     # This is more obvious when calling a slow endpoint
-    for i in range(5):
+    for _ in range(5):
         response = session.get('https://httpbin.org/delay/2')
 
     # Caching can be disabled if we want to get a fresh page and not cache it

@@ -151,8 +151,8 @@ def test_delete__invalid(tempfile_path):
     mock_session = mount_mock_adapter(mock_session)
 
     # Start with two cached responses, one of which will raise an error
-    response_1 = mock_session.get(MOCKED_URL)
-    response_2 = mock_session.get(MOCKED_URL_JSON)
+    mock_session.get(MOCKED_URL)
+    mock_session.get(MOCKED_URL_JSON)
 
     # Use the generic BaseCache implementation, not the SQLite-specific one
     BaseCache.delete(mock_session.cache, expired=True, invalid=True)
@@ -441,7 +441,7 @@ def test_values(mock_session):
     with ignore_deprecation():
         responses = list(mock_session.cache.values())
     assert len(responses) == 3
-    assert all([isinstance(response, CachedResponse) for response in responses])
+    assert all(isinstance(response, CachedResponse) for response in responses)
 
 
 def test_values__with_invalid_responses(mock_session):

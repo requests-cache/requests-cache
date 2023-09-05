@@ -1,7 +1,7 @@
 """Modules that implement cache policy, based on a combination of standard HTTP headers and
 additional settings and features specific to requests-cache.
 """
-# flake8: noqa: E402,F401
+# ruff: noqa: E402,F401,F403
 # isort: skip_file
 from datetime import datetime, timedelta
 from typing import Callable, Dict, Pattern as RegexPattern, Union, MutableMapping
