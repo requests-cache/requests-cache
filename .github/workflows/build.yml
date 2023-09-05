@@ -33,6 +33,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - uses: snok/install-poetry@v1.3
         with:
+          version: 1.5.1  # For python 3.7 compatibility
           virtualenvs-in-project: true
 
       # Start integration test databases
