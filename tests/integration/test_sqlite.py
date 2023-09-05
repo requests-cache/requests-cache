@@ -1,7 +1,7 @@
 import os
 import pickle
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import timedelta
 from os.path import join
 from tempfile import NamedTemporaryFile, gettempdir
 from threading import Thread
@@ -13,6 +13,7 @@ from platformdirs import user_cache_dir
 from requests_cache.backends import BaseCache, SQLiteCache, SQLiteDict
 from requests_cache.backends.sqlite import MEMORY_URI
 from requests_cache.models import CachedResponse
+from requests_cache.policy import utcnow
 from tests.conftest import skip_pypy
 from tests.integration.base_cache_test import BaseCacheTest
 from tests.integration.base_storage_test import CACHE_NAME, BaseStorageTest
@@ -256,7 +257,7 @@ class TestSQLiteDict(BaseStorageTest):
     @pytest.mark.parametrize('limit', [None, 50])
     def test_sorted__by_expires(self, limit):
         cache = self.init_cache()
-        now = datetime.utcnow()
+        now = utcnow()
 
         # Insert items with decreasing expiration time
         for i in range(100):
@@ -274,7 +275,7 @@ class TestSQLiteDict(BaseStorageTest):
     @skip_pypy
     def test_sorted__exclude_expired(self):
         cache = self.init_cache()
-        now = datetime.utcnow()
+        now = utcnow()
 
         # Make only odd numbered items expired
         for i in range(100):
@@ -375,7 +376,7 @@ class TestSQLiteCache(BaseCacheTest):
     def test_count(self):
         """count() should work the same as len(), but with the option to exclude expired responses"""
         session = self.init_session()
-        now = datetime.utcnow()
+        now = utcnow()
         session.cache.responses['key_1'] = CachedResponse(expires=now + timedelta(1))
         session.cache.responses['key_2'] = CachedResponse(expires=now - timedelta(1))
 
@@ -415,7 +416,7 @@ class TestSQLiteCache(BaseCacheTest):
     def test_sorted(self):
         """Test wrapper method for SQLiteDict.sorted(), with all arguments combined"""
         session = self.init_session(clear=False)
-        now = datetime.utcnow()
+        now = utcnow()
 
         # Insert items with decreasing expiration time
         for i in range(500):

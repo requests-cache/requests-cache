@@ -12,7 +12,7 @@ import os
 import platform
 import warnings
 from contextlib import contextmanager, nullcontext
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 from importlib import import_module
 from logging import basicConfig, getLogger
@@ -28,7 +28,7 @@ from requests_mock import Adapter
 from rich.logging import RichHandler
 from timeout_decorator import timeout
 
-from requests_cache import ALL_METHODS, CachedSession, install_cache, uninstall_cache
+from requests_cache import ALL_METHODS, CachedSession, install_cache, uninstall_cache, utcnow
 
 # ignore missing time-travel library on PyPy
 try:
@@ -71,12 +71,12 @@ HTTPBIN_FORMATS = [
     'xml',
 ]
 HTTPDATE_STR = 'Fri, 16 APR 2021 21:13:00 GMT'
-HTTPDATE_DATETIME = datetime(2021, 4, 16, 21, 13)
-EXPIRED_DT = datetime.utcnow() - timedelta(1)
+HTTPDATE_DATETIME = datetime(2021, 4, 16, 21, 13, tzinfo=timezone.utc)
+EXPIRED_DT = utcnow() - timedelta(1)
 ETAG = '"644b5b0155e6404a9cc4bd9d8b1ae730"'
 LAST_MODIFIED = 'Thu, 05 Jul 2012 15:31:30 GMT'
-START_DT = datetime.utcnow()
-YESTERDAY = datetime.utcnow() - timedelta(days=1)
+START_DT = utcnow()
+YESTERDAY = utcnow() - timedelta(days=1)
 
 MOCKED_URL = 'http+mock://requests-cache.com/text'
 MOCKED_URL_ETAG = 'http+mock://requests-cache.com/etag'
