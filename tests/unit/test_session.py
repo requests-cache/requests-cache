@@ -2,7 +2,7 @@
 import json
 import pickle
 from collections import UserDict, defaultdict
-from datetime import datetime, timedelta, UTC
+from datetime import datetime, timedelta
 from logging import getLogger
 from pathlib import Path
 from pickle import PickleError
@@ -20,7 +20,7 @@ from requests_cache._utils import get_placeholder_class
 from requests_cache.backends import BACKEND_CLASSES, BaseCache
 from requests_cache.backends.base import DESERIALIZE_ERRORS
 from requests_cache.models import CachedResponse
-from requests_cache.policy.expiration import DO_NOT_CACHE, EXPIRE_IMMEDIATELY, NEVER_EXPIRE
+from requests_cache.policy import DO_NOT_CACHE, EXPIRE_IMMEDIATELY, NEVER_EXPIRE, utcnow
 from tests.conftest import (
     MOCKED_URL,
     MOCKED_URL_200_404,
@@ -91,7 +91,7 @@ def test_pickle__disabled():
 
 def test_response_defaults(mock_session):
     """Both cached and new responses should always have the following attributes"""
-    mock_session.settings.expire_after = datetime.now(UTC) + timedelta(days=1)
+    mock_session.settings.expire_after = utcnow() + timedelta(days=1)
     response_1 = mock_session.get(MOCKED_URL)
     response_2 = mock_session.get(MOCKED_URL)
     response_3 = mock_session.get(MOCKED_URL)
@@ -472,7 +472,7 @@ def test_stale_if_error__max_stale(mock_session):
     status code AND it is expired by less than the specified time
     """
     mock_session.settings.stale_if_error = timedelta(seconds=15)
-    mock_session.settings.expire_after = datetime.now(UTC) - timedelta(seconds=10)
+    mock_session.settings.expire_after = utcnow() - timedelta(seconds=10)
     mock_session.settings.allowable_codes = (200,)
     mock_session.get(MOCKED_URL_200_404)
 
@@ -709,7 +709,7 @@ def test_304_not_modified(
 ):
     url = f'{MOCKED_URL}/endpoint_2'
     if cache_expired:
-        mock_session.settings.expire_after = datetime.now(UTC) - timedelta(1)
+        mock_session.settings.expire_after = utcnow() - timedelta(1)
     if cache_hit:
         mock_session.mock_adapter.register_uri('GET', url, status_code=200)
         mock_session.get(url)

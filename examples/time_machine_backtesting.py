@@ -3,7 +3,7 @@
 An example of using the [time-machine](https://github.com/adamchainz/time-machine) library for backtesting,
 e.g., testing with cached responses that were available at an arbitrary time in the past.
 """
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
 import requests
 import time_machine

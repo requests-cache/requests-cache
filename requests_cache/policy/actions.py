@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, UTC
+from datetime import datetime, timedelta
 from logging import DEBUG, getLogger
 from typing import TYPE_CHECKING, Dict, List, MutableMapping, Optional, Union
 
@@ -18,6 +18,7 @@ from . import (
     get_expiration_datetime,
     get_expiration_seconds,
     get_url_expiration,
+    utcnow,
 )
 from .settings import CacheSettings
 
@@ -163,7 +164,7 @@ class CacheActions(RichMixin):
         else:
             offset = self._directives.get_expire_offset()
 
-        return datetime.now(UTC) < cached_response.expires + offset
+        return utcnow() < cached_response.expires + offset
 
     def update_from_cached_response(
         self,

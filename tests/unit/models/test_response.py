@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, UTC
+from datetime import timedelta
 from io import BytesIO
 from time import sleep
 
@@ -6,6 +6,7 @@ import pytest
 from urllib3.response import HTTPResponse
 
 from requests_cache.models.response import CachedResponse, format_file_size
+from requests_cache.policy import utcnow
 from tests.conftest import MOCKED_URL
 
 
@@ -35,8 +36,8 @@ def test_history(mock_session):
 @pytest.mark.parametrize(
     'expires, is_expired',
     [
-        (datetime.now(UTC) + timedelta(days=1), False),
-        (datetime.now(UTC) - timedelta(days=1), True),
+        (utcnow() + timedelta(days=1), False),
+        (utcnow() - timedelta(days=1), True),
     ],
 )
 def test_is_expired(expires, is_expired, mock_session):
@@ -79,12 +80,12 @@ def test_reset_expiration__extend_expiration(mock_session):
     # Start with an expired response
     response = CachedResponse.from_response(
         mock_session.get(MOCKED_URL),
-        expires=datetime.now(UTC) - timedelta(seconds=0.01),
+        expires=utcnow() - timedelta(seconds=0.01),
     )
     assert response.is_expired is True
 
     # Set expiration in the future
-    is_expired = response.reset_expiration(datetime.now(UTC) + timedelta(seconds=0.01))
+    is_expired = response.reset_expiration(utcnow() + timedelta(seconds=0.01))
     assert is_expired is response.is_expired is False
     sleep(0.1)
     assert response.is_expired is True
@@ -94,12 +95,12 @@ def test_reset_expiration__shorten_expiration(mock_session):
     # Start with a non-expired response
     response = CachedResponse.from_response(
         mock_session.get(MOCKED_URL),
-        expires=datetime.now(UTC) + timedelta(seconds=1),
+        expires=utcnow() + timedelta(seconds=1),
     )
     assert response.is_expired is False
 
     # Set expiration in the past
-    is_expired = response.reset_expiration(datetime.now(UTC) - timedelta(seconds=1))
+    is_expired = response.reset_expiration(utcnow() - timedelta(seconds=1))
     assert is_expired is response.is_expired is True
 
 
