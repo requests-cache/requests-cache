@@ -1,7 +1,9 @@
 # History
 
 ## 1.2.0 (TBD)
-* ⚠️ Remove `CachedSession` and `BaseCache` methods [deprecated in 1.0](#deprecations-1-0)
+* ⚠️ Remove methods [deprecated in 1.0](#deprecations-1-0) from `CachedSession` and `BaseCache`
+* Optimize `SQLiteCache.delete()` when deleting a single key
+* Add `vacuum` parameter to `SQLiteCache.delete()` to optionally skip vacuuming after deletion (enabled by default to free up disk space)
 
 ## 1.1.0 (2023-06-30)
 

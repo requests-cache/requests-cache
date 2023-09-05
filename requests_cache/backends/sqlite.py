@@ -93,6 +93,14 @@ class SQLiteCache(BaseCache):
         vacuum: bool = True,
         **kwargs,
     ):
+        """Remove responses from the cache according one or more conditions.
+
+        Args:
+            keys: Remove responses with these cache keys
+            expired: Remove all expired responses
+            vacuum: Vacuum the database after deleting responses to free up disk space
+            kwargs: Additional keyword arguments for :py:meth:`BaseCache.delete`
+        """
         # If deleting a single key, skip bulk delete + vacuum and ignore any KeyErrors
         if len(keys) == 1:
             try:
