@@ -1,5 +1,5 @@
 """Classes and functions for cache persistence. See :ref:`backends` for general usage info."""
-# flake8: noqa: F401
+# ruff: noqa: F401
 from logging import getLogger
 from typing import Callable, Dict, Iterable, Optional, Type, Union
 

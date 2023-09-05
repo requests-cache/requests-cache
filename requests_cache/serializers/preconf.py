@@ -1,4 +1,4 @@
-# flake8: noqa: F841
+# ruff: noqa: F841
 """Stages and serializers for supported serialization formats.
 
 .. automodsumm:: requests_cache.serializers.preconf
@@ -73,8 +73,8 @@ def safe_pickle_serializer(secret_key=None, salt='requests-cache', **kwargs) -> 
 try:
     import itsdangerous  # noqa: F401
 except ImportError as e:
-    signer_stage = get_placeholder_class(e)
-    safe_pickle_serializer = get_placeholder_class(e)
+    signer_stage = get_placeholder_class(e)  # noqa: F811
+    safe_pickle_serializer = get_placeholder_class(e)  # noqa: F811
 
 
 # BSON/MongoDB document serializers

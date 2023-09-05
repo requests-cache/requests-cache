@@ -27,7 +27,7 @@ jobs:
 
     steps:
       # Set up python + poetry
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
@@ -40,7 +40,7 @@ jobs:
       - uses: supercharge/mongodb-github-action@v1.10.0
         with:
           mongodb-version: 5.0
-      - uses: supercharge/redis-github-action@1.6.0
+      - uses: supercharge/redis-github-action@1.7.0
         with:
           redis-version: 6
       - uses: rrainn/dynamodb-action@v3.0.0
@@ -79,7 +79,7 @@ jobs:
   analyze:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ env.LATEST_PY_VERSION }}
