@@ -38,7 +38,7 @@ def get_expiration_datetime(
             raise ValueError(f'Invalid HTTP date: {expire_after}')
         return expire_after_dt
     elif isinstance(expire_after, datetime):
-        return _to_utc(expire_after)
+        return expire_after.astimezone(timezone.utc)
 
     # Otherwise, it must be a timedelta or time in seconds
     if not isinstance(expire_after, timedelta):
@@ -79,20 +79,10 @@ def _parse_http_date(value: str) -> Optional[datetime]:
     """Attempt to parse an HTTP (RFC 5322-compatible) timestamp"""
     try:
         expire_after = parsedate_to_datetime(value)
-        return _to_utc(expire_after)
+        return expire_after.astimezone(timezone.utc)
     except (TypeError, ValueError):
         logger.debug(f'Failed to parse timestamp: {value}')
         return None
-
-
-def _to_utc(dt: datetime):
-    """All internal datetimes are UTC and timezone-naive. Convert any user/header-provided
-    datetimes to the same format.
-    """
-    if dt.tzinfo:
-        dt = dt.astimezone(timezone.utc)
-        dt = dt.replace(tzinfo=None)
-    return dt
 
 
 def _url_match(url: str, pattern: ExpirationPattern) -> bool:

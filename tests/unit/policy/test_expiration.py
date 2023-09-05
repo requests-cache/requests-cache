@@ -38,7 +38,7 @@ def test_get_expiration_datetime__relative(expire_after, expected_expiration_del
 def test_get_expiration_datetime__tzinfo():
     tz = timezone(-timedelta(hours=5))
     dt = datetime(2021, 2, 1, 7, 0, tzinfo=tz)
-    assert get_expiration_datetime(dt) == datetime(2021, 2, 1, 12, 0)
+    assert get_expiration_datetime(dt) == datetime(2021, 2, 1, 12, 0, tzinfo=timezone.utc)
 
 
 def test_get_expiration_datetime__httpdate():

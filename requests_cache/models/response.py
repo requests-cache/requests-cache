@@ -190,8 +190,6 @@ def format_datetime(value: Optional[datetime]) -> str:
     """Get a formatted datetime string in the local time zone"""
     if not value:
         return "N/A"
-    if value.tzinfo is None:
-        value = value.replace(tzinfo=timezone.utc)
     return value.astimezone().strftime(DATETIME_FORMAT)
 
 
