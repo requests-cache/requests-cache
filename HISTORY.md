@@ -5,6 +5,7 @@
 * Optimize `SQLiteCache.delete()` when deleting a single key
 * Add `vacuum` parameter to `SQLiteCache.delete()` to optionally skip vacuuming after deletion (enabled by default to free up disk space)
 * Use timezone-aware UTC datetimes for all internal expiration values
+* Add `CachedSession.wrap()` classmethod to add caching to an existing `requests.Session` object
 
 ## 1.1.0 (2023-06-30)
 
