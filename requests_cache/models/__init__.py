@@ -1,5 +1,5 @@
 """Data models used to serialize response data"""
-# flake8: noqa: F401
+# ruff: noqa: F401
 from typing import Union
 
 from requests import PreparedRequest, Request, Response
