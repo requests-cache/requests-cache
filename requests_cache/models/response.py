@@ -11,7 +11,7 @@ from requests import PreparedRequest, Response
 from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
 
-from ..policy import ExpirationTime, get_expiration_datetime, utcnow
+from ..policy import ExpirationTime, add_tzinfo, get_expiration_datetime, utcnow
 from . import CachedHTTPResponse, CachedRequest, RichMixin
 
 if TYPE_CHECKING:
@@ -69,7 +69,7 @@ class CachedResponse(RichMixin, BaseResponse):
     created_at: datetime = field(default=None)
     elapsed: timedelta = field(factory=timedelta)
     encoding: str = field(default=None)
-    expires: Optional[datetime] = field(default=None)
+    expires: Optional[datetime] = field(default=None, converter=add_tzinfo)
     headers: CaseInsensitiveDict = field(factory=CaseInsensitiveDict)
     history: List['CachedResponse'] = field(factory=list)  # type: ignore
     raw: CachedHTTPResponse = None  # type: ignore  # Not serialized; populated from CachedResponse attrs

@@ -70,6 +70,15 @@ def get_url_expiration(
     return None
 
 
+def add_tzinfo(dt: Optional[datetime]) -> Optional[datetime]:
+    """Add a UTC timezone to a datetime object, if it doesn't already have one. This is used mainly
+    during deserialization for backends that don't store timezone info.
+    """
+    if dt and dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
 def utcnow() -> datetime:
     """Get the current time in UTC (timezone-aware)"""
     return datetime.now(timezone.utc)
