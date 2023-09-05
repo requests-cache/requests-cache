@@ -29,7 +29,7 @@ include = [
 "Issues" = "https://github.com/requests-cache/requests-cache/issues"
 
 [tool.poetry.dependencies]
-python        = ">=3.8"    # requests requires python >=3.8
+python        = ">=3.8"
 
 # Required dependencies
 requests      = ">=2.22"   # Needs no introduction
