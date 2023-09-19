@@ -78,6 +78,30 @@ class CacheMixin(MIXIN_BASE):
         # If the mixin superclass is a custom Session, pass along any valid kwargs
         super().__init__(**get_valid_kwargs(super().__init__, kwargs))  # type: ignore
 
+    @classmethod
+    def wrap(cls, original_session: OriginalSession, **kwargs) -> 'CacheMixin':
+        """Add caching to an existing :py:class:`~requests.Session` object, while retaining all
+        original session settings.
+
+        Args:
+            original_session: Session object to wrap
+            kwargs: Keyword arguments for :py:class:`.CachedSession`
+        """
+        session = cls(**kwargs)
+        session.adapters = original_session.adapters
+        session.auth = original_session.auth
+        session.cert = original_session.cert
+        session.cookies = original_session.cookies
+        session.headers = original_session.headers
+        session.hooks = original_session.hooks
+        session.max_redirects = original_session.max_redirects
+        session.params = original_session.params
+        session.proxies = original_session.proxies
+        session.stream = original_session.stream
+        session.trust_env = original_session.trust_env
+        session.verify = original_session.verify
+        return session
+
     @property
     def settings(self) -> CacheSettings:
         """Settings that affect cache behavior"""
