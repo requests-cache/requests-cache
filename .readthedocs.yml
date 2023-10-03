@@ -6,11 +6,11 @@ sphinx:
   configuration: docs/conf.py
 
 build:
-  image: testing
+  os: 'ubuntu-22.04'
+  tools:
+    python: '3.11'
 
 python:
-  version: 3.8
-  system_packages: True
   install:
     - method: pip
       path: .
