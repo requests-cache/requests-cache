@@ -7,6 +7,9 @@
 * Use timezone-aware UTC datetimes for all internal expiration values
 * Add `CachedSession.wrap()` classmethod to add caching to an existing `requests.Session` object
 
+⚠️ **Deprecations & removals:**
+* Drop support for python 3.7
+
 ## 1.1.0 (2023-06-30)
 
 ⚙️ **Session settings:**

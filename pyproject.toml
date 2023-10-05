@@ -29,7 +29,7 @@ include = [
 "Issues" = "https://github.com/requests-cache/requests-cache/issues"
 
 [tool.poetry.dependencies]
-python        = "^3.7"     # requests requires python >=3.7, <4.0
+python        = ">=3.8"    # requests requires python >=3.8
 
 # Required dependencies
 requests      = ">=2.22"   # Needs no introduction
@@ -63,7 +63,7 @@ sphinx-copybutton          = {optional=true, version=">=0.5"}
 sphinx-design              = {optional=true, version=">=0.2"}
 sphinx-notfound-page       = {optional=true, version=">=0.8"}
 sphinxcontrib-apidoc       = {optional=true, version=">=0.3"}
-sphinxext-opengraph        = {optional=true, version=">=0.6", python=">=3.8"}
+sphinxext-opengraph        = {optional=true, version=">=0.6"}
 
 [tool.poetry.extras]
 # Package extras for optional backend dependencies
@@ -105,12 +105,11 @@ pre-commit            = "^2.19"
 
 # For convenience in local development
 nox                   = "^2023.4"
-nox-poetry            = "^1.0.0"
+# TODO: Remove the 'python' constraint once nox-poetry drops its own constraint
+# https://github.com/cjolowicz/nox-poetry/pull/1213
+nox-poetry            = {version = "^1.0.0", python = "<4"}
 rich                  = ">=10.0"
 sphinx-autobuild      = "^2021.3.14"
-
-# Workaround for missing dependency on python 3.7
-zipp                  = {version = ">=3.8", python = "<3.8"}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -163,3 +162,4 @@ format = 'grouped'
 line-length = 120
 select = ['B', 'C4','C90', 'E', 'F']
 ignore = ['B023']
+target-version = 'py38'

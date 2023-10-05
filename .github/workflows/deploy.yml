@@ -51,7 +51,7 @@ jobs:
           python-version: ${{ env.LATEST_PY_VERSION }}
       - uses: snok/install-poetry@v1.3
         with:
-          version: 1.5.1  # For python 3.7 compatibility
+          version: 1.6.1
           virtualenvs-in-project: true
 
       # Start integration test databases
@@ -92,7 +92,7 @@ jobs:
           python-version: ${{ env.LATEST_PY_VERSION }}
       - uses: snok/install-poetry@v1.3
         with:
-          version: 1.5.1  # For python 3.7 compatibility
+          version: 1.6.1
           virtualenvs-in-project: true
 
       # Cache packages per python version, and reuse until lockfile changes
@@ -118,7 +118,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11', 'pypy3.9'] # , '3.12-dev'
+        python-version: ['3.8', '3.9', '3.10', '3.11', 'pypy3.9'] # , '3.12-dev'
         requests-version: [latest]
         exclude:
         - os: windows-latest
@@ -169,7 +169,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - uses: snok/install-poetry@v1.3
         with:
-          version: 1.5.1  # For python 3.7 compatibility
+          version: 1.6.1
           virtualenvs-in-project: true
 
       # Cache packages per python version, and reuse until lockfile changes
@@ -205,7 +205,7 @@ jobs:
           python-version: ${{ env.LATEST_PY_VERSION }}
       - uses: snok/install-poetry@v1.3
         with:
-          version: 1.5.1  # For python 3.7 compatibility
+          version: 1.6.1
           virtualenvs-in-project: true
 
       - name: Set pre-release version
