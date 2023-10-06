@@ -1,14 +1,16 @@
 # History
 
 ## 1.2.0 (TBD)
-* ⚠️ Remove methods [deprecated in 1.0](#deprecations-1-0) from `CachedSession` and `BaseCache`
 * Optimize `SQLiteCache.delete()` when deleting a single key
 * Add `vacuum` parameter to `SQLiteCache.delete()` to optionally skip vacuuming after deletion (enabled by default to free up disk space)
 * Use timezone-aware UTC datetimes for all internal expiration values
 * Add `CachedSession.wrap()` classmethod to add caching to an existing `requests.Session` object
+* Add support for python 3.12
+  * Note: There is a known bug with concurrent usage of the SQLite backend on python 3.12.
 
 ⚠️ **Deprecations & removals:**
 * Drop support for python 3.7
+* Remove methods [deprecated in 1.0](#deprecations-1-0) from `CachedSession` and `BaseCache`
 
 ## 1.1.0 (2023-06-30)
 

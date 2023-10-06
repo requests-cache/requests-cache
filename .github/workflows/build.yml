@@ -17,16 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        include:
-          # TODO: revert this to simple version array
-          - python-version: '3.8'
-          - python-version: '3.9'
-          - python-version: '3.10'
-          - python-version: '3.11'
-          - python-version: 'pypy3.9'
-            full-version: 'pypy3.9-7.3.11'
-          # - python-version: '3.12'
-          #   full-version: '3.12-dev'
+        # Note: pypy 7.3.13 does not appear to work with poetry
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', 'pypy3.9-7.3.12']
       fail-fast: false
     services:
       nginx:
@@ -39,7 +31,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.full-version || matrix.python-version }}
+          python-version: ${{ matrix.python-version }}
       - uses: snok/install-poetry@v1.3
         with:
           virtualenvs-in-project: true
