@@ -1,10 +1,16 @@
 # History
 
 ## 1.2.0 (TBD)
-* Optimize `SQLiteCache.delete()` when deleting a single key
-* Add `vacuum` parameter to `SQLiteCache.delete()` to optionally skip vacuuming after deletion (enabled by default to free up disk space)
-* Use timezone-aware UTC datetimes for all internal expiration values
+
+⚙️ **Session methods:**
 * Add `CachedSession.wrap()` classmethod to add caching to an existing `requests.Session` object
+
+💾 **SQLite Backend:**
+* Add `vacuum` parameter to `SQLiteCache.delete()` to optionally skip vacuuming after deletion (enabled by default to free up disk space)
+* Optimize `SQLiteCache.delete()` when deleting a single key
+
+🧩 **Compatibility:**
+* Use timezone-aware UTC datetimes for all internal expiration values
 * Add support for python 3.12
   * Note: There is a known bug with concurrent usage of the SQLite backend on python 3.12.
 

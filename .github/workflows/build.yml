@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix:
         # Note: pypy 7.3.13 does not appear to work with poetry
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', 'pypy3.9-7.3.12']
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', 'pypy3.9-7.3.12', 'pypy3.10-7.3.12']
       fail-fast: false
     services:
       nginx:

@@ -976,6 +976,15 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "edgarrmondragon",
+      "name": "Edgar Ramírez Mondragón",
+      "avatar_url": "https://avatars.githubusercontent.com/u/16805946?v=4",
+      "profile": "https://edgarrmondragon.github.io/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
