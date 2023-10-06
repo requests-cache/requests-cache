@@ -5,10 +5,9 @@ from logging import getLogger
 from pickle import PickleError
 from unittest.mock import patch
 
-import pytest
 from requests import Request
 
-from requests_cache.backends import BaseCache, SQLiteCache, SQLiteDict
+from requests_cache.backends import BaseCache, SQLiteDict
 from requests_cache.cache_keys import create_key
 from requests_cache.models import CachedRequest, CachedResponse
 from requests_cache.policy import utcnow
@@ -20,7 +19,6 @@ from tests.conftest import (
     MOCKED_URL_JSON,
     MOCKED_URL_REDIRECT,
     START_DT,
-    YESTERDAY,
     ignore_deprecation,
     mount_mock_adapter,
     patch_normalize_url,
@@ -70,6 +68,13 @@ def test_contains__url(mock_session):
     mock_session.get(MOCKED_URL)
     assert mock_session.cache.contains(url=MOCKED_URL)
     assert not mock_session.cache.contains(url=f'{MOCKED_URL}?foo=bar')
+
+
+def test_delete__keys(mock_session):
+    r = mock_session.get(MOCKED_URL)
+    mock_session.cache.delete(r.cache_key, 'nonexistent_key')
+    mock_session.cache.delete('nonexistent_key')
+    assert not mock_session.cache.contains(url=MOCKED_URL)
 
 
 @skip_pypy  # time-machine doesn't work on PyPy
@@ -348,67 +353,7 @@ def test_urls__error(mock_session):
 # --------------------
 
 
-def test_has_key(mock_session):
-    response = CachedResponse()
-    mock_session.cache.responses['12345'] = response
-    # flake8: noqa: W601
-    assert mock_session.cache.has_key('12345')
-    assert not mock_session.cache.has_key('1234')
-
-
-def test_has_url(mock_session):
-    mock_session.get(MOCKED_URL, params={'foo': 'bar'})
-    with ignore_deprecation():
-        assert mock_session.cache.has_url(MOCKED_URL, params={'foo': 'bar'})
-        assert not mock_session.cache.has_url(MOCKED_URL)
-
-
-def test_delete_url(mock_session):
-    mock_session.get(MOCKED_URL)
-    with ignore_deprecation():
-        mock_session.cache.delete_url(MOCKED_URL)
-        assert not mock_session.cache.has_url(MOCKED_URL)
-
-
-def test_delete_url__request_args(mock_session):
-    mock_session.get(MOCKED_URL, params={'foo': 'bar'})
-    with ignore_deprecation():
-        mock_session.cache.delete_url(MOCKED_URL, params={'foo': 'bar'})
-        assert not mock_session.cache.has_url(MOCKED_URL, params={'foo': 'bar'})
-
-
-def test_delete_url__nonexistent_response(mock_session):
-    """Deleting a response that was either already deleted (or never added) should fail silently"""
-    with ignore_deprecation():
-        mock_session.cache.delete_url(MOCKED_URL)
-
-        mock_session.get(MOCKED_URL)
-        mock_session.cache.delete_url(MOCKED_URL)
-
-        assert not mock_session.cache.has_url(MOCKED_URL)
-        mock_session.cache.delete_url(MOCKED_URL)  # Should fail silently
-
-
-def test_delete_urls(mock_session):
-    mock_session.get(MOCKED_URL)
-    with ignore_deprecation():
-        mock_session.cache.delete_urls([MOCKED_URL])
-        assert not mock_session.cache.has_url(MOCKED_URL)
-
-
-def test_keys(mock_session):
-    for url in [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_REDIRECT]:
-        mock_session.get(url)
-
-    with ignore_deprecation():
-        response_keys = set(mock_session.cache.responses.keys())
-        redirect_keys = set(mock_session.cache.redirects.keys())
-        assert set(mock_session.cache.keys()) == response_keys | redirect_keys
-        assert len(list(mock_session.cache.keys(check_expiry=True))) == 5
-
-
 def test_remove_expired_responses(mock_session):
-    """Test for backwards-compatibility"""
     with ignore_deprecation(), patch.object(
         mock_session.cache, 'delete'
     ) as mock_delete, patch.object(mock_session.cache, 'reset_expiration') as mock_reset:
@@ -418,40 +363,3 @@ def test_remove_expired_responses(mock_session):
 
         mock_session.cache.remove_expired_responses()
         assert mock_delete.call_count == 2 and mock_reset.call_count == 1
-
-
-@pytest.mark.parametrize('check_expiry, expected_count', [(True, 2), (False, 3)])
-def test_response_count(check_expiry, expected_count, mock_session):
-    """response_count() should always exclude invalid responses, and optionally exclude expired
-    responses"""
-    mock_session.get(MOCKED_URL)
-    mock_session.get(MOCKED_URL_JSON)
-
-    mock_session.cache.responses['expired_response'] = CachedResponse(expires=YESTERDAY)
-    mock_session.cache.responses['invalid_response'] = InvalidResponse()
-    with ignore_deprecation():
-        response_count = mock_session.cache.response_count(check_expiry=check_expiry)
-    assert response_count == expected_count
-
-
-def test_values(mock_session):
-    for url in [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_HTTPS]:
-        mock_session.get(url)
-
-    with ignore_deprecation():
-        responses = list(mock_session.cache.values())
-    assert len(responses) == 3
-    assert all(isinstance(response, CachedResponse) for response in responses)
-
-
-def test_values__with_invalid_responses(mock_session):
-    responses = [mock_session.get(url) for url in [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_HTTPS]]
-    responses[1] = None
-    responses[2] = CachedResponse(expires=YESTERDAY, url='test')
-
-    with ignore_deprecation(), patch.object(SQLiteCache, 'filter', side_effect=responses):
-        values = mock_session.cache.values(check_expiry=True)
-        assert len(list(values)) == 1
-
-    # The invalid response should be skipped, but remain in the cache for now
-    assert len(mock_session.cache.responses.keys()) == 3

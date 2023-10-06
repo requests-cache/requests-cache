@@ -35,7 +35,6 @@ from tests.conftest import (
     MOCKED_URL_VARY_REDIRECT,
     MOCKED_URL_VARY_REDIRECT_TARGET,
     START_DT,
-    ignore_deprecation,
     patch_normalize_url,
     skip_pypy,
     time_travel,
@@ -1051,13 +1050,3 @@ def test_request_force_refresh__prepared_request(mock_session):
     assert response_2.from_cache is False
     assert response_3.from_cache is True
     assert response_3.expires is not None
-
-
-# Deprecated methods
-# --------------------
-
-
-def test_remove_expired_responses(mock_session):
-    with ignore_deprecation(), patch.object(mock_session.cache, 'delete') as mock_delete:
-        mock_session.remove_expired_responses()
-        mock_delete.assert_called_once_with(expired=True, invalid=True)
