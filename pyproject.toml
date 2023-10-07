@@ -101,7 +101,7 @@ timeout-decorator     = "^0.5"
 time-machine          = {version = "^2.9", markers = "implementation_name != 'pypy'"}
 
 # Tools for linting, type checking, etc. are managed with pre-commit
-pre-commit            = "^2.19"
+pre-commit            = "^3.4"
 
 # For convenience in local development
 nox                   = "^2023.4"
