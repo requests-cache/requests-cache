@@ -56,7 +56,7 @@ ujson                      = {optional=true, version=">=5.4"}
 furo                       = {optional=true, version="^2023.3"}
 linkify-it-py              = {optional=true, version="^2.0"}
 myst-parser                = {optional=true, version="^1.0"}
-sphinx                     = {optional=true, version="^5.0.2"}
+sphinx                     = {optional=true, version=">=5.0.2,<7.0.0"}
 sphinx-autodoc-typehints   = {optional=true, version=">=1.19"}
 sphinx-automodapi          = {optional=true, version=">=0.14"}
 sphinx-copybutton          = {optional=true, version=">=0.5"}
