@@ -1,12 +1,13 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 from io import BytesIO
 from time import sleep
 
 import pytest
+from requests import Response
 from urllib3.response import HTTPResponse
 
-from requests_cache.models.response import CachedResponse, format_file_size
-from requests_cache.policy import utcnow
+from requests_cache.models.response import CachedResponse, OriginalResponse, format_file_size
+from requests_cache.policy import CacheActions, utcnow
 from tests.conftest import MOCKED_URL
 
 
@@ -20,9 +21,28 @@ def test_basic_attrs(mock_session):
     assert response.encoding == 'ISO-8859-1'
     assert response.headers['Content-Type'] == 'text/plain'
     assert response.text == 'mock response'
-    assert response.created_at is not None
+    assert isinstance(response.created_at, datetime)
     assert response.expires is None
     assert response.is_expired is False
+
+
+@pytest.mark.parametrize(
+    'response',
+    [
+        OriginalResponse(),
+        OriginalResponse.wrap_response(Response(), CacheActions()),
+    ],
+)
+def test_original_reponse(response):
+    """Test both instantiating directly and wrapping a `requests.Response`"""
+    response = OriginalResponse()
+    assert response._content is False
+    assert response._content_consumed is False
+    assert response.status_code is None
+    assert isinstance(response.created_at, datetime)
+    assert response.expires is None
+    assert response.revalidated is False
+    assert response.cache_key == ''
 
 
 def test_history(mock_session):

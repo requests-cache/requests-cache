@@ -42,9 +42,13 @@ class BaseResponse(Response):
         return False
 
 
-@define(auto_attribs=False, repr=False, slots=False)
+@define(auto_attribs=False, repr=False, slots=False, init=False)
 class OriginalResponse(BaseResponse):
     """Wrapper class for non-cached responses returned by :py:class:`.CachedSession`"""
+
+    def __init__(self, **kwargs):
+        Response.__init__(self)
+        self.__attrs_init__(**kwargs)
 
     @classmethod
     def wrap_response(cls, response: Response, actions: 'CacheActions') -> 'OriginalResponse':
