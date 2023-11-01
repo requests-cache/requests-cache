@@ -8,7 +8,7 @@ For other use cases, you can check out these other python projects related to ca
 ## Client-side HTTP caching
 * [aiohttp-client-cache](https://github.com/JWCook/aiohttp-client-cache): An async HTTP cache for `aiohttp`, based on `requests-cache`
 * [CacheControl](https://github.com/ionrock/cachecontrol): An HTTP cache that ports features from `httplib2` for usage with `requests`
-* [httpx-cache](https://github.com/obendidi/httpx-cache): A sync+async HTTP cache that ports features from `httplib2` for usage with `httpx`
+* [Hishel](https://github.com/karpetrosyan/hishel): A sync+async HTTP cache for `httpx`
 
 ## Server-side HTTP caching
 * [aiohttp-cache](https://github.com/cr0hn/aiohttp-cache): A server-side async HTTP cache for the `aiohttp` web server
