@@ -95,7 +95,7 @@ pytest-cov            = ">=3.0"
 pytest-rerunfailures  = "^10.1"
 pytest-xdist          = ">=2.2"
 requests-mock         = "^1.9"
-responses             = "0.19.0"
+responses             = "0.24.0"
 tenacity              = "^8.0"
 timeout-decorator     = "^0.5"
 time-machine          = {version = "^2.9", markers = "implementation_name != 'pypy'"}
