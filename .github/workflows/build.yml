@@ -89,4 +89,7 @@ jobs:
         uses: pypa/gh-action-pip-audit@v1.0.8
         with:
           vulnerability-service: osv
-          ignore-vulns: PYSEC-2022-43012  # older setuptools used by the action itself
+          # Ignore issues with pip and setuptools versions used by the action itself
+          ignore-vulns: |
+            PYSEC-2023-228
+            PYSEC-2022-43012
