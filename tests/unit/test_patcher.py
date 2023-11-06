@@ -11,12 +11,30 @@ from tests.conftest import CACHE_NAME
 
 def test_install_uninstall():
     for _ in range(2):
-        requests_cache.install_cache(name=CACHE_NAME, use_temp=True)
+        requests_cache.install_cache(CACHE_NAME, use_temp=True)
         assert isinstance(requests.Session(), CachedSession)
         assert isinstance(requests.sessions.Session(), CachedSession)
         requests_cache.uninstall_cache()
         assert not isinstance(requests.Session(), CachedSession)
         assert not isinstance(requests.sessions.Session(), CachedSession)
+
+
+def test_session_settings():
+    requests_cache.install_cache(
+        CACHE_NAME,
+        use_temp=True,
+        expire_after=360,
+        cache_control=True,
+        allowable_codes=(200, 301),
+    )
+
+    patched_session = requests.Session()
+    assert patched_session.cache.cache_name == CACHE_NAME
+    assert patched_session.settings.expire_after == 360
+    assert patched_session.settings.cache_control is True
+    assert patched_session.settings.allowable_codes == (200, 301)
+
+    requests_cache.uninstall_cache()
 
 
 def test_session_is_a_class_with_original_attributes(installed_session):
@@ -75,7 +93,7 @@ def test_enabled(cached_request, original_request, tempfile_path):
 
 def test_is_installed():
     assert requests_cache.is_installed() is False
-    requests_cache.install_cache(name=CACHE_NAME, use_temp=True)
+    requests_cache.install_cache(CACHE_NAME, use_temp=True)
     assert requests_cache.is_installed() is True
     requests_cache.uninstall_cache()
     assert requests_cache.is_installed() is False
