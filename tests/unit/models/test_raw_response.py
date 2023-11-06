@@ -7,6 +7,7 @@ from tests.conftest import MOCKED_URL
 def test_from_response(mock_session):
     response = mock_session.get(MOCKED_URL)
     response.raw._fp = BytesIO(b'mock response')
+    response.raw._request_url = MOCKED_URL
     raw = CachedHTTPResponse.from_response(response)
 
     assert dict(response.raw.headers) == dict(raw.headers) == {'Content-Type': 'text/plain'}
@@ -14,7 +15,7 @@ def test_from_response(mock_session):
     assert response.raw.decode_content is raw.decode_content is False
     assert response.raw.reason is raw.reason is None
     if hasattr(response.raw, '_request_url'):
-        assert response.raw._request_url is raw.request_url is None
+        assert response.raw._request_url == raw._request_url == MOCKED_URL
     assert response.raw.status == raw.status == 200
     assert response.raw.version == raw.version == 0
 

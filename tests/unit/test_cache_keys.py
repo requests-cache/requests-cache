@@ -5,6 +5,7 @@ import json
 
 import pytest
 from requests import Request, Response
+from urllib3 import HTTPResponse
 
 from requests_cache.cache_keys import (
     MAX_NORM_BODY_SIZE,
@@ -67,16 +68,22 @@ def test_create_key__normalize_duplicate_params():
 
 
 def test_redact_response__escaped_params():
-    """Test that redact_response() handles escaped request parameters"""
-    request = Request(
-        method='GET',
-        url='https://img.site.com/base/img.jpg?ignored_param=value_1&param_2=value_2',
-    )
+    """Test that redact_response() handles urlescaped request parameters"""
+    url = 'https://img.site.com/base/img.jpg?where=code%3D123'
+    request = Request(method='GET', url=url).prepare()
     response = Response()
-    response.url = 'https://img.site.com/base/img.jpg?where=code%3D123'
+    response.url = url
     response.request = request
+    response.raw = HTTPResponse(request_url=url)
     redacted_response = redact_response(response, [])
     assert redacted_response.url == 'https://img.site.com/base/img.jpg?where=code%3D123'
+    assert redacted_response.request.url == 'https://img.site.com/base/img.jpg?where=code%3D123'
+    assert redacted_response.request.path_url == '/base/img.jpg?where=code%3D123'
+    assert (
+        redacted_response.raw._request_url == 'https://img.site.com/base/img.jpg?where=code%3D123'
+    )
+    if hasattr(redacted_response.raw, 'url'):
+        assert redacted_response.raw.url == 'https://img.site.com/base/img.jpg?where=code%3D123'
 
 
 def test_normalize_request__json_body():

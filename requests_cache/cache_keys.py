@@ -203,7 +203,14 @@ def redact_response(response: CachedResponse, ignored_parameters: ParamList) -> 
     """Redact any ignored parameters (potentially containing sensitive info) from a cached request"""
     if ignored_parameters:
         response.url = filter_url(response.url, ignored_parameters)
-        response.request = normalize_request(response.request, ignored_parameters)  # type: ignore
+        response.request.url = filter_url(response.request.url, ignored_parameters)
+        response.headers = CaseInsensitiveDict(
+            filter_sort_dict(response.headers, ignored_parameters)
+        )
+        response.request.headers = CaseInsensitiveDict(
+            filter_sort_dict(response.request.headers, ignored_parameters)
+        )
+        response.request.body = normalize_body(response.request, ignored_parameters)
     return response
 
 
