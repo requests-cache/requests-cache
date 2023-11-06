@@ -25,7 +25,7 @@ from typing import (
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from requests import Request, Session
-from requests.models import CaseInsensitiveDict
+from requests.structures import CaseInsensitiveDict
 from url_normalize import url_normalize
 
 from ._utils import decode, encode, patch_form_boundary

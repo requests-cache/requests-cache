@@ -2,6 +2,9 @@
 
 ## 1.2.0 (TBD)
 
+🕗 **Expiration & headers:**
+* Add support for `X-HTTP-Method-Override` and other headers that can override request method
+
 ⚙️ **Session methods:**
 * Add `CachedSession.wrap()` classmethod to add caching to an existing `requests.Session` object
 

@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Dict, List, MutableMapping, Optional, Union
 
 from attr import define, field
 from requests import PreparedRequest, Response
+from requests.structures import CaseInsensitiveDict
 
 from .._utils import coalesce
 from ..cache_keys import normalize_headers
@@ -24,6 +25,9 @@ from .settings import CacheSettings
 
 if TYPE_CHECKING:
     from ..models import CachedResponse
+
+# Nonstandard headers that can be used to override the request method
+METHOD_OVERRIDE_HEADERS = ['X-HTTP-Method-Override', 'X-HTTP-Method', 'X-Method-Override']
 
 logger = getLogger(__name__)
 
@@ -109,7 +113,7 @@ class CacheActions(RichMixin):
         # Check and log conditions for reading from the cache
         read_criteria = {
             'disabled cache': settings.disabled,
-            'disabled method': str(request.method) not in settings.allowable_methods,
+            'disabled method': not _is_method_allowed(request, settings),
             'disabled by headers or refresh': directives.no_cache or directives.no_store,
             'disabled by expiration': expire_after == DO_NOT_CACHE,
         }
@@ -225,7 +229,7 @@ class CacheActions(RichMixin):
         # Check and log conditions for writing to the cache
         write_criteria = {
             'disabled cache': self._settings.disabled,
-            'disabled method': str(response.request.method) not in self._settings.allowable_methods,
+            'disabled method': not _is_method_allowed(response.request, self._settings),
             'disabled status': response.status_code not in self._settings.allowable_codes,
             'disabled by filter': filtered_out,
             'disabled by headers': self.skip_write,
@@ -320,6 +324,14 @@ class CacheActions(RichMixin):
                 self._request.headers, cached_response.request.headers, key_kwargs['match_headers']
             )
         return headers_match
+
+
+def _is_method_allowed(request: PreparedRequest, settings: CacheSettings) -> bool:
+    """Check request method as well as method override headers"""
+    headers = request.headers or CaseInsensitiveDict()
+    methods = [headers.get(k) for k in METHOD_OVERRIDE_HEADERS]
+    methods += [request.method]
+    return any(m is not None and m in settings.allowable_methods for m in methods)
 
 
 def _log_vary_diff(
