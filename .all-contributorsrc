@@ -985,6 +985,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "netomi",
+      "name": "Thomas Neidhart",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1048055?v=4",
+      "profile": "https://netomi.github.io/",
+      "contributions": [
+        "bug",
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
