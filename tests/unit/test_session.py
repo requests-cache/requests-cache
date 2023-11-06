@@ -27,6 +27,7 @@ from requests_cache.policy import (
     CacheActions,
     utcnow,
 )
+from requests_cache.policy.actions import METHOD_OVERRIDE_HEADERS
 from requests_cache.session import OriginalSession
 from tests.conftest import (
     MOCKED_URL,
@@ -583,6 +584,23 @@ def test_allowable_methods(mock_session):
     mock_session.delete(MOCKED_URL)
     assert not mock_session.cache.contains(request=Request('DELETE', MOCKED_URL))
     assert mock_session.delete(MOCKED_URL).from_cache is False
+
+
+@pytest.mark.parametrize('override_header', METHOD_OVERRIDE_HEADERS)
+def test_allowable_methods__override_headers(override_header, mock_session):
+    mock_session.settings.allowable_methods = ['GET']
+
+    # In this case the request should not be cached, since POST is not allowed
+    mock_session.post(MOCKED_URL)
+    r = mock_session.post(MOCKED_URL)
+    assert r.from_cache is False
+    assert not mock_session.cache.contains(request=Request('POST', MOCKED_URL))
+
+    # In this case the request should be cached, since the overridden method is GET
+    mock_session.post(MOCKED_URL, headers={override_header: 'GET'})
+    r = mock_session.post(MOCKED_URL, headers={override_header: 'GET'})
+    assert r.from_cache is True
+    assert mock_session.cache.contains(request=Request('POST', MOCKED_URL))
 
 
 def test_always_revalidate(mock_session):
