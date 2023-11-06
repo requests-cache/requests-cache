@@ -439,7 +439,7 @@ class TestSQLiteCache(BaseCacheTest):
             assert item.cache_key
             assert not item.is_expired
 
-    # TODO: Remove when fixed
+    # TODO: Remove after fixing issue with SQLite multiprocessing on python 3.12
     @pytest.mark.parametrize('executor_class', [ThreadPoolExecutor, ProcessPoolExecutor])
     @pytest.mark.parametrize('iteration', range(N_ITERATIONS))
     def test_concurrency(self, iteration, executor_class):
