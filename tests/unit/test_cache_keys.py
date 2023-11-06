@@ -67,16 +67,17 @@ def test_create_key__normalize_duplicate_params():
 
 
 def test_redact_response__escaped_params():
-    """Test that redact_response() handles escaped request parameters"""
-    request = Request(
-        method='GET',
-        url='https://img.site.com/base/img.jpg?ignored_param=value_1&param_2=value_2',
-    )
+    """Test that redact_response() handles urlescaped request parameters"""
+    url = 'https://img.site.com/base/img.jpg?where=code%3D123'
+    request = Request(method='GET', url=url).prepare()
     response = Response()
-    response.url = 'https://img.site.com/base/img.jpg?where=code%3D123'
+    response.url = url
     response.request = request
     redacted_response = redact_response(response, [])
     assert redacted_response.url == 'https://img.site.com/base/img.jpg?where=code%3D123'
+    assert redacted_response.raw.url == 'https://img.site.com/base/img.jpg?where=code%3D123'
+    assert redacted_response.request.url == 'https://img.site.com/base/img.jpg?where=code%3D123'
+    assert redacted_response.request.path_url == '/base/img.jpg?where=code%3D123'
 
 
 def test_normalize_request__json_body():

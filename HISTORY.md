@@ -16,6 +16,7 @@
 
 🪲 **Bugfixes:**
 * Handle a corner case with streaming requests, conditional requests, and redirects
+* When redacting ignored parameters from a cached response, keep the rest of the original URL and headers without normalizing
 
 ⚠️ **Deprecations & removals:**
 * Drop support for python 3.7
