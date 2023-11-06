@@ -17,6 +17,7 @@
 🪲 **Bugfixes:**
 * Handle a corner case with streaming requests, conditional requests, and redirects
 * When redacting ignored parameters from a cached response, keep the rest of the original URL and headers without normalizing
+* Add `CachedHTTPResponse._request_url` property for compatibility with urllib3
 
 ⚠️ **Deprecations & removals:**
 * Drop support for python 3.7

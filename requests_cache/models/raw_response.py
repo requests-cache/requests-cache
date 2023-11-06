@@ -49,6 +49,7 @@ class CachedHTTPResponse(RichMixin, HTTPResponse):
         # Copy basic attributes
         raw = response.raw
         kwargs = {k: getattr(raw, k, None) for k in fields_dict(cls).keys()}
+        # Note: in HTTPResponse, init kwarg is named 'request_url', but attribute is '_request_url'
         kwargs['request_url'] = raw._request_url
 
         # Read and copy raw response data, and then restore response object to its previous state
@@ -86,6 +87,15 @@ class CachedHTTPResponse(RichMixin, HTTPResponse):
         )
         obj.reset(response._content)
         return obj
+
+    @property
+    def _request_url(self) -> str:
+        """For compatibility with urllib3"""
+        return self.request_url
+
+    @_request_url.setter
+    def _request_url(self, value: str):
+        self.request_url = value
 
     def release_conn(self):
         """No-op for compatibility"""

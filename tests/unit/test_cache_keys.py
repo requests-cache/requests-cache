@@ -5,6 +5,7 @@ import json
 
 import pytest
 from requests import Request, Response
+from urllib3 import HTTPResponse
 
 from requests_cache.cache_keys import (
     MAX_NORM_BODY_SIZE,
@@ -73,11 +74,16 @@ def test_redact_response__escaped_params():
     response = Response()
     response.url = url
     response.request = request
+    response.raw = HTTPResponse(request_url=url)
     redacted_response = redact_response(response, [])
     assert redacted_response.url == 'https://img.site.com/base/img.jpg?where=code%3D123'
-    assert redacted_response.raw.url == 'https://img.site.com/base/img.jpg?where=code%3D123'
     assert redacted_response.request.url == 'https://img.site.com/base/img.jpg?where=code%3D123'
     assert redacted_response.request.path_url == '/base/img.jpg?where=code%3D123'
+    assert (
+        redacted_response.raw._request_url == 'https://img.site.com/base/img.jpg?where=code%3D123'
+    )
+    if hasattr(redacted_response.raw, 'url'):
+        assert redacted_response.raw.url == 'https://img.site.com/base/img.jpg?where=code%3D123'
 
 
 def test_normalize_request__json_body():
