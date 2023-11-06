@@ -14,6 +14,9 @@
 * Add support for python 3.12
   * Note: There is a known bug with concurrent usage of the SQLite backend on python 3.12.
 
+🪲 **Bugfixes:**
+* Handle a corner case with streaming requests, conditional requests, and redirects
+
 ⚠️ **Deprecations & removals:**
 * Drop support for python 3.7
 * Remove methods [deprecated in 1.0](#deprecations-1-0) from `CachedSession` and `BaseCache`

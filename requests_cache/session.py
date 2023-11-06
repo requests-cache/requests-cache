@@ -262,7 +262,13 @@ class CacheMixin(MIXIN_BASE):
             return cached_response
         else:
             logger.debug(f'Skipping cache write for URL: {request.url}')
-        return OriginalResponse.wrap_response(response, actions)
+
+        # This is possible if the original request is a cache miss, but updating its validation
+        # headers results in redirecting to a different URL that is a cache hit
+        if isinstance(response, CachedResponse):
+            return response
+        else:
+            return OriginalResponse.wrap_response(response, actions)
 
     def _resend(
         self,

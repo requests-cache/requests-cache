@@ -20,7 +20,14 @@ from requests_cache._utils import get_placeholder_class
 from requests_cache.backends import BACKEND_CLASSES, BaseCache
 from requests_cache.backends.base import DESERIALIZE_ERRORS
 from requests_cache.models import CachedResponse
-from requests_cache.policy import DO_NOT_CACHE, EXPIRE_IMMEDIATELY, NEVER_EXPIRE, utcnow
+from requests_cache.policy import (
+    DO_NOT_CACHE,
+    EXPIRE_IMMEDIATELY,
+    NEVER_EXPIRE,
+    CacheActions,
+    utcnow,
+)
+from requests_cache.session import OriginalSession
 from tests.conftest import (
     MOCKED_URL,
     MOCKED_URL_200_404,
@@ -1050,3 +1057,18 @@ def test_request_force_refresh__prepared_request(mock_session):
     assert response_2.from_cache is False
     assert response_3.from_cache is True
     assert response_3.expires is not None
+
+
+@patch.object(OriginalSession, 'send')
+def test_send_and_cache__already_cached(mock_send, mock_session):
+    """If _send_and_cache() receives a cached response after re-sending an updated request,
+    it should be returned as-is
+    """
+    r1 = CachedResponse()
+    mock_send.return_value = r1
+    r2 = mock_session._send_and_cache(
+        Request('GET', MOCKED_URL).prepare(),
+        CacheActions(settings=mock_session.settings),
+        CachedResponse(),
+    )
+    assert r1 is r2
