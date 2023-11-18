@@ -14,7 +14,7 @@ serialization formats.
 from datetime import datetime, timedelta
 from decimal import Decimal
 from json import JSONDecodeError
-from typing import Callable, Dict, ForwardRef, MutableMapping, Optional
+from typing import Callable, Dict, ForwardRef, List, MutableMapping, Optional, Union
 
 from cattr import Converter
 from requests.cookies import RequestsCookieJar, cookiejar_from_dict
@@ -42,8 +42,9 @@ class CattrStage(Stage):
     Notes on ``decode_content`` option:
 
     * Response body will be decoded into a human-readable format (if possible) during serialization,
-      and re-encoded during deserialization to reconstruct the original response.
-    * Supported  Content-Types are ``application/json`` and ``text/*``. All other types will be saved as-is.
+      and re-encoded during deserialization to recreate the original response body.
+    * Supported Content-Types are ``application/json`` and ``text/*``. All other types will be saved
+      as-is.
     * Decoded responses are saved in a separate ``_decoded_content`` attribute, to ensure that
       ``_content`` is always binary.
     * This is the default behavior for Filesystem, DynamoDB, and MongoDB backends.
@@ -112,9 +113,16 @@ def init_converter(
 
     # Convert decoded JSON body back to a string. If the object is a valid JSON root (dict or list),
     # that means it was previously saved in human-readable format due to `decode_content=True`.
-    # After this hook runs, the body will also be re-encoded with `_encode_content()`.
+    # After this hook runs, the body will also be re-encoded during `CattrStage.loads()`
     converter.register_structure_hook(
         DecodedContent, lambda obj, cls: json.dumps(obj) if isinstance(obj, (dict, list)) else obj
+    )
+    # For cattrs 23.2+: JsonConverter already handles all JSON primitive types, but we need to
+    # explicity handle dict and list types. In cattrs terms, this handles the "spillover" after
+    # handling DecodedContent with the "union passthrough strategy."
+    converter.register_structure_hook(
+        Union[Dict, List],
+        lambda obj, cls: json.dumps(obj),
     )
 
     def structure_fwd_ref(obj, cls):
