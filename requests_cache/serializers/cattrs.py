@@ -144,11 +144,14 @@ def make_decimal_timedelta_converter(**kwargs) -> Converter:
         timedelta, lambda obj: Decimal(str(obj.total_seconds())) if obj else None
     )
     converter.register_structure_hook(timedelta, _to_timedelta)
+    # converter.register_unstructure_hook(float, lambda obj: Decimal(str(obj)) if obj else None)
+    # converter.register_structure_hook(float, lambda obj, cls: float(obj) if obj else None)
     return converter
 
 
 def _decode_content(response: CachedResponse, response_dict: Dict) -> Dict:
     """Decode response body into a human-readable format, if possible"""
+
     # Decode body as JSON
     if response.headers.get('Content-Type') == 'application/json':
         try:
@@ -186,6 +189,26 @@ def _encode_content(response: CachedResponse) -> CachedResponse:
         response.headers['Content-Length'] = str(len(response._content))  # Size may have changed
 
     return response
+
+
+def _convert_floats(value):
+    """Workaround for DynamoDB-specific issue with decode_content=True. There doesn't seem to be
+    an obvious way to do this with the current converter setup, so need to do it manually here.
+    """
+
+    def _float_to_decimal(value: DecodedContent):
+        if isinstance(value, list):
+            return [_float_to_decimal(v) for v in value]
+        elif isinstance(value, dict):
+            return {k: _float_to_decimal(v) for k, v in value.items()}
+        elif isinstance(value, float):
+            return Decimal(str(value))
+        else:
+            return value
+
+    if isinstance(value, dict) and '_decoded_content' in value:
+        value['_decoded_content'] = _float_to_decimal(value['_decoded_content'])
+    return value
 
 
 def _to_datetime(obj, cls) -> datetime:

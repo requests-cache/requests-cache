@@ -5,7 +5,7 @@ from unittest.mock import patch
 import pytest
 
 from requests_cache.backends import DynamoDbCache, DynamoDbDict
-from tests.conftest import CACHE_NAME, MOCKED_URL_JSON_LIST, fail_if_no_connection
+from tests.conftest import CACHE_NAME, fail_if_no_connection
 from tests.integration.base_cache_test import BaseCacheTest
 from tests.integration.base_storage_test import BaseStorageTest
 
@@ -89,17 +89,6 @@ class TestDynamoDbDict(BaseStorageTest):
             assert ttl_value is None
 
 
-# TODO: Fix DynamoDB serialization of JSON body with floats -> Decimals
 class TestDynamoDbCache(BaseCacheTest):
     backend_class = DynamoDbCache
     init_kwargs = AWS_OPTIONS
-
-    @pytest.mark.parametrize('decode_content', [True, False])
-    @pytest.mark.parametrize('url', [MOCKED_URL_JSON_LIST])
-    def test_decode_json_response(self, decode_content, url):
-        super().test_decode_json_response(decode_content, url)
-
-    @pytest.mark.parametrize('decode_content', [True, False])
-    @pytest.mark.parametrize('body', ['string', 47, True])
-    def test_decode_json_with_primitive_root(self, decode_content, body):
-        super().test_decode_json_with_primitive_root(decode_content, body)
