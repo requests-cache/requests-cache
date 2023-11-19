@@ -206,7 +206,13 @@ def get_mock_adapter() -> Adapter:
         ANY_METHOD,
         MOCKED_URL_JSON,
         headers={'Content-Type': 'application/json'},
-        json={'message': 'mock json response'},
+        json={
+            'message': 'mock json response',
+            'int': 47,
+            'float': 47.1,
+            'bool': True,
+            'null': None,
+        },
         status_code=200,
     )
     adapter.register_uri(

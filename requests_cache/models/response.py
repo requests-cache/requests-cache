@@ -17,8 +17,12 @@ from . import CachedHTTPResponse, CachedRequest, RichMixin
 if TYPE_CHECKING:
     from ..policy.actions import CacheActions
 
-DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S %Z'  # Format used for __str__ only
-DecodedContent = Union[Dict, List, str, None]
+# Format used for __str__ only
+DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S %Z'
+
+# Support RFC 7159: JSON body root element can be an object, array, or any of its primitive types
+DecodedContent = Union[Dict, List, str, bool, int, float, None]
+
 logger = getLogger(__name__)
 
 

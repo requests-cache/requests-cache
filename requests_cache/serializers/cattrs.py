@@ -16,7 +16,7 @@ from decimal import Decimal
 from json import JSONDecodeError
 from typing import Callable, Dict, ForwardRef, List, MutableMapping, Optional, Union
 
-from cattr import Converter
+from cattrs import Converter
 from requests.cookies import RequestsCookieJar, cookiejar_from_dict
 from requests.exceptions import RequestException
 from requests.structures import CaseInsensitiveDict
@@ -111,19 +111,12 @@ def init_converter(
         CaseInsensitiveDict, lambda obj, cls: CaseInsensitiveDict(obj)
     )
 
-    # Convert decoded JSON body back to a string. If the object is a valid JSON root (dict or list),
-    # that means it was previously saved in human-readable format due to `decode_content=True`.
-    # After this hook runs, the body will also be re-encoded during `CattrStage.loads()`
-    converter.register_structure_hook(
-        DecodedContent, lambda obj, cls: json.dumps(obj) if isinstance(obj, (dict, list)) else obj
-    )
-    # For cattrs 23.2+: JsonConverter already handles all JSON primitive types, but we need to
-    # explicity handle dict and list types. In cattrs terms, this handles the "spillover" after
-    # handling DecodedContent with the "union passthrough strategy."
-    converter.register_structure_hook(
-        Union[Dict, List],
-        lambda obj, cls: json.dumps(obj),
-    )
+    # Tell cattrs to ignore DecodedContent; this will be handled separately in `CattrStage.loads()`
+    converter.register_structure_hook(DecodedContent, lambda obj, cls: obj)
+    # Same as above, but for cattrs 23.2+. In cattrs terms, this handles the "spillover" after
+    # handling DecodedContent with the "union passthrough strategy," which is enabled by default
+    # for its pre-configured converters (JsonConverter, etc.).
+    converter.register_structure_hook(Union[Dict, List], lambda obj, cls: obj)
 
     def structure_fwd_ref(obj, cls):
         # python<=3.8: ForwardRef may not have been evaluated yet
@@ -177,11 +170,21 @@ def _encode_content(response: CachedResponse) -> CachedResponse:
     """Re-encode response body if saved as JSON or text (via ``decode_content=True``).
     This has no effect for a binary response body.
     """
+    # The response may have previously been saved with `decode_content=False`
+    if not response._decoded_content:
+        return response
+
+    # Encode body as JSON
+    if response.headers.get('Content-Type') == 'application/json':
+        response._decoded_content = json.dumps(response._decoded_content)
+
+    # Encode body back to bytes
     if isinstance(response._decoded_content, str):
         response._content = response._decoded_content.encode('utf-8')
         response._decoded_content = None
-        response.encoding = 'utf-8'  # Set encoding explicitly so requests doesn't have to guess
+        response.encoding = 'utf-8'  # Set encoding explicitly so requests doesn't have to detect it
         response.headers['Content-Length'] = str(len(response._content))  # Size may have changed
+
     return response
 
 

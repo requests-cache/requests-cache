@@ -9,7 +9,7 @@ from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
-from cattr import BaseConverter, GenConverter
+from cattrs import BaseConverter, GenConverter
 
 from requests_cache import (
     CachedResponse,

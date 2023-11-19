@@ -284,6 +284,26 @@ class BaseCacheTest:
         r2 = session.get(url)
         assert r1.json() == r2.json()
 
+    @pytest.mark.parametrize('decode_content', [True, False])
+    @pytest.mark.parametrize('body', ['string', 47, 47.1, True])
+    def test_decode_json_with_primitive_root(self, decode_content, body):
+        """Test that JSON responses (with primitive type root) are correctly returned from the
+        cache, regardless of `decode_content` setting"""
+        session = self.init_session(decode_content=decode_content)
+        session = mount_mock_adapter(session)
+        url = 'http+mock://requests-cache.com/json_alt'
+        session.mock_adapter.register_uri(
+            'GET',
+            url,
+            headers={'Content-Type': 'application/json'},
+            json=body,
+            status_code=200,
+        )
+
+        r1 = session.get(url)
+        r2 = session.get(url)
+        assert r1.json() == r2.json()
+
     def test_multipart_upload(self):
         session = self.init_session()
         session.post(httpbin('post'), files={'file1': BytesIO(b'10' * 1024)})
