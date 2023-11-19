@@ -122,7 +122,7 @@ jobs:
         requests-version: [latest]
         exclude:
         - os: windows-latest
-          python-version: 'pypy3.9'
+          python-version: 'pypy3.9-7.3.12'
         # TODO: Could this be less verbose? Maybe a dynamic matrix? Also, env isn't supported here.
         include:
         - python-version: '3.11'
@@ -185,6 +185,7 @@ jobs:
           poetry add requests@${{ matrix.requests-version }} --lock
           poetry lock --check
           poetry lock --no-update
+          poetry config installer.max-workers 1
           poetry install -v -E all
 
       # Run tests
