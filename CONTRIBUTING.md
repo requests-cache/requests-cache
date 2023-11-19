@@ -11,7 +11,7 @@ received a response in a timely manner, please reach out on the Code Shelter cha
 
 ## Development Status
 Requests-cache is under active development!  Contributions are very welcome, and will be attributed on the
-[Contributors](https://requests-cache.readthedocs.io/en/latest/project_info/contributors.html)
+[Contributors](https://requests-cache.readthedocs.io/en/main/project_info/contributors.html)
 page.
 
 ## How to Help
@@ -191,7 +191,7 @@ pip install -U requests-cache
 Notes:
 * See python packaging docs on
 [pre-release versioning](https://packaging.python.org/guides/distributing-packages-using-setuptools/#pre-release-versioning) for more info on how this works
-* requests-cache pre-release docs can be found here: https://requests-cache.readthedocs.io/en/latest/
+* requests-cache pre-release docs can be found here: https://requests-cache.readthedocs.io/en/main/
 * Any collaborator can trigger a pre-release build for requests-cache by going to
   **Actions > Deploy > Run workflow**
 * A complete list of builds can by found on [PyPI under 'Release History'](https://pypi.org/project/requests-cache/#history)
