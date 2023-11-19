@@ -3,6 +3,9 @@
 ## 1.2.0 (TBD)
 * ⚠️ Remove `CachedSession` and `BaseCache` methods [deprecated in 1.0](#deprecations-1-0)
 
+## 1.1.1 (2023-11-18)
+* Backport fix from v1.2: Add compatibility with cattrs 23.2
+
 ## 1.1.0 (2023-06-30)
 
 ⚙️ **Session settings:**
