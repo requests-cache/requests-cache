@@ -43,7 +43,7 @@ class CacheMixin(MIXIN_BASE):
 
     def __init__(
         self,
-        cache_name: str | Path = DEFAULT_CACHE_NAME,
+        cache_name: Union[str, Path] = DEFAULT_CACHE_NAME,
         backend: Optional[BackendSpecifier] = None,
         serializer: Optional[SerializerType] = None,
         expire_after: ExpirationTime = -1,
