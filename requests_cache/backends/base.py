@@ -60,9 +60,7 @@ class BaseCache:
         self.cache_name = cache_name
         self.responses: BaseStorage[str, CachedResponse] = DictStorage()
         self.redirects: BaseStorage[str, str] = DictStorage()
-        self._settings = (
-            CacheSettings()
-        )  # Init and public access is done in CachedSession
+        self._settings = CacheSettings()  # Init and public access is done in CachedSession
 
     # Main cache operations
     # ---------------------
@@ -76,9 +74,7 @@ class BaseCache:
         """
         try:
             response = self.responses.get(key)
-            if (
-                response is None
-            ):  # Note: bool(requests.Response) is False if status > 400
+            if response is None:  # Note: bool(requests.Response) is False if status > 400
                 response = self.responses[self.redirects[key]]
             return response
         except (AttributeError, KeyError):
@@ -99,9 +95,7 @@ class BaseCache:
         """
         cache_key = cache_key or self.create_key(response.request)
         cached_response = CachedResponse.from_response(response, expires=expires)
-        cached_response = redact_response(
-            cached_response, self._settings.ignored_parameters
-        )
+        cached_response = redact_response(cached_response, self._settings.ignored_parameters)
         self.responses[cache_key] = cached_response
 
         # Save redirect aliases, unless this is a revalidation (i.e., it was saved previously)
@@ -111,13 +105,13 @@ class BaseCache:
 
     def clear(self):
         """Delete all items from the cache"""
-        logger.info("Clearing all items from the cache")
+        logger.info('Clearing all items from the cache')
         self.responses.clear()
         self.redirects.clear()
 
     def close(self):
         """Close any open backend connections"""
-        logger.debug("Closing backend connections")
+        logger.debug('Closing backend connections')
         self.responses.close()
         self.redirects.close()
 
@@ -128,9 +122,7 @@ class BaseCache:
         **kwargs,
     ) -> str:
         """Create a normalized cache key from a request object"""
-        key_fn = (
-            self._settings.key_fn if self._settings.key_fn is not None else create_key
-        )
+        key_fn = self._settings.key_fn if self._settings.key_fn is not None else create_key
         return key_fn(
             request=request,
             ignored_parameters=self._settings.ignored_parameters,
@@ -156,7 +148,7 @@ class BaseCache:
             url: Check for a matching GET request with the specified URL
         """
         if url:
-            request = Request("GET", url)
+            request = Request('GET', url)
         if request and not key:
             key = self.create_key(request)
         return key in self.responses or key in self.redirects
@@ -182,9 +174,7 @@ class BaseCache:
         """
         delete_keys: List[str] = list(keys) if keys else []
         if urls:
-            requests = list(requests or []) + [
-                Request("GET", url).prepare() for url in urls
-            ]
+            requests = list(requests or []) + [Request('GET', url).prepare() for url in urls]
         if requests:
             delete_keys += [self.create_key(request) for request in requests]
 
@@ -193,7 +183,7 @@ class BaseCache:
         ):
             delete_keys.append(response.cache_key)
 
-        logger.debug(f"Deleting up to {len(delete_keys)} responses")
+        logger.debug(f'Deleting up to {len(delete_keys)} responses')
         # For some backends, we don't want to use bulk_delete if there's only one key
         if len(delete_keys) == 1:
             try:
@@ -206,9 +196,7 @@ class BaseCache:
 
     def _prune_redirects(self):
         """Remove any redirects that no longer point to an existing response"""
-        invalid_redirects = [
-            k for k, v in self.redirects.items() if v not in self.responses
-        ]
+        invalid_redirects = [k for k, v in self.redirects.items() if v not in self.responses]
         self.redirects.bulk_delete(invalid_redirects)
 
     def filter(
@@ -246,14 +234,14 @@ class BaseCache:
 
     def recreate_keys(self):
         """Recreate cache keys for all previously cached responses"""
-        logger.debug("Recreating all cache keys")
+        logger.debug('Recreating all cache keys')
         old_keys = list(self.responses.keys())
 
         for old_cache_key in old_keys:
             response = self.responses[old_cache_key]
             # Adjust empty request body for responses cached before 1.0
-            if response.request.body == b"None":
-                response.request.body = b""
+            if response.request.body == b'None':
+                response.request.body = b''
             new_cache_key = self.create_key(response.request)
             if new_cache_key != old_cache_key:
                 self.responses[new_cache_key] = response
@@ -263,7 +251,7 @@ class BaseCache:
     # for awhile longer.
     def remove_expired_responses(self, expire_after: ExpirationTime = None):
         warn(
-            "remove_expired_responses() is deprecated; please use delete(expired=True) instead",
+            'remove_expired_responses() is deprecated; please use delete(expired=True) instead',
             DeprecationWarning,
             stacklevel=2,
         )
@@ -277,16 +265,14 @@ class BaseCache:
         Args:
             expire_after: New expiration value, **relative to the current time**
         """
-        logger.info(f"Resetting expiration with: {expire_after}")
+        logger.info(f'Resetting expiration with: {expire_after}')
         for response in self.filter():
             response.reset_expiration(expire_after)
             self.responses[response.cache_key] = response
 
-    def update(self, other: "BaseCache"):  # type: ignore
+    def update(self, other: 'BaseCache'):  # type: ignore
         """Update this cache with the contents of another cache"""
-        logger.debug(
-            f"Copying {len(other.responses)} responses from {repr(other)} to {repr(self)}"
-        )
+        logger.debug(f'Copying {len(other.responses)} responses from {repr(other)} to {repr(self)}')
         self.responses.update(other.responses)
         self.redirects.update(other.redirects)
 
@@ -295,14 +281,14 @@ class BaseCache:
         return sorted({response.url for response in self.filter(**kwargs)})
 
     def __str__(self):
-        return f"<{self.__class__.__name__}(name={self.cache_name})>"
+        return f'<{self.__class__.__name__}(name={self.cache_name})>'
 
     def __repr__(self):
         return str(self)
 
 
-KT = TypeVar("KT")
-VT = TypeVar("VT")
+KT = TypeVar('KT')
+VT = TypeVar('VT')
 
 
 class BaseStorage(MutableMapping[KT, VT], ABC):
@@ -332,9 +318,7 @@ class BaseStorage(MutableMapping[KT, VT], ABC):
         **kwargs,
     ):
         self.serializer = init_serializer(serializer, decode_content)
-        logger.debug(
-            f"Initialized {type(self).__name__} with serializer: {self.serializer}"
-        )
+        logger.debug(f'Initialized {type(self).__name__} with serializer: {self.serializer}')
 
     def bulk_delete(self, keys: Iterable[KT]):
         """Delete multiple keys from the cache, without raising errors for missing keys.
@@ -354,7 +338,7 @@ class BaseStorage(MutableMapping[KT, VT], ABC):
     def serialize(self, value: VT):
         """Serialize a value, if a serializer is available"""
         if TYPE_CHECKING:
-            assert hasattr(self.serializer, "dumps")
+            assert hasattr(self.serializer, 'dumps')
         return self.serializer.dumps(value) if self.serializer else value
 
     def deserialize(self, key, value: VT):
@@ -366,7 +350,7 @@ class BaseStorage(MutableMapping[KT, VT], ABC):
         if not self.serializer:
             return value
         if TYPE_CHECKING:
-            assert hasattr(self.serializer, "loads")
+            assert hasattr(self.serializer, 'loads')
 
         try:
             obj = self.serializer.loads(value)
@@ -377,7 +361,7 @@ class BaseStorage(MutableMapping[KT, VT], ABC):
                 pass
             return obj
         except DESERIALIZE_ERRORS as e:
-            logger.error(f"Unable to deserialize response: {str(e)}")
+            logger.error(f'Unable to deserialize response: {str(e)}')
             logger.debug(e, exc_info=True)
             return None
 
@@ -405,7 +389,7 @@ class DictStorage(UserDict, BaseStorage):
         response body has already been read, and needs to be reset.
         """
         item = super().__getitem__(key)
-        if getattr(item, "raw", None):
+        if getattr(item, 'raw', None):
             item.raw.reset()
         try:
             item.cache_key = key

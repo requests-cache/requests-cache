@@ -197,7 +197,7 @@ class CachedResponse(RichMixin, BaseResponse):
 def format_datetime(value: Optional[datetime]) -> str:
     """Get a formatted datetime string in the local time zone"""
     if not value:
-        return "N/A"
+        return 'N/A'
     return value.astimezone().strftime(DATETIME_FORMAT)
 
 

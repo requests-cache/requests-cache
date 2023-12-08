@@ -126,8 +126,8 @@ options `ignored_parameters` and `match_headers`, you can implement them in `key
 ```python
 def create_key(
     request: requests.PreparedRequest,
-    ignored_parameters: List[str] = None,
-    match_headers: List[str] = None,
+    ignored_parameters: list[str] = None,
+    match_headers: list[str] = None,
     **kwargs,
 ) -> str:
     """Generate a custom cache key for the given request"""

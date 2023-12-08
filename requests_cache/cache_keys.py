@@ -31,12 +31,12 @@ from url_normalize import url_normalize
 from ._utils import decode, encode, patch_form_boundary
 
 __all__ = [
-    "create_key",
-    "normalize_body",
-    "normalize_headers",
-    "normalize_request",
-    "normalize_params",
-    "normalize_url",
+    'create_key',
+    'normalize_body',
+    'normalize_headers',
+    'normalize_request',
+    'normalize_params',
+    'normalize_url',
 ]
 if TYPE_CHECKING:
     from .models import AnyPreparedRequest, AnyRequest, CachedResponse
@@ -69,10 +69,10 @@ def create_key(
     # Normalize and gather all relevant request info to match against
     request = normalize_request(request, ignored_parameters)
     key_parts = [
-        request.method or "",
+        request.method or '',
         request.url,
-        request.body or "",
-        request_kwargs.get("verify", True),
+        request.body or '',
+        request_kwargs.get('verify', True),
         *get_matched_headers(request.headers, match_headers),
         str(serializer),
     ]
@@ -95,7 +95,7 @@ def get_matched_headers(
     if match_headers is True:
         match_headers = headers
     return [
-        f"{k.lower()}={headers[k]}"
+        f'{k.lower()}={headers[k]}'
         for k in sorted(match_headers, key=lambda x: x.lower())
         if k in headers
     ]
@@ -122,8 +122,8 @@ def normalize_request(
     else:
         norm_request = request.copy()
 
-    norm_request.method = (norm_request.method or "").upper()
-    norm_request.url = normalize_url(norm_request.url or "", ignored_parameters)
+    norm_request.method = (norm_request.method or '').upper()
+    norm_request.url = normalize_url(norm_request.url or '', ignored_parameters)
     norm_request.headers = normalize_headers(norm_request.headers, ignored_parameters)
     norm_request.body = normalize_body(norm_request, ignored_parameters)
     return norm_request
@@ -136,9 +136,9 @@ def normalize_headers(
     if ignored_parameters:
         headers = filter_sort_dict(headers, ignored_parameters)
     for k, v in headers.items():
-        if "," in v:
-            values = [v.strip() for v in v.lower().split(",") if v.strip()]
-            headers[k] = ", ".join(sorted(values))
+        if ',' in v:
+            values = [v.strip() for v in v.lower().split(',') if v.strip()]
+            headers[k] = ', '.join(sorted(values))
     return CaseInsensitiveDict(headers)
 
 
@@ -153,14 +153,14 @@ def normalize_url(url: str, ignored_parameters: ParamList) -> str:
 def normalize_body(request: AnyPreparedRequest, ignored_parameters: ParamList) -> bytes:
     """Normalize and filter a request body if possible, depending on Content-Type"""
     if not request.body:
-        return b""
-    content_type = request.headers.get("Content-Type")
+        return b''
+    content_type = request.headers.get('Content-Type')
 
     # Filter and sort params if possible
     filtered_body: Union[str, bytes] = request.body
-    if content_type == "application/json":
+    if content_type == 'application/json':
         filtered_body = normalize_json_body(request.body, ignored_parameters)
-    elif content_type == "application/x-www-form-urlencoded":
+    elif content_type == 'application/x-www-form-urlencoded':
         filtered_body = normalize_params(request.body, ignored_parameters)
 
     return encode(filtered_body)
@@ -179,13 +179,11 @@ def normalize_json_body(
         return json.dumps(body)
     # If it's invalid JSON, then don't mess with it
     except (AttributeError, TypeError, ValueError):
-        logger.debug("Invalid JSON body")
+        logger.debug('Invalid JSON body')
         return original_body
 
 
-def normalize_params(
-    value: Union[str, bytes], ignored_parameters: ParamList = None
-) -> str:
+def normalize_params(value: Union[str, bytes], ignored_parameters: ParamList = None) -> str:
     """Normalize and filter urlencoded params from either a URL or request body with form data"""
     value = decode(value)
     params = parse_qsl(value)
@@ -193,19 +191,15 @@ def normalize_params(
     query_str = urlencode(params)
 
     # parse_qsl doesn't handle key-only params, so add those here
-    key_only_params = [k for k in value.split("&") if k and "=" not in k]
+    key_only_params = [k for k in value.split('&') if k and '=' not in k]
     if key_only_params:
-        key_only_param_str = "&".join(sorted(key_only_params))
-        query_str = (
-            f"{query_str}&{key_only_param_str}" if query_str else key_only_param_str
-        )
+        key_only_param_str = '&'.join(sorted(key_only_params))
+        query_str = f'{query_str}&{key_only_param_str}' if query_str else key_only_param_str
 
     return query_str
 
 
-def redact_response(
-    response: CachedResponse, ignored_parameters: ParamList
-) -> CachedResponse:
+def redact_response(response: CachedResponse, ignored_parameters: ParamList) -> CachedResponse:
     """Redact any ignored parameters (potentially containing sensitive info) from a cached request"""
     if ignored_parameters:
         response.url = filter_url(response.url, ignored_parameters)
@@ -233,15 +227,12 @@ def filter_sort_dict(
     # Note: Any ignored_parameters present will have their values replaced instead of removing the
     # parameter, so the cache key will still match whether the parameter was present or not.
     ignored_parameters = set(ignored_parameters or [])
-    return {
-        k: ("REDACTED" if k in ignored_parameters else v)
-        for k, v in sorted(data.items())
-    }
+    return {k: ('REDACTED' if k in ignored_parameters else v) for k, v in sorted(data.items())}
 
 
 def filter_sort_multidict(data: KVList, ignored_parameters: ParamList = None) -> KVList:
     ignored_parameters = set(ignored_parameters or [])
-    return [(k, "REDACTED" if k in ignored_parameters else v) for k, v in sorted(data)]
+    return [(k, 'REDACTED' if k in ignored_parameters else v) for k, v in sorted(data)]
 
 
 def filter_sort_list(data: List, ignored_parameters: ParamList = None) -> List:

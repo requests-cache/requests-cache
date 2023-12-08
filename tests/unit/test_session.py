@@ -71,7 +71,7 @@ def test_init_unregistered_backend():
 
 def test_init_cache_path_expansion():
     session = CachedSession('~', backend='filesystem')
-    assert session.cache.cache_dir == Path("~").expanduser()
+    assert session.cache.cache_dir == Path('~').expanduser()
 
 
 @patch.dict(BACKEND_CLASSES, {'mongodb': get_placeholder_class()})
@@ -257,7 +257,7 @@ def test_raw_data(method, mock_session):
 @pytest.mark.parametrize('field', ['params', 'data', 'json'])
 def test_normalize_params(field, mock_session):
     """Test normalization with different combinations of data fields"""
-    params = {"a": "a", "b": ["1", "2", "3"], "c": "4"}
+    params = {'a': 'a', 'b': ['1', '2', '3'], 'c': '4'}
     reversed_params = dict(sorted(params.items(), reverse=True))
 
     assert mock_session.get(MOCKED_URL, **{field: params}).from_cache is False
@@ -265,13 +265,13 @@ def test_normalize_params(field, mock_session):
     assert mock_session.post(MOCKED_URL, **{field: params}).from_cache is False
     assert mock_session.post(MOCKED_URL, **{field: params}).from_cache is True
     assert mock_session.post(MOCKED_URL, **{field: reversed_params}).from_cache is True
-    assert mock_session.post(MOCKED_URL, **{field: {"a": "b"}}).from_cache is False
+    assert mock_session.post(MOCKED_URL, **{field: {'a': 'b'}}).from_cache is False
 
 
 @pytest.mark.parametrize('mapping_class', [dict, UserDict, CaseInsensitiveDict])
 def test_normalize_params__custom_dicts(mapping_class, mock_session):
     """Test normalization with different dict-like classes"""
-    params = {"a": "a", "b": ["1", "2", "3"], "c": "4"}
+    params = {'a': 'a', 'b': ['1', '2', '3'], 'c': '4'}
     params = mapping_class(params.items())
 
     assert mock_session.get(MOCKED_URL, params=params).from_cache is False
@@ -283,7 +283,7 @@ def test_normalize_params__custom_dicts(mapping_class, mock_session):
 def test_normalize_params__serialized_body(mock_session):
     """Test normalization for serialized request body content"""
     headers = {'Content-Type': 'application/json'}
-    params = {"a": "a", "b": ["1", "2", "3"], "c": "4"}
+    params = {'a': 'a', 'b': ['1', '2', '3'], 'c': '4'}
     sorted_params = json.dumps(params)
     reversed_params = json.dumps(dict(sorted(params.items(), reverse=True)))
 
@@ -294,7 +294,7 @@ def test_normalize_params__serialized_body(mock_session):
 
 def test_normalize_params__urlencoded_body(mock_session):
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
-    params = urlencode({"a": "a", "b": "!@#$%^&*()[]", "c": "4"})
+    params = urlencode({'a': 'a', 'b': '!@#$%^&*()[]', 'c': '4'})
 
     assert mock_session.post(MOCKED_URL, headers=headers, data=params).from_cache is False
     assert mock_session.post(MOCKED_URL, headers=headers, data=params).from_cache is True

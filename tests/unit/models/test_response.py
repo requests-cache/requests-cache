@@ -22,16 +22,16 @@ def test_basic_attrs(mock_session):
     assert response.url == MOCKED_URL
     assert response.status_code == 200
     assert response.reason is None
-    assert response.encoding == "ISO-8859-1"
-    assert response.headers["Content-Type"] == "text/plain"
-    assert response.text == "mock response"
+    assert response.encoding == 'ISO-8859-1'
+    assert response.headers['Content-Type'] == 'text/plain'
+    assert response.text == 'mock response'
     assert isinstance(response.created_at, datetime)
     assert response.expires is None
     assert response.is_expired is False
 
 
 @pytest.mark.parametrize(
-    "response",
+    'response',
     [
         OriginalResponse(),
         OriginalResponse.wrap_response(Response(), CacheActions()),
@@ -46,7 +46,7 @@ def test_original_response(response):
     assert isinstance(response.created_at, datetime)
     assert response.expires is None
     assert response.revalidated is False
-    assert response.cache_key == ""
+    assert response.cache_key == ''
 
 
 def test_history(mock_session):
@@ -58,32 +58,30 @@ def test_history(mock_session):
 
 
 @pytest.mark.parametrize(
-    "expires, is_expired",
+    'expires, is_expired',
     [
         (utcnow() + timedelta(days=1), False),
         (utcnow() - timedelta(days=1), True),
     ],
 )
 def test_is_expired(expires, is_expired, mock_session):
-    response = CachedResponse.from_response(
-        mock_session.get(MOCKED_URL), expires=expires
-    )
+    response = CachedResponse.from_response(mock_session.get(MOCKED_URL), expires=expires)
     assert response.from_cache is True
     assert response.is_expired == is_expired
 
 
 def test_iterator(mock_session):
     # Set up mock response with streamed content
-    url = f"{MOCKED_URL}/stream"
+    url = f'{MOCKED_URL}/stream'
     mock_raw_response = HTTPResponse(
-        body=BytesIO(b"mock response"),
+        body=BytesIO(b'mock response'),
         status=200,
-        request_method="GET",
+        request_method='GET',
         decode_content=False,
         preload_content=False,
     )
     mock_session.mock_adapter.register_uri(
-        "GET",
+        'GET',
         url,
         status_code=200,
         raw=mock_raw_response,
@@ -134,7 +132,7 @@ def test_size(mock_session):
     response = CachedResponse.from_response(mock_session.get(MOCKED_URL))
     response._content = None
     assert response.size == 0
-    response._content = b"1" * 1024
+    response._content = b'1' * 1024
     assert response.size == 1024
 
 
@@ -143,28 +141,28 @@ def test_str(mock_session):
     may change without breaking the test.
     """
     response = CachedResponse.from_response(mock_session.get(MOCKED_URL))
-    response._content = b"1010"
-    expected_values = ["GET", MOCKED_URL, 200, "4 bytes", "created", "expires", "fresh"]
+    response._content = b'1010'
+    expected_values = ['GET', MOCKED_URL, 200, '4 bytes', 'created', 'expires', 'fresh']
     assert all(str(v) in str(response) for v in expected_values)
 
 
 def test_repr(mock_session):
     """Just ensure that a subset of relevant attrs get included in the response repr"""
     response = CachedResponse.from_response(mock_session.get(MOCKED_URL))
-    expected_values = ["GET", MOCKED_URL, 200, "ISO-8859-1", response.headers]
+    expected_values = ['GET', MOCKED_URL, 200, 'ISO-8859-1', response.headers]
     print(repr(response))
-    assert repr(response).startswith("CachedResponse(") and repr(response).endswith(")")
+    assert repr(response).startswith('CachedResponse(') and repr(response).endswith(')')
     assert all(str(v) in repr(response) for v in expected_values)
 
 
 @pytest.mark.parametrize(
-    "n_bytes, expected_size",
+    'n_bytes, expected_size',
     [
-        (None, "0 bytes"),
-        (5, "5 bytes"),
-        (3 * 1024, "3.00 KiB"),
-        (1024 * 3000, "2.93 MiB"),
-        (1024 * 1024 * 5000, "4.88 GiB"),
+        (None, '0 bytes'),
+        (5, '5 bytes'),
+        (3 * 1024, '3.00 KiB'),
+        (1024 * 3000, '2.93 MiB'),
+        (1024 * 1024 * 5000, '4.88 GiB'),
     ],
 )
 def test_format_file_size(n_bytes, expected_size):

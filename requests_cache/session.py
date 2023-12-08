@@ -26,7 +26,7 @@ from .policy import (
 )
 from .serializers import SerializerType
 
-__all__ = ["CachedSession", "CacheMixin"]
+__all__ = ['CachedSession', 'CacheMixin']
 if TYPE_CHECKING:
     MIXIN_BASE = OriginalSession
 else:
@@ -79,7 +79,7 @@ class CacheMixin(MIXIN_BASE):
         super().__init__(**get_valid_kwargs(super().__init__, kwargs))  # type: ignore
 
     @classmethod
-    def wrap(cls, original_session: OriginalSession, **kwargs) -> "CacheMixin":
+    def wrap(cls, original_session: OriginalSession, **kwargs) -> 'CacheMixin':
         """Add caching to an existing :py:class:`~requests.Session` object, while retaining all
         original session settings.
 
@@ -122,28 +122,28 @@ class CacheMixin(MIXIN_BASE):
 
     # Wrapper methods to add return type hints
     def get(self, url: str, params=None, **kwargs) -> AnyResponse:  # type: ignore
-        kwargs.setdefault("allow_redirects", True)
-        return self.request("GET", url, params=params, **kwargs)
+        kwargs.setdefault('allow_redirects', True)
+        return self.request('GET', url, params=params, **kwargs)
 
     def options(self, url: str, **kwargs) -> AnyResponse:  # type: ignore
-        kwargs.setdefault("allow_redirects", True)
-        return self.request("OPTIONS", url, **kwargs)
+        kwargs.setdefault('allow_redirects', True)
+        return self.request('OPTIONS', url, **kwargs)
 
     def head(self, url: str, **kwargs) -> AnyResponse:  # type: ignore
-        kwargs.setdefault("allow_redirects", False)
-        return self.request("HEAD", url, **kwargs)
+        kwargs.setdefault('allow_redirects', False)
+        return self.request('HEAD', url, **kwargs)
 
     def post(self, url: str, data=None, **kwargs) -> AnyResponse:  # type: ignore
-        return self.request("POST", url, data=data, **kwargs)
+        return self.request('POST', url, data=data, **kwargs)
 
     def put(self, url: str, data=None, **kwargs) -> AnyResponse:  # type: ignore
-        return self.request("PUT", url, data=data, **kwargs)
+        return self.request('PUT', url, data=data, **kwargs)
 
     def patch(self, url: str, data=None, **kwargs) -> AnyResponse:  # type: ignore
-        return self.request("PATCH", url, data=data, **kwargs)
+        return self.request('PATCH', url, data=data, **kwargs)
 
     def delete(self, url: str, **kwargs) -> AnyResponse:  # type: ignore
-        return self.request("DELETE", url, **kwargs)
+        return self.request('DELETE', url, **kwargs)
 
     def request(  # type: ignore
         self,
@@ -177,10 +177,8 @@ class CacheMixin(MIXIN_BASE):
         Returns:
             Either a new or cached response
         """
-        headers = set_request_headers(
-            headers, expire_after, only_if_cached, refresh, force_refresh
-        )
-        with patch_form_boundary() if kwargs.get("files") else nullcontext():
+        headers = set_request_headers(headers, expire_after, only_if_cached, refresh, force_refresh)
+        with patch_form_boundary() if kwargs.get('files') else nullcontext():
             return super().request(method, url, *args, headers=headers, **kwargs)  # type: ignore
 
     def send(
@@ -217,9 +215,7 @@ class CacheMixin(MIXIN_BASE):
         cached_response: Optional[CachedResponse] = None
         if not actions.skip_read:
             cached_response = self.cache.get_response(actions.cache_key)
-        actions.update_from_cached_response(
-            cached_response, self.cache.create_key, **kwargs
-        )
+        actions.update_from_cached_response(cached_response, self.cache.create_key, **kwargs)
 
         # Handle missing and expired responses based on settings and headers
         if actions.error_504:
@@ -235,15 +231,13 @@ class CacheMixin(MIXIN_BASE):
             response = cached_response  # type: ignore  # Guaranteed to be non-None by this point
 
         # If the request has been filtered out and was previously cached, delete it
-        if self.settings.filter_fn is not None and not self.settings.filter_fn(
-            response
-        ):
-            logger.debug(f"Deleting filtered response for URL: {response.url}")
+        if self.settings.filter_fn is not None and not self.settings.filter_fn(response):
+            logger.debug(f'Deleting filtered response for URL: {response.url}')
             self.cache.delete(actions.cache_key)
             return response
 
         # Dispatch any hooks here, because they are removed during serialization
-        return dispatch_hook("response", request.hooks, response, **kwargs)
+        return dispatch_hook('response', request.hooks, response, **kwargs)
 
     def _send_and_cache(
         self,
@@ -262,16 +256,12 @@ class CacheMixin(MIXIN_BASE):
         if not actions.skip_write:
             self.cache.save_response(response, actions.cache_key, actions.expires)
         elif cached_response is not None and response.status_code == 304:
-            cached_response = actions.update_revalidated_response(
-                response, cached_response
-            )
+            cached_response = actions.update_revalidated_response(response, cached_response)
             if not actions.skip_write:
-                self.cache.save_response(
-                    cached_response, actions.cache_key, actions.expires
-                )
+                self.cache.save_response(cached_response, actions.cache_key, actions.expires)
             return cached_response
         else:
-            logger.debug(f"Skipping cache write for URL: {request.url}")
+            logger.debug(f'Skipping cache write for URL: {request.url}')
 
         # This is possible if the original request is a cache miss, but updating its validation
         # headers results in redirecting to a different URL that is a cache hit
@@ -290,7 +280,7 @@ class CacheMixin(MIXIN_BASE):
         """Handle a stale cached response by attempting to resend the request and cache a fresh
         response
         """
-        logger.debug("Stale response; attempting to re-send request")
+        logger.debug('Stale response; attempting to re-send request')
         try:
             response = self._send_and_cache(request, actions, cached_response, **kwargs)
             if (
@@ -304,20 +294,18 @@ class CacheMixin(MIXIN_BASE):
 
     def _resend_async(self, *args, **kwargs):
         """Send a non-blocking request to refresh a cached response"""
-        logger.debug("Using stale response while revalidating")
+        logger.debug('Using stale response while revalidating')
         thread = Thread(target=self._send_and_cache, args=args, kwargs=kwargs)
         thread.start()
 
-    def _handle_error(
-        self, cached_response: CachedResponse, actions: CacheActions
-    ) -> AnyResponse:
+    def _handle_error(self, cached_response: CachedResponse, actions: CacheActions) -> AnyResponse:
         """Handle a request error based on settings:
         * Default behavior: re-raise the error
         * stale-if-error: Ignore the error and and return the stale cache item
         """
         if actions.is_usable(cached_response, error=True):
             logger.warning(
-                f"Request for URL {cached_response.request.url} failed; using cached response",
+                f'Request for URL {cached_response.request.url} failed; using cached response',
                 exc_info=True,
             )
             return cached_response
@@ -356,10 +344,10 @@ class CacheMixin(MIXIN_BASE):
         # Unlike requests.Session, CachedSession may contain backend connection objects that can't
         # be pickled. Support for this could be added if necessary, but for now it's explicitly
         # disabled to avoid confusing errors upon unpickling.
-        raise NotImplementedError("CachedSession cannot be pickled")
+        raise NotImplementedError('CachedSession cannot be pickled')
 
     def __repr__(self):
-        return f"<CachedSession(cache={repr(self.cache)}, settings={self.settings})>"
+        return f'<CachedSession(cache={repr(self.cache)}, settings={self.settings})>'
 
 
 class CachedSession(CacheMixin, OriginalSession):
@@ -400,8 +388,8 @@ class CachedSession(CacheMixin, OriginalSession):
 def get_504_response(request: PreparedRequest) -> CachedResponse:
     """Get a 504: Not Cached error response, for use with only-if-cached option"""
     return CachedResponse(
-        url=request.url or "",
+        url=request.url or '',
         status_code=504,
-        reason="Not Cached",
+        reason='Not Cached',
         request=request,  # type: ignore
     )
