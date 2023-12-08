@@ -1,6 +1,6 @@
 from typing import Dict, Iterable, Union
 
-from attr import define, field
+from attrs import define, field
 
 from .._utils import get_valid_kwargs
 from ..models import RichMixin

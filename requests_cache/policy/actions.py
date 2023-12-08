@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from logging import DEBUG, getLogger
 from typing import TYPE_CHECKING, Dict, List, MutableMapping, Optional, Union
 
-from attr import define, field
+from attrs import define, field
 from requests import PreparedRequest, Response
 from requests.structures import CaseInsensitiveDict
 

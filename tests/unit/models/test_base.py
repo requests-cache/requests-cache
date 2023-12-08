@@ -1,6 +1,6 @@
 from typing import List
 
-from attr import define, field
+from attrs import define, field
 
 from requests_cache.models import RichMixin
 

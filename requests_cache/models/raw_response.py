@@ -2,7 +2,7 @@ from io import BytesIO
 from logging import getLogger
 from typing import TYPE_CHECKING, Optional
 
-from attr import define, field, fields_dict
+from attrs import define, field, fields_dict
 from requests import Response
 from urllib3.response import (  # type: ignore  # import location false positive
     HTTPHeaderDict,
