@@ -6,7 +6,7 @@ from time import time
 from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 import attr
-from attr import define, field
+from attrs import define, field
 from requests import PreparedRequest, Response
 from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict

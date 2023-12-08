@@ -1,7 +1,7 @@
 from logging import getLogger
 from urllib.parse import urlsplit
 
-from attr import asdict, define, field, fields_dict
+from attrs import asdict, define, field, fields_dict
 from requests import PreparedRequest
 from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
