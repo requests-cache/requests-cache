@@ -6,6 +6,8 @@ from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional, Tupl
 
 from urllib3 import filepost
 
+FORM_BOUNDARY = '==requests-cache-form-boundary=='
+
 KwargDict = Dict[str, Any]
 logger = getLogger('requests_cache')
 
@@ -76,7 +78,7 @@ def patch_form_boundary():
     monkey-patches it instead.
     """
     original_boundary = filepost.choose_boundary
-    filepost.choose_boundary = lambda: '##requests-cache-form-boundary##'
+    filepost.choose_boundary = lambda: FORM_BOUNDARY
     yield
     filepost.choose_boundary = original_boundary
 
