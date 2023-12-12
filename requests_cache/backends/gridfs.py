@@ -34,7 +34,7 @@ class GridFSCache(BaseCache):
         db_name: str,
         decode_content: bool = False,
         serializer: Optional[SerializerType] = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(cache_name=db_name, **kwargs)
         skwargs = {'serializer': serializer, **kwargs} if serializer else kwargs
@@ -45,7 +45,7 @@ class GridFSCache(BaseCache):
             collection_name='redirects',
             connection=self.responses.connection,
             serializer=None,
-            **kwargs
+            **kwargs,
         )
 
     def delete(self, *args, **kwargs):
@@ -69,7 +69,7 @@ class GridFSDict(BaseStorage):
         collection_name=None,
         connection=None,
         serializer: Optional[SerializerType] = pickle_serializer,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(serializer=serializer, **kwargs)
         connection_kwargs = get_valid_kwargs(MongoClient.__init__, kwargs)

@@ -27,7 +27,11 @@ if TYPE_CHECKING:
     from ..models import CachedResponse
 
 # Nonstandard headers that can be used to override the request method
-METHOD_OVERRIDE_HEADERS = ['X-HTTP-Method-Override', 'X-HTTP-Method', 'X-Method-Override']
+METHOD_OVERRIDE_HEADERS = [
+    'X-HTTP-Method-Override',
+    'X-HTTP-Method',
+    'X-Method-Override',
+]
 
 logger = getLogger(__name__)
 
@@ -78,7 +82,10 @@ class CacheActions(RichMixin):
 
     @classmethod
     def from_request(
-        cls, cache_key: str, request: PreparedRequest, settings: Optional[CacheSettings] = None
+        cls,
+        cache_key: str,
+        request: PreparedRequest,
+        settings: Optional[CacheSettings] = None,
     ):
         """Initialize from request info and cache settings.
 
@@ -147,7 +154,7 @@ class CacheActions(RichMixin):
 
         * min-fresh
         * max-stale
-        * stale-if-error (if an error has occured)
+        * stale-if-error (if an error has occurred)
         * stale-while-revalidate
         """
         if cached_response is None:
@@ -321,7 +328,9 @@ class CacheActions(RichMixin):
         headers_match = create_key(self._request, **key_kwargs) == vary_cache_key
         if not headers_match:
             _log_vary_diff(
-                self._request.headers, cached_response.request.headers, key_kwargs['match_headers']
+                self._request.headers,
+                cached_response.request.headers,
+                key_kwargs['match_headers'],
             )
         return headers_match
 
@@ -335,7 +344,9 @@ def _is_method_allowed(request: PreparedRequest, settings: CacheSettings) -> boo
 
 
 def _log_vary_diff(
-    headers_1: MutableMapping[str, str], headers_2: MutableMapping[str, str], vary: List[str]
+    headers_1: MutableMapping[str, str],
+    headers_2: MutableMapping[str, str],
+    vary: List[str],
 ):
     """Log which specific headers specified by Vary did not match"""
     if logger.level > DEBUG:

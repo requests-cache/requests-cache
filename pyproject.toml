@@ -8,8 +8,21 @@ readme = "README.md"
 documentation = "https://requests-cache.readthedocs.io"
 homepage = "https://github.com/requests-cache/requests-cache"
 repository = "https://github.com/requests-cache/requests-cache"
-keywords = ["requests", "python-requests", "cache", "http", "http-client", "web",
-            "webscraping", "performance", "sqlite", "redis", "mongodb", "gridfs", "dynamodb"]
+keywords = [
+    "requests",
+    "python-requests",
+    "cache",
+    "http",
+    "http-client",
+    "web",
+    "webscraping",
+    "performance",
+    "sqlite",
+    "redis",
+    "mongodb",
+    "gridfs",
+    "dynamodb",
+]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -78,12 +91,31 @@ security = ["itsdangerous"]
 yaml     = ["pyyaml"]
 
 # All optional packages combined, for demo/evaluation purposes
-all      = ["boto3", "botocore", "itsdangerous", "pymongo", "pyyaml", "redis", "ujson"]
+all = [
+    "boto3",
+    "botocore",
+    "itsdangerous",
+    "pymongo",
+    "pyyaml",
+    "redis",
+    "ujson",
+]
 
 # Documentation
-docs     = ["matplotlib","furo", "linkify-it-py", "myst-parser", "sphinx", "sphinx-autodoc-typehints",
-            "sphinx-automodapi", "sphinx-copybutton", "sphinx-design", "sphinx-notfound-page",
-            "sphinxcontrib-apidoc", "sphinxext-opengraph"]
+docs = [
+    "matplotlib",
+    "furo",
+    "linkify-it-py",
+    "myst-parser",
+    "sphinx",
+    "sphinx-autodoc-typehints",
+    "sphinx-automodapi",
+    "sphinx-copybutton",
+    "sphinx-design",
+    "sphinx-notfound-page",
+    "sphinxcontrib-apidoc",
+    "sphinxext-opengraph",
+]
 
 [tool.poetry.dev-dependencies]
 # For unit + integration tests
@@ -115,10 +147,6 @@ sphinx-autobuild      = "^2021.3.14"
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.black]
-line-length = 100
-skip-string-normalization = true
-
 [tool.coverage.html]
 directory = 'test-reports'
 
@@ -143,23 +171,25 @@ exclude_lines = [
     'except ImportError:',
 ]
 
-[tool.isort]
-profile = 'black'
-line_length = 100
-skip_gitignore = true
-skip = [
-    'examples/',
-    'tests/compat/',
-]
-known_first_party = ['tests']
-
 [tool.mypy]
 ignore_missing_imports = true
 
-
 [tool.ruff]
-line-length = 120
+fix = true
+unsafe-fixes = true
+line-length = 100
 output-format = 'grouped'
-select = ['B', 'C4','C90', 'E', 'F']
+select = ['B', 'C4', 'C90', 'E', 'F']
 ignore = ['B023']
 target-version = 'py38'
+exclude = ['examples/']
+
+[tool.ruff.format]
+quote-style = 'single'
+
+[tool.ruff.lint.isort]
+known-first-party = ['tests']
+
+# Wrap lines to 100 chars, but don't error on unwrappable lines until 120 chars
+[tool.ruff.lint.pycodestyle]
+max-line-length = 120

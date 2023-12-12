@@ -4,7 +4,7 @@
 ## Pickle Vulnerabilities
 :::{warning}
 The python `pickle` module has [known security vulnerabilities](https://docs.python.org/3/library/pickle.html),
-potentially leading to code execution when deserialzing data.
+potentially leading to code execution when deserializing data.
 :::
 
 This means it should only be used to deserialize data that you trust hasn't been tampered with.

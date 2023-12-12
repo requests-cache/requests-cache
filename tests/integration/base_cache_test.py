@@ -334,9 +334,9 @@ class BaseCacheTest:
     def test_filter_request_headers(self, method):
         url = httpbin(method.lower())
         session = self.init_session(ignored_parameters=['Authorization'])
-        response = session.request(method, url, headers={"Authorization": "<Secret Key>"})
+        response = session.request(method, url, headers={'Authorization': '<Secret Key>'})
         assert response.from_cache is False
-        response = session.request(method, url, headers={"Authorization": "<Secret Key>"})
+        response = session.request(method, url, headers={'Authorization': '<Secret Key>'})
         assert response.from_cache is True
         assert response.request.headers.get('Authorization') == 'REDACTED'
 
@@ -344,9 +344,9 @@ class BaseCacheTest:
     def test_filter_request_query_parameters(self, method):
         url = httpbin(method.lower())
         session = self.init_session(ignored_parameters=['api_key'])
-        response = session.request(method, url, params={"api_key": "<Secret Key>"})
+        response = session.request(method, url, params={'api_key': '<Secret Key>'})
         assert response.from_cache is False
-        response = session.request(method, url, params={"api_key": "<Secret Key>"})
+        response = session.request(method, url, params={'api_key': '<Secret Key>'})
         assert response.from_cache is True
         query = urlparse(response.request.url).query
         query_dict = parse_qs(query)
@@ -357,7 +357,7 @@ class BaseCacheTest:
     def test_filter_request_post_data(self, post_type):
         method = 'POST'
         url = httpbin(method.lower())
-        body = {"api_key": "<Secret Key>"}
+        body = {'api_key': '<Secret Key>'}
         headers = {}
         if post_type == 'data':
             body = json.dumps(body)

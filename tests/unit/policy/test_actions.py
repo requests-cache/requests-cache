@@ -359,7 +359,7 @@ def test_is_usable__min_fresh(min_fresh, usable):
     ],
 )
 def test_is_usable__stale_if_error(stale_if_error, error, usable):
-    """For a response that expired 10 seconds ago, if an error occured while refreshing, it may be
+    """For a response that expired 10 seconds ago, if an error occurred while refreshing, it may be
     either accepted or rejected based on stale-if-error
     """
     request = Request(
@@ -379,7 +379,7 @@ def test_is_usable__stale_if_error(stale_if_error, error, usable):
     ],
 )
 def test_is_usable__stale_while_revalidate(stale_while_revalidate, usable):
-    """For a response that expired 10 seconds ago, if an error occured while refreshing, it may be
+    """For a response that expired 10 seconds ago, if an error occurred while refreshing, it may be
     either accepted or rejected based on stale-while-revalidate
     """
     request = Request(

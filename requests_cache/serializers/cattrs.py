@@ -54,7 +54,7 @@ class CattrStage(Stage):
         self,
         factory: Optional[Callable[..., Converter]] = None,
         decode_content: bool = False,
-        **kwargs
+        **kwargs,
     ):
         self.converter = init_converter(factory, **kwargs)
         self.decode_content = decode_content

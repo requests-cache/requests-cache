@@ -11,7 +11,15 @@ from collections import UserDict
 from datetime import datetime
 from logging import getLogger
 from pickle import PickleError
-from typing import TYPE_CHECKING, Iterable, Iterator, List, MutableMapping, Optional, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Iterable,
+    Iterator,
+    List,
+    MutableMapping,
+    Optional,
+    TypeVar,
+)
 from warnings import warn
 
 from requests import Request, Response
@@ -231,7 +239,7 @@ class BaseCache:
 
         for old_cache_key in old_keys:
             response = self.responses[old_cache_key]
-            # Adjust empty request body for reponses cached before 1.0
+            # Adjust empty request body for responses cached before 1.0
             if response.request.body == b'None':
                 response.request.body = b''
             new_cache_key = self.create_key(response.request)
@@ -304,7 +312,10 @@ class BaseStorage(MutableMapping[KT, VT], ABC):
     """
 
     def __init__(
-        self, serializer: Optional[SerializerType] = None, decode_content: bool = False, **kwargs
+        self,
+        serializer: Optional[SerializerType] = None,
+        decode_content: bool = False,
+        **kwargs,
     ):
         self.serializer = init_serializer(serializer, decode_content)
         logger.debug(f'Initialized {type(self).__name__} with serializer: {self.serializer}')

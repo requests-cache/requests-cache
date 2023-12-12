@@ -62,7 +62,7 @@ def create_key(
 
     Args:
         request: Request object to generate a cache key from
-        ignored_parameters: Request paramters, headers, and/or JSON body params to exclude
+        ignored_parameters: Request parameters, headers, and/or JSON body params to exclude
         match_headers: Match only the specified headers, or ``True`` to match all headers
         request_kwargs: Additional keyword arguments for :py:func:`~requests.request`
     """
@@ -112,7 +112,7 @@ def normalize_request(
 
     Args:
         request: Request object to normalize
-        ignored_parameters: Request paramters, headers, and/or JSON body params to exclude
+        ignored_parameters: Request parameters, headers, and/or JSON body params to exclude
     """
     if isinstance(request, Request):
         # For a multipart POST request that hasn't been prepared, we need to patch the form boundary

@@ -195,7 +195,7 @@ replacements are listed below. If this causes problems for you, please open an i
 
 ⚠️ **Breaking changes:**
 
-* After initialization, cache settings can only be accesed and modified via `CachedSession.settings`. Previously, some settings could be modified by setting them on either `CachedSession` or `BaseCache`. In some cases this could silently fail or otherwise have undefined behavior.
+* After initialization, cache settings can only be accessed and modified via `CachedSession.settings`. Previously, some settings could be modified by setting them on either `CachedSession` or `BaseCache`. In some cases this could silently fail or otherwise have undefined behavior.
 * `BaseCache.urls` has been replaced with a method that returns a list of URLs.
 * DynamoDB table structure has changed. If you are using the DynamoDB backend, you will need to create a new table when upgrading to 1.0. See [DynamoDB backend docs](https://requests-cache.readthedocs.io/en/stable/user_guide/backends/dynamodb.html#dynamodb) for more details.
 
@@ -306,7 +306,7 @@ Backport fixes from 1.0:
 * Fix `CachedResponse` serialization behavior when using stdlib `pickle` in a custom serializer
 
 ### 0.8.1 (2021-09-15)
-* Redact `ingored_parameters` from `CachedResponse.url` (if used for credentials or other sensitive info)
+* Redact `ignored_parameters` from `CachedResponse.url` (if used for credentials or other sensitive info)
 * Fix an incorrect debug log message about skipping cache write
 * Add some additional aliases for `DbDict`, etc. so fully qualified imports don't break
 
@@ -453,7 +453,7 @@ The following changes are meant to make certain behaviors more obvious for new u
 * Add more detailed repr methods for `CachedSession`, `CachedResponse`, and `BaseCache`
 * Update `BaseCache.urls` to only skip invalid responses, not delete them (for better performance)
 
-📦 **Depedencies:**
+📦 **Dependencies:**
 * Add minimum `requests` version of `2.17`
 * Add `attrs` as a dependency for improved serialization models
 * Add `cattrs` as an optional dependency
@@ -550,7 +550,7 @@ Thanks to [Code Shelter](https://www.codeshelter.co) and [contributors](https://
 * Update usage of deprecated MongoClient `save()` method
 * Replace some old bugs with new and different bugs, just to keep life interesting
 
-📦 **Depedencies:**
+📦 **Dependencies:**
 * Add `itsdangerous` as a dependency for secure serialization
 * Add `url-normalize` as a dependency for better request normalization and reducing duplications
 

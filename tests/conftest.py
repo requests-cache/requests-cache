@@ -264,7 +264,7 @@ def get_mock_adapter() -> Adapter:
     adapter.register_uri(ANY_METHOD, MOCKED_URL_404, status_code=404)
     adapter.register_uri(ANY_METHOD, MOCKED_URL_500, status_code=500)
     adapter.register_uri(
-        ANY_METHOD, MOCKED_URL_200_404, [{"status_code": 200}, {"status_code": 404}]
+        ANY_METHOD, MOCKED_URL_200_404, [{'status_code': 200}, {'status_code': 404}]
     )
     return adapter
 

@@ -6,7 +6,11 @@ import pytest
 from requests import Response
 from urllib3.response import HTTPResponse
 
-from requests_cache.models.response import CachedResponse, OriginalResponse, format_file_size
+from requests_cache.models.response import (
+    CachedResponse,
+    OriginalResponse,
+    format_file_size,
+)
 from requests_cache.policy import CacheActions, utcnow
 from tests.conftest import MOCKED_URL
 
@@ -33,7 +37,7 @@ def test_basic_attrs(mock_session):
         OriginalResponse.wrap_response(Response(), CacheActions()),
     ],
 )
-def test_original_reponse(response):
+def test_original_response(response):
     """Test both instantiating directly and wrapping a `requests.Response`"""
     response = OriginalResponse()
     assert response._content is False

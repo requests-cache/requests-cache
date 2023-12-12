@@ -46,7 +46,7 @@ def test_session_is_a_class_with_original_attributes(installed_session):
 
 def test_inheritance_after_monkey_patch(installed_session):
     class FooSession(requests.Session):
-        __attrs__ = requests.Session.__attrs__ + ["new_one"]
+        __attrs__ = requests.Session.__attrs__ + ['new_one']
 
         def __init__(self, param):
             self.param = param
@@ -55,7 +55,7 @@ def test_inheritance_after_monkey_patch(installed_session):
     s = FooSession(1)
     assert isinstance(s, CachedSession)
     assert s.param == 1
-    assert "new_one" in s.__attrs__
+    assert 'new_one' in s.__attrs__
 
 
 @patch.object(SQLiteCache, 'clear')

@@ -34,24 +34,28 @@ cd requests-cache
 poetry install -v -E all
 ```
 
-## Pre-commit Hooks
-CI jobs will run code style checks, type checks, linting, etc. If you would like to run these same
-checks locally, you can use [pre-commit](https://github.com/pre-commit/pre-commit).
-This is optional but recommended.
+## Linting & Formatting
+Code linting and formatting tools used include:
+* [ruff (linter)](https://docs.astral.sh/ruff/linter)
+* [ruff (formatter)](https://docs.astral.sh/ruff/formatter)
+* [mypy](https://mypy.readthedocs.io/en/stable/getting_started.html)
 
-To install pre-commit hooks:
+All of these will be run by GitHub Actions on pull requests. You can also run them locally with:
+```bash
+nox -e lint
+```
+
+#### Pre-Commit Hooks
+Optionally, you can use [pre-commit](https://github.com/pre-commit/pre-commit) to automatically
+run all of these checks before a commit is made:
 ```bash
 pre-commit install
 ```
 
-To manually run checks on all files:
-```bash
-pre-commit run --all-files
-# Alternative alias with nox:
-nox -e lint
-```
+This can save you some time in that it will show you errors immediately rather than waiting for CI
+jobs to complete, or if you forget to manually run the checks before committing.
 
-To disable pre-commit hooks:
+You can disable these hooks at any time with:
 ```bash
 pre-commit uninstall
 ```
@@ -131,7 +135,7 @@ open docs/_build/html/index.html
 xdg-open docs/_build/html/index.html
 ```
 
-You can also use [sphinx-autobuild](https://github.com/executablebooks/sphinx-autobuild) to rebuild the docs and live reload in the browser whenver doc contents change:
+You can also use [sphinx-autobuild](https://github.com/executablebooks/sphinx-autobuild) to rebuild the docs and live reload in the browser whenever doc contents change:
 ```bash
 nox -e livedocs
 ```

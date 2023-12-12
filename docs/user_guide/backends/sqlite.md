@@ -102,6 +102,6 @@ available:
   - AWS [EC2](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/InstanceStorage.html),
     [Lambda (depending on configuration)](https://aws.amazon.com/blogs/compute/choosing-between-aws-lambda-data-storage-options-in-web-apps/),
     and some other AWS services use ephemeral storage that only persists for the lifetime of the
-    instance. This is fine for short-term caching. For longer-term persistance, you can store the
+    instance. This is fine for short-term caching. For longer-term persistence, you can store the
     cache on an
     [attached EBS volume](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-attaching-volume.html).

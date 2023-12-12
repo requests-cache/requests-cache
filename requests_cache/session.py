@@ -372,7 +372,7 @@ class CachedSession(CacheMixin, OriginalSession):
             is not expired
         match_headers: Request headers to match, when `Vary` response header is not available. May
             be a list of headers, or ``True`` to match all.
-        ignored_parameters: Request paramters, headers, and/or JSON body params to exclude from both
+        ignored_parameters: Request parameters, headers, and/or JSON body params to exclude from both
             request matching and cached request data
         stale_if_error: Return a stale response if a new request raises an exception. Optionally
             accepts a time value representing maximum staleness to accept.
