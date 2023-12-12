@@ -5,7 +5,7 @@ specifying how long to store responses, either with a single expiration value, g
 or {ref}`cache headers <headers>`.
 
 The simplest option is to initialize the cache with an `expire_after` value, which will apply to all
-reponses:
+responses:
 ```python
 >>> # Set expiration for the session using a value in seconds
 >>> session = CachedSession(expire_after=360)

@@ -131,7 +131,7 @@ open docs/_build/html/index.html
 xdg-open docs/_build/html/index.html
 ```
 
-You can also use [sphinx-autobuild](https://github.com/executablebooks/sphinx-autobuild) to rebuild the docs and live reload in the browser whenver doc contents change:
+You can also use [sphinx-autobuild](https://github.com/executablebooks/sphinx-autobuild) to rebuild the docs and live reload in the browser whenever doc contents change:
 ```bash
 nox -e livedocs
 ```

@@ -9,7 +9,7 @@ There are some additional options to configure how you want requests to be match
 ## Selective Parameter Matching
 By default, all normalized request parameters are matched. In some cases, there may be request
 parameters that you don't want to match. For example, an authentication token will change frequently
-but not change reponse content.
+but not change response content.
 
 Use the `ignored_parameters` option if you want to ignore specific parameters.
 
@@ -154,7 +154,7 @@ header variations like order, casing, whitespace, etc. In some cases, you may be
 optimize your requests with some additional header normalization.
 
 For example, let's say you're working with a site that supports content negotiation using the
-`Accept-Encoding` header, and the only varation you care about is whether you requested gzip
+`Accept-Encoding` header, and the only variation you care about is whether you requested gzip
 encoding. This example will increase cache hits by ignoring variations you don't care about:
 ```python
 from requests import PreparedRequest
