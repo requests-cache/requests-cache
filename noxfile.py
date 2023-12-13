@@ -10,6 +10,7 @@ Notes:
 import platform
 from os import getenv
 from os.path import join
+from pathlib import Path
 from shutil import rmtree
 
 import nox
@@ -21,11 +22,15 @@ nox.options.sessions = ['lint', 'cov']
 LIVE_DOCS_PORT = 8181
 LIVE_DOCS_IGNORE = ['*.pyc', '*.tmp', join('**', 'modules', '*')]
 LIVE_DOCS_WATCH = ['requests_cache', 'examples']
-CLEAN_DIRS = ['dist', 'build', join('docs', '_build'), join('docs', 'modules')]
+
+DOCS_DIR = Path('docs')
+DOC_BUILD_DIR = DOCS_DIR / '_build' / 'html'
+TEST_DIR = Path('tests')
+CLEAN_DIRS = ['dist', 'build', DOCS_DIR / '_build', DOCS_DIR / 'modules']
 
 PYTHON_VERSIONS = ['3.8', '3.9', '3.10', '3.11', '3.12', 'pypy3.9', 'pypy3.10']
-UNIT_TESTS = join('tests', 'unit')
-INTEGRATION_TESTS = join('tests', 'integration')
+UNIT_TESTS = TEST_DIR / 'unit'
+INTEGRATION_TESTS = TEST_DIR / 'integration'
 STRESS_TEST_MULTIPLIER = 10
 DEFAULT_COVERAGE_FORMATS = ['html', 'term']
 # Run tests in parallel, grouped by test module
@@ -92,8 +97,13 @@ def stress_test(session):
 @session(python=False)
 def docs(session):
     """Build Sphinx documentation"""
-    cmd = 'sphinx-build docs docs/_build/html -j auto'
-    session.run(*cmd.split(' '))
+    session.run('sphinx-build', 'docs', DOC_BUILD_DIR, '-j', 'auto')
+
+
+@session(python=False)
+def linkcheck(session):
+    """Check documentation for dead links"""
+    session.run('sphinx-build', 'docs', DOC_BUILD_DIR, '-b', 'linkcheck')
 
 
 @session(python=False)

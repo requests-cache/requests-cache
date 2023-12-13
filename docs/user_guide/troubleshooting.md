@@ -20,7 +20,7 @@ import logging
 logging.basicConfig(level='DEBUG')
 ```
 
-For prettier, more readable logs, try the [rich](https://github.com/willmcgugan/rich) library's
+For prettier, more readable logs, try the [rich](https://github.com/Textualize/rich) library's
 [logging handler](https://rich.readthedocs.io/en/stable/logging.html):
 ```python
 import logging
@@ -73,7 +73,7 @@ Here are some error messages you may see either in the logs or (more rarely) in 
   {ref}`stale_if_error <request-errors>` option is working as intended.
 * **{py:exc}`~requests.RequestException`:** These are general request errors not specific to
   requests-cache. See `requests` documentation on
-  [Errors and Exceptions](https://2.python-requests.org/en/master/user/quickstart/#errors-and-exceptions)
+  [Errors and Exceptions](https://requests.readthedocs.io/en/latest/user/quickstart/#errors-and-exceptions)
   for more details.
 * **{py:exc}`ModuleNotFoundError`**: `No module named 'requests_cache.core'`: This module was deprecated in `v0.6` and removed in `v0.8`. Please import from `requests_cache` instead of `requests_cache.core`.
 * **{py:exc}`ImportError`:** Indicates a missing required or optional dependency.

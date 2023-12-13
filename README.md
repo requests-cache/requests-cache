@@ -46,7 +46,7 @@ First, install with pip:
 pip install requests-cache
 ```
 
-Then, use [requests_cache.CachedSession](https://requests-cache.readthedocs.io/en/stable/session.html)
+Then, use [requests_cache.CachedSession](https://requests-cache.readthedocs.io/en/stable/modules/requests_cache.session.html)
 to make your requests. It behaves like a normal
 [requests.Session](https://requests.readthedocs.io/en/latest/user/advanced/#session-objects),
 but with caching behavior.

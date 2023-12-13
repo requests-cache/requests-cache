@@ -1,10 +1,10 @@
 # {fas}`info-circle` Advanced Requests
 Following are some tips on using requests-cache with some of the more
-[advanced features](https://docs.python-requests.org/en/latest/user/advanced/) of the requests
+[advanced features](https://requests.readthedocs.io/en/latest/user/advanced/) of the requests
 library.
 
 ## Event Hooks
-Requests has an [event hook](https://requests.readthedocs.io/en/master/user/advanced/#event-hooks)
+Requests has an [event hook](https://requests.readthedocs.io/en/latest/user/advanced/#event-hooks)
 system that can be used to add custom behavior into different parts of the request process.
 It can be used, for example, for request throttling:
 
@@ -36,7 +36,7 @@ It can be used, for example, for request throttling:
 :::
 
 ## Streaming Requests
-If you use [streaming requests](https://2.python-requests.org/en/master/user/advanced/#id9), you
+If you use [streaming requests](https://requests.readthedocs.io/en/latest/user/advanced/#id9), you
 can use the same code to iterate over both cached and non-cached requests. Cached response content
 will have already been read (i.e., consumed), but will be available for re-reading so it behaves like
 the original streamed response:

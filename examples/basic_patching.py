@@ -35,7 +35,7 @@ def main():
     requests_cache.uninstall_cache()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     t = time.time()
     main()
     print('Elapsed: %.3f seconds' % (time.time() - t))
