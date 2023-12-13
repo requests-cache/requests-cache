@@ -1,16 +1,14 @@
 # Contributing Guide
 
-## Bug Reports & Feedback
-If you discover a bug, want to propose a new feature, or have other feedback about requests-cache, please
-[create an issue](https://github.com/requests-cache/requests-cache/issues/new/choose)!
+## Bug Reports, Feedback, and Discussion
+If you discover a bug or want to request a new feature, please
+[create an issue](https://github.com/requests-cache/requests-cache/issues/new/choose).
 
-## Project Discussion
-If you want to discuss ideas about the project in general, or if you have an issue or PR that hasn't
-received a response in a timely manner, please reach out on the Code Shelter chat server, under
-[projects/requests-cache](https://codeshelter.zulipchat.com/#narrow/stream/186993-projects/topic/requests-cache).
+If you want to discuss ideas about the project in general, or have a more open-ended question or feedback,
+please use [Discussions](https://github.com/orgs/requests-cache/discussions).
 
 ## Development Status
-Requests-cache is under active development!  Contributions are very welcome, and will be attributed on the
+Requests-cache is under active development! Contributions are very welcome, and will be attributed on the
 [Contributors](https://requests-cache.readthedocs.io/en/main/project_info/contributors.html)
 page.
 
@@ -34,7 +32,7 @@ cd requests-cache
 poetry install -v -E all
 ```
 
-## Linting & Formatting
+### Linting & Formatting
 Code linting and formatting tools used include:
 * [ruff (linter)](https://docs.astral.sh/ruff/linter)
 * [ruff (formatter)](https://docs.astral.sh/ruff/formatter)
@@ -194,7 +192,7 @@ pip install -U requests-cache
 
 Notes:
 * See python packaging docs on
-[pre-release versioning](https://packaging.python.org/guides/distributing-packages-using-setuptools/#pre-release-versioning) for more info on how this works
+[pre-release versioning](https://packaging.python.org/en/latest/guides/distributing-packages-using-setuptools/#pre-release-versioning) for more info on how this works
 * requests-cache pre-release docs can be found here: https://requests-cache.readthedocs.io/en/main/
 * Any collaborator can trigger a pre-release build for requests-cache by going to
   **Actions > Deploy > Run workflow**

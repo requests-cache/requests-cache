@@ -471,7 +471,7 @@ The following changes are meant to make certain behaviors more obvious for new u
 * Run pre-release tests for each supported version of `requests`
 * Packaging is now managed by Poetry
   * For users, installation still works the same.
-  * For developers, see [Contributing Guide](https://requests-cache.readthedocs.io/en/stable/contributing.html) for details
+  * For developers, see [Contributing Guide](https://requests-cache.readthedocs.io/en/stable/project_info/contributing.html) for details
 
 
 -----
@@ -499,7 +499,7 @@ The following changes are meant to make certain behaviors more obvious for new u
 ## 0.6.0 (2021-04-09)
 [See all issues and PRs for 0.6](https://github.com/requests-cache/requests-cache/milestone/1?closed=1)
 
-Thanks to [Code Shelter](https://www.codeshelter.co) and [contributors](https://requests-cache.readthedocs.io/en/stable/contributors.html) for making this release possible!
+Thanks to [Code Shelter](https://www.codeshelter.co) and [contributors](https://requests-cache.readthedocs.io/en/stable/project_info/contributors.html) for making this release possible!
 
 🕗 **Expiration:**
 * Cached responses are now stored with an absolute expiration time, so `CachedSession.expire_after`
@@ -529,12 +529,12 @@ Thanks to [Code Shelter](https://www.codeshelter.co) and [contributors](https://
 * Add optional support for `itsdangerous` for more secure serialization
 
 **Other features:**
-* Add `CacheMixin` class to make the features of `CachedSession` usable as a mixin class, for [compatibility with other requests-based libraries](https://requests-cache.readthedocs.io/en/stable/advanced_usage.html#library-compatibility).
+* Add `CacheMixin` class to make the features of `CachedSession` usable as a mixin class, for [compatibility with other requests-based libraries](https://requests-cache.readthedocs.io/en/stable/user_guide/compatibility.html).
 * Add `HEAD` to default `allowable_methods`
 
 📗 **Docs & Tests:**
 * Add type annotations to main functions/methods in public API, and include in documentation on [readthedocs](https://requests-cache.readthedocs.io/en/stable/)
-* Add [Contributing Guide](https://requests-cache.readthedocs.io/en/stable/contributing.html), [Security](https://requests-cache.readthedocs.io/en/stable/security.html) info, and more examples & detailed usage info in [User Guide](https://requests-cache.readthedocs.io/en/stable/user_guide.html) and [Advanced Usage](https://requests-cache.readthedocs.io/en/stable/advanced_usage.html) sections.
+* Add [Contributing Guide](https://requests-cache.readthedocs.io/en/stable/project_info/contributing.html), [Security](https://requests-cache.readthedocs.io/en/stable/user_guide/security.html) info, and more examples & detailed usage info in [User Guide](https://requests-cache.readthedocs.io/en/stable/user_guide.html) section.
 * Increase test coverage and rewrite most tests using pytest
 * Add containerized backends for both local and CI integration testing
 

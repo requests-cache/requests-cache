@@ -12,7 +12,7 @@ This example demonstrates the following features:
   expiration.
 * {ref}`conditional-requests`: The GitHub API also supports conditional requests. Even after
   responses expire, we can still make use of the cache until the remote content actually changes.
-* [Rate limiting](https://docs.github.com/en/rest/overview/resources-in-the-rest-api#rate-limiting):
+* [Rate limiting](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api):
   The GitHub API is rate-limited at 5000 requests per hour if authenticated, or only 60 requests per
   hour otherwise. This makes caching especially useful, because cache hits and `304 Not Modified`
   responses (from conditional requests) are not counted against the rate limit.

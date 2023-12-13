@@ -10,7 +10,7 @@ Here is a full list of backends available, and any extra dependencies required:
 Backend                                               | Class                      | Alias          | Dependencies
 ------------------------------------------------------|----------------------------|----------------|----------------------------------------------------------
 ![](../_static/sqlite_32px.png)     {ref}`sqlite`     | {py:class}`.SQLiteCache`   | `'sqlite'`     |
-![](../_static/redis_32px.png)      {ref}`redis`      | {py:class}`.RedisCache`    | `'redis'`      | [redis-py](https://github.com/andymccurdy/redis-py)
+![](../_static/redis_32px.png)      {ref}`redis`      | {py:class}`.RedisCache`    | `'redis'`      | [redis-py](https://github.com/redis/redis-py)
 ![](../_static/mongodb_32px.png)    {ref}`mongodb`    | {py:class}`.MongoCache`    | `'mongodb'`    | [pymongo](https://github.com/mongodb/mongo-python-driver)
 ![](../_static/mongodb_32px.png)    {ref}`gridfs`     | {py:class}`.GridFSCache`   | `'gridfs'`     | [pymongo](https://github.com/mongodb/mongo-python-driver)
 ![](../_static/dynamodb_32px.png)   {ref}`dynamodb`   | {py:class}`.DynamoDbCache` | `'dynamodb'`   | [boto3](https://github.com/boto/boto3)

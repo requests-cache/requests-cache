@@ -120,7 +120,7 @@ session = CachedSession(stale_if_error=timedelta(minutes=5))
 
 In addition to HTTP error codes, `stale_if_error` also applies to python exceptions (typically a
 {py:exc}`~requests.RequestException`). See `requests` documentation on
-[Errors and Exceptions](https://2.python-requests.org/en/master/user/quickstart/#errors-and-exceptions)
+[Errors and Exceptions](https://requests.readthedocs.io/en/latest/user/quickstart/#errors-and-exceptions)
 for more details on request errors in general.
 
 (stale-while-revalidate)=
