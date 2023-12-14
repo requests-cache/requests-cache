@@ -93,7 +93,7 @@ use one of the two following strategies to balance cache freshness and performan
 
 **Define exactly how long to keep responses:**
 
-Use the `expire_after` parameter to set a fixed expiration time for all responses:
+Use the `expire_after` parameter to set a fixed expiration time for all new responses:
 ```python
 from requests_cache import CachedSession
 from datetime import timedelta

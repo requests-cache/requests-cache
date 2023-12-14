@@ -5,10 +5,17 @@ specifying how long to store responses, either with a single expiration value, g
 or {ref}`cache headers <headers>`.
 
 The simplest option is to initialize the cache with an `expire_after` value, which will apply to all
-responses:
+new responses:
 ```python
 >>> # Set expiration for the session using a value in seconds
 >>> session = CachedSession(expire_after=360)
+```
+
+Expiration can also be set via request and response headers, per URL, or per individual requests.
+
+```{note}
+Note that setting an expiration value applies only to new responses, **not** retroactively.
+See {ref}`reset` for more details.
 ```
 
 (precedence)=
@@ -123,6 +130,22 @@ In addition to HTTP error codes, `stale_if_error` also applies to python excepti
 [Errors and Exceptions](https://requests.readthedocs.io/en/latest/user/quickstart/#errors-and-exceptions)
 for more details on request errors in general.
 
+(reset)=
+## Resetting Expiration
+Changing the session's expiration settings does not apply retroactively.
+
+If you cache some responses with one expiration value, and later set a different value, the new
+expiration will only apply to new responses (including refreshes of expired responses).
+
+Options to apply a new expiration value include:
+* Clearing the cache
+* {ref}`Refreshing <refresh>` individual requests
+* Use :py:meth:`.BaseCache.reset_expiration`:
+```python
+# Reset expiration for all responses to 30 days from now
+>>> session.cache.reset_expiration(timedelta(days=30))
+```
+
 (stale-while-revalidate)=
 ## Asynchronous Revalidation
 You can use the `stale_while_revalidate` option to improve performance when refreshing responses.
@@ -178,12 +201,6 @@ You can also remove responses older than a certain time:
 session.cache.delete(older_than=timedelta(days=7))
 ```
 
-Or apply a new expiration value to previously cached responses:
-```python
-# Reset expiration for all responses to 30 days from now
->>> session.cache.reset_expiration(timedelta(days=30))
-```
-
 Finally, you can delete individual responses matching specific requests or
 {ref}`cache keys <custom-matching>`:
 ```python
@@ -222,6 +239,7 @@ The `expire_after` argument can be used to override the session's expiration for
 >>> session.get('https://httpbin.org/get', expire_after=60)
 ```
 
+(refresh)=
 ### Manual Refresh
 If you want to manually refresh a response before it expires, you can use the `refresh` argument.
 
