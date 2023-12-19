@@ -45,6 +45,7 @@
 
 🪲 **Bugfixes:**
 * Fix loading cached JSON content with `decode_content=True` when the root element is a list
+* Fix checking Content-Type with charset when normalizing request body
 * Fix `BaseCache.recreate_keys()` to normalize response bodies with `b'None'`
 * Fix `BaseCache.contains()` for multipart POST requests
 * Fix `CachedResponse.history` not being fully deserialized on python<=3.8
