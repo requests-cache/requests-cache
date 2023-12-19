@@ -154,10 +154,14 @@ def normalize_body(request: AnyPreparedRequest, ignored_parameters: ParamList) -
     """Normalize and filter a request body if possible, depending on Content-Type"""
     if not request.body:
         return b''
-    content_type = request.headers.get('Content-Type')
+
+    filtered_body: Union[str, bytes] = request.body
+    try:
+        content_type = request.headers['Content-Type'].split(';')[0].lower()
+    except (AttributeError, KeyError):
+        content_type = ''
 
     # Filter and sort params if possible
-    filtered_body: Union[str, bytes] = request.body
     if content_type == 'application/json':
         filtered_body = normalize_json_body(request.body, ignored_parameters)
     elif content_type == 'application/x-www-form-urlencoded':
