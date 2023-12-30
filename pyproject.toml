@@ -119,7 +119,7 @@ docs = [
 
 [tool.poetry.dev-dependencies]
 # For unit + integration tests
-coverage              = "^7.1"
+coverage              = "^7.4"
 psutil                = "^5.0"
 pytest                = "^7.3"
 pytest-clarity        = "^1.0.1"
