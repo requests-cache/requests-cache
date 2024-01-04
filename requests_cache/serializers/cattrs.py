@@ -149,7 +149,7 @@ def make_decimal_timedelta_converter(**kwargs) -> Converter:
 def _decode_content(response: CachedResponse, response_dict: Dict) -> Dict:
     """Decode response body into a human-readable format, if possible"""
     # Decode body as JSON
-    if response.headers.get('Content-Type').startswith('application/json'):
+    if response.headers.get('Content-Type').startswith('application/json', 'application/ld+json', 'application/vnd.api+json'):
         try:
             response_dict['_decoded_content'] = response.json()
             response_dict.pop('_content', None)
