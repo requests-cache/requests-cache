@@ -204,11 +204,6 @@ def test_params_positional_arg(mock_session):
     assert 'param_1=1' in response.url
 
 
-def test_https(mock_session):
-    assert mock_session.get(MOCKED_URL_HTTPS, verify=True).from_cache is False
-    assert mock_session.get(MOCKED_URL_HTTPS, verify=True).from_cache is True
-
-
 def test_json(mock_session):
     assert mock_session.get(MOCKED_URL_JSON).from_cache is False
     response = mock_session.get(MOCKED_URL_JSON)
@@ -216,11 +211,21 @@ def test_json(mock_session):
     assert response.json()['message'] == 'mock json response'
 
 
+def test_https(mock_session):
+    assert mock_session.get(MOCKED_URL_HTTPS, verify=True).from_cache is False
+    assert mock_session.get(MOCKED_URL_HTTPS, verify=True).from_cache is True
+
+
 def test_verify(mock_session):
     mock_session.get(MOCKED_URL)
-    assert mock_session.get(MOCKED_URL).from_cache is True
-    assert mock_session.get(MOCKED_URL, verify=False).from_cache is False
-    assert mock_session.get(MOCKED_URL, verify='/path/to/cert').from_cache is False
+    r1 = mock_session.get(MOCKED_URL, verify=True)
+    r2 = mock_session.get(MOCKED_URL, verify='/path/to/cert')
+    r3 = mock_session.get(MOCKED_URL, verify=False)
+
+    assert r1.from_cache is True
+    assert r2.from_cache is True
+    assert r3.from_cache is False
+    assert r1.cache_key == r2.cache_key
 
 
 def test_response_history(mock_session):

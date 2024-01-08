@@ -23,7 +23,8 @@
 * Handle a corner case with streaming requests, conditional requests, and redirects
 * When redacting ignored parameters from a cached response, keep the rest of the original URL and headers without normalizing
 * Add `CachedHTTPResponse._request_url` property for compatibility with urllib3
-* Fix form boundary used for cached multipart requests to compy with RFC 2046
+* Fix form boundary used for cached multipart requests to comply with RFC 2046
+* If an explicit CA bundle path is passed via `verify` param, cache the response under the same key as `verify=True`
 
 ⚠️ **Deprecations & removals:**
 * Drop support for python 3.7
