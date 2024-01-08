@@ -13,8 +13,8 @@ from threading import RLock
 from typing import Iterator, Optional
 
 from ..serializers import SERIALIZERS, SerializerType, json_serializer
-from . import BaseCache, BaseStorage
-from .sqlite import AnyPath, SQLiteDict, get_cache_path
+from . import BaseCache, BaseStorage, StrOrPath
+from .sqlite import SQLiteDict, get_cache_path
 
 
 class FileCache(BaseCache):
@@ -22,7 +22,7 @@ class FileCache(BaseCache):
 
     Args:
         cache_name: Base directory for cache files
-        use_cache_dir: Store datebase in a user cache directory (e.g., `~/.cache/`)
+        use_cache_dir: Store database in a user cache directory (e.g., `~/.cache/`)
         use_temp: Store cache files in a temp directory (e.g., ``/tmp/http_cache/``).
             Note: if ``cache_name`` is an absolute path, this option will be ignored.
         decode_content: Decode JSON or text response body into a human-readable format
@@ -32,7 +32,7 @@ class FileCache(BaseCache):
 
     def __init__(
         self,
-        cache_name: AnyPath = 'http_cache',
+        cache_name: StrOrPath = 'http_cache',
         use_temp: bool = False,
         decode_content: bool = True,
         serializer: Optional[SerializerType] = None,
@@ -72,7 +72,7 @@ class FileDict(BaseStorage):
 
     def __init__(
         self,
-        cache_name: AnyPath,
+        cache_name: StrOrPath,
         use_temp: bool = False,
         use_cache_dir: bool = False,
         extension: Optional[str] = None,

@@ -1,7 +1,6 @@
 """Main classes to add caching features to :py:class:`requests.Session`"""
 from contextlib import contextmanager, nullcontext
 from logging import getLogger
-from pathlib import Path
 from threading import RLock, Thread
 from typing import TYPE_CHECKING, Iterable, MutableMapping, Optional, Union
 
@@ -10,7 +9,7 @@ from requests import Session as OriginalSession
 from requests.hooks import dispatch_hook
 
 from ._utils import get_valid_kwargs, patch_form_boundary
-from .backends import BackendSpecifier, init_backend
+from .backends import BackendSpecifier, StrOrPath, init_backend
 from .models import AnyResponse, CachedResponse, OriginalResponse
 from .policy import (
     DEFAULT_CACHE_NAME,
@@ -43,7 +42,7 @@ class CacheMixin(MIXIN_BASE):
 
     def __init__(
         self,
-        cache_name: Union[str, Path] = DEFAULT_CACHE_NAME,
+        cache_name: StrOrPath = DEFAULT_CACHE_NAME,
         backend: Optional[BackendSpecifier] = None,
         serializer: Optional[SerializerType] = None,
         expire_after: ExpirationTime = -1,
@@ -59,7 +58,7 @@ class CacheMixin(MIXIN_BASE):
         stale_if_error: Union[bool, int] = False,
         **kwargs,
     ):
-        self.cache = init_backend(str(cache_name), backend, serializer=serializer, **kwargs)
+        self.cache = init_backend(cache_name, backend, serializer=serializer, **kwargs)
         self.settings = CacheSettings.from_kwargs(
             expire_after=expire_after,
             urls_expire_after=urls_expire_after,
