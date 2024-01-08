@@ -13,7 +13,7 @@ from os.path import getsize, isfile
 from pathlib import Path
 from tempfile import gettempdir
 from time import sleep, time
-from typing import Collection, Iterator, List, Optional, Tuple, Type, Union
+from typing import Collection, Iterator, List, Optional, Tuple, Type
 
 from platformdirs import user_cache_dir
 
@@ -21,14 +21,13 @@ from .._utils import chunkify, get_valid_kwargs
 from ..models.response import CachedResponse
 from ..policy import ExpirationTime
 from ..serializers import SerializerType, pickle_serializer
-from . import BaseCache, BaseStorage
+from . import BaseCache, BaseStorage, StrOrPath
 from .base import VT
 
 MEMORY_URI = 'file::memory:?cache=shared'
 SQLITE_MAX_VARIABLE_NUMBER = 999
 DEFAULT_WRITE_RETRIES = 3
 
-AnyPath = Union[Path, str]
 logger = getLogger(__name__)
 
 
@@ -52,7 +51,7 @@ class SQLiteCache(BaseCache):
 
     def __init__(
         self,
-        db_path: AnyPath = 'http_cache',
+        db_path: StrOrPath = 'http_cache',
         serializer: Optional[SerializerType] = None,
         **kwargs,
     ):
@@ -69,7 +68,7 @@ class SQLiteCache(BaseCache):
         )
 
     @property
-    def db_path(self) -> AnyPath:
+    def db_path(self) -> StrOrPath:
         return self.responses.db_path
 
     def clear(self):
@@ -128,7 +127,8 @@ class SQLiteCache(BaseCache):
         """A more efficient implementation of deleting expired responses in SQL"""
         with self.responses._lock, self.responses.connection(commit=True) as con:
             con.execute(
-                f'DELETE FROM {self.responses.table_name} WHERE expires <= ?', (round(time()),)
+                f'DELETE FROM {self.responses.table_name} WHERE expires <= ?',
+                (round(time()),),
             )
 
     def _prune_redirects(self):
@@ -195,7 +195,7 @@ class SQLiteDict(BaseStorage):
 
     def __init__(
         self,
-        db_path: AnyPath,
+        db_path: StrOrPath,
         table_name: str = 'http_cache',
         busy_timeout: Optional[int] = None,
         fast_save: bool = False,
@@ -457,8 +457,8 @@ def _format_sequence(values: Collection) -> Tuple[str, List]:
 
 
 def _get_sqlite_cache_path(
-    db_path: AnyPath, use_cache_dir: bool, use_temp: bool, use_memory: bool = False
-) -> AnyPath:
+    db_path: StrOrPath, use_cache_dir: bool, use_temp: bool, use_memory: bool = False
+) -> StrOrPath:
     """Get a resolved path for a SQLite database file (or memory URI)"""
     # Use an in-memory database, if specified
     db_path = str(db_path)
@@ -473,7 +473,7 @@ def _get_sqlite_cache_path(
     return get_cache_path(db_path, use_cache_dir, use_temp)
 
 
-def get_cache_path(db_path: AnyPath, use_cache_dir: bool = False, use_temp: bool = False) -> Path:
+def get_cache_path(db_path: StrOrPath, use_cache_dir: bool = False, use_temp: bool = False) -> Path:
     """Get a resolved cache path"""
     db_path = Path(db_path)
 

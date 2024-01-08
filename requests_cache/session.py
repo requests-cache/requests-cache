@@ -9,7 +9,7 @@ from requests import Session as OriginalSession
 from requests.hooks import dispatch_hook
 
 from ._utils import get_valid_kwargs, patch_form_boundary
-from .backends import BackendSpecifier, init_backend
+from .backends import BackendSpecifier, StrOrPath, init_backend
 from .models import AnyResponse, CachedResponse, OriginalResponse
 from .policy import (
     DEFAULT_CACHE_NAME,
@@ -42,7 +42,7 @@ class CacheMixin(MIXIN_BASE):
 
     def __init__(
         self,
-        cache_name: str = DEFAULT_CACHE_NAME,
+        cache_name: StrOrPath = DEFAULT_CACHE_NAME,
         backend: Optional[BackendSpecifier] = None,
         serializer: Optional[SerializerType] = None,
         expire_after: ExpirationTime = -1,

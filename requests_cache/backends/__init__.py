@@ -1,6 +1,7 @@
 """Classes and functions for cache persistence. See :ref:`backends` for general usage info."""
 # ruff: noqa: F401
 from logging import getLogger
+from pathlib import Path
 from typing import Callable, Dict, Iterable, Optional, Type, Union
 
 from .._utils import get_placeholder_class, get_valid_kwargs
@@ -10,6 +11,7 @@ from .base import BaseCache, BaseStorage, DictStorage
 CACHE_NAME_KWARGS = ['db_path', 'db_name', 'namespace', 'table_name']
 
 BackendSpecifier = Union[str, BaseCache]
+StrOrPath = Union[Path, str]
 logger = getLogger(__name__)
 
 
@@ -57,7 +59,7 @@ BACKEND_CLASSES = {
 
 
 def init_backend(
-    cache_name: str, backend: Optional[BackendSpecifier] = None, **kwargs
+    cache_name: StrOrPath, backend: Optional[BackendSpecifier] = None, **kwargs
 ) -> BaseCache:
     """Initialize a backend from a name, class, or instance"""
     logger.debug(f'Initializing backend: {backend} {cache_name}')
@@ -72,11 +74,9 @@ def init_backend(
     # Already a backend instance
     if isinstance(backend, BaseCache):
         if cache_name:
-            backend.cache_name = cache_name
+            backend.cache_name = str(cache_name)
         return backend
     # If no backend is specified, use SQLite as default, unless the environment doesn't support it
-    # TODO: Deprecate fallback to memory?
-    #   Unsupported SQLite is a rare case, and should probably be handled by the user instead.
     elif not backend:
         sqlite_supported = issubclass(BACKEND_CLASSES['sqlite'], BaseCache)
         backend = 'sqlite' if sqlite_supported else 'memory'
