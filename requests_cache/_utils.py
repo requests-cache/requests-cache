@@ -103,6 +103,7 @@ def try_int(value: Any) -> Optional[int]:
     except (TypeError, ValueError):
         return None
 
+
 def is_json_content_type(content_type: Optional[str]) -> bool:
     """Returns whether the given content-type represents json"""
     # empiric solution to catch stuff like `application/json;charset=UTF-8` or `application/vnd.api+json`
