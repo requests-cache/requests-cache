@@ -23,6 +23,7 @@ from requests.structures import CaseInsensitiveDict
 
 from ..models import CachedResponse, DecodedContent
 from .pipeline import Stage
+from .._utils import is_json_content_type
 
 try:
     import ujson as json
@@ -43,7 +44,7 @@ class CattrStage(Stage):
 
     * Response body will be decoded into a human-readable format (if possible) during serialization,
       and re-encoded during deserialization to reconstruct the original response.
-    * Supported  Content-Types are ``application/json*`` and ``text/*``. All other types will be saved as-is.
+    * Supported  Content-Types are ``application/*json*`` and ``text/*``. All other types will be saved as-is.
     * Decoded responses are saved in a separate ``_decoded_content`` attribute, to ensure that
       ``_content`` is always binary.
     * This is the default behavior for Filesystem, DynamoDB, and MongoDB backends.
@@ -148,8 +149,10 @@ def make_decimal_timedelta_converter(**kwargs) -> Converter:
 
 def _decode_content(response: CachedResponse, response_dict: Dict) -> Dict:
     """Decode response body into a human-readable format, if possible"""
+    ct_header = response.headers.get('Content-Type', '')
+
     # Decode body as JSON
-    if response.headers.get('Content-Type').startswith('application/json', 'application/ld+json', 'application/vnd.api+json'):
+    if is_json_content_type(ct_header):
         try:
             response_dict['_decoded_content'] = response.json()
             response_dict.pop('_content', None)
@@ -157,7 +160,7 @@ def _decode_content(response: CachedResponse, response_dict: Dict) -> Dict:
             pass
 
     # Decode body as text
-    if response.headers.get('Content-Type', '').startswith('text/'):
+    if ct_header.startswith('text/'):
         response_dict['_decoded_content'] = response.text
         response_dict.pop('_content', None)
 
