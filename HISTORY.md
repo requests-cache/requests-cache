@@ -11,6 +11,7 @@
 🪲 **Bugfixes:**
 * Revert normalizing `CachedResponse.url` so it matches the original request URL
 * Fix loading cached JSON content when `decode_content=True` and the root element is a list
+* Fix `decode_content` not applying for all json mime types (such as `application/vnd.api+json`)
 * Fix `BaseCache.recreate_keys()` to normalize response bodies with `b'None'`
 * Fix potential `OperationalError: database is locked` during bulk delete operations
 * Fix `CachedResponse.history` not being fully deserialized on python<=3.8
