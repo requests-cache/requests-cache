@@ -9,7 +9,7 @@ There are some additional options to configure how you want requests to be match
 ## Selective Parameter Matching
 By default, all normalized request parameters are matched. In some cases, there may be request
 parameters that you don't want to match. For example, an authentication token will change frequently
-but not change reponse content.
+but not change response content.
 
 Use the `ignored_parameters` option if you want to ignore specific parameters.
 
@@ -126,20 +126,19 @@ options `ignored_parameters` and `match_headers`, you can implement them in `key
 ```python
 def create_key(
     request: requests.PreparedRequest,
-    ignored_parameters: List[str] = None,
-    match_headers: List[str] = None,
+    ignored_parameters: list[str] = None,
+    match_headers: list[str] = None,
     **kwargs,
 ) -> str:
     """Generate a custom cache key for the given request"""
 ```
 
-See {py:func}`.create_key` for the reference implementation, and see the rest of the
-{py:mod}`.cache_keys` module for some potentially useful helper functions.
+Reference:
+* See {py:func}`.create_key` for the reference implementation.
+* See the rest of the {py:mod}`.cache_keys` module for some useful helper functions.
+* See {ref}`Examples<custom_keys>` for a complete example of custom request matching.
 
 
-```{tip}
-See {ref}`Examples<custom_keys>` for a complete example for custom request matching.
-```
 ```{tip}
 As a general rule, if you include less information in your cache keys, you will have more cache hits
 and use less storage space, but risk getting incorrect response data back.
@@ -155,14 +154,14 @@ header variations like order, casing, whitespace, etc. In some cases, you may be
 optimize your requests with some additional header normalization.
 
 For example, let's say you're working with a site that supports content negotiation using the
-`Accept-Encoding` header, and the only varation you care about is whether you requested gzip
+`Accept-Encoding` header, and the only variation you care about is whether you requested gzip
 encoding. This example will increase cache hits by ignoring variations you don't care about:
 ```python
 from requests import PreparedRequest
 from requests_cache import CachedSession, create_key
 
 
-def create_key(request: PreparedRequest, **kwargs) -> str:
+def create_custom_key(request: PreparedRequest, **kwargs) -> str:
     # Don't modify the original request that's about to be sent
     request = request.copy()
 

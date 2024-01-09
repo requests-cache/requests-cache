@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List
 
-from attr import Factory
+from attrs import Factory
 
 
 class RichMixin:

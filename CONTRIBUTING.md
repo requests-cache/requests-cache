@@ -1,17 +1,15 @@
 # Contributing Guide
 
-## Bug Reports & Feedback
-If you discover a bug, want to propose a new feature, or have other feedback about requests-cache, please
-[create an issue](https://github.com/requests-cache/requests-cache/issues/new/choose)!
+## Bug Reports, Feedback, and Discussion
+If you discover a bug or want to request a new feature, please
+[create an issue](https://github.com/requests-cache/requests-cache/issues/new/choose).
 
-## Project Discussion
-If you want to discuss ideas about the project in general, or if you have an issue or PR that hasn't
-received a response in a timely manner, please reach out on the Code Shelter chat server, under
-[projects/requests-cache](https://codeshelter.zulipchat.com/#narrow/stream/186993-projects/topic/requests-cache).
+If you want to discuss ideas about the project in general, or have a more open-ended question or feedback,
+please use [Discussions](https://github.com/orgs/requests-cache/discussions).
 
 ## Development Status
-Requests-cache is under active development!  Contributions are very welcome, and will be attributed on the
-[Contributors](https://requests-cache.readthedocs.io/en/latest/project_info/contributors.html)
+Requests-cache is under active development! Contributions are very welcome, and will be attributed on the
+[Contributors](https://requests-cache.readthedocs.io/en/main/project_info/contributors.html)
 page.
 
 ## How to Help
@@ -34,24 +32,28 @@ cd requests-cache
 poetry install -v -E all
 ```
 
-## Pre-commit Hooks
-CI jobs will run code style checks, type checks, linting, etc. If you would like to run these same
-checks locally, you can use [pre-commit](https://github.com/pre-commit/pre-commit).
-This is optional but recommended.
+### Linting & Formatting
+Code linting and formatting tools used include:
+* [ruff (linter)](https://docs.astral.sh/ruff/linter)
+* [ruff (formatter)](https://docs.astral.sh/ruff/formatter)
+* [mypy](https://mypy.readthedocs.io/en/stable/getting_started.html)
 
-To install pre-commit hooks:
+All of these will be run by GitHub Actions on pull requests. You can also run them locally with:
+```bash
+nox -e lint
+```
+
+#### Pre-Commit Hooks
+Optionally, you can use [pre-commit](https://github.com/pre-commit/pre-commit) to automatically
+run all of these checks before a commit is made:
 ```bash
 pre-commit install
 ```
 
-To manually run checks on all files:
-```bash
-pre-commit run --all-files
-# Alternative alias with nox:
-nox -e lint
-```
+This can save you some time in that it will show you errors immediately rather than waiting for CI
+jobs to complete, or if you forget to manually run the checks before committing.
 
-To disable pre-commit hooks:
+You can disable these hooks at any time with:
 ```bash
 pre-commit uninstall
 ```
@@ -131,7 +133,7 @@ open docs/_build/html/index.html
 xdg-open docs/_build/html/index.html
 ```
 
-You can also use [sphinx-autobuild](https://github.com/executablebooks/sphinx-autobuild) to rebuild the docs and live reload in the browser whenver doc contents change:
+You can also use [sphinx-autobuild](https://github.com/executablebooks/sphinx-autobuild) to rebuild the docs and live reload in the browser whenever doc contents change:
 ```bash
 nox -e livedocs
 ```
@@ -190,8 +192,8 @@ pip install -U requests-cache
 
 Notes:
 * See python packaging docs on
-[pre-release versioning](https://packaging.python.org/guides/distributing-packages-using-setuptools/#pre-release-versioning) for more info on how this works
-* requests-cache pre-release docs can be found here: https://requests-cache.readthedocs.io/en/latest/
+[pre-release versioning](https://packaging.python.org/en/latest/guides/distributing-packages-using-setuptools/#pre-release-versioning) for more info on how this works
+* requests-cache pre-release docs can be found here: https://requests-cache.readthedocs.io/en/main/
 * Any collaborator can trigger a pre-release build for requests-cache by going to
   **Actions > Deploy > Run workflow**
 * A complete list of builds can by found on [PyPI under 'Release History'](https://pypi.org/project/requests-cache/#history)

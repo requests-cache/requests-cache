@@ -1,24 +1,62 @@
 # History
 
-## 1.1.0 (TBD)
-* ⚠️ Remove `CachedSession` and `BaseCache` methods [deprecated in 1.0](#deprecations-1-0)
+## 1.2.0 (TBD)
 
-## 1.0.2 (2023-TBD)
+🕗 **Expiration & headers:**
+* Add support for `X-HTTP-Method-Override` and other headers that can override request method
 
-⭐ **Features:**
-* Add support for regular expressions when using `urls_expire_after`
+⚙️ **Session methods:**
+* Add `CachedSession.wrap()` classmethod to add caching to an existing `requests.Session` object
+
+💾 **SQLite Backend:**
+* Add `vacuum` parameter to `SQLiteCache.delete()` to optionally skip vacuuming after deletion (enabled by default to free up disk space)
+* Optimize `SQLiteCache.delete()` when deleting a single key
+
+🧩 **Compatibility:**
+* Add support for RFC 7159 JSON body with `decode_content=True` (root element with any type)
+* Use timezone-aware UTC datetimes for all internal expiration values
+* Add support for python 3.12
+  * Note: There is a known bug with multiprocess/multithreaded usage of the SQLite backend on python 3.12.
+* Add support for cattrs 23.2
 
 🪲 **Bugfixes:**
-* Revert normalizing `CachedResponse.url` so it matches the original request URL
-* Fix loading cached JSON content when `decode_content=True` and the root element is a list
+* Handle a corner case with streaming requests, conditional requests, and redirects
+* When redacting ignored parameters from a cached response, keep the rest of the original URL and headers without normalizing
+* Add `CachedHTTPResponse._request_url` property for compatibility with urllib3
+* Fix form boundary used for cached multipart requests to comply with RFC 2046
+* If an explicit CA bundle path is passed via `verify` param, cache the response under the same key as `verify=True`
 * Fix `decode_content` not applying for all json mime types (such as `application/vnd.api+json`)
+
+⚠️ **Deprecations & removals:**
+* Drop support for python 3.7
+* Remove methods [deprecated in 1.0](#deprecations-1-0) from `CachedSession` and `BaseCache`
+
+## 1.1.1 (2023-11-18)
+* Backport fix from 1.2: Add compatibility with cattrs 23.2
+
+## 1.1.0 (2023-06-30)
+
+⚙️ **Session settings:**
+* Add support for regular expressions with `urls_expire_after`
+
+💾 **SQLite Backend:**
+* Add `busy_timeout` argument (see [SQLite docs](https://www.sqlite.org/pragma.html#pragma_busy_timeout) for details)
+* In WAL journaling mode (`wal=True`), default to 'normal' synchronous mode instead of 'full'
+* Fix potential `OperationalError: database is locked` in multithreaded SQLite usage during bulk delete operations
+* Fix deadlock in multithreaded SQLite usage if a thread encounters an error during COMMIT
+
+🪲 **Bugfixes:**
+* Fix loading cached JSON content with `decode_content=True` when the root element is a list
+* Fix checking Content-Type with charset when normalizing request body
 * Fix `BaseCache.recreate_keys()` to normalize response bodies with `b'None'`
-* Fix potential `OperationalError: database is locked` during bulk delete operations
+* Fix `BaseCache.contains()` for multipart POST requests
 * Fix `CachedResponse.history` not being fully deserialized on python<=3.8
 * Fix request matching with `Vary` and redirects
+* Skip normalizing `CachedResponse.url` so it always matches the original request URL
+* Avoid unnecessary cache writes for revalidation requests if headers and expiration are unchanged
 * Add compatibility with urllib3 2.0
 
-## 1.0.1 (2023-03-24)
+### 1.0.1 (2023-03-24)
 * Ignore `Cache-Control: must-revalidate` and `no-cache` response headers with `cache_control=False`
 
 ## 1.0.0 (2023-03-01)
@@ -146,7 +184,7 @@
 
 ⚠️ <a id="deprecations-1-0">**Deprecations:**</a>
 
-The following methods are deprecated, and will be removed in **1.1**. The recommended
+The following methods are deprecated, and will be removed in **1.2**. The recommended
 replacements are listed below. If this causes problems for you, please open an issue to discuss.
 * `CachedSession.remove_expired_responses()`: `BaseCache.delete(expired=True)`
 * `BaseCache.remove_expired_responses()`: `BaseCache.delete(expired=True)`
@@ -160,7 +198,7 @@ replacements are listed below. If this causes problems for you, please open an i
 
 ⚠️ **Breaking changes:**
 
-* After initialization, cache settings can only be accesed and modified via `CachedSession.settings`. Previously, some settings could be modified by setting them on either `CachedSession` or `BaseCache`. In some cases this could silently fail or otherwise have undefined behavior.
+* After initialization, cache settings can only be accessed and modified via `CachedSession.settings`. Previously, some settings could be modified by setting them on either `CachedSession` or `BaseCache`. In some cases this could silently fail or otherwise have undefined behavior.
 * `BaseCache.urls` has been replaced with a method that returns a list of URLs.
 * DynamoDB table structure has changed. If you are using the DynamoDB backend, you will need to create a new table when upgrading to 1.0. See [DynamoDB backend docs](https://requests-cache.readthedocs.io/en/stable/user_guide/backends/dynamodb.html#dynamodb) for more details.
 
@@ -271,7 +309,7 @@ Backport fixes from 1.0:
 * Fix `CachedResponse` serialization behavior when using stdlib `pickle` in a custom serializer
 
 ### 0.8.1 (2021-09-15)
-* Redact `ingored_parameters` from `CachedResponse.url` (if used for credentials or other sensitive info)
+* Redact `ignored_parameters` from `CachedResponse.url` (if used for credentials or other sensitive info)
 * Fix an incorrect debug log message about skipping cache write
 * Add some additional aliases for `DbDict`, etc. so fully qualified imports don't break
 
@@ -418,7 +456,7 @@ The following changes are meant to make certain behaviors more obvious for new u
 * Add more detailed repr methods for `CachedSession`, `CachedResponse`, and `BaseCache`
 * Update `BaseCache.urls` to only skip invalid responses, not delete them (for better performance)
 
-📦 **Depedencies:**
+📦 **Dependencies:**
 * Add minimum `requests` version of `2.17`
 * Add `attrs` as a dependency for improved serialization models
 * Add `cattrs` as an optional dependency
@@ -436,7 +474,7 @@ The following changes are meant to make certain behaviors more obvious for new u
 * Run pre-release tests for each supported version of `requests`
 * Packaging is now managed by Poetry
   * For users, installation still works the same.
-  * For developers, see [Contributing Guide](https://requests-cache.readthedocs.io/en/stable/contributing.html) for details
+  * For developers, see [Contributing Guide](https://requests-cache.readthedocs.io/en/stable/project_info/contributing.html) for details
 
 
 -----
@@ -464,7 +502,7 @@ The following changes are meant to make certain behaviors more obvious for new u
 ## 0.6.0 (2021-04-09)
 [See all issues and PRs for 0.6](https://github.com/requests-cache/requests-cache/milestone/1?closed=1)
 
-Thanks to [Code Shelter](https://www.codeshelter.co) and [contributors](https://requests-cache.readthedocs.io/en/stable/contributors.html) for making this release possible!
+Thanks to [Code Shelter](https://www.codeshelter.co) and [contributors](https://requests-cache.readthedocs.io/en/stable/project_info/contributors.html) for making this release possible!
 
 🕗 **Expiration:**
 * Cached responses are now stored with an absolute expiration time, so `CachedSession.expire_after`
@@ -494,12 +532,12 @@ Thanks to [Code Shelter](https://www.codeshelter.co) and [contributors](https://
 * Add optional support for `itsdangerous` for more secure serialization
 
 **Other features:**
-* Add `CacheMixin` class to make the features of `CachedSession` usable as a mixin class, for [compatibility with other requests-based libraries](https://requests-cache.readthedocs.io/en/stable/advanced_usage.html#library-compatibility).
+* Add `CacheMixin` class to make the features of `CachedSession` usable as a mixin class, for [compatibility with other requests-based libraries](https://requests-cache.readthedocs.io/en/stable/user_guide/compatibility.html).
 * Add `HEAD` to default `allowable_methods`
 
 📗 **Docs & Tests:**
 * Add type annotations to main functions/methods in public API, and include in documentation on [readthedocs](https://requests-cache.readthedocs.io/en/stable/)
-* Add [Contributing Guide](https://requests-cache.readthedocs.io/en/stable/contributing.html), [Security](https://requests-cache.readthedocs.io/en/stable/security.html) info, and more examples & detailed usage info in [User Guide](https://requests-cache.readthedocs.io/en/stable/user_guide.html) and [Advanced Usage](https://requests-cache.readthedocs.io/en/stable/advanced_usage.html) sections.
+* Add [Contributing Guide](https://requests-cache.readthedocs.io/en/stable/project_info/contributing.html), [Security](https://requests-cache.readthedocs.io/en/stable/user_guide/security.html) info, and more examples & detailed usage info in [User Guide](https://requests-cache.readthedocs.io/en/stable/user_guide.html) section.
 * Increase test coverage and rewrite most tests using pytest
 * Add containerized backends for both local and CI integration testing
 
@@ -515,7 +553,7 @@ Thanks to [Code Shelter](https://www.codeshelter.co) and [contributors](https://
 * Update usage of deprecated MongoClient `save()` method
 * Replace some old bugs with new and different bugs, just to keep life interesting
 
-📦 **Depedencies:**
+📦 **Dependencies:**
 * Add `itsdangerous` as a dependency for secure serialization
 * Add `url-normalize` as a dependency for better request normalization and reducing duplications
 

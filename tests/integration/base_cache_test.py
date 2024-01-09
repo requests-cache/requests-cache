@@ -1,7 +1,6 @@
 """Common tests to run for all backends (BaseCache subclasses)"""
 import json
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
-from datetime import datetime
 from functools import partial
 from io import BytesIO
 from logging import getLogger
@@ -17,6 +16,7 @@ from requests import ConnectionError, PreparedRequest, Session
 
 from requests_cache import ALL_METHODS, CachedResponse, CachedSession
 from requests_cache.backends import BaseCache
+from requests_cache.policy import utcnow
 from tests.conftest import (
     CACHE_NAME,
     ETAG,
@@ -180,7 +180,7 @@ class BaseCacheTest:
         if expected_expiration is None:
             assert response.expires is None
         else:
-            assert_delta_approx_equal(datetime.utcnow(), response.expires, expected_expiration)
+            assert_delta_approx_equal(utcnow(), response.expires, expected_expiration)
 
     @pytest.mark.parametrize(
         'cached_response_headers, expected_from_cache',
@@ -284,6 +284,26 @@ class BaseCacheTest:
         r2 = session.get(url)
         assert r1.json() == r2.json()
 
+    @pytest.mark.parametrize('decode_content', [True, False])
+    @pytest.mark.parametrize('body', ['string', 47, 47.1, True])
+    def test_decode_json_with_primitive_root(self, decode_content, body):
+        """Test that JSON responses (with primitive type root) are correctly returned from the
+        cache, regardless of `decode_content` setting"""
+        session = self.init_session(decode_content=decode_content)
+        session = mount_mock_adapter(session)
+        url = 'http+mock://requests-cache.com/json_alt'
+        session.mock_adapter.register_uri(
+            'GET',
+            url,
+            headers={'Content-Type': 'application/json'},
+            json=body,
+            status_code=200,
+        )
+
+        r1 = session.get(url)
+        r2 = session.get(url)
+        assert r1.json() == r2.json()
+
     def test_multipart_upload(self):
         session = self.init_session()
         session.post(httpbin('post'), files={'file1': BytesIO(b'10' * 1024)})
@@ -314,9 +334,9 @@ class BaseCacheTest:
     def test_filter_request_headers(self, method):
         url = httpbin(method.lower())
         session = self.init_session(ignored_parameters=['Authorization'])
-        response = session.request(method, url, headers={"Authorization": "<Secret Key>"})
+        response = session.request(method, url, headers={'Authorization': '<Secret Key>'})
         assert response.from_cache is False
-        response = session.request(method, url, headers={"Authorization": "<Secret Key>"})
+        response = session.request(method, url, headers={'Authorization': '<Secret Key>'})
         assert response.from_cache is True
         assert response.request.headers.get('Authorization') == 'REDACTED'
 
@@ -324,9 +344,9 @@ class BaseCacheTest:
     def test_filter_request_query_parameters(self, method):
         url = httpbin(method.lower())
         session = self.init_session(ignored_parameters=['api_key'])
-        response = session.request(method, url, params={"api_key": "<Secret Key>"})
+        response = session.request(method, url, params={'api_key': '<Secret Key>'})
         assert response.from_cache is False
-        response = session.request(method, url, params={"api_key": "<Secret Key>"})
+        response = session.request(method, url, params={'api_key': '<Secret Key>'})
         assert response.from_cache is True
         query = urlparse(response.request.url).query
         query_dict = parse_qs(query)
@@ -337,7 +357,7 @@ class BaseCacheTest:
     def test_filter_request_post_data(self, post_type):
         method = 'POST'
         url = httpbin(method.lower())
-        body = {"api_key": "<Secret Key>"}
+        body = {'api_key': '<Secret Key>'}
         headers = {}
         if post_type == 'data':
             body = json.dumps(body)

@@ -19,7 +19,7 @@ cattrs+ujson.loads:     2.128
 cattrs+bson.dumps: 1.550
 cattrs+bson.loads: 1.322
 """
-# flake8: noqa: F401
+# ruff: noqa: E402,F401,F841
 import json
 import os
 import pickle
@@ -28,7 +28,7 @@ from os.path import abspath, dirname, join
 from time import perf_counter as time
 
 import ujson
-from cattr.preconf.json import make_converter
+from cattrs.preconf.json import make_converter
 
 from requests_cache.backends.sqlite import SQLiteCache
 

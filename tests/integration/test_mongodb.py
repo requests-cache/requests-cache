@@ -46,7 +46,7 @@ class TestMongoDict(BaseStorageTest):
             invalid_kwarg='???',
         )
         assert "host=['0.0.0.0:2222']" in repr(cache.connection)
-        assert "tz_aware=True" in repr(cache.connection)
+        assert 'tz_aware=True' in repr(cache.connection)
 
 
 class TestMongoCache(BaseCacheTest):
@@ -108,7 +108,7 @@ class TestMongoCache(BaseCacheTest):
 class TestGridFSDict(BaseStorageTest):
     storage_class = GridFSDict
     picklable = True
-    num_instances = 1  # Only test a single collecton instead of multiple
+    num_instances = 1  # Only test a single collection instead of multiple
 
     def test_connection_kwargs(self):
         """A spot check to make sure optional connection kwargs gets passed to connection"""
@@ -121,7 +121,7 @@ class TestGridFSDict(BaseStorageTest):
             invalid_kwarg='???',
         )
         assert "host=['0.0.0.0:2222']" in repr(cache.connection)
-        assert "tz_aware=True" in repr(cache.connection)
+        assert 'tz_aware=True' in repr(cache.connection)
 
     def test_corrupt_file(self):
         """A corrupted file should be handled and raise a KeyError instead"""

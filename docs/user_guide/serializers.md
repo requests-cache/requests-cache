@@ -87,8 +87,7 @@ pip install requests-cache[yaml]
 [BSON](https://www.mongodb.com/json-and-bson) is a serialization format originally created for
 MongoDB, but it can also be used independently. Compared to JSON, it has better performance
 (although still not as fast as `pickle`), and adds support for additional data types. It is not
-human-readable, but some tools support reading and editing it directly
-(for example, [bson-converter](https://atom.io/packages/bson-converter) for Atom).
+human-readable, but some tools support reading and editing it directly.
 
 Usage:
 ```python

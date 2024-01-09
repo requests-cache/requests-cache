@@ -1,24 +1,28 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from logging import getLogger
 from time import time
 from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 import attr
-from attr import define, field
+from attrs import define, field
 from requests import PreparedRequest, Response
 from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
 
-from ..policy import ExpirationTime, get_expiration_datetime
+from ..policy import ExpirationTime, add_tzinfo, get_expiration_datetime, utcnow
 from . import CachedHTTPResponse, CachedRequest, RichMixin
 
 if TYPE_CHECKING:
     from ..policy.actions import CacheActions
 
-DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S %Z'  # Format used for __str__ only
-DecodedContent = Union[Dict, List, str, None]
+# Format used for __str__ only
+DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S %Z'
+
+# Support RFC 7159: JSON body root element can be an object, array, or any of its primitive types
+DecodedContent = Union[Dict, List, str, bool, int, float, None]
+
 logger = getLogger(__name__)
 
 
@@ -28,7 +32,7 @@ class BaseResponse(Response):
     provide type hints for extra cache-related attributes that are added to non-cached responses.
     """
 
-    created_at: datetime = field(factory=datetime.utcnow)
+    created_at: datetime = field(factory=utcnow)
     expires: Optional[datetime] = field(default=None)
     cache_key: str = ''  # Not serialized; set by BaseCache.get_response()
     revalidated: bool = False  # Not serialized; set by CacheActions.update_revalidated_response()
@@ -42,9 +46,13 @@ class BaseResponse(Response):
         return False
 
 
-@define(auto_attribs=False, repr=False, slots=False)
+@define(auto_attribs=False, repr=False, slots=False, init=False)
 class OriginalResponse(BaseResponse):
     """Wrapper class for non-cached responses returned by :py:class:`.CachedSession`"""
+
+    def __init__(self, **kwargs):
+        Response.__init__(self)
+        self.__attrs_init__(**kwargs)
 
     @classmethod
     def wrap_response(cls, response: Response, actions: 'CacheActions') -> 'OriginalResponse':
@@ -54,7 +62,7 @@ class OriginalResponse(BaseResponse):
             # Add expires and cache_key only if the response was written to the cache
             response.expires = None if actions.skip_write else actions.expires  # type: ignore
             response.cache_key = None if actions.skip_write else actions.cache_key  # type: ignore
-            response.created_at = datetime.utcnow()  # type: ignore
+            response.created_at = utcnow()  # type: ignore
         return response  # type: ignore
 
 
@@ -69,7 +77,7 @@ class CachedResponse(RichMixin, BaseResponse):
     created_at: datetime = field(default=None)
     elapsed: timedelta = field(factory=timedelta)
     encoding: str = field(default=None)
-    expires: Optional[datetime] = field(default=None)
+    expires: Optional[datetime] = field(default=None, converter=add_tzinfo)
     headers: CaseInsensitiveDict = field(factory=CaseInsensitiveDict)
     history: List['CachedResponse'] = field(factory=list)  # type: ignore
     raw: CachedHTTPResponse = None  # type: ignore  # Not serialized; populated from CachedResponse attrs
@@ -80,7 +88,7 @@ class CachedResponse(RichMixin, BaseResponse):
 
     def __attrs_post_init__(self):
         # Not using created_at field default due to possible bug on Windows with omit_if_default
-        self.created_at = self.created_at or datetime.utcnow()
+        self.created_at = self.created_at or utcnow()
         # Re-initialize raw (urllib3) response after deserialization
         self.raw = self.raw or CachedHTTPResponse.from_cached_response(self)
 
@@ -130,7 +138,7 @@ class CachedResponse(RichMixin, BaseResponse):
         """Get time to expiration in seconds (rounded to the nearest second)"""
         if self.expires is None:
             return None
-        delta = self.expires - datetime.utcnow()
+        delta = self.expires - utcnow()
         return round(delta.total_seconds())
 
     @property
@@ -146,7 +154,7 @@ class CachedResponse(RichMixin, BaseResponse):
     @property
     def is_expired(self) -> bool:
         """Determine if this cached response is expired"""
-        return self.expires is not None and datetime.utcnow() >= self.expires
+        return self.expires is not None and utcnow() >= self.expires
 
     def is_older_than(self, older_than: ExpirationTime) -> bool:
         """Determine if this cached response is older than the given time"""
@@ -189,9 +197,7 @@ class CachedResponse(RichMixin, BaseResponse):
 def format_datetime(value: Optional[datetime]) -> str:
     """Get a formatted datetime string in the local time zone"""
     if not value:
-        return "N/A"
-    if value.tzinfo is None:
-        value = value.replace(tzinfo=timezone.utc)
+        return 'N/A'
     return value.astimezone().strftime(DATETIME_FORMAT)
 
 

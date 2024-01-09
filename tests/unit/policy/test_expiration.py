@@ -8,6 +8,7 @@ from requests_cache.policy.expiration import (
     EXPIRE_IMMEDIATELY,
     get_expiration_datetime,
     get_url_expiration,
+    utcnow,
 )
 from tests.conftest import HTTPDATE_DATETIME, HTTPDATE_STR
 
@@ -16,7 +17,7 @@ from tests.conftest import HTTPDATE_DATETIME, HTTPDATE_STR
 def test_get_expiration_datetime__no_expiration(mock_datetime):
     assert get_expiration_datetime(None) is None
     assert get_expiration_datetime(-1) is None
-    assert get_expiration_datetime(EXPIRE_IMMEDIATELY) == mock_datetime.utcnow()
+    assert get_expiration_datetime(EXPIRE_IMMEDIATELY) == mock_datetime.now(timezone.utc)
 
 
 @pytest.mark.parametrize(
@@ -29,7 +30,7 @@ def test_get_expiration_datetime__no_expiration(mock_datetime):
 )
 def test_get_expiration_datetime__relative(expire_after, expected_expiration_delta):
     expires = get_expiration_datetime(expire_after)
-    expected_expiration = datetime.utcnow() + expected_expiration_delta
+    expected_expiration = utcnow() + expected_expiration_delta
     # Instead of mocking datetime (which adds some complications), check for approximate value
     assert abs((expires - expected_expiration).total_seconds()) <= 1
 
@@ -37,7 +38,7 @@ def test_get_expiration_datetime__relative(expire_after, expected_expiration_del
 def test_get_expiration_datetime__tzinfo():
     tz = timezone(-timedelta(hours=5))
     dt = datetime(2021, 2, 1, 7, 0, tzinfo=tz)
-    assert get_expiration_datetime(dt) == datetime(2021, 2, 1, 12, 0)
+    assert get_expiration_datetime(dt) == datetime(2021, 2, 1, 12, 0, tzinfo=timezone.utc)
 
 
 def test_get_expiration_datetime__httpdate():

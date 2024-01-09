@@ -6,14 +6,14 @@ If requests-cache isn't quite what you need, you can help make it better! See th
 For other use cases, you can check out these other python projects related to caching:
 
 ## Client-side HTTP caching
-* [aiohttp-client-cache](https://github.com/JWCook/aiohttp-client-cache): An async HTTP cache for `aiohttp`, based on `requests-cache`
-* [CacheControl](https://github.com/ionrock/cachecontrol): An HTTP cache that ports features from `httplib2` for usage with `requests`
-* [httpx-cache](https://github.com/obendidi/httpx-cache): A sync+async HTTP cache that ports features from `httplib2` for usage with `httpx`
+* [aiohttp-client-cache](https://github.com/requests-cache/aiohttp-client-cache): An async HTTP cache for `aiohttp`, based on `requests-cache`
+* [CacheControl](https://github.com/psf/cachecontrol): An HTTP cache that ports features from `httplib2` for usage with `requests`
+* [Hishel](https://github.com/karpetrosyan/hishel): A sync+async HTTP cache for `httpx`
 
 ## Server-side HTTP caching
 * [aiohttp-cache](https://github.com/cr0hn/aiohttp-cache): A server-side async HTTP cache for the `aiohttp` web server
 * [fastapi-cache](https://github.com/long2ice/fastapi-cache): A server-side async HTTP cache for applications build with FastAPI
-* [flask-caching](https://github.com/sh4nks/flask-caching): A server-side HTTP cache for applications built with Flask
+* [flask-caching](https://github.com/pallets-eco/flask-caching): A server-side HTTP cache for applications built with Flask
 
 ## General
 * [aiocache](https://github.com/aio-libs/aiocache): General-purpose async cache backends

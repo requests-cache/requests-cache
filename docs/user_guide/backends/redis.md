@@ -6,7 +6,7 @@
 [Redis](https://redis.io) is an in-memory data store with on-disk persistence.
 
 ## Use Cases
-Redis offers a high-performace cache that scales exceptionally well, making it an ideal choice for
+Redis offers a high-performance cache that scales exceptionally well, making it an ideal choice for
 larger applications, especially those that make a large volume of concurrent requests.
 
 ## Usage Example

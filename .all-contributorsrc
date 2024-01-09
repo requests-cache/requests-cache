@@ -957,6 +957,44 @@
         "bug",
         "code"
       ]
+    },
+    {
+      "login": "nschloe",
+      "name": "Nico Schlömer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/181628?v=4",
+      "profile": "https://github.com/nschloe",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "amangean",
+      "name": "A. Mangean",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3106815?v=4",
+      "profile": "https://github.com/amangean",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "edgarrmondragon",
+      "name": "Edgar Ramírez Mondragón",
+      "avatar_url": "https://avatars.githubusercontent.com/u/16805946?v=4",
+      "profile": "https://edgarrmondragon.github.io/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "netomi",
+      "name": "Thomas Neidhart",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1048055?v=4",
+      "profile": "https://netomi.github.io/",
+      "contributions": [
+        "bug",
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

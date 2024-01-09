@@ -10,6 +10,7 @@ Notes:
 import platform
 from os import getenv
 from os.path import join
+from pathlib import Path
 from shutil import rmtree
 
 import nox
@@ -21,11 +22,15 @@ nox.options.sessions = ['lint', 'cov']
 LIVE_DOCS_PORT = 8181
 LIVE_DOCS_IGNORE = ['*.pyc', '*.tmp', join('**', 'modules', '*')]
 LIVE_DOCS_WATCH = ['requests_cache', 'examples']
-CLEAN_DIRS = ['dist', 'build', join('docs', '_build'), join('docs', 'modules')]
 
-PYTHON_VERSIONS = ['3.7', '3.8', '3.9', '3.10', '3.11', 'pypy3.9']
-UNIT_TESTS = join('tests', 'unit')
-INTEGRATION_TESTS = join('tests', 'integration')
+DOCS_DIR = Path('docs')
+DOC_BUILD_DIR = DOCS_DIR / '_build' / 'html'
+TEST_DIR = Path('tests')
+CLEAN_DIRS = ['dist', 'build', DOCS_DIR / '_build', DOCS_DIR / 'modules']
+
+PYTHON_VERSIONS = ['3.8', '3.9', '3.10', '3.11', '3.12', 'pypy3.9', 'pypy3.10']
+UNIT_TESTS = TEST_DIR / 'unit'
+INTEGRATION_TESTS = TEST_DIR / 'integration'
 STRESS_TEST_MULTIPLIER = 10
 DEFAULT_COVERAGE_FORMATS = ['html', 'term']
 # Run tests in parallel, grouped by test module
@@ -40,7 +45,7 @@ def test(session):
     test_paths = session.posargs or [UNIT_TESTS, INTEGRATION_TESTS]
     session.install('.', 'pytest', 'pytest-xdist', 'requests-mock', 'rich', 'timeout-decorator')
 
-    cmd = f'pytest -rs {XDIST_ARGS}'
+    cmd = f'pytest -rsxX {XDIST_ARGS}'
     session.run(*cmd.split(' '), *test_paths)
 
 
@@ -48,7 +53,7 @@ def test(session):
 def test_current(session):
     """Run tests using the current virtualenv"""
     test_paths = session.posargs or [UNIT_TESTS, INTEGRATION_TESTS]
-    cmd = f'pytest -rs {XDIST_ARGS}'
+    cmd = f'pytest -rsxX {XDIST_ARGS}'
     session.run(*cmd.split(' '), *test_paths)
 
 
@@ -63,7 +68,7 @@ def clean(session):
 @session(python=False, name='cov')
 def coverage(session):
     """Run tests and generate coverage report"""
-    cmd = f'pytest {UNIT_TESTS} {INTEGRATION_TESTS} -rs --cov'.split(' ')
+    cmd = f'pytest {UNIT_TESTS} {INTEGRATION_TESTS} -rsxX --cov'.split(' ')
     if not IS_PYPY:
         cmd += XDIST_ARGS.split(' ')
 
@@ -92,8 +97,13 @@ def stress_test(session):
 @session(python=False)
 def docs(session):
     """Build Sphinx documentation"""
-    cmd = 'sphinx-build docs docs/_build/html -j auto'
-    session.run(*cmd.split(' '))
+    session.run('sphinx-build', 'docs', DOC_BUILD_DIR, '-j', 'auto')
+
+
+@session(python=False)
+def linkcheck(session):
+    """Check documentation for dead links"""
+    session.run('sphinx-build', 'docs', DOC_BUILD_DIR, '-b', 'linkcheck')
 
 
 @session(python=False)

@@ -1,4 +1,4 @@
-# flake8: noqa: F841
+# ruff: noqa: F841
 """Stages and serializers for supported serialization formats.
 
 .. automodsumm:: requests_cache.serializers.preconf
@@ -9,7 +9,7 @@ from functools import partial
 from importlib import import_module
 
 from .._utils import get_placeholder_class
-from .cattrs import CattrStage, make_decimal_timedelta_converter
+from .cattrs import CattrStage, _convert_floats, make_decimal_timedelta_converter
 from .pipeline import SerializerPipeline, Stage
 
 
@@ -73,8 +73,8 @@ def safe_pickle_serializer(secret_key=None, salt='requests-cache', **kwargs) -> 
 try:
     import itsdangerous  # noqa: F401
 except ImportError as e:
-    signer_stage = get_placeholder_class(e)
-    safe_pickle_serializer = get_placeholder_class(e)
+    signer_stage = get_placeholder_class(e)  # noqa: F811
+    safe_pickle_serializer = get_placeholder_class(e)  # noqa: F811
 
 
 # BSON/MongoDB document serializers
@@ -142,8 +142,9 @@ except ImportError as e:
 dynamodb_preconf_stage = CattrStage(
     factory=make_decimal_timedelta_converter, convert_timedelta=False
 )  #: Pre-serialization steps for DynamoDB
+convert_float_stage = Stage(dumps=_convert_floats, loads=lambda x: x)
 dynamodb_document_serializer = SerializerPipeline(
-    [dynamodb_preconf_stage],
+    [dynamodb_preconf_stage, convert_float_stage],
     name='dynamodb_document',
     is_binary=False,
 )  #: DynamoDB-compatible document serializer

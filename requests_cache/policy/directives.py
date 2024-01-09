@@ -1,8 +1,8 @@
 from datetime import timedelta
 from typing import Optional
 
-from attr import define, field
-from requests.models import CaseInsensitiveDict
+from attrs import define, field
+from requests.structures import CaseInsensitiveDict
 
 from .._utils import decode, get_valid_kwargs, try_int
 from ..models import RichMixin

@@ -20,7 +20,15 @@ To cache additional HTTP methods, specify them with `allowable_methods`:
 
 For example, some APIs use the `POST` method to request data via a JSON-formatted request body, for
 requests that may exceed the max size of a `GET` request. You may also want to cache `POST` requests
-to ensure you don't send the exact same data multiple times.
+if you have a case where you could potentially send the exact same data multiple times.
+
+Method override headers will also be respected. For example, if a server supports the `X-HTTP-Method-Override` header, you may want to cache POST requests that only fetch data
+(overridden as GET), but not other POST requests that may create/modify data:
+```python
+>>> session = CachedSession(allowable_methods=('GET'))
+>>> session.post('https://httpbin.org/post', headers={'X-HTTP-Method-Override': 'GET'})
+```
+:::
 
 ## Filter by Status Codes
 To cache additional status codes, specify them with `allowable_codes`

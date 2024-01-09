@@ -7,10 +7,9 @@ from typing import TYPE_CHECKING, Iterable, MutableMapping, Optional, Union
 from requests import PreparedRequest
 from requests import Session as OriginalSession
 from requests.hooks import dispatch_hook
-from urllib3 import filepost
 
-from ._utils import get_valid_kwargs
-from .backends import BackendSpecifier, init_backend
+from ._utils import get_valid_kwargs, patch_form_boundary
+from .backends import BackendSpecifier, StrOrPath, init_backend
 from .models import AnyResponse, CachedResponse, OriginalResponse
 from .policy import (
     DEFAULT_CACHE_NAME,
@@ -43,7 +42,7 @@ class CacheMixin(MIXIN_BASE):
 
     def __init__(
         self,
-        cache_name: str = DEFAULT_CACHE_NAME,
+        cache_name: StrOrPath = DEFAULT_CACHE_NAME,
         backend: Optional[BackendSpecifier] = None,
         serializer: Optional[SerializerType] = None,
         expire_after: ExpirationTime = -1,
@@ -78,6 +77,30 @@ class CacheMixin(MIXIN_BASE):
 
         # If the mixin superclass is a custom Session, pass along any valid kwargs
         super().__init__(**get_valid_kwargs(super().__init__, kwargs))  # type: ignore
+
+    @classmethod
+    def wrap(cls, original_session: OriginalSession, **kwargs) -> 'CacheMixin':
+        """Add caching to an existing :py:class:`~requests.Session` object, while retaining all
+        original session settings.
+
+        Args:
+            original_session: Session object to wrap
+            kwargs: Keyword arguments for :py:class:`.CachedSession`
+        """
+        session = cls(**kwargs)
+        session.adapters = original_session.adapters
+        session.auth = original_session.auth
+        session.cert = original_session.cert
+        session.cookies = original_session.cookies
+        session.headers = original_session.headers
+        session.hooks = original_session.hooks
+        session.max_redirects = original_session.max_redirects
+        session.params = original_session.params
+        session.proxies = original_session.proxies
+        session.stream = original_session.stream
+        session.trust_env = original_session.trust_env
+        session.verify = original_session.verify
+        return session
 
     @property
     def settings(self) -> CacheSettings:
@@ -234,11 +257,18 @@ class CacheMixin(MIXIN_BASE):
             self.cache.save_response(response, actions.cache_key, actions.expires)
         elif cached_response is not None and response.status_code == 304:
             cached_response = actions.update_revalidated_response(response, cached_response)
-            self.cache.save_response(cached_response, actions.cache_key, actions.expires)
+            if not actions.skip_write:
+                self.cache.save_response(cached_response, actions.cache_key, actions.expires)
             return cached_response
         else:
             logger.debug(f'Skipping cache write for URL: {request.url}')
-        return OriginalResponse.wrap_response(response, actions)
+
+        # This is possible if the original request is a cache miss, but updating its validation
+        # headers results in redirecting to a different URL that is a cache hit
+        if isinstance(response, CachedResponse):
+            return response
+        else:
+            return OriginalResponse.wrap_response(response, actions)
 
     def _resend(
         self,
@@ -310,10 +340,6 @@ class CacheMixin(MIXIN_BASE):
         super().close()
         self.cache.close()
 
-    def remove_expired_responses(self, expire_after: ExpirationTime = None):
-        # Deprecated; will be replaced by CachedSession.cache.delete(expired=True)
-        self.cache.remove_expired_responses(expire_after)
-
     def __getstate__(self):
         # Unlike requests.Session, CachedSession may contain backend connection objects that can't
         # be pickled. Support for this could be added if necessary, but for now it's explicitly
@@ -346,7 +372,7 @@ class CachedSession(CacheMixin, OriginalSession):
             is not expired
         match_headers: Request headers to match, when `Vary` response header is not available. May
             be a list of headers, or ``True`` to match all.
-        ignored_parameters: Request paramters, headers, and/or JSON body params to exclude from both
+        ignored_parameters: Request parameters, headers, and/or JSON body params to exclude from both
             request matching and cached request data
         stale_if_error: Return a stale response if a new request raises an exception. Optionally
             accepts a time value representing maximum staleness to accept.
@@ -367,15 +393,3 @@ def get_504_response(request: PreparedRequest) -> CachedResponse:
         reason='Not Cached',
         request=request,  # type: ignore
     )
-
-
-@contextmanager
-def patch_form_boundary():
-    """If the ``files`` param is present, patch the form boundary used to separate multipart
-    uploads. ``requests`` does not provide a way to pass a custom boundary to urllib3, so this just
-    monkey-patches it instead.
-    """
-    original_boundary = filepost.choose_boundary
-    filepost.choose_boundary = lambda: '##requests-cache-form-boundary##'
-    yield
-    filepost.choose_boundary = original_boundary

@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import json
+from contextlib import nullcontext
 from hashlib import blake2b
 from logging import getLogger
 from typing import (
@@ -24,10 +25,10 @@ from typing import (
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from requests import Request, Session
-from requests.models import CaseInsensitiveDict
+from requests.structures import CaseInsensitiveDict
 from url_normalize import url_normalize
 
-from ._utils import decode, encode, is_json_content_type
+from ._utils import decode, encode, patch_form_boundary, is_json_content_type
 
 __all__ = [
     'create_key',
@@ -61,7 +62,7 @@ def create_key(
 
     Args:
         request: Request object to generate a cache key from
-        ignored_parameters: Request paramters, headers, and/or JSON body params to exclude
+        ignored_parameters: Request parameters, headers, and/or JSON body params to exclude
         match_headers: Match only the specified headers, or ``True`` to match all headers
         request_kwargs: Additional keyword arguments for :py:func:`~requests.request`
     """
@@ -71,7 +72,7 @@ def create_key(
         request.method or '',
         request.url,
         request.body or '',
-        request_kwargs.get('verify', True),
+        bool(request_kwargs.get('verify', True)),
         *get_matched_headers(request.headers, match_headers),
         str(serializer),
     ]
@@ -111,10 +112,13 @@ def normalize_request(
 
     Args:
         request: Request object to normalize
-        ignored_parameters: Request paramters, headers, and/or JSON body params to exclude
+        ignored_parameters: Request parameters, headers, and/or JSON body params to exclude
     """
     if isinstance(request, Request):
-        norm_request: AnyPreparedRequest = Session().prepare_request(request)
+        # For a multipart POST request that hasn't been prepared, we need to patch the form boundary
+        # so the request body will have a consistent hash
+        with patch_form_boundary() if request.files else nullcontext():
+            norm_request: AnyPreparedRequest = Session().prepare_request(request)
     else:
         norm_request = request.copy()
 
@@ -150,10 +154,14 @@ def normalize_body(request: AnyPreparedRequest, ignored_parameters: ParamList) -
     """Normalize and filter a request body if possible, depending on Content-Type"""
     if not request.body:
         return b''
-    content_type = request.headers.get('Content-Type')
+
+    filtered_body: Union[str, bytes] = request.body
+    try:
+        content_type = request.headers['Content-Type'].split(';')[0].lower()
+    except (AttributeError, KeyError):
+        content_type = ''
 
     # Filter and sort params if possible
-    filtered_body: Union[str, bytes] = request.body
     if is_json_content_type(content_type):
         filtered_body = normalize_json_body(request.body, ignored_parameters)
     elif content_type == 'application/x-www-form-urlencoded':
@@ -199,7 +207,14 @@ def redact_response(response: CachedResponse, ignored_parameters: ParamList) -> 
     """Redact any ignored parameters (potentially containing sensitive info) from a cached request"""
     if ignored_parameters:
         response.url = filter_url(response.url, ignored_parameters)
-        response.request = normalize_request(response.request, ignored_parameters)  # type: ignore
+        response.request.url = filter_url(response.request.url, ignored_parameters)
+        response.headers = CaseInsensitiveDict(
+            filter_sort_dict(response.headers, ignored_parameters)
+        )
+        response.request.headers = CaseInsensitiveDict(
+            filter_sort_dict(response.request.headers, ignored_parameters)
+        )
+        response.request.body = normalize_body(response.request, ignored_parameters)
     return response
 
 

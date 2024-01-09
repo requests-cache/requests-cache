@@ -15,11 +15,11 @@ requests_cache.install_cache('example_cache', backend='sqlite')
 
 def main():
     # The real request will only be made once; afterward, the cached response is used
-    for i in range(5):
+    for _ in range(5):
         response = requests.get('https://httpbin.org/get')
 
     # This is more obvious when calling a slow endpoint
-    for i in range(5):
+    for _ in range(5):
         response = requests.get('https://httpbin.org/delay/2')
 
     # Caching can be disabled if we want to get a fresh page and not cache it
@@ -35,7 +35,7 @@ def main():
     requests_cache.uninstall_cache()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     t = time.time()
     main()
     print('Elapsed: %.3f seconds' % (time.time() - t))

@@ -1,7 +1,10 @@
 import os
 import pickle
-from datetime import datetime, timedelta
+import sqlite3
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from datetime import timedelta
 from os.path import join
+from sys import version_info
 from tempfile import NamedTemporaryFile, gettempdir
 from threading import Thread
 from unittest.mock import patch
@@ -12,7 +15,8 @@ from platformdirs import user_cache_dir
 from requests_cache.backends import BaseCache, SQLiteCache, SQLiteDict
 from requests_cache.backends.sqlite import MEMORY_URI
 from requests_cache.models import CachedResponse
-from tests.conftest import skip_pypy
+from requests_cache.policy import utcnow
+from tests.conftest import N_ITERATIONS, skip_pypy
 from tests.integration.base_cache_test import BaseCacheTest
 from tests.integration.base_storage_test import CACHE_NAME, BaseStorageTest
 
@@ -134,7 +138,7 @@ class TestSQLiteDict(BaseStorageTest):
         assert cache._can_commit is True
 
     @skip_pypy
-    @pytest.mark.parametrize('kwargs', [{'fast_save': True}, {'wal': True}])
+    @pytest.mark.parametrize('kwargs', [{'busy_timeout': 5}, {'fast_save': True}, {'wal': True}])
     def test_pragma(self, kwargs):
         """Test settings that make additional PRAGMA statements"""
         cache_1 = self.init_cache('cache_1', **kwargs)
@@ -147,6 +151,72 @@ class TestSQLiteDict(BaseStorageTest):
 
         assert set(cache_1.keys()) == {f'key_{i}' for i in range(n)}
         assert set(cache_2.values()) == {f'value_{i}' for i in range(n)}
+
+    def test_busy_timeout(self):
+        cache = self.init_cache(busy_timeout=5)
+        with cache.connection() as con:
+            r = con.execute('PRAGMA busy_timeout').fetchone()
+            assert r[0] == 5
+
+    def test_wal_sync_mode(self):
+        # Should default to 'NORMAL' (1)
+        cache = self.init_cache(wal=True)
+        with cache.connection() as con:
+            r = con.execute('PRAGMA synchronous').fetchone()
+            assert r[0] == 1
+
+        # Not recommended, but should still work
+        cache = self.init_cache(wal=True, fast_save=True)
+        with cache.connection() as con:
+            r = con.execute('PRAGMA synchronous').fetchone()
+            assert r[0] == 0
+
+    def test_write_retry(self):
+        cache = self.init_cache()
+        locked_error = sqlite3.OperationalError('database is locked')
+        with patch.object(cache, '_write', side_effect=[locked_error, 1]) as mock_write:
+            cache['key_1'] = 'value_1'
+            assert mock_write.call_count == 2
+
+    def test_write_retry__exceeded_retries(self):
+        cache = self.init_cache()
+        locked_error = sqlite3.OperationalError('database is locked')
+
+        with patch.object(cache, '_write', side_effect=locked_error) as mock_write:
+            cache['key_1'] = 'value_1'
+            assert mock_write.call_count == 3
+            assert 'key_1' not in cache
+
+        # Set a custom number of retries
+        cache = self.init_cache(retries=5)
+        with patch.object(cache, '_write', side_effect=locked_error) as mock_write:
+            cache['key_1'] = 'value_1'
+            assert mock_write.call_count == 5
+
+        # Set retries to 0 to disable retrying
+        cache = self.init_cache(retries=0)
+        with patch.object(cache, '_write', side_effect=locked_error) as mock_write:
+            with pytest.raises(sqlite3.OperationalError):
+                cache['key_1'] = 'value_1'
+            assert mock_write.call_count == 1
+
+        # Expect no change to behavior if retrying is disabled and there are no errors
+        cache['key_1'] = 'value_1'
+        assert 'key_1' in cache
+
+    def test_write_retry__other_errors(self):
+        """Errors other than 'OperationalError: database is locked' should not be retried"""
+        cache = self.init_cache()
+
+        error_1 = sqlite3.OperationalError('no more rows available')
+        with patch.object(cache, '_write', side_effect=error_1):
+            with pytest.raises(sqlite3.OperationalError):
+                cache['key_1'] = 'value_1'
+
+        error_2 = sqlite3.DatabaseError('hard drive is on fire')
+        with patch.object(cache, '_write', side_effect=error_2):
+            with pytest.raises(sqlite3.DatabaseError):
+                cache['key_1'] = 'value_1'
 
     @skip_pypy
     @pytest.mark.parametrize('limit', [None, 50])
@@ -189,7 +259,7 @@ class TestSQLiteDict(BaseStorageTest):
     @pytest.mark.parametrize('limit', [None, 50])
     def test_sorted__by_expires(self, limit):
         cache = self.init_cache()
-        now = datetime.utcnow()
+        now = utcnow()
 
         # Insert items with decreasing expiration time
         for i in range(100):
@@ -207,7 +277,7 @@ class TestSQLiteDict(BaseStorageTest):
     @skip_pypy
     def test_sorted__exclude_expired(self):
         cache = self.init_cache()
-        now = datetime.utcnow()
+        now = utcnow()
 
         # Make only odd numbered items expired
         for i in range(100):
@@ -308,12 +378,31 @@ class TestSQLiteCache(BaseCacheTest):
     def test_count(self):
         """count() should work the same as len(), but with the option to exclude expired responses"""
         session = self.init_session()
-        now = datetime.utcnow()
+        now = utcnow()
         session.cache.responses['key_1'] = CachedResponse(expires=now + timedelta(1))
         session.cache.responses['key_2'] = CachedResponse(expires=now - timedelta(1))
 
         assert session.cache.count() == 2
         assert session.cache.count(expired=False) == 1
+
+    def test_delete__single_key(self):
+        """Vacuum should not be used after delete if there is only a single key"""
+        session = self.init_session()
+        session.cache.responses['key_1'] = 'value_1'
+
+        with patch.object(SQLiteDict, 'vacuum') as mock_vacuum:
+            session.cache.delete('key_1')
+            mock_vacuum.assert_not_called()
+
+    def test_delete__skip_vacuum(self):
+        """Vacuum should not be used after delete if disabled"""
+        session = self.init_session()
+        session.cache.responses['key_1'] = 'value_1'
+        session.cache.responses['key_2'] = 'value_2'
+
+        with patch.object(SQLiteDict, 'vacuum') as mock_vacuum:
+            session.cache.delete('key_1', 'key_2', vacuum=False)
+            mock_vacuum.assert_not_called()
 
     @patch.object(SQLiteDict, 'sorted')
     def test_filter__expired(self, mock_sorted):
@@ -329,7 +418,7 @@ class TestSQLiteCache(BaseCacheTest):
     def test_sorted(self):
         """Test wrapper method for SQLiteDict.sorted(), with all arguments combined"""
         session = self.init_session(clear=False)
-        now = datetime.utcnow()
+        now = utcnow()
 
         # Insert items with decreasing expiration time
         for i in range(500):
@@ -349,3 +438,11 @@ class TestSQLiteCache(BaseCacheTest):
             assert prev_item is None or prev_item.expires < item.expires
             assert item.cache_key
             assert not item.is_expired
+
+    # TODO: Remove after fixing issue with SQLite multiprocessing on python 3.12
+    @pytest.mark.parametrize('executor_class', [ThreadPoolExecutor, ProcessPoolExecutor])
+    @pytest.mark.parametrize('iteration', range(N_ITERATIONS))
+    def test_concurrency(self, iteration, executor_class):
+        if version_info >= (3, 12):
+            pytest.xfail('Concurrent usage of SQLite backend is not yet supported on python 3.12')
+        super().test_concurrency(iteration, executor_class)

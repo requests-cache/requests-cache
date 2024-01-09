@@ -12,7 +12,7 @@ from urllib.parse import urlencode
 
 import pytest
 import requests
-from requests import HTTPError, Request, RequestException
+from requests import HTTPError, Request, RequestException, Session
 from requests.structures import CaseInsensitiveDict
 
 from requests_cache import ALL_METHODS, CachedSession
@@ -20,7 +20,15 @@ from requests_cache._utils import get_placeholder_class
 from requests_cache.backends import BACKEND_CLASSES, BaseCache
 from requests_cache.backends.base import DESERIALIZE_ERRORS
 from requests_cache.models import CachedResponse
-from requests_cache.policy.expiration import DO_NOT_CACHE, EXPIRE_IMMEDIATELY, NEVER_EXPIRE
+from requests_cache.policy import (
+    DO_NOT_CACHE,
+    EXPIRE_IMMEDIATELY,
+    NEVER_EXPIRE,
+    CacheActions,
+    utcnow,
+)
+from requests_cache.policy.actions import METHOD_OVERRIDE_HEADERS
+from requests_cache.session import OriginalSession
 from tests.conftest import (
     MOCKED_URL,
     MOCKED_URL_200_404,
@@ -35,7 +43,6 @@ from tests.conftest import (
     MOCKED_URL_VARY_REDIRECT,
     MOCKED_URL_VARY_REDIRECT_TARGET,
     START_DT,
-    ignore_deprecation,
     patch_normalize_url,
     skip_pypy,
     time_travel,
@@ -64,7 +71,7 @@ def test_init_unregistered_backend():
 
 def test_init_cache_path_expansion():
     session = CachedSession('~', backend='filesystem')
-    assert session.cache.cache_dir == Path("~").expanduser()
+    assert session.cache.cache_dir == Path('~').expanduser()
 
 
 @patch.dict(BACKEND_CLASSES, {'mongodb': get_placeholder_class()})
@@ -72,6 +79,22 @@ def test_init_missing_backend_dependency():
     """Test that the correct error is thrown when a user does not have a dependency installed"""
     with pytest.raises(ImportError):
         CachedSession(backend='mongodb')
+
+
+def test_wrap():
+    vanilla_session = Session()
+    vanilla_session.auth = ('user', 'pass')
+    vanilla_session.cookies = {'user-id': '123'}
+    vanilla_session.headers = {'Accept-Encoding': 'gzip'}
+    vanilla_session.verify = False
+
+    session = CachedSession.wrap(vanilla_session, expire_after=60)
+    assert isinstance(session, CachedSession)
+    assert session.auth == ('user', 'pass')
+    assert session.cookies == {'user-id': '123'}
+    assert session.headers == {'Accept-Encoding': 'gzip'}
+    assert session.verify is False
+    assert session.settings.expire_after == 60
 
 
 def test_repr(mock_session):
@@ -91,7 +114,7 @@ def test_pickle__disabled():
 
 def test_response_defaults(mock_session):
     """Both cached and new responses should always have the following attributes"""
-    mock_session.settings.expire_after = datetime.utcnow() + timedelta(days=1)
+    mock_session.settings.expire_after = utcnow() + timedelta(days=1)
     response_1 = mock_session.get(MOCKED_URL)
     response_2 = mock_session.get(MOCKED_URL)
     response_3 = mock_session.get(MOCKED_URL)
@@ -181,11 +204,6 @@ def test_params_positional_arg(mock_session):
     assert 'param_1=1' in response.url
 
 
-def test_https(mock_session):
-    assert mock_session.get(MOCKED_URL_HTTPS, verify=True).from_cache is False
-    assert mock_session.get(MOCKED_URL_HTTPS, verify=True).from_cache is True
-
-
 def test_json(mock_session):
     assert mock_session.get(MOCKED_URL_JSON).from_cache is False
     response = mock_session.get(MOCKED_URL_JSON)
@@ -193,11 +211,21 @@ def test_json(mock_session):
     assert response.json()['message'] == 'mock json response'
 
 
+def test_https(mock_session):
+    assert mock_session.get(MOCKED_URL_HTTPS, verify=True).from_cache is False
+    assert mock_session.get(MOCKED_URL_HTTPS, verify=True).from_cache is True
+
+
 def test_verify(mock_session):
     mock_session.get(MOCKED_URL)
-    assert mock_session.get(MOCKED_URL).from_cache is True
-    assert mock_session.get(MOCKED_URL, verify=False).from_cache is False
-    assert mock_session.get(MOCKED_URL, verify='/path/to/cert').from_cache is False
+    r1 = mock_session.get(MOCKED_URL, verify=True)
+    r2 = mock_session.get(MOCKED_URL, verify='/path/to/cert')
+    r3 = mock_session.get(MOCKED_URL, verify=False)
+
+    assert r1.from_cache is True
+    assert r2.from_cache is True
+    assert r3.from_cache is False
+    assert r1.cache_key == r2.cache_key
 
 
 def test_response_history(mock_session):
@@ -234,7 +262,7 @@ def test_raw_data(method, mock_session):
 @pytest.mark.parametrize('field', ['params', 'data', 'json'])
 def test_normalize_params(field, mock_session):
     """Test normalization with different combinations of data fields"""
-    params = {"a": "a", "b": ["1", "2", "3"], "c": "4"}
+    params = {'a': 'a', 'b': ['1', '2', '3'], 'c': '4'}
     reversed_params = dict(sorted(params.items(), reverse=True))
 
     assert mock_session.get(MOCKED_URL, **{field: params}).from_cache is False
@@ -242,13 +270,13 @@ def test_normalize_params(field, mock_session):
     assert mock_session.post(MOCKED_URL, **{field: params}).from_cache is False
     assert mock_session.post(MOCKED_URL, **{field: params}).from_cache is True
     assert mock_session.post(MOCKED_URL, **{field: reversed_params}).from_cache is True
-    assert mock_session.post(MOCKED_URL, **{field: {"a": "b"}}).from_cache is False
+    assert mock_session.post(MOCKED_URL, **{field: {'a': 'b'}}).from_cache is False
 
 
 @pytest.mark.parametrize('mapping_class', [dict, UserDict, CaseInsensitiveDict])
 def test_normalize_params__custom_dicts(mapping_class, mock_session):
     """Test normalization with different dict-like classes"""
-    params = {"a": "a", "b": ["1", "2", "3"], "c": "4"}
+    params = {'a': 'a', 'b': ['1', '2', '3'], 'c': '4'}
     params = mapping_class(params.items())
 
     assert mock_session.get(MOCKED_URL, params=params).from_cache is False
@@ -260,7 +288,7 @@ def test_normalize_params__custom_dicts(mapping_class, mock_session):
 def test_normalize_params__serialized_body(mock_session):
     """Test normalization for serialized request body content"""
     headers = {'Content-Type': 'application/json'}
-    params = {"a": "a", "b": ["1", "2", "3"], "c": "4"}
+    params = {'a': 'a', 'b': ['1', '2', '3'], 'c': '4'}
     sorted_params = json.dumps(params)
     reversed_params = json.dumps(dict(sorted(params.items(), reverse=True)))
 
@@ -271,7 +299,7 @@ def test_normalize_params__serialized_body(mock_session):
 
 def test_normalize_params__urlencoded_body(mock_session):
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
-    params = urlencode({"a": "a", "b": "!@#$%^&*()[]", "c": "4"})
+    params = urlencode({'a': 'a', 'b': '!@#$%^&*()[]', 'c': '4'})
 
     assert mock_session.post(MOCKED_URL, headers=headers, data=params).from_cache is False
     assert mock_session.post(MOCKED_URL, headers=headers, data=params).from_cache is True
@@ -472,7 +500,7 @@ def test_stale_if_error__max_stale(mock_session):
     status code AND it is expired by less than the specified time
     """
     mock_session.settings.stale_if_error = timedelta(seconds=15)
-    mock_session.settings.expire_after = datetime.utcnow() - timedelta(seconds=10)
+    mock_session.settings.expire_after = utcnow() - timedelta(seconds=10)
     mock_session.settings.allowable_codes = (200,)
     mock_session.get(MOCKED_URL_200_404)
 
@@ -561,6 +589,23 @@ def test_allowable_methods(mock_session):
     mock_session.delete(MOCKED_URL)
     assert not mock_session.cache.contains(request=Request('DELETE', MOCKED_URL))
     assert mock_session.delete(MOCKED_URL).from_cache is False
+
+
+@pytest.mark.parametrize('override_header', METHOD_OVERRIDE_HEADERS)
+def test_allowable_methods__override_headers(override_header, mock_session):
+    mock_session.settings.allowable_methods = ['GET']
+
+    # In this case the request should not be cached, since POST is not allowed
+    mock_session.post(MOCKED_URL)
+    r = mock_session.post(MOCKED_URL)
+    assert r.from_cache is False
+    assert not mock_session.cache.contains(request=Request('POST', MOCKED_URL))
+
+    # In this case the request should be cached, since the overridden method is GET
+    mock_session.post(MOCKED_URL, headers={override_header: 'GET'})
+    r = mock_session.post(MOCKED_URL, headers={override_header: 'GET'})
+    assert r.from_cache is True
+    assert mock_session.cache.contains(request=Request('POST', MOCKED_URL))
 
 
 def test_always_revalidate(mock_session):
@@ -709,7 +754,7 @@ def test_304_not_modified(
 ):
     url = f'{MOCKED_URL}/endpoint_2'
     if cache_expired:
-        mock_session.settings.expire_after = datetime.utcnow() - timedelta(1)
+        mock_session.settings.expire_after = utcnow() - timedelta(1)
     if cache_hit:
         mock_session.mock_adapter.register_uri('GET', url, status_code=200)
         mock_session.get(url)
@@ -914,6 +959,48 @@ def test_request_only_if_cached__prepared_request(mock_session):
         response.raise_for_status()
 
 
+def test_revalidation__skip_update(mock_session):
+    """After a revalidation request, the response should not be updated in the cache if expiration
+    and headers are unchanged.
+    """
+    # With no expiration (NEVER_EXPIRE), the expiration value in the cache will not change.
+    mock_session.settings.expire_after = NEVER_EXPIRE
+    response_1 = mock_session.get(MOCKED_URL_ETAG)
+    mock_session.mock_adapter.register_uri('GET', MOCKED_URL_ETAG, status_code=304)
+
+    with patch.object(mock_session.cache, 'save_response') as mock_save:
+        response_2 = mock_session.get(MOCKED_URL_ETAG, refresh=True)
+        mock_save.assert_not_called()
+
+    assert response_2.from_cache is True and response_2.revalidated is True
+    assert response_1.expires == response_2.expires
+
+
+def test_revalidation__update_cache(mock_session):
+    """After a revalidation request, the response should be updated in the cache with new expiration
+    and/or headers (if either changed).
+    """
+    mock_session.settings.expire_after = -1
+    response_1 = mock_session.get(MOCKED_URL_ETAG)
+    assert response_1.expires is None
+    mock_session.mock_adapter.register_uri('GET', MOCKED_URL_ETAG, status_code=304)
+
+    # Expiration has changed
+    with patch.object(mock_session.cache, 'save_response') as mock_save:
+        response_2 = mock_session.get(MOCKED_URL_ETAG, refresh=True, expire_after=60)
+        mock_save.assert_called()
+    assert response_2.expires is not None
+
+    # Headers have changed
+    mock_session.mock_adapter.register_uri(
+        'GET', MOCKED_URL_ETAG, headers={'new_header': 'true'}, status_code=304
+    )
+    with patch.object(mock_session.cache, 'save_response') as mock_save:
+        response_3 = mock_session.get(MOCKED_URL_ETAG, refresh=True, expire_after=60)
+        mock_save.assert_called()
+    assert response_3.headers['new_header'] == 'true'
+
+
 def test_request_refresh(mock_session):
     """The refresh option should send a conditional request, if possible"""
     response_1 = mock_session.get(MOCKED_URL_ETAG, expire_after=60)
@@ -995,11 +1082,16 @@ def test_request_force_refresh__prepared_request(mock_session):
     assert response_3.expires is not None
 
 
-# Deprecated methods
-# --------------------
-
-
-def test_remove_expired_responses(mock_session):
-    with ignore_deprecation(), patch.object(mock_session.cache, 'delete') as mock_delete:
-        mock_session.remove_expired_responses()
-        mock_delete.assert_called_once_with(expired=True, invalid=True)
+@patch.object(OriginalSession, 'send')
+def test_send_and_cache__already_cached(mock_send, mock_session):
+    """If _send_and_cache() receives a cached response after re-sending an updated request,
+    it should be returned as-is
+    """
+    r1 = CachedResponse()
+    mock_send.return_value = r1
+    r2 = mock_session._send_and_cache(
+        Request('GET', MOCKED_URL).prepare(),
+        CacheActions(settings=mock_session.settings),
+        CachedResponse(),
+    )
+    assert r1 is r2

@@ -14,9 +14,9 @@ serialization formats.
 from datetime import datetime, timedelta
 from decimal import Decimal
 from json import JSONDecodeError
-from typing import Callable, Dict, ForwardRef, MutableMapping, Optional
+from typing import Callable, Dict, ForwardRef, List, MutableMapping, Optional, Union
 
-from cattr import Converter
+from cattrs import Converter
 from requests.cookies import RequestsCookieJar, cookiejar_from_dict
 from requests.exceptions import RequestException
 from requests.structures import CaseInsensitiveDict
@@ -43,8 +43,9 @@ class CattrStage(Stage):
     Notes on ``decode_content`` option:
 
     * Response body will be decoded into a human-readable format (if possible) during serialization,
-      and re-encoded during deserialization to reconstruct the original response.
-    * Supported  Content-Types are ``application/*json*`` and ``text/*``. All other types will be saved as-is.
+      and re-encoded during deserialization to recreate the original response body.
+    * Supported Content-Types are ``application/*json*`` and ``text/*``. All other types will be saved
+      as-is.
     * Decoded responses are saved in a separate ``_decoded_content`` attribute, to ensure that
       ``_content`` is always binary.
     * This is the default behavior for Filesystem, DynamoDB, and MongoDB backends.
@@ -54,7 +55,7 @@ class CattrStage(Stage):
         self,
         factory: Optional[Callable[..., Converter]] = None,
         decode_content: bool = False,
-        **kwargs
+        **kwargs,
     ):
         self.converter = init_converter(factory, **kwargs)
         self.decode_content = decode_content
@@ -111,12 +112,12 @@ def init_converter(
         CaseInsensitiveDict, lambda obj, cls: CaseInsensitiveDict(obj)
     )
 
-    # Convert decoded JSON body back to a string. If the object is a valid JSON root (dict or list),
-    # that means it was previously saved in human-readable format due to `decode_content=True`.
-    # After this hook runs, the body will also be re-encoded with `_encode_content()`.
-    converter.register_structure_hook(
-        DecodedContent, lambda obj, cls: json.dumps(obj) if isinstance(obj, (dict, list)) else obj
-    )
+    # Tell cattrs to ignore DecodedContent; this will be handled separately in `CattrStage.loads()`
+    converter.register_structure_hook(DecodedContent, lambda obj, cls: obj)
+    # Same as above, but for cattrs 23.2+. In cattrs terms, this handles the "spillover" after
+    # handling DecodedContent with the "union passthrough strategy," which is enabled by default
+    # for its pre-configured converters (JsonConverter, etc.).
+    converter.register_structure_hook(Union[Dict, List], lambda obj, cls: obj)
 
     def structure_fwd_ref(obj, cls):
         # python<=3.8: ForwardRef may not have been evaluated yet
@@ -144,6 +145,8 @@ def make_decimal_timedelta_converter(**kwargs) -> Converter:
         timedelta, lambda obj: Decimal(str(obj.total_seconds())) if obj else None
     )
     converter.register_structure_hook(timedelta, _to_timedelta)
+    # converter.register_unstructure_hook(float, lambda obj: Decimal(str(obj)) if obj else None)
+    # converter.register_structure_hook(float, lambda obj, cls: float(obj) if obj else None)
     return converter
 
 
@@ -172,12 +175,42 @@ def _encode_content(response: CachedResponse) -> CachedResponse:
     """Re-encode response body if saved as JSON or text (via ``decode_content=True``).
     This has no effect for a binary response body.
     """
+    # The response may have previously been saved with `decode_content=False`
+    if not response._decoded_content:
+        return response
+
+    # Encode body as JSON
+    if response.headers.get('Content-Type') == 'application/json':
+        response._decoded_content = json.dumps(response._decoded_content)
+
+    # Encode body back to bytes
     if isinstance(response._decoded_content, str):
         response._content = response._decoded_content.encode('utf-8')
         response._decoded_content = None
-        response.encoding = 'utf-8'  # Set encoding explicitly so requests doesn't have to guess
+        response.encoding = 'utf-8'  # Set encoding explicitly so requests doesn't have to detect it
         response.headers['Content-Length'] = str(len(response._content))  # Size may have changed
+
     return response
+
+
+def _convert_floats(value):
+    """Workaround for DynamoDB-specific issue with decode_content=True. There doesn't seem to be
+    an obvious way to do this with the current converter setup, so need to do it manually here.
+    """
+
+    def _float_to_decimal(value: DecodedContent):
+        if isinstance(value, list):
+            return [_float_to_decimal(v) for v in value]
+        elif isinstance(value, dict):
+            return {k: _float_to_decimal(v) for k, v in value.items()}
+        elif isinstance(value, float):
+            return Decimal(str(value))
+        else:
+            return value
+
+    if isinstance(value, dict) and '_decoded_content' in value:
+        value['_decoded_content'] = _float_to_decimal(value['_decoded_content'])
+    return value
 
 
 def _to_datetime(obj, cls) -> datetime:

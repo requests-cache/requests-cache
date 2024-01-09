@@ -91,7 +91,7 @@ If needed, you can disable this behavior with the `ttl` argument:
 ```
 
 ## Creating a Table
-A table will be automatically created if one doesn't already exist. This is convienient if you just
+A table will be automatically created if one doesn't already exist. This is convenient if you just
 want to quickly test out DynamoDB as a cache backend, but in a production environment you will
 likely want to create the tables yourself, for example with
 [CloudFormation](https://aws.amazon.com/cloudformation/) or [Terraform](https://www.terraform.io/).

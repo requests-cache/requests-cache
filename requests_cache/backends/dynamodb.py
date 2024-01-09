@@ -24,7 +24,7 @@ class DynamoDbCache(BaseCache):
 
     Args:
         table_name: DynamoDB table name
-        connection: :boto3:`DynamoDB Resource <services/dynamodb.html#DynamoDB.ServiceResource>`
+        connection: :boto3:`DynamoDB Resource <services/dynamodb/service-resource/index.html#service-resource>`
             object to use instead of creating a new one
         ttl: Use DynamoDB TTL to automatically remove expired items
         kwargs: Additional keyword arguments for :py:meth:`~boto3.session.Session.resource`
@@ -58,7 +58,7 @@ class DynamoDbDict(BaseStorage):
 
     Args:
         table_name: DynamoDB table name
-        connection: :boto3:`DynamoDB Resource <services/dynamodb.html#DynamoDB.ServiceResource>`
+        connection: :boto3:`DynamoDB Resource <services/dynamodb/service-resource/index.html#service-resource>`
             object to use instead of creating a new one
         ttl: Use DynamoDB TTL to automatically remove expired items
         kwargs: Additional keyword arguments for :py:meth:`~boto3.session.Session.resource`

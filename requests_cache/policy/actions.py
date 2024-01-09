@@ -2,8 +2,9 @@ from datetime import datetime, timedelta
 from logging import DEBUG, getLogger
 from typing import TYPE_CHECKING, Dict, List, MutableMapping, Optional, Union
 
-from attr import define, field
+from attrs import define, field
 from requests import PreparedRequest, Response
+from requests.structures import CaseInsensitiveDict
 
 from .._utils import coalesce
 from ..cache_keys import normalize_headers
@@ -18,11 +19,19 @@ from . import (
     get_expiration_datetime,
     get_expiration_seconds,
     get_url_expiration,
+    utcnow,
 )
 from .settings import CacheSettings
 
 if TYPE_CHECKING:
     from ..models import CachedResponse
+
+# Nonstandard headers that can be used to override the request method
+METHOD_OVERRIDE_HEADERS = [
+    'X-HTTP-Method-Override',
+    'X-HTTP-Method',
+    'X-Method-Override',
+]
 
 logger = getLogger(__name__)
 
@@ -73,7 +82,10 @@ class CacheActions(RichMixin):
 
     @classmethod
     def from_request(
-        cls, cache_key: str, request: PreparedRequest, settings: Optional[CacheSettings] = None
+        cls,
+        cache_key: str,
+        request: PreparedRequest,
+        settings: Optional[CacheSettings] = None,
     ):
         """Initialize from request info and cache settings.
 
@@ -108,7 +120,7 @@ class CacheActions(RichMixin):
         # Check and log conditions for reading from the cache
         read_criteria = {
             'disabled cache': settings.disabled,
-            'disabled method': str(request.method) not in settings.allowable_methods,
+            'disabled method': not _is_method_allowed(request, settings),
             'disabled by headers or refresh': directives.no_cache or directives.no_store,
             'disabled by expiration': expire_after == DO_NOT_CACHE,
         }
@@ -142,7 +154,7 @@ class CacheActions(RichMixin):
 
         * min-fresh
         * max-stale
-        * stale-if-error (if an error has occured)
+        * stale-if-error (if an error has occurred)
         * stale-while-revalidate
         """
         if cached_response is None:
@@ -163,7 +175,7 @@ class CacheActions(RichMixin):
         else:
             offset = self._directives.get_expire_offset()
 
-        return datetime.utcnow() < cached_response.expires + offset
+        return utcnow() < cached_response.expires + offset
 
     def update_from_cached_response(
         self,
@@ -224,7 +236,7 @@ class CacheActions(RichMixin):
         # Check and log conditions for writing to the cache
         write_criteria = {
             'disabled cache': self._settings.disabled,
-            'disabled method': str(response.request.method) not in self._settings.allowable_methods,
+            'disabled method': not _is_method_allowed(response.request, self._settings),
             'disabled status': response.status_code not in self._settings.allowable_codes,
             'disabled by filter': filtered_out,
             'disabled by headers': self.skip_write,
@@ -243,6 +255,14 @@ class CacheActions(RichMixin):
     ) -> 'CachedResponse':
         """After revalidation, update the cached response's expiration and headers"""
         logger.debug(f'Response for URL {response.request.url} has not been modified')
+
+        # Skip updating the cached response if expiration and headers are unchanged
+        # Ignore validators missing from new response, since they may be omitted
+        headers_changed = any(
+            cached_response.headers.get(k) != v for k, v in response.headers.items()
+        )
+        self.skip_write = self.expires == cached_response.expires and not headers_changed
+
         cached_response.expires = self.expires
         cached_response.headers.update(response.headers)
         cached_response.revalidated = True
@@ -308,13 +328,25 @@ class CacheActions(RichMixin):
         headers_match = create_key(self._request, **key_kwargs) == vary_cache_key
         if not headers_match:
             _log_vary_diff(
-                self._request.headers, cached_response.request.headers, key_kwargs['match_headers']
+                self._request.headers,
+                cached_response.request.headers,
+                key_kwargs['match_headers'],
             )
         return headers_match
 
 
+def _is_method_allowed(request: PreparedRequest, settings: CacheSettings) -> bool:
+    """Check request method as well as method override headers"""
+    headers = request.headers or CaseInsensitiveDict()
+    methods = [headers.get(k) for k in METHOD_OVERRIDE_HEADERS]
+    methods += [request.method]
+    return any(m is not None and m in settings.allowable_methods for m in methods)
+
+
 def _log_vary_diff(
-    headers_1: MutableMapping[str, str], headers_2: MutableMapping[str, str], vary: List[str]
+    headers_1: MutableMapping[str, str],
+    headers_2: MutableMapping[str, str],
+    vary: List[str],
 ):
     """Log which specific headers specified by Vary did not match"""
     if logger.level > DEBUG:
