@@ -107,4 +107,4 @@ def try_int(value: Any) -> Optional[int]:
 def is_json_content_type(content_type: Optional[str]) -> bool:
     """Returns whether the given content-type represents json"""
     # empiric solution to catch stuff like `application/json;charset=UTF-8` or `application/vnd.api+json`
-    return content_type and content_type.startswith('application/') and 'json' in content_type
+    return bool(content_type and content_type.startswith('application/') and 'json' in content_type)
