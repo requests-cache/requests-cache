@@ -90,7 +90,12 @@ def test_redact_response__escaped_params():
 
 @pytest.mark.parametrize(
     'content_type',
-    ['application/json', 'application/json; charset=utf-8'],
+    [
+        'application/json',
+        'application/json; charset=utf-8',
+        'application/vnd.api+json; charset=utf-8',
+        'application/any_string+json',
+    ],
 )
 @pytest.mark.parametrize(
     'data',

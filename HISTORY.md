@@ -25,7 +25,7 @@
 * Add `CachedHTTPResponse._request_url` property for compatibility with urllib3
 * Fix form boundary used for cached multipart requests to comply with RFC 2046
 * If an explicit CA bundle path is passed via `verify` param, cache the response under the same key as `verify=True`
-* Fix `decode_content` not applying for all json mime types (such as `application/vnd.api+json`)
+* Handle JSON Content-Type charsets and MIME type variations (such as `application/vnd.api+json`) during request normalization and serialization
 
 ⚠️ **Deprecations & removals:**
 * Drop support for python 3.7
@@ -47,7 +47,6 @@
 
 🪲 **Bugfixes:**
 * Fix loading cached JSON content with `decode_content=True` when the root element is a list
-* Fix checking Content-Type with charset when normalizing request body
 * Fix `BaseCache.recreate_keys()` to normalize response bodies with `b'None'`
 * Fix `BaseCache.contains()` for multipart POST requests
 * Fix `CachedResponse.history` not being fully deserialized on python<=3.8
