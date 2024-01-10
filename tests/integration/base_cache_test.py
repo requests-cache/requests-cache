@@ -27,6 +27,7 @@ from tests.conftest import (
     LAST_MODIFIED,
     MOCKED_URL_JSON,
     MOCKED_URL_JSON_LIST,
+    MOCKED_URL_JSON_SPECIAL_TYPE,
     N_ITERATIONS,
     N_REQUESTS_PER_ITERATION,
     N_WORKERS,
@@ -273,7 +274,7 @@ class BaseCacheTest:
         assert b'gzipped' in cached_response.raw.read(amt=None, decode_content=True)
 
     @pytest.mark.parametrize('decode_content', [True, False])
-    @pytest.mark.parametrize('url', [MOCKED_URL_JSON, MOCKED_URL_JSON_LIST])
+    @pytest.mark.parametrize('url', [MOCKED_URL_JSON, MOCKED_URL_JSON_LIST, MOCKED_URL_JSON_SPECIAL_TYPE])
     def test_decode_json_response(self, decode_content, url):
         """Test that JSON responses (with both dict and list root) are correctly returned from the
         cache, regardless of `decode_content` setting"""
