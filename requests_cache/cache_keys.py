@@ -28,7 +28,7 @@ from requests import Request, Session
 from requests.structures import CaseInsensitiveDict
 from url_normalize import url_normalize
 
-from ._utils import decode, encode, patch_form_boundary
+from ._utils import decode, encode, patch_form_boundary, is_json_content_type
 
 __all__ = [
     'create_key',
@@ -162,7 +162,7 @@ def normalize_body(request: AnyPreparedRequest, ignored_parameters: ParamList) -
         content_type = ''
 
     # Filter and sort params if possible
-    if content_type == 'application/json':
+    if is_json_content_type(content_type):
         filtered_body = normalize_json_body(request.body, ignored_parameters)
     elif content_type == 'application/x-www-form-urlencoded':
         filtered_body = normalize_params(request.body, ignored_parameters)
