@@ -25,6 +25,7 @@
 * Add `CachedHTTPResponse._request_url` property for compatibility with urllib3
 * Fix form boundary used for cached multipart requests to comply with RFC 2046
 * If an explicit CA bundle path is passed via `verify` param, cache the response under the same key as `verify=True`
+* Fix `decode_content` not applying for all json mime types (such as `application/vnd.api+json`)
 
 ⚠️ **Deprecations & removals:**
 * Drop support for python 3.7
