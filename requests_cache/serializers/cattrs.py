@@ -180,7 +180,7 @@ def _encode_content(response: CachedResponse) -> CachedResponse:
         return response
 
     # Encode body as JSON
-    if response.headers.get('Content-Type') == 'application/json':
+    if is_json_content_type(response.headers.get('Content-Type')):
         response._decoded_content = json.dumps(response._decoded_content)
 
     # Encode body back to bytes
