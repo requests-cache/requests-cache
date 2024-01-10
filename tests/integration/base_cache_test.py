@@ -272,6 +272,9 @@ class BaseCacheTest:
         assert b'gzipped' in cached_response.content
         assert b'gzipped' in cached_response.raw.read(amt=None, decode_content=True)
 
+    # TODO: The following JSON-specific tests use requests-mock instead of httpbin. To make these
+    #   full integration tests, a separate flask (etc) app could be made to serve custom responses.
+
     @pytest.mark.parametrize('decode_content', [True, False])
     @pytest.mark.parametrize('url', [MOCKED_URL_JSON, MOCKED_URL_JSON_LIST])
     def test_decode_json_response(self, decode_content, url):
@@ -279,6 +282,34 @@ class BaseCacheTest:
         cache, regardless of `decode_content` setting"""
         session = self.init_session(decode_content=decode_content)
         session = mount_mock_adapter(session)
+
+        r1 = session.get(url)
+        r2 = session.get(url)
+        assert r1.json() == r2.json()
+
+    @pytest.mark.parametrize('decode_content', [True, False])
+    @pytest.mark.parametrize(
+        'content_type',
+        [
+            'application/json',
+            'application/json; charset=utf-8',
+            'application/vnd.api+json; charset=utf-8',
+            'application/any_string+json',
+        ],
+    )
+    def test_decode_json_variants(self, content_type, decode_content):
+        """Test that other JSON media type variants are correctly decoded and returned from the
+        cache"""
+        session = self.init_session(decode_content=decode_content)
+        session = mount_mock_adapter(session)
+        url = 'http+mock://requests-cache.com/json_alt'
+        session.mock_adapter.register_uri(
+            'GET',
+            url,
+            headers={'Content-Type': content_type},
+            json={'data': {'key': 'value'}},
+            status_code=200,
+        )
 
         r1 = session.get(url)
         r2 = session.get(url)
