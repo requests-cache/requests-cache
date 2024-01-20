@@ -65,7 +65,7 @@ jobs:
       # Cache packages per python version, and reuse until lockfile changes
       - name: Cache python packages
         id: cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: .venv
           key: venv-${{ env.LATEST_PY_VERSION }}-latest-${{ hashFiles('poetry.lock') }}
@@ -96,7 +96,7 @@ jobs:
       # Cache packages per python version, and reuse until lockfile changes
       - name: Cache python packages
         id: cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: .venv
           key: venv-${{ matrix.python-version }}-latest-minimum-deps-${{ hashFiles('poetry.lock') }}
@@ -172,7 +172,7 @@ jobs:
       # Cache packages per python version, and reuse until lockfile changes
       - name: Cache python packages
         id: cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: .venv
           key: venv-${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.requests-version }}-${{ hashFiles('poetry.lock') }}
