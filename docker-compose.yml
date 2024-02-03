@@ -6,11 +6,11 @@ services:
     image: kennethreitz/httpbin
     container_name: httpbin
     ports:
-      - '80:80'
+      - '8080:80'
 
   dynamodb:
     image: amazon/dynamodb-local
-    container_name: dynamodb
+    container_name: dynamodb-test
     ports:
       - '8000:8000'
     command: '-jar DynamoDBLocal.jar -inMemory'
@@ -21,7 +21,7 @@ services:
 
   mongo:
     image: mongo
-    container_name: mongo
+    container_name: mongo-test
     environment:
       MONGO_INITDB_DATABASE: 'requests_cache_pytest'
     ports:
@@ -30,7 +30,7 @@ services:
       - 'mongodb_data:/data/db'
 
   redis:
-    container_name: redis
+    container_name: redis-test
     image: docker.io/bitnami/redis
     ports:
       - '6379:6379'

@@ -54,6 +54,7 @@ N_WORKERS = 5 * STRESS_TEST_MULTIPLIER
 N_ITERATIONS = 4 * STRESS_TEST_MULTIPLIER
 N_REQUESTS_PER_ITERATION = 10 + 10 * STRESS_TEST_MULTIPLIER
 
+HTTPBIN_DEFAULT = 'http://localhost:8080'
 HTTPBIN_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 HTTPBIN_FORMATS = [
     'brotli',
@@ -101,7 +102,7 @@ SAMPLE_CACHE_FILES = list(SAMPLE_DATA_DIR.glob('sample.db.*'))
 
 def httpbin(path):
     """Get the url for either a local or remote httpbin instance"""
-    base_url = os.getenv('HTTPBIN_URL', 'http://localhost:80').rstrip('/')
+    base_url = os.getenv('HTTPBIN_URL', HTTPBIN_DEFAULT).rstrip('/')
     return f'{base_url}/{path}'
 
 
