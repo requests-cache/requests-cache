@@ -121,7 +121,7 @@ docs = [
 # For unit + integration tests
 coverage              = "^7.1"
 psutil                = "^5.0"
-pytest                = "^7.3"
+pytest                = "^8.0"
 pytest-clarity        = "^1.0.1"
 pytest-cov            = ">=3.0"
 pytest-rerunfailures  = ">=10.1"
