@@ -14,7 +14,7 @@ serialization formats.
 from datetime import datetime, timedelta
 from decimal import Decimal
 from json import JSONDecodeError
-from typing import Callable, Dict, ForwardRef, List, Optional, Union
+from typing import Callable, Dict, ForwardRef, List, MutableMapping, Optional, Union
 
 from cattrs import Converter
 from requests.cookies import RequestsCookieJar, cookiejar_from_dict
@@ -65,6 +65,8 @@ class CattrStage(Stage):
         return _decode_content(value, response_dict) if self.decode_content else response_dict
 
     def loads(self, value: Dict) -> CachedResponse:
+        if not isinstance(value, MutableMapping):
+            return value
         return _encode_content(self.converter.structure(value, cl=CachedResponse))
 
 

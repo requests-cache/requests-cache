@@ -76,7 +76,7 @@ class CacheMixin(MIXIN_BASE):
         self._lock = RLock()
 
         # If the mixin superclass is a custom Session, pass along any valid kwargs
-        super().__init__(**get_valid_kwargs(super().__init__, kwargs))
+        super().__init__(**get_valid_kwargs(super().__init__, kwargs))  # type: ignore
 
     @classmethod
     def wrap(cls, original_session: OriginalSession, **kwargs) -> 'CacheMixin':
@@ -258,7 +258,7 @@ class CacheMixin(MIXIN_BASE):
         elif cached_response is not None and response.status_code == 304:
             cached_response = actions.update_revalidated_response(response, cached_response)
             if not actions.skip_write:
-                self.cache.save_response(cached_response, actions.cache_key, actions.expires)  # type: ignore[unreachable]
+                self.cache.save_response(cached_response, actions.cache_key, actions.expires)
             return cached_response
         else:
             logger.debug(f'Skipping cache write for URL: {request.url}')

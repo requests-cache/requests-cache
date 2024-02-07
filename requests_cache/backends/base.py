@@ -270,7 +270,7 @@ class BaseCache:
             response.reset_expiration(expire_after)
             self.responses[response.cache_key] = response
 
-    def update(self, other: 'BaseCache'):
+    def update(self, other: 'BaseCache'):  # type: ignore
         """Update this cache with the contents of another cache"""
         logger.debug(f'Copying {len(other.responses)} responses from {repr(other)} to {repr(self)}')
         self.responses.update(other.responses)
