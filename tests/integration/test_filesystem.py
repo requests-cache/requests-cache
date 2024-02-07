@@ -7,7 +7,6 @@ import pytest
 from platformdirs import user_cache_dir
 
 from requests_cache.backends import FileCache, FileDict
-from requests_cache.models.response import CachedResponse
 from requests_cache.serializers import (
     SERIALIZERS,
     SerializerPipeline,
@@ -104,7 +103,7 @@ class TestFileCache(BaseCacheTest):
         session = self.init_session(serializer=serializer_name)
         num_files = 20
         for i in range(num_files):
-            session.cache.responses[f'key_{i}'] = CachedResponse()
+            session.cache.responses[f'key_{i}'] = {f'value_{i}': i}
 
         expected_extension = serializer_name.replace('pickle', 'pkl')
         assert len(list(session.cache.paths())) == num_files

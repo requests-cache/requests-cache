@@ -1,6 +1,6 @@
 """Common tests to run for all backends (BaseStorage subclasses)"""
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Dict, Type
 
 import pytest
@@ -117,12 +117,19 @@ class BaseStorageTest:
 
     def test_picklable_dict(self):
         cache = self.init_cache(serializer='pickle')
-        original_obj = CachedResponse(created_at=datetime.now(timezone.utc))
+        original_obj = BasicDataclass(
+            bool_attr=True,
+            datetime_attr=datetime(2022, 2, 2),
+            int_attr=2,
+            str_attr='value',
+        )
         cache['key_1'] = original_obj
 
         obj = cache['key_1']
-        assert obj == original_obj
-        assert obj.created_at == original_obj.created_at
+        assert obj.bool_attr == original_obj.bool_attr
+        assert obj.datetime_attr == original_obj.datetime_attr
+        assert obj.int_attr == original_obj.int_attr
+        assert obj.str_attr == original_obj.str_attr
 
     def test_clear_and_work_again(self):
         cache_1 = self.init_cache()
