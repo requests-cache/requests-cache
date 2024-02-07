@@ -59,7 +59,6 @@ pymongo                    = {optional=true, version=">=3"}
 redis                      = {optional=true, version=">=3"}
 
 # Optional serialization dependencies
-bson                       = {optional=true, version=">=0.5"}
 itsdangerous               = {optional=true, version=">=2.0"}
 pyyaml                     = {optional=true, version=">=6.0.1"}
 ujson                      = {optional=true, version=">=5.4"}
@@ -85,7 +84,6 @@ mongodb  = ["pymongo"]
 redis    = ["redis"]
 
 # Package extras for optional seriazliation dependencies
-bson     = ["bson"]   # BSON comes with pymongo, but can also be used as a standalone codec
 json     = ["ujson"]  # Will optionally be used by JSON serializer for improved performance
 security = ["itsdangerous"]
 yaml     = ["pyyaml"]
