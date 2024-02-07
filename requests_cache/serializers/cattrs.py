@@ -61,8 +61,6 @@ class CattrStage(Stage):
         self.decode_content = decode_content
 
     def dumps(self, value: CachedResponse) -> Dict:
-        if not isinstance(value, CachedResponse):
-            return value
         response_dict = self.converter.unstructure(value)
         return _decode_content(value, response_dict) if self.decode_content else response_dict
 
