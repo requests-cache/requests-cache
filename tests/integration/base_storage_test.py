@@ -8,12 +8,7 @@ from attrs import define, field
 
 from requests_cache.backends import BaseStorage
 from requests_cache.models import CachedResponse
-from tests.conftest import (
-    CACHE_NAME,
-    N_ITERATIONS,
-    N_REQUESTS_PER_ITERATION,
-    N_WORKERS,
-)
+from tests.conftest import CACHE_NAME, N_ITERATIONS, N_REQUESTS_PER_ITERATION, N_WORKERS
 
 
 class BaseStorageTest:
@@ -40,16 +35,12 @@ class BaseStorageTest:
         """
         caches = [self.init_cache(index=i) for i in range(10)]
         for i in range(self.num_instances):
-            cached_response = CachedResponse()
-            cached_response._content = str(i).encode()
-            caches[i][f'key_{i}'] = cached_response
+            caches[i][f'key_{i}'] = f'value_{i}'
+            caches[i][f'key_{i+1}'] = f'value_{i+1}'
 
-            cached_response = CachedResponse()
-            cached_response._content = str(i + 1).encode()
-            caches[i][f'key_{i+1}'] = cached_response
-
+        for i in range(self.num_instances):
             cache = caches[i]
-            assert cache[f'key_{i}']._content == str(i).encode()
+            assert cache[f'key_{i}'] == f'value_{i}'
             assert len(cache) == 2
             assert f'key_{i}' in cache and f'key_{i+1}' in cache
 
@@ -62,19 +53,15 @@ class BaseStorageTest:
         """
         caches = [self.init_cache(index=i) for i in range(self.num_instances)]
         for i in range(self.num_instances):
-            cached_response = CachedResponse()
-            cached_response._content = str(i).encode()
-            caches[i][f'key_{i}'] = cached_response
+            caches[i][f'key_{i}'] = f'value_{i}'
 
         for i in range(self.num_instances):
             cache = caches[i]
             assert list(cache) == [f'key_{i}']
             assert list(cache.keys()) == [f'key_{i}']
-            cached_response = CachedResponse()
-            cached_response._content = str(i).encode()
-            assert list(cache.values())[0]._content == cached_response._content
-            assert list(cache.items())[0][1]._content == cached_response._content
-            assert dict(cache)[f'key_{i}']._content == cached_response._content
+            assert list(cache.values()) == [f'value_{i}']
+            assert list(cache.items()) == [(f'key_{i}', f'value_{i}')]
+            assert dict(cache) == {f'key_{i}': f'value_{i}'}
 
     def test_cache_key(self):
         """The cache_key attribute should be available on responses returned from all
@@ -90,29 +77,24 @@ class BaseStorageTest:
         """Some more tests to ensure ``delitem`` deletes only the expected items"""
         cache = self.init_cache()
         for i in range(20):
-            cached_response = CachedResponse()
-            cached_response._content = str(i).encode()
-            cache[f'key_{i}'] = cached_response
+            cache[f'key_{i}'] = f'value_{i}'
         for i in range(5):
             del cache[f'key_{i}']
 
         assert len(cache) == 15
         assert set(cache.keys()) == {f'key_{i}' for i in range(5, 20)}
-        assert len(list(cache.values())) == 15
-        assert all(cache[f'key_{i}']._content == str(i).encode() for i in range(5, 20))
+        assert set(cache.values()) == {f'value_{i}' for i in range(5, 20)}
 
     def test_bulk_delete(self):
         cache = self.init_cache()
         for i in range(20):
-            cached_response = CachedResponse()
-            cached_response._content = str(i).encode()
-            cache[f'key_{i}'] = cached_response
+            cache[f'key_{i}'] = f'value_{i}'
         cache.bulk_delete([f'key_{i}' for i in range(5)])
         cache.bulk_delete(['nonexistent_key'])
 
         assert len(cache) == 15
         assert set(cache.keys()) == {f'key_{i}' for i in range(5, 20)}
-        assert all(cache[f'key_{i}']._content == str(i).encode() for i in range(5, 20))
+        assert set(cache.values()) == {f'value_{i}' for i in range(5, 20)}
 
     def test_bulk_delete__noop(self):
         """Just make sure bulk_delete doesn't do anything unexpected if no keys are provided"""
@@ -158,10 +140,9 @@ class BaseStorageTest:
     def test_same_settings(self):
         cache_1 = self.init_cache()
         cache_2 = self.init_cache(connection=getattr(cache_1, 'connection', None))
-        assert cache_1 == cache_2
         cache_1['key_1'] = 'value_1'
         cache_2['key_2'] = 'value_2'
-        assert cache_1 != cache_2
+        assert cache_1 == cache_2
 
     def test_str(self):
         """Not much to test for __str__ methods, just make sure they return keys in some format"""
