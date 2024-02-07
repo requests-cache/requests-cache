@@ -41,7 +41,7 @@ jobs:
       nginx:
         image: kennethreitz/httpbin
         ports:
-          - 80:80
+          - 8080:80
 
     steps:
       # Set up python + poetry
