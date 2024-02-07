@@ -54,14 +54,15 @@ class TestSQLiteDict(BaseStorageTest):
         cache = self.init_cache(use_memory=True)
         assert cache.db_path == MEMORY_URI
         for i in range(20):
-            cache[f'key_{i}'] = f'value_{i}'
+            cached_response = CachedResponse()
+            cached_response._content = str(i).encode()
+            cache[f'key_{i}'] = cached_response
         for i in range(5):
             del cache[f'key_{i}']
 
         assert len(cache) == 15
         assert set(cache.keys()) == {f'key_{i}' for i in range(5, 20)}
-        assert set(cache.values()) == {f'value_{i}' for i in range(5, 20)}
-
+        assert all(cache[f'key_{i}']._content == str(i).encode() for i in range(5, 20))
         cache.clear()
         assert len(cache) == 0
 
@@ -83,9 +84,11 @@ class TestSQLiteDict(BaseStorageTest):
         n_items = 1000
         with cache.bulk_commit():
             for i in range(n_items):
-                cache[f'key_{i}'] = f'value_{i}'
+                cached_response = CachedResponse()
+                cached_response._content = str(i).encode()
+                cache[f'key_{i}'] = cached_response
         assert set(cache.keys()) == {f'key_{i}' for i in range(n_items)}
-        assert set(cache.values()) == {f'value_{i}' for i in range(n_items)}
+        assert all(cache[f'key_{i}']._content == str(i).encode() for i in range(n_items))
 
     def test_bulk_delete__chunked(self):
         """When deleting more items than SQLite can handle in a single statement, it should be
@@ -146,11 +149,13 @@ class TestSQLiteDict(BaseStorageTest):
 
         n = 500
         for i in range(n):
-            cache_1[f'key_{i}'] = f'value_{i}'
-            cache_2[f'key_{i*2}'] = f'value_{i}'
+            cached_response = CachedResponse()
+            cached_response._content = str(i).encode()
+            cache_1[f'key_{i}'] = cached_response
+            cache_2[f'key_{i*2}'] = cached_response
 
         assert set(cache_1.keys()) == {f'key_{i}' for i in range(n)}
-        assert set(cache_2.values()) == {f'value_{i}' for i in range(n)}
+        assert all(cache_2[f'key_{i * 2}']._content == str(i).encode() for i in range(n))
 
     def test_busy_timeout(self):
         cache = self.init_cache(busy_timeout=5)
@@ -241,12 +246,14 @@ class TestSQLiteDict(BaseStorageTest):
         cache = self.init_cache()
 
         for i in range(100):
-            cache[f'key_{i+1:03}'] = f'value_{i+1}'
+            cached_response = CachedResponse()
+            cached_response._content = str(i + 1).encode()
+            cache[f'key_{i+1:03}'] = cached_response
 
         items = list(cache.sorted(key='key', reversed=True))
         assert len(items) == 100
         for i, item in enumerate(items):
-            assert item == f'value_{100-i}'
+            assert item._content == str(100 - i).encode()
 
     @skip_pypy
     def test_sorted__invalid_sort_key(self):
