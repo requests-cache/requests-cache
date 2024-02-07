@@ -68,7 +68,7 @@ class CattrStage(Stage):
         return value
 
     @dumps.register
-    def _(self, value: CachedResponse) -> CachedResponse:
+    def _(self, value: CachedResponse) -> dict:
         response_dict = self.converter.unstructure(value)
         return _decode_content(value, response_dict) if self.decode_content else response_dict
 
