@@ -27,6 +27,9 @@
 * If an explicit CA bundle path is passed via `verify` param, cache the response under the same key as `verify=True`
 * Handle JSON Content-Type charsets and MIME type variations (such as `application/vnd.api+json`) during request normalization and serialization
 
+📗 **Docs & Tests:**
+* Updated Mypy config and adapted tests.
+
 ⚠️ **Deprecations & removals:**
 * Drop support for python 3.7
 * Remove methods [deprecated in 1.0](#deprecations-1-0) from `CachedSession` and `BaseCache`

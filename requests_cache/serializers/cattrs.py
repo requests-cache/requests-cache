@@ -11,10 +11,13 @@ serialization formats.
    :functions-only:
    :nosignatures:
 """
+from __future__ import annotations
 from datetime import datetime, timedelta
 from decimal import Decimal
 from json import JSONDecodeError
-from typing import Callable, Dict, ForwardRef, List, MutableMapping, Optional, Union
+from typing import Callable, Dict, ForwardRef, List, Optional, Union
+from functools import singledispatchmethod
+from collections.abc import MutableMapping
 
 from cattrs import Converter
 from requests.cookies import RequestsCookieJar, cookiejar_from_dict
@@ -60,15 +63,21 @@ class CattrStage(Stage):
         self.converter = init_converter(factory, **kwargs)
         self.decode_content = decode_content
 
-    def dumps(self, value: CachedResponse) -> Dict:
-        if not isinstance(value, CachedResponse):
-            return value
+    @singledispatchmethod
+    def dumps(self, value):
+        return value
+
+    @dumps.register
+    def _(self, value: CachedResponse) -> dict:
         response_dict = self.converter.unstructure(value)
         return _decode_content(value, response_dict) if self.decode_content else response_dict
 
-    def loads(self, value: Dict) -> CachedResponse:
-        if not isinstance(value, MutableMapping):
-            return value
+    @singledispatchmethod
+    def loads(self, value):
+        return value
+
+    @loads.register
+    def _(self, value: MutableMapping) -> CachedResponse:
         return _encode_content(self.converter.structure(value, cl=CachedResponse))
 
 

@@ -172,7 +172,14 @@ exclude_lines = [
 ]
 
 [tool.mypy]
+python_version = 3.8
 ignore_missing_imports = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unreachable = true
+show_error_codes = true
+show_column_numbers = true
+pretty = true
 
 [tool.ruff]
 fix = true
