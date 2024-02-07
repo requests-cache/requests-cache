@@ -26,6 +26,7 @@
 * Fix form boundary used for cached multipart requests to comply with RFC 2046
 * If an explicit CA bundle path is passed via `verify` param, cache the response under the same key as `verify=True`
 * Handle JSON Content-Type charsets and MIME type variations (such as `application/vnd.api+json`) during request normalization and serialization
+* Removed 'bson' from the explicit dependencies because PyMongo comes with its own bson package. Read the warning: https://pymongo.readthedocs.io/en/stable/installation.html#installing-upgrading
 
 ⚠️ **Deprecations & removals:**
 * Drop support for python 3.7
