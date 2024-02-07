@@ -154,29 +154,34 @@ docker exec readthedocs make all
 ## Pull Requests
 Here are some general guidelines for submitting a pull request:
 
-- If the changes are trivial, just briefly explain the changes in the PR description
-- Otherwise, please submit an issue describing the proposed change prior to submitting a PR
-- Add unit test coverage for your changes
-- If your changes add or modify user-facing behavior, add documentation describing those changes
-- Submit the PR to be merged into the `main` branch
+* If the changes are trivial, just briefly explain the changes in the PR description
+* Otherwise, please submit an issue describing the proposed change prior to submitting a PR
+* Add unit test coverage for your changes
+* If your changes add or modify user-facing behavior, add documentation describing those changes
+* Submit the PR to be merged into the `main` branch
 
 ## Notes for Maintainers
 
 ### Releases
-- Releases are built and published to PyPI based on **git tags.**
-- [Milestones](https://github.com/requests-cache/requests-cache/milestones) will be used to track
+* Releases are built and published to PyPI based on **git tags.**
+* [Milestones](https://github.com/requests-cache/requests-cache/milestones) will be used to track
 progress on major and minor releases.
-- GitHub Actions will build and deploy packages to PyPI on tagged commits
+* GitHub Actions will build and deploy packages to PyPI on tagged commits
 on the `main` branch.
 
 Release steps:
-- Update the version in `requests_cache/__init__.py`
-- Update the release notes in `HISTORY.md`
-- Generate a sample cache for the new version (used by unit tests) with `python tests/generate_test_db.py`
-- Merge changes into the `main` branch
-- Push a new tag, e.g.: `git tag v0.1 && git push origin --tags`
-- This will trigger a deployment. Verify that this completes successfully and that the new version
+* Update the version in both `pyproject.toml` and `requests_cache/__init__.py`
+* Update the release notes in `HISTORY.md`
+* Generate a sample cache for the new version (used by unit tests) with `python tests/generate_test_db.py`
+* Merge changes into the `main` branch
+* Push a new tag, e.g.: `git tag v0.1 && git push origin --tags`
+* This will trigger a deployment. Verify that this completes successfully and that the new version
   can be installed from pypi with `pip install`
+* A [readthedocs build](https://readthedocs.org/projects/requests-cache/builds/) will be triggered by the new tag. Verify that this completes successfully.
+
+Downstream builds:
+* We also maintain a [Conda package](https://anaconda.org/conda-forge/requests-cache), which is automatically built and published by conda-forge whenever a new release is published to PyPI. The [feedstock repo](https://github.com/conda-forge/requests-cache-feedstock) only needs to be updated manually if there are changes to dependencies.
+* For reference: [repology](https://repology.org/project/python:requests-cache) lists additional downstream packages maintained by other developers.
 
 ### Pre-Releases
 Pre-release builds are convenient for letting testers try out in-development changes. Versions with
