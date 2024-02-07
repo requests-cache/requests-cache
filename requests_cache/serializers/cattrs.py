@@ -15,8 +15,9 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from decimal import Decimal
 from json import JSONDecodeError
-from typing import Any, Callable, Dict, ForwardRef, List, MutableMapping, Optional, Union
+from typing import Callable, Dict, ForwardRef, List, Optional, Union
 from functools import singledispatchmethod
+from collections.abc import MutableMapping
 
 from cattrs import Converter
 from requests.cookies import RequestsCookieJar, cookiejar_from_dict
@@ -63,21 +64,21 @@ class CattrStage(Stage):
         self.decode_content = decode_content
 
     @singledispatchmethod
-    def dumps(self, value: Any) -> Any:
-        response_dict = self.converter.unstructure(value)
-        return _decode_content(value, response_dict) if self.decode_content else response_dict
+    def dumps(self, value):
+        return value
 
     @dumps.register
     def _(self, value: CachedResponse) -> CachedResponse:
-        return value
+        response_dict = self.converter.unstructure(value)
+        return _decode_content(value, response_dict) if self.decode_content else response_dict
 
     @singledispatchmethod
-    def loads(self, value: Any) -> Any:
-        return _encode_content(self.converter.structure(value, cl=CachedResponse))
+    def loads(self, value):
+        return value
 
     @loads.register
-    def _(self, value: MutableMapping) -> MutableMapping:
-        return value
+    def _(self, value: MutableMapping) -> CachedResponse:
+        return _encode_content(self.converter.structure(value, cl=CachedResponse))
 
 
 def init_converter(
