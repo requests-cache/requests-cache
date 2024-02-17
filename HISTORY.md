@@ -1,6 +1,10 @@
 # History
 
-## 1.2.0 (TBD)
+## 1.2.0 (2024-02-17)
+
+⚠️ **Deprecations & removals:**
+* Drop support for python 3.7
+* Remove methods [deprecated in 1.0](#deprecations-1-0) from `CachedSession` and `BaseCache`
 
 🕗 **Expiration & headers:**
 * Add support for `X-HTTP-Method-Override` and other headers that can override request method
@@ -28,14 +32,7 @@
 * If an explicit CA bundle path is passed via `verify` param, cache the response under the same key as `verify=True`
 * Handle JSON Content-Type charsets and MIME type variations (such as `application/vnd.api+json`) during request normalization and serialization
 
-📗 **Docs & Tests:**
-* Updated Mypy config and adapted tests.
-
-⚠️ **Deprecations & removals:**
-* Drop support for python 3.7
-* Remove methods [deprecated in 1.0](#deprecations-1-0) from `CachedSession` and `BaseCache`
-
-## 1.1.1 (2023-11-18)
+### 1.1.1 (2023-11-18)
 * Backport fix from 1.2: Add compatibility with cattrs 23.2
 
 ## 1.1.0 (2023-06-30)
