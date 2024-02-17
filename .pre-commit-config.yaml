@@ -18,9 +18,22 @@ repos:
     hooks:
       - id: mypy
         files: requests_cache
-        additional_dependencies: [attrs, types-itsdangerous, types-requests, types-pyyaml, types-redis, types-ujson, types-urllib3]
+        additional_dependencies:
+          [
+            attrs,
+            types-itsdangerous,
+            types-requests,
+            types-pyyaml,
+            types-redis,
+            types-ujson,
+            types-urllib3,
+          ]
   - repo: https://github.com/yunojuno/pre-commit-xenon
     rev: v0.1
     hooks:
       - id: xenon
         args: [--max-average=A, --max-modules=B, --max-absolute=C]
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
+    hooks:
+      - id: prettier
