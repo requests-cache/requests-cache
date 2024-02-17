@@ -6,13 +6,13 @@ _decoded_content:
     author: Yours Truly
     date: date of publication
     slides:
-    - title: Wake up to WonderWidgets!
-      type: all
-    - items:
-      - Why <em>WonderWidgets</em> are great
-      - Who <em>buys</em> WonderWidgets
-      title: Overview
-      type: all
+      - title: Wake up to WonderWidgets!
+        type: all
+      - items:
+          - Why <em>WonderWidgets</em> are great
+          - Who <em>buys</em> WonderWidgets
+        title: Overview
+        type: all
     title: Sample Slide Show
 created_at: '2021-07-21T22:32:17.592974'
 elapsed: 0.187586
