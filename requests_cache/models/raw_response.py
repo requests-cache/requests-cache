@@ -88,6 +88,8 @@ class CachedHTTPResponse(RichMixin, HTTPResponse):
         """
         if 'Content-Encoding' in self.headers and decode_content is False:
             logger.warning('read(decode_content=False) is not supported for cached responses')
+        if is_fp_closed(self._fp):
+            return b''
 
         data = self._fp.read(amt)
         if data:
