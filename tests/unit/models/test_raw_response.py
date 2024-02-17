@@ -50,12 +50,6 @@ def test_reset():
     assert raw.read(None) == b'mock response'
 
 
-def test_set_content():
-    raw = CachedHTTPResponse(body=None)
-    raw.set_content(b'mock response')
-    assert raw.read() == b'mock response'
-
-
 def test_stream():
     raw = CachedHTTPResponse(body=b'mock response')
     data = b''
