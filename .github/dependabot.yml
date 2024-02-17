@@ -1,19 +1,19 @@
 version: 2
 updates:
-  - package-ecosystem: "pip"
-    directory: "/"
+  - package-ecosystem: 'pip'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "saturday"
-      time: "16:00"
+      interval: 'weekly'
+      day: 'saturday'
+      time: '16:00'
     ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-patch"]
-    labels: ["dependencies"]
-  - package-ecosystem: "github-actions"
-    directory: "/"
+      - dependency-name: '*'
+        update-types: ['version-update:semver-patch']
+    labels: ['dependencies']
+  - package-ecosystem: 'github-actions'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "saturday"
-      time: "16:00"
-    labels: ["dependencies"]
+      interval: 'weekly'
+      day: 'saturday'
+      time: '16:00'
+    labels: ['dependencies']

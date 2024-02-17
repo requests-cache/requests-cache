@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: "2010-09-09"
+AWSTemplateFormatVersion: '2010-09-09'
 Description: An example of creating a DynamoDB table to use as a requests-cache backend
 
 Parameters:
@@ -25,8 +25,8 @@ Resources:
       # Optional: Use provisioned throughput instead of on-demand
       BillingMode: PROVISIONED
       ProvisionedThroughput:
-          WriteCapacityUnits: 2
-          ReadCapacityUnits: 2
+        WriteCapacityUnits: 2
+        ReadCapacityUnits: 2
 
       # Optional: Enable DynamoDB's TTL feature
       TimeToLiveSpecification:
