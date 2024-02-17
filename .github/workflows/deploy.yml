@@ -115,7 +115,16 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', 'pypy3.9-7.3.12']
+        python-version:
+          [
+            '3.8',
+            '3.9',
+            '3.10',
+            '3.11',
+            '3.12',
+            'pypy3.9-7.3.12',
+            'pypy3.10-7.3.12',
+          ]
         requests-version: [latest]
         exclude:
           - os: windows-latest
@@ -178,6 +187,8 @@ jobs:
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
+          # Workaround due to older versions of requests/urllib3 having an upper bound on python version
+          sed -i -r 's/python\s+= ">=3.8"/python="^3.8"/g' pyproject.toml
           poetry add requests@${{ matrix.requests-version }} --lock
           poetry lock --check
           poetry lock --no-update
