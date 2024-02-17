@@ -745,6 +745,13 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/148966056?v=4",
       "profile": "https://github.com/olk-m",
       "contributions": ["bug", "code"]
+    },
+    {
+      "login": "deeenes",
+      "name": "deeenes",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2679889?v=4",
+      "profile": "https://denes.omnipathdb.org/",
+      "contributions": ["bug"]
     }
   ],
   "contributorsPerLine": 7,

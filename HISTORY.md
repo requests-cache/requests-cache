@@ -20,6 +20,7 @@
 * Add support for cattrs 23.2
 
 🪲 **Bugfixes:**
+* Fix `IncompleteRead` error that could sometimes occur with streaming requests due to mismatch with `Content-Length` header
 * Handle a corner case with streaming requests, conditional requests, and redirects
 * When redacting ignored parameters from a cached response, keep the rest of the original URL and headers without normalizing
 * Add `CachedHTTPResponse._request_url` property for compatibility with urllib3
