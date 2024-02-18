@@ -67,7 +67,7 @@ Here are some error messages you may see either in the logs or (more rarely) in 
   usually means that a response was previously cached in a format that isn't compatible with the
   current version of requests-cache or one of its dependencies.
   * This message is to help with debugging and can generally be ignored. If you prefer, you can
-    either {py:meth}`~.BaseCache.remove` the invalid responses or {py:meth}`~.BaseCache.clear` the
+    either {py:meth}`~.BaseCache.delete` the invalid responses or {py:meth}`~.BaseCache.clear` the
     entire cache.
 * **`Request for URL {url} failed; using cached response`:** This is just a notification that the
   {ref}`stale_if_error <request-errors>` option is working as intended.

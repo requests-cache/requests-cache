@@ -121,7 +121,7 @@ session = CachedSession(key_fn=create_key)
 ```
 
 `**kwargs` includes relevant {py:class}`.BaseCache` settings and any other keyword args passed to
-{py:meth}`.CachedSession.send()`. If you want use a custom matching function _and_ the existing
+{py:meth}`.CachedSession.send`. If you want use a custom matching function _and_ the existing
 options `ignored_parameters` and `match_headers`, you can implement them in `key_fn`:
 ```python
 def create_key(
