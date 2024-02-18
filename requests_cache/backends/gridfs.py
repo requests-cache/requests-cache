@@ -25,8 +25,8 @@ class GridFSCache(BaseCache):
 
     Args:
         db_name: Database name
-        connection: :py:class:`pymongo.MongoClient` object to reuse instead of creating a new one
-        kwargs: Additional keyword arguments for :py:class:`pymongo.MongoClient`
+        connection: :py:class:`~pymongo.mongo_client.MongoClient` object to reuse instead of creating a new one
+        kwargs: Additional keyword arguments for :py:class:`~pymongo.mongo_client.MongoClient`
     """
 
     def __init__(
@@ -59,8 +59,8 @@ class GridFSDict(BaseStorage):
     Args:
         db_name: Database name
         collection_name: Ignored; GridFS internally uses collections 'fs.files' and 'fs.chunks'
-        connection: :py:class:`pymongo.MongoClient` object to reuse instead of creating a new one
-        kwargs: Additional keyword arguments for :py:class:`pymongo.MongoClient`
+        connection: :py:class:`~pymongo.mongo_client.MongoClient` object to reuse instead of creating a new one
+        kwargs: Additional keyword arguments for :py:class:`~pymongo.mongo_client.MongoClient`
     """
 
     def __init__(

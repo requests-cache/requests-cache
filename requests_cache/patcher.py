@@ -1,7 +1,8 @@
 """Utilities for patching ``requests``. See :ref:`patching` for general usage info.
 
-.. warning:: These functions are not thread-safe. Use :py:class:`.CachedSession` if you want to use
-    caching in a multi-threaded environment.
+.. warning::
+    These functions are not thread-safe. Use :py:class:`.CachedSession` if you want to use caching
+    in a multi-threaded environment.
 
 .. automodsumm:: requests_cache.patcher
    :functions-only:
@@ -108,7 +109,7 @@ def clear():
 
 def delete(*args, **kwargs):
     """Remove responses from the cache according one or more conditions.
-    See :py:meth:`.BaseCache.delete for usage details.
+    See :py:meth:`.BaseCache.delete` for usage details.
     """
     session = requests.Session()
     if isinstance(session, CachedSession):

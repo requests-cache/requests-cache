@@ -36,7 +36,7 @@ class SQLiteCache(BaseCache):
 
     Args:
         db_path: Database file path
-        use_cache_dir: Store datebase in a user cache directory (e.g., `~/.cache/http_cache.sqlite`)
+        use_cache_dir: Store database in a user cache directory (e.g., `~/.cache/http_cache.sqlite`)
         use_temp: Store database in a temp directory (e.g., ``/tmp/http_cache.sqlite``)
         use_memory: Store database in memory instead of in a file
         busy_timeout: Timeout in milliseconds for SQLite to wait if a table is locked.
@@ -84,7 +84,7 @@ class SQLiteCache(BaseCache):
             self.responses.init_db()
             self.redirects.init_db()
 
-    # A more efficient SQLite implementation of :py:meth:`BaseCache.delete`
+    # A more efficient SQLite implementation of BaseCache.delete
     def delete(
         self,
         *keys: str,
@@ -152,7 +152,7 @@ class SQLiteCache(BaseCache):
         """
         return self.responses.count(expired=expired)
 
-    # A more efficient implementation of :py:meth:`BaseCache.filter` to make use of indexes
+    # A more efficient implementation of BaseCache.filter to make use of indexes
     def filter(
         self,
         valid: bool = True,
@@ -167,7 +167,7 @@ class SQLiteCache(BaseCache):
                 valid=valid, expired=expired, invalid=invalid, older_than=older_than
             )
 
-    # A more efficient implementation of :py:meth:`BaseCache.recreate_keys
+    # A more efficient implementation of BaseCache.recreate_keys
     def recreate_keys(self):
         with self.responses.bulk_commit():
             super().recreate_keys()

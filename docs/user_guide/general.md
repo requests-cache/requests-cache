@@ -100,7 +100,7 @@ There are a number of settings that affect cache behavior, which are covered in 
 
 These can all be passed as keyword arguments to {py:class}`.CachedSession` or
 {py:func}`.install_cache`. When using a session object, these can also be safely modified at any
-time via {py:attr}`.CachedSession.settings`. For example:
+time via {py:class}`CachedSession.settings <.CacheSettings>`. For example:
 ```python
 >>> from requests_cache import CachedSession
 

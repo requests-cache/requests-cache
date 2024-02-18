@@ -21,12 +21,12 @@ logger = getLogger(__name__)
 
 class MongoCache(BaseCache):
     """MongoDB cache backend.
-    By default, responses are only partially serialized into a MongoDB-compatible document format.
+    By default, responses are partially serialized into a MongoDB-compatible document format.
 
     Args:
         db_name: Database name
-        connection: :py:class:`pymongo.MongoClient` object to reuse instead of creating a new one
-        kwargs: Additional keyword arguments for :py:class:`pymongo.mongo_client.MongoClient`
+        connection: :py:class:`~pymongo.mongo_client.MongoClient` object to reuse instead of creating a new one
+        kwargs: Additional keyword arguments for :py:class:`~pymongo.mongo_client.MongoClient`
     """
 
     def __init__(
@@ -75,8 +75,8 @@ class MongoDict(BaseStorage):
     Args:
         db_name: Database name
         collection_name: Collection name
-        connection: :py:class:`pymongo.MongoClient` object to reuse instead of creating a new one
-        kwargs: Additional keyword arguments for :py:class:`pymongo.MongoClient`
+        connection: :py:class:`~pymongo.mongo_client.MongoClient` object to reuse instead of creating a new one
+        kwargs: Additional keyword arguments for :py:class:`~pymongo.mongo_client.MongoClient`
     """
 
     def __init__(
