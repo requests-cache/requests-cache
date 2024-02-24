@@ -1470,13 +1470,13 @@ type-comment = ["typed-ast (>=1.5.4)"]
 
 [[package]]
 name = "sphinx-automodapi"
-version = "0.16.0"
+version = "0.17.0"
 description = "Sphinx extension for auto-generating API documentation for entire modules"
 optional = true
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "sphinx-automodapi-0.16.0.tar.gz", hash = "sha256:6c673ef93066408e5ad3e2fa3533044d432a47fe6a826212b9ebf5f52a872554"},
-    {file = "sphinx_automodapi-0.16.0-py3-none-any.whl", hash = "sha256:68fc47064804604b90aa27c047016e86aaf970981d90a0082d5b5dd2e9d38afd"},
+    {file = "sphinx-automodapi-0.17.0.tar.gz", hash = "sha256:7ccdadad57add4aa9149d9f2bb5cf28c8f8b590280b4735b1156ea8355c423a1"},
+    {file = "sphinx_automodapi-0.17.0-py3-none-any.whl", hash = "sha256:4d029cb79eef29413e94ab01bb0177ebd2d5ba86e9789b73575afe9c06ae1501"},
 ]
 
 [package.dependencies]
@@ -1942,23 +1942,6 @@ files = [
 brotli = ["brotli (==1.0.9)", "brotli (>=1.0.9)", "brotlicffi (>=0.8.0)", "brotlipy (>=0.6.0)"]
 secure = ["certifi", "cryptography (>=1.3.4)", "idna (>=2.0.0)", "ipaddress", "pyOpenSSL (>=0.14)", "urllib3-secure-extra"]
 socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
-
-[[package]]
-name = "urllib3"
-version = "2.0.7"
-description = "HTTP library with thread-safe connection pooling, file post, and more."
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "urllib3-2.0.7-py3-none-any.whl", hash = "sha256:fdb6d215c776278489906c2f8916e6e7d4f5a9b602ccbcfdf7f016fc8da0596e"},
-    {file = "urllib3-2.0.7.tar.gz", hash = "sha256:c97dfde1f7bd43a71c8d2a58e369e9b2bf692d1334ea9f9cae55add7d0dd0f84"},
-]
-
-[package.extras]
-brotli = ["brotli (>=1.0.9)", "brotlicffi (>=0.8.0)"]
-secure = ["certifi", "cryptography (>=1.9)", "idna (>=2.0.0)", "pyopenssl (>=17.1.0)", "urllib3-secure-extra"]
-socks = ["pysocks (>=1.5.6,!=1.5.7,<2.0)"]
-zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
 name = "virtualenv"
