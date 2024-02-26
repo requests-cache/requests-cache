@@ -173,11 +173,45 @@ def test_normalize_request__oversized_body():
     assert normalize_request(request, ignored_parameters=['param']).body == encoded_body
 
 
-def test_normalize_request__headers():
+def test_normalize_request__single_header_value_as_bytes():
+    headers = {'Accept': b'gzip'}
     request = Request(
         method='GET',
         url='https://img.site.com/base/img.jpg',
-        headers={'Accept': 'gzip,  deflate,Venmo,  PayPal, '},
+        headers=headers,
+    )
+    norm_request = normalize_request(request.prepare())
+    assert norm_request.headers == {'Accept': 'gzip'}
+
+
+def test_normalize_request__multiple_header_values_as_bytes():
+    headers = {'Accept': b'gzip,  deflate,Venmo,  PayPal, '}
+    request = Request(
+        method='GET',
+        url='https://img.site.com/base/img.jpg',
+        headers=headers,
+    )
+    norm_request = normalize_request(request.prepare())
+    assert norm_request.headers == {'Accept': 'deflate, gzip, paypal, venmo'}
+
+
+def test_normalize_request__single_header_value_as_string():
+    headers = {'Accept': 'gzip'}
+    request = Request(
+        method='GET',
+        url='https://img.site.com/base/img.jpg',
+        headers=headers,
+    )
+    norm_request = normalize_request(request.prepare())
+    assert norm_request.headers == {'Accept': 'gzip'}
+
+
+def test_normalize_request__multiple_header_values_as_string():
+    headers = {'Accept': 'gzip,  deflate,Venmo,  PayPal, '}
+    request = Request(
+        method='GET',
+        url='https://img.site.com/base/img.jpg',
+        headers=headers,
     )
     norm_request = normalize_request(request.prepare())
     assert norm_request.headers == {'Accept': 'deflate, gzip, paypal, venmo'}

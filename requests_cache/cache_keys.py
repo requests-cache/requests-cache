@@ -124,7 +124,8 @@ def normalize_request(
 
     norm_request.method = (norm_request.method or '').upper()
     norm_request.url = normalize_url(norm_request.url or '', ignored_parameters)
-    norm_request.headers = normalize_headers(norm_request.headers, ignored_parameters)
+    decoded_headers = {k: decode(v) for (k, v) in norm_request.headers.items()}
+    norm_request.headers = normalize_headers(decoded_headers, ignored_parameters)
     norm_request.body = normalize_body(norm_request, ignored_parameters)
     return norm_request
 
