@@ -752,6 +752,13 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/2679889?v=4",
       "profile": "https://denes.omnipathdb.org/",
       "contributions": ["bug"]
+    },
+    {
+      "login": "cenviity",
+      "name": "Vincent Ging Ho Yim",
+      "avatar_url": "https://avatars.githubusercontent.com/u/28189684?v=4",
+      "profile": "https://www.thedataschool.com.au/the-team/vincent-ging-ho-yim/",
+      "contributions": ["bug", "code"]
     }
   ],
   "contributorsPerLine": 7,
