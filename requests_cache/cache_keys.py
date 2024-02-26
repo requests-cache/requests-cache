@@ -133,6 +133,7 @@ def normalize_headers(
     headers: MutableMapping[str, str], ignored_parameters: ParamList = None
 ) -> CaseInsensitiveDict:
     """Sort and filter request headers, and normalize minor variations in multi-value headers"""
+    headers = {k: decode(v) for (k, v) in headers.items()}
     if ignored_parameters:
         headers = filter_sort_dict(headers, ignored_parameters)
     for k, v in headers.items():

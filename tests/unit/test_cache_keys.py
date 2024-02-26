@@ -10,6 +10,7 @@ from urllib3 import HTTPResponse
 from requests_cache.cache_keys import (
     MAX_NORM_BODY_SIZE,
     create_key,
+    normalize_headers,
     normalize_request,
     redact_response,
 )
@@ -173,14 +174,28 @@ def test_normalize_request__oversized_body():
     assert normalize_request(request, ignored_parameters=['param']).body == encoded_body
 
 
-def test_normalize_request__headers():
-    request = Request(
-        method='GET',
-        url='https://img.site.com/base/img.jpg',
-        headers={'Accept': 'gzip,  deflate,Venmo,  PayPal, '},
-    )
-    norm_request = normalize_request(request.prepare())
-    assert norm_request.headers == {'Accept': 'deflate, gzip, paypal, venmo'}
+def test_normalize_headers__single_header_value_as_bytes():
+    headers = {'Accept': b'gzip'}
+    norm_headers = normalize_headers(headers)
+    assert norm_headers == {'Accept': 'gzip'}
+
+
+def test_normalize_headers__multiple_header_values_as_bytes():
+    headers = {'Accept': b'gzip,  deflate,Venmo,  PayPal, '}
+    norm_headers = normalize_headers(headers)
+    assert norm_headers == {'Accept': 'deflate, gzip, paypal, venmo'}
+
+
+def test_normalize_headers__single_header_value_as_string():
+    headers = {'Accept': 'gzip'}
+    norm_headers = normalize_headers(headers)
+    assert norm_headers == {'Accept': 'gzip'}
+
+
+def test_normalize_headers__multiple_header_values_as_string():
+    headers = {'Accept': 'gzip,  deflate,Venmo,  PayPal, '}
+    norm_headers = normalize_headers(headers)
+    assert norm_headers == {'Accept': 'deflate, gzip, paypal, venmo'}
 
 
 def test_remove_ignored_headers__empty():

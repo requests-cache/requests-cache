@@ -1,5 +1,10 @@
 # History
 
+## 1.2.1 (2024-02-xx)
+
+🪲 **Bugfixes:**
+* Fix `normalize_headers` not accepting header values in bytes
+
 ## 1.2.0 (2024-02-17)
 
 ⚠️ **Deprecations & removals:**
