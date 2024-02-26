@@ -3,7 +3,7 @@
 ## 1.2.1 (2024-02-xx)
 
 🪲 **Bugfixes:**
-* Fix `normalize_request` not accepting header values in bytes
+* Fix `normalize_headers` not accepting header values in bytes
 
 ## 1.2.0 (2024-02-17)
 

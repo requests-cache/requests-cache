@@ -124,8 +124,7 @@ def normalize_request(
 
     norm_request.method = (norm_request.method or '').upper()
     norm_request.url = normalize_url(norm_request.url or '', ignored_parameters)
-    decoded_headers = {k: decode(v) for (k, v) in norm_request.headers.items()}
-    norm_request.headers = normalize_headers(decoded_headers, ignored_parameters)
+    norm_request.headers = normalize_headers(norm_request.headers, ignored_parameters)
     norm_request.body = normalize_body(norm_request, ignored_parameters)
     return norm_request
 
@@ -134,6 +133,7 @@ def normalize_headers(
     headers: MutableMapping[str, str], ignored_parameters: ParamList = None
 ) -> CaseInsensitiveDict:
     """Sort and filter request headers, and normalize minor variations in multi-value headers"""
+    headers = {k: decode(v) for (k, v) in headers.items()}
     if ignored_parameters:
         headers = filter_sort_dict(headers, ignored_parameters)
     for k, v in headers.items():
