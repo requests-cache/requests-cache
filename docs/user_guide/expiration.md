@@ -86,7 +86,7 @@ Examples:
 ```
 
 **Notes:**
-- `urls_expire_after` should be a dict in the format `{pattern': expire_after}`
+- `urls_expire_after` should be a dict in the format `{pattern: expire_after}`
 - `expire_after` accepts the same types as `CachedSession.settings.expire_after`
 - **Glob patterns** will match request **base URLs without the protocol**, so the pattern `site.com/resource/`
   is equivalent to `http*://site.com/resource/**`.
