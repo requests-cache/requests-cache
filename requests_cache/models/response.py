@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from logging import getLogger
-from time import time
 from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 import attr
@@ -144,8 +143,9 @@ class CachedResponse(RichMixin, BaseResponse):
     @property
     def expires_unix(self) -> Optional[int]:
         """Get expiration time as a Unix timestamp"""
-        seconds = self.expires_delta
-        return round(time() + seconds) if seconds is not None else None
+        if self.expires is None:
+            return None
+        return round(self.expires.timestamp())
 
     @property
     def from_cache(self) -> bool:

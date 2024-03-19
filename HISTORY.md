@@ -1,9 +1,10 @@
 # History
 
-## 1.2.1 (2024-02-xx)
+## Unreleased
 
 🪲 **Bugfixes:**
 * Fix `normalize_headers` not accepting header values in bytes
+* Fix inconsistency due to rounding in `CachedResponse.expires_unix` property
 
 ## 1.2.0 (2024-02-17)
 
