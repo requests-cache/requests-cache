@@ -140,7 +140,7 @@ expiration will only apply to new responses (including refreshes of expired resp
 Options to apply a new expiration value include:
 * Clearing the cache
 * {ref}`Refreshing <refresh>` individual requests
-* Use :py:meth:`.BaseCache.reset_expiration`:
+* Use {py:meth}`.BaseCache.reset_expiration`:
 ```python
 # Reset expiration for all responses to 30 days from now
 >>> session.cache.reset_expiration(timedelta(days=30))
