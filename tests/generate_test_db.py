@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # flake8: noqa: E402
 """Generate a SQLite cache with some content for testing behavior during version upgrades"""
+
 import sys
 from os.path import abspath, join
 

@@ -1,4 +1,5 @@
 """Example of using requests-cache with the requests-mock library"""
+
 from os.path import dirname, join
 from unittest.mock import patch
 

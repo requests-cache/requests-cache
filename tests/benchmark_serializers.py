@@ -19,6 +19,7 @@ cattrs+ujson.loads:     2.128
 cattrs+bson.dumps: 1.550
 cattrs+bson.loads: 1.322
 """
+
 # ruff: noqa: E402,F401,F841
 import json
 import os

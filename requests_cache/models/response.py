@@ -187,10 +187,10 @@ class CachedResponse(RichMixin, BaseResponse):
 
     def __str__(self):
         return (
-            f'<CachedResponse [{self.status_code}]: '
-            f'created: {format_datetime(self.created_at)}, '
+            f'<CachedResponse [{self.status_code}]: "'
+            f"created: {format_datetime(self.created_at)}, "
             f'expires: {format_datetime(self.expires)} ({"stale" if self.is_expired else "fresh"}), '
-            f'size: {format_file_size(self.size)}, request: {self.request}>'
+            f"size: {format_file_size(self.size)}, request: {self.request}>"
         )
 
 

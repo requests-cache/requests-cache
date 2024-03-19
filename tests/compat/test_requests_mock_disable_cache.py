@@ -1,4 +1,5 @@
 """Example of using requests-cache with the requests-mock library"""
+
 import pytest
 import requests
 

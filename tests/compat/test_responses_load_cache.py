@@ -1,4 +1,5 @@
 """Example of using requests-cache with the responses library"""
+
 from contextlib import contextmanager
 from os.path import dirname, join
 from unittest.mock import patch

@@ -1,4 +1,5 @@
 """BaseCache tests that use mocked responses only"""
+
 import pickle
 from datetime import timedelta
 from logging import getLogger

@@ -1,4 +1,5 @@
 """Common tests to run for all backends (BaseCache subclasses)"""
+
 import json
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from functools import partial

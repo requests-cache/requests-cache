@@ -186,13 +186,15 @@ fix = true
 unsafe-fixes = true
 line-length = 100
 output-format = 'grouped'
-select = ['B', 'C4', 'C90', 'E', 'F']
-ignore = ['B023']
 target-version = 'py38'
 exclude = ['examples/']
 
 [tool.ruff.format]
 quote-style = 'single'
+
+[tool.ruff.lint]
+select = ['B', 'C4', 'C90', 'E', 'F']
+ignore = ['B023']
 
 [tool.ruff.lint.isort]
 known-first-party = ['tests']

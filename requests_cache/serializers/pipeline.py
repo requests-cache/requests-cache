@@ -4,6 +4,7 @@
    :classes-only:
    :nosignatures:
 """
+
 from typing import Any, Callable, Optional, Sequence, Union
 
 from ..models import CachedResponse

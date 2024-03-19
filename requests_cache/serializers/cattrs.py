@@ -11,6 +11,7 @@ serialization formats.
    :functions-only:
    :nosignatures:
 """
+
 from __future__ import annotations
 from datetime import datetime, timedelta
 from decimal import Decimal

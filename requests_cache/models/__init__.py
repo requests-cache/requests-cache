@@ -1,4 +1,5 @@
 """Data models used to serialize response data"""
+
 # ruff: noqa: F401
 from typing import Union
 

@@ -1,4 +1,5 @@
 """Minor internal utility functions that don't really belong anywhere else"""
+
 from contextlib import contextmanager
 from inspect import signature
 from logging import getLogger

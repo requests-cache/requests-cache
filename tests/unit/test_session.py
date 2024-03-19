@@ -1,4 +1,5 @@
 """CachedSession tests that use mocked responses only"""
+
 import json
 import pickle
 from collections import UserDict, defaultdict

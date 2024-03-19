@@ -8,6 +8,7 @@
    :functions-only:
    :nosignatures:
 """
+
 from contextlib import contextmanager
 from logging import getLogger
 from typing import Optional, Type

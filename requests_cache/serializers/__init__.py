@@ -18,6 +18,7 @@ For example, for JSON:
 For any optional libraries that aren't installed, the corresponding serializer will be a placeholder
 class that raises an ``ImportError`` at initialization time instead of at import time.
 """
+
 # ruff: noqa: F401
 from typing import Optional, Union
 

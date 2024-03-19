@@ -9,6 +9,7 @@ Notes:
 * The `api/` directory contains manually formatted sources for some modules
 * The `_templates` directory contains some Sphinx templates that modify auto-generated sources
 """
+
 import os
 import sys
 from os.path import join

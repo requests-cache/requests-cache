@@ -4,6 +4,7 @@
    :functions-only:
    :nosignatures:
 """
+
 from __future__ import annotations
 
 import json

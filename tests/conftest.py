@@ -8,6 +8,7 @@ Note: The protocol ``http(s)+mock://`` helps :py:class:`requests_mock.Adapter` p
 :py:class:`requests.PreparedRequest`. More info here:
 https://requests-mock.readthedocs.io/en/latest/adapter.html
 """
+
 import os
 import platform
 import warnings
@@ -28,7 +29,13 @@ from requests_mock import Adapter
 from rich.logging import RichHandler
 from timeout_decorator import timeout
 
-from requests_cache import ALL_METHODS, CachedSession, install_cache, uninstall_cache, utcnow
+from requests_cache import (
+    ALL_METHODS,
+    CachedSession,
+    install_cache,
+    uninstall_cache,
+    utcnow,
+)
 
 # ignore missing time-travel library on PyPy
 try:
@@ -331,7 +338,7 @@ def skip_missing_deps(module_name: str) -> pytest.Mark:
 
 @contextmanager
 def ignore_deprecation():
-    """Temporarily ilence deprecation warnings"""
+    """Temporarily silence deprecation warnings"""
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', category=DeprecationWarning)
         yield

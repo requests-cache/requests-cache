@@ -4,6 +4,7 @@
    :classes-only:
    :nosignatures:
 """
+
 from typing import Iterable, Optional
 
 import boto3
