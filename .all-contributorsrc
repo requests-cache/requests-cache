@@ -759,6 +759,13 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/28189684?v=4",
       "profile": "https://www.thedataschool.com.au/the-team/vincent-ging-ho-yim/",
       "contributions": ["bug", "code"]
+    },
+    {
+      "login": "jcd000",
+      "name": "jcd000",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8661795?v=4",
+      "profile": "https://github.com/jcd000",
+      "contributions": ["bug", "code"]
     }
   ],
   "contributorsPerLine": 7,

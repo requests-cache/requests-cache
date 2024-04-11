@@ -5,6 +5,7 @@
 🪲 **Bugfixes:**
 * Fix `normalize_headers` not accepting header values in bytes
 * Fix inconsistency due to rounding in `CachedResponse.expires_unix` property
+* Fix form boundary used for cached multipart requests to _fully_ comply with RFC 2046
 
 ## 1.2.0 (2024-02-17)
 
