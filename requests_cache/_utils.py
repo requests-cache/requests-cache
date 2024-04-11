@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional, Tupl
 
 from urllib3 import filepost
 
-FORM_BOUNDARY = '==requests-cache-form-boundary=='
+FORM_BOUNDARY = '--requests-cache-form-boundary--'
 
 KwargDict = Dict[str, Any]
 logger = getLogger('requests_cache')
