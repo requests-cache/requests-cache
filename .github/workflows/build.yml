@@ -52,7 +52,7 @@ jobs:
       - uses: supercharge/redis-github-action@1.8.0
         with:
           redis-version: 6
-      - uses: rrainn/dynamodb-action@v3.0.0
+      - uses: rrainn/dynamodb-action@v4.0.0
 
       # Cache packages per python version, and reuse until lockfile changes
       - name: Cache python packages
