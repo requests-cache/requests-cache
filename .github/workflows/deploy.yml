@@ -53,13 +53,13 @@ jobs:
           virtualenvs-in-project: true
 
       # Start integration test databases
-      - uses: supercharge/mongodb-github-action@v1.10.0
+      - uses: supercharge/mongodb-github-action@1.11.0
         with:
           mongodb-version: 5.0
       - uses: supercharge/redis-github-action@1.8.0
         with:
           redis-version: 6
-      - uses: rrainn/dynamodb-action@v3.0.0
+      - uses: rrainn/dynamodb-action@v4.0.0
 
       # Cache packages per python version, and reuse until lockfile changes
       - name: Cache python packages
