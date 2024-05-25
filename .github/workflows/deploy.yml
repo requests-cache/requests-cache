@@ -53,7 +53,7 @@ jobs:
           virtualenvs-in-project: true
 
       # Start integration test databases
-      - uses: supercharge/mongodb-github-action@v1.10.0
+      - uses: supercharge/mongodb-github-action@1.11.0
         with:
           mongodb-version: 5.0
       - uses: supercharge/redis-github-action@1.8.0
