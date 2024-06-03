@@ -32,6 +32,8 @@ CLEAN_DIRS = ['dist', 'build', DOCS_DIR / '_build', DOCS_DIR / 'modules']
 PYTHON_VERSIONS = ['3.8', '3.9', '3.10', '3.11', '3.12', 'pypy3.9', 'pypy3.10']
 UNIT_TESTS = TEST_DIR / 'unit'
 INTEGRATION_TESTS = TEST_DIR / 'integration'
+COMPAT_TESTS = TEST_DIR / 'compat'
+ALL_TESTS = [UNIT_TESTS, INTEGRATION_TESTS, COMPAT_TESTS]
 STRESS_TEST_MULTIPLIER = 10
 DEFAULT_COVERAGE_FORMATS = ['html', 'term']
 # Run tests in parallel, grouped by test module
@@ -43,7 +45,7 @@ IS_PYPY = platform.python_implementation() == 'PyPy'
 @session(python=PYTHON_VERSIONS)
 def test(session):
     """Run tests in a separate virtualenv per python version"""
-    test_paths = session.posargs or [UNIT_TESTS, INTEGRATION_TESTS]
+    test_paths = session.posargs or ALL_TESTS
     session.install('.', 'pytest', 'pytest-xdist', 'requests-mock', 'rich', 'timeout-decorator')
 
     cmd = f'pytest -rsxX {XDIST_ARGS}'
@@ -53,7 +55,7 @@ def test(session):
 @session(python=False, name='test-current')
 def test_current(session):
     """Run tests using the current virtualenv"""
-    test_paths = session.posargs or [UNIT_TESTS, INTEGRATION_TESTS]
+    test_paths = session.posargs or ALL_TESTS
     cmd = f'pytest -rsxX {XDIST_ARGS}'
     session.run(*cmd.split(' '), *test_paths)
 
@@ -69,7 +71,7 @@ def clean(session):
 @session(python=False, name='cov')
 def coverage(session):
     """Run tests and generate coverage report"""
-    cmd = f'pytest {UNIT_TESTS} {INTEGRATION_TESTS} -rsxX --cov'.split(' ')
+    cmd = ['pytest', *ALL_TESTS, '-rsxX', '--cov']
     if not IS_PYPY:
         cmd += XDIST_ARGS.split(' ')
 
