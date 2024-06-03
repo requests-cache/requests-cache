@@ -44,7 +44,9 @@ def get_responses():
 
 # responses patches HTTPAdapter.send(), so we need to patch one level lower to verify request mocking
 @patch.object(
-    requests.adapters.HTTPAdapter, 'get_connection', side_effect=ValueError('Real request made!')
+    requests.adapters.HTTPAdapter,
+    'get_connection_with_tls_context',
+    side_effect=ValueError('Real request made!'),
 )
 def test_mock_session(mock_http_adapter):
     """Test that the mock_session fixture is working as expected"""
