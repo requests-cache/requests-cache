@@ -246,7 +246,10 @@ class BaseCacheTest:
         session.get(url, params=first_response_headers)
 
         # Add different Response Header to mocked return value of the session.send() function.
-        updated_response_headers = {**first_response_headers, 'Cache-Control': 'max-age=60'}
+        updated_response_headers = {
+            **first_response_headers,
+            'Cache-Control': 'max-age=60',
+        }
         with patch.object(
             Session,
             'send',
@@ -317,10 +320,10 @@ class BaseCacheTest:
         assert r1.json() == r2.json()
 
     @pytest.mark.parametrize('decode_content', [True, False])
-    @pytest.mark.parametrize('body', ['string', 47, 47.1, True])
-    def test_decode_json_with_primitive_root(self, decode_content, body):
-        """Test that JSON responses (with primitive type root) are correctly returned from the
-        cache, regardless of `decode_content` setting"""
+    @pytest.mark.parametrize('body', ['string', 47, 47.1, True, '', [], {}])
+    def test_decode_json_root_types(self, decode_content, body):
+        """Test that JSON responses with an empty or primitive type root element are correctly
+        returned from the cache, regardless of `decode_content` setting"""
         session = self.init_session(decode_content=decode_content)
         session = mount_mock_adapter(session)
         url = 'http+mock://requests-cache.com/json_alt'

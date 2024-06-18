@@ -13,21 +13,22 @@ serialization formats.
 """
 
 from __future__ import annotations
+
+from collections.abc import MutableMapping
 from datetime import datetime, timedelta
 from decimal import Decimal
+from functools import singledispatchmethod
 from json import JSONDecodeError
 from typing import Callable, Dict, ForwardRef, List, Optional, Union
-from functools import singledispatchmethod
-from collections.abc import MutableMapping
 
 from cattrs import Converter
 from requests.cookies import RequestsCookieJar, cookiejar_from_dict
 from requests.exceptions import RequestException
 from requests.structures import CaseInsensitiveDict
 
+from .._utils import is_json_content_type
 from ..models import CachedResponse, DecodedContent
 from .pipeline import Stage
-from .._utils import is_json_content_type
 
 try:
     import ujson as json
@@ -186,7 +187,7 @@ def _encode_content(response: CachedResponse) -> CachedResponse:
     This has no effect for a binary response body.
     """
     # The response may have previously been saved with `decode_content=False`
-    if not response._decoded_content:
+    if response._decoded_content is None:
         return response
 
     # Encode body as JSON
