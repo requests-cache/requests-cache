@@ -1,6 +1,6 @@
 # History
 
-## Unreleased
+## 1.2.1 (2024-06-18)
 
 🪲 **Bugfixes:**
 * Fix `normalize_headers` not accepting header values in bytes
