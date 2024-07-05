@@ -36,6 +36,7 @@ from tests.conftest import (
     MOCKED_URL_404,
     MOCKED_URL_500,
     MOCKED_URL_ETAG,
+    MOCKED_URL_ETAG_200_404,
     MOCKED_URL_HTTPS,
     MOCKED_URL_JSON,
     MOCKED_URL_REDIRECT,
@@ -425,7 +426,8 @@ def test_cache_error(exception_cls, mock_session):
 
 
 @skip_pypy
-def test_expired_request_error(mock_session):
+@pytest.mark.parametrize('url', [MOCKED_URL, MOCKED_URL_ETAG])
+def test_expired_request_error(url, mock_session):
     """Without stale_if_error (default), if there is an error while re-fetching an expired
     response, the request should be re-raised
     """
@@ -433,31 +435,33 @@ def test_expired_request_error(mock_session):
     mock_session.settings.expire_after = 1
 
     with time_travel(START_DT):
-        mock_session.get(MOCKED_URL)
+        mock_session.get(url)
 
     with patch.object(mock_session.cache, 'save_response', side_effect=ValueError):
         with time_travel(START_DT + timedelta(seconds=1.1)):
             with pytest.raises(ValueError):
-                mock_session.get(MOCKED_URL)
+                mock_session.get(url)
 
 
 @skip_pypy
-def test_stale_if_error__exception(mock_session):
+@pytest.mark.parametrize('url', [MOCKED_URL, MOCKED_URL_ETAG])
+def test_stale_if_error__exception(url, mock_session):
     """With stale_if_error, expect to get old cache data if there is an exception during a request"""
     mock_session.settings.stale_if_error = True
     mock_session.settings.expire_after = 1
     with time_travel(START_DT):
-        assert mock_session.get(MOCKED_URL).from_cache is False
-        assert mock_session.get(MOCKED_URL).from_cache is True
+        assert mock_session.get(url).from_cache is False
+        assert mock_session.get(url).from_cache is True
 
     with patch.object(mock_session.cache, 'save_response', side_effect=RequestException):
         with time_travel(START_DT + timedelta(seconds=1.1)):
-            response = mock_session.get(MOCKED_URL)
+            response = mock_session.get(url)
             assert response.from_cache is True and response.is_expired is True
 
 
 @skip_pypy
-def test_stale_if_error__error_code(mock_session):
+@pytest.mark.parametrize('url', [MOCKED_URL_200_404, MOCKED_URL_ETAG_200_404])
+def test_stale_if_error__error_code(url, mock_session):
     """With stale_if_error, expect to get old cache data if a response has an error status code,
     that is not in allowable_codes.
     """
@@ -466,10 +470,10 @@ def test_stale_if_error__error_code(mock_session):
     mock_session.settings.allowable_codes = (200,)
 
     with time_travel(START_DT):
-        assert mock_session.get(MOCKED_URL_200_404).status_code == 200
+        assert mock_session.get(url).status_code == 200
 
     with time_travel(START_DT + timedelta(seconds=1.1)):
-        response = mock_session.get(MOCKED_URL_200_404)
+        response = mock_session.get(url)
 
     assert response.status_code == 200
     assert response.from_cache is True
@@ -477,7 +481,8 @@ def test_stale_if_error__error_code(mock_session):
 
 
 @skip_pypy
-def test_stale_if_error__error_code_in_allowable_codes(mock_session):
+@pytest.mark.parametrize('url', [MOCKED_URL_200_404, MOCKED_URL_ETAG_200_404])
+def test_stale_if_error__error_code_in_allowable_codes(url, mock_session):
     """With stale_if_error, expect to get the failed response if a response has an error status code,
     that is in allowable_codes.
     """
@@ -486,49 +491,33 @@ def test_stale_if_error__error_code_in_allowable_codes(mock_session):
     mock_session.settings.allowable_codes = (200, 404)
 
     with time_travel(START_DT):
-        assert mock_session.get(MOCKED_URL_200_404).status_code == 200
+        assert mock_session.get(url).status_code == 200
 
     with time_travel(START_DT + timedelta(seconds=1.1)):
-        response = mock_session.get(MOCKED_URL_200_404)
+        response = mock_session.get(url)
 
     assert response.status_code == 404
     assert response.from_cache is False
     assert response.is_expired is False
 
 
-@skip_pypy
-def test_stale_if_error__revalidation(mock_session):
-    """With stale_if_error, expect to get old cache data if there is an exception during a
-    revalidation request.
-    """
-    mock_session.settings.stale_if_error = True
-    mock_session.settings.expire_after = 1
-    with time_travel(START_DT):
-        assert mock_session.get(MOCKED_URL_ETAG).from_cache is False
-        assert mock_session.get(MOCKED_URL_ETAG).from_cache is True
-
-    with patch.object(mock_session.cache, 'save_response', side_effect=RequestException):
-        with time_travel(START_DT + timedelta(seconds=1.1)):
-            response = mock_session.get(MOCKED_URL_ETAG)
-            assert response.from_cache is True and response.is_expired is True
-
-
-def test_stale_if_error__max_stale(mock_session):
+@pytest.mark.parametrize('url', [MOCKED_URL_200_404, MOCKED_URL_ETAG_200_404])
+def test_stale_if_error__max_stale(url, mock_session):
     """With stale_if_error as a time value, expect to get old cache data if a response has an error
     status code AND it is expired by less than the specified time
     """
     mock_session.settings.stale_if_error = timedelta(seconds=15)
     mock_session.settings.expire_after = utcnow() - timedelta(seconds=10)
     mock_session.settings.allowable_codes = (200,)
-    mock_session.get(MOCKED_URL_200_404)
+    mock_session.get(url)
 
-    response = mock_session.get(MOCKED_URL_200_404)
+    response = mock_session.get(url)
     assert response.from_cache is True
     assert response.is_expired is True
 
     mock_session.settings.stale_if_error = 5
     with pytest.raises(HTTPError):
-        mock_session.get(MOCKED_URL_200_404)
+        mock_session.get(url)
 
 
 def test_old_data_on_error():
