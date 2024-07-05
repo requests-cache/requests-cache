@@ -496,6 +496,23 @@ def test_stale_if_error__error_code_in_allowable_codes(mock_session):
     assert response.is_expired is False
 
 
+@skip_pypy
+def test_stale_if_error__revalidation(mock_session):
+    """With stale_if_error, expect to get old cache data if there is an exception during a
+    revalidation request.
+    """
+    mock_session.settings.stale_if_error = True
+    mock_session.settings.expire_after = 1
+    with time_travel(START_DT):
+        assert mock_session.get(MOCKED_URL_ETAG).from_cache is False
+        assert mock_session.get(MOCKED_URL_ETAG).from_cache is True
+
+    with patch.object(mock_session.cache, 'save_response', side_effect=RequestException):
+        with time_travel(START_DT + timedelta(seconds=1.1)):
+            response = mock_session.get(MOCKED_URL_ETAG)
+            assert response.from_cache is True and response.is_expired is True
+
+
 def test_stale_if_error__max_stale(mock_session):
     """With stale_if_error as a time value, expect to get old cache data if a response has an error
     status code AND it is expired by less than the specified time

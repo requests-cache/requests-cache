@@ -176,7 +176,8 @@ def test_update_from_cached_response__revalidate(response_headers, expected_vali
     cached_response = CachedResponse(headers=response_headers, expires=utcnow() - timedelta(1))
 
     actions.update_from_cached_response(cached_response)
-    assert actions.send_request is bool(expected_validation_headers)
+    assert actions.send_request is False
+    assert actions.resend_request is True
     assert actions._validation_headers == expected_validation_headers
 
 
@@ -203,10 +204,10 @@ def test_update_from_cached_response__force_revalidate(cache_control, response_h
 
     # cache_control=False overrides revalidation in this case
     if cache_control is False:
-        assert actions.send_request is False
+        assert actions.resend_request is False
         assert not actions._validation_headers
     else:
-        assert actions.send_request is True
+        assert actions.resend_request is True
         assert actions._validation_headers == {'If-None-Match': ETAG}
 
 
