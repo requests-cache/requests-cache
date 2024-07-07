@@ -1,5 +1,8 @@
 # History
 
+## Unreleased
+* Fix error handling with `stale_if_error` during revalidation requests
+
 ## 1.2.1 (2024-06-18)
 
 🪲 **Bugfixes:**

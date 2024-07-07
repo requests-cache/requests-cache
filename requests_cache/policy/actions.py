@@ -303,8 +303,8 @@ class CacheActions(RichMixin):
                 self._validation_headers['If-None-Match'] = directives.etag
             if directives.last_modified:
                 self._validation_headers['If-Modified-Since'] = directives.last_modified
-            self.send_request = True
-            self.resend_request = False
+            self.send_request = False
+            self.resend_request = True
 
     def _validate_vary(
         self, cached_response: 'CachedResponse', create_key: KeyCallback, **key_kwargs

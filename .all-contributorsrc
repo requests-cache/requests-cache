@@ -766,6 +766,13 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/8661795?v=4",
       "profile": "https://github.com/jcd000",
       "contributions": ["bug", "code"]
+    },
+    {
+      "login": "federicocagnola",
+      "name": "federico cagnola",
+      "avatar_url": "https://avatars.githubusercontent.com/u/96195209?v=4",
+      "profile": "https://github.com/federicocagnola",
+      "contributions": ["bug"]
     }
   ],
   "contributorsPerLine": 7,
