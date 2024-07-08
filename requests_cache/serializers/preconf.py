@@ -108,26 +108,36 @@ except ImportError as e:
     bson_document_serializer = get_placeholder_class(e)
 
 
-# JSON serializer
+# JSON serializer: stlib
 _json_preconf_stage = json_preconf_stage
+_json_stage = Stage(dumps=partial(json.dumps, indent=2), loads=json.loads)
+_json_is_binary = False
+
+
+# JSON serializer: ultrajson
 try:
-    import ujson as json  # type: ignore
+    import ujson
 
     _json_preconf_stage = ujson_preconf_stage
+    _json_stage = Stage(dumps=partial(ujson.dumps, indent=2), loads=ujson.loads)
+    _json_is_binary = False
 except ImportError:
     pass
+
+# JSON serializer: orjson
 try:
-    import orjson as json  # type: ignore
+    import orjson
 
     _json_preconf_stage = orjson_preconf_stage
+    _json_stage = Stage(dumps=partial(orjson.dumps, option=orjson.OPT_INDENT_2), loads=orjson.loads)
+    _json_is_binary = True
 except ImportError:
     pass
 
-_json_stage = Stage(dumps=partial(json.dumps, indent=2), loads=json.loads)
 json_serializer = SerializerPipeline(
     [_json_preconf_stage, _json_stage],
     name='json',
-    is_binary=False,
+    is_binary=_json_is_binary,
 )  #: Complete JSON serializer; uses orjson or ultrajson if available, otherwise stdlib json
 
 

@@ -27,25 +27,22 @@ from tests.conftest import skip_missing_deps
 @skip_missing_deps('orjson')
 def test_orjson():
     """1st priority JSON module: orjson"""
-    import orjson
+    from requests_cache.serializers.preconf import _json_preconf_stage, orjson_preconf_stage
 
-    from requests_cache.serializers.preconf import json as module_json
-
-    assert module_json is orjson
+    assert _json_preconf_stage is orjson_preconf_stage
 
 
 @skip_missing_deps('ujson')
 def test_ujson():
     """2nd priority JSON module: ultrajson"""
-    import ujson
 
     import requests_cache.serializers.preconf
 
     with patch.dict(sys.modules, {'orjson': None, 'cattr.preconf.orjson': None}):
         reload(requests_cache.serializers.preconf)
-        from requests_cache.serializers.preconf import json as module_json
+        from requests_cache.serializers.preconf import _json_preconf_stage, ujson_preconf_stage
 
-        assert module_json is ujson
+        assert _json_preconf_stage is ujson_preconf_stage
 
     reload(requests_cache.serializers.preconf)
 
@@ -59,9 +56,9 @@ def test_stdlib_json():
         {'ujson': None, 'cattr.preconf.ujson': None, 'orjson': None, 'cattr.preconf.orjson': None},
     ):
         reload(requests_cache.serializers.preconf)
-        from requests_cache.serializers.preconf import json as module_json
+        from requests_cache.serializers.preconf import _json_preconf_stage, json_preconf_stage
 
-        assert module_json is json
+        assert _json_preconf_stage is json_preconf_stage
 
     reload(requests_cache.serializers.preconf)
 
