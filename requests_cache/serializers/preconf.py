@@ -109,36 +109,43 @@ except ImportError as e:
 
 
 # JSON serializer: stlib
-_json_preconf_stage = json_preconf_stage
-_json_stage = Stage(dumps=partial(json.dumps, indent=2), loads=json.loads)
-_json_is_binary = False
+json_serializer = SerializerPipeline(
+    [json_preconf_stage, Stage(dumps=partial(json.dumps, indent=2), loads=json.loads)],
+    name='json',
+    is_binary=False,
+)  #: Complete JSON serializer using stdlib json module
+default_json_serializer = json_serializer  #: Complete JSON serializer; uses orjson or ultrajson if available, otherwise stdlib json  # noqa: E501
 
 
 # JSON serializer: ultrajson
 try:
     import ujson
 
-    _json_preconf_stage = ujson_preconf_stage
-    _json_stage = Stage(dumps=partial(ujson.dumps, indent=2), loads=ujson.loads)
-    _json_is_binary = False
-except ImportError:
-    pass
+    ujson_serializer = SerializerPipeline(
+        [ujson_preconf_stage, Stage(dumps=partial(ujson.dumps, indent=2), loads=ujson.loads)],
+        name='ujson',
+        is_binary=False,
+    )  #: Complete JSON serializer using ultrajson module
+    default_json_serializer = ujson_serializer
+except ImportError as e:
+    ujson_serializer = get_placeholder_class(e)
+
 
 # JSON serializer: orjson
 try:
     import orjson
 
-    _json_preconf_stage = orjson_preconf_stage
-    _json_stage = Stage(dumps=partial(orjson.dumps, option=orjson.OPT_INDENT_2), loads=orjson.loads)
-    _json_is_binary = True
-except ImportError:
-    pass
-
-json_serializer = SerializerPipeline(
-    [_json_preconf_stage, _json_stage],
-    name='json',
-    is_binary=_json_is_binary,
-)  #: Complete JSON serializer; uses orjson or ultrajson if available, otherwise stdlib json
+    orjson_serializer = SerializerPipeline(
+        [
+            orjson_preconf_stage,
+            Stage(dumps=partial(orjson.dumps, option=orjson.OPT_INDENT_2), loads=orjson.loads),
+        ],
+        name='orjson',
+        is_binary=True,
+    )  #: Complete JSON serializer using orjson module
+    default_json_serializer = orjson_serializer
+except ImportError as e:
+    orjson_serializer = get_placeholder_class(e)
 
 
 # YAML serializer
