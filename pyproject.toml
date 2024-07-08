@@ -60,6 +60,7 @@ redis                      = {optional=true, version=">=3"}
 
 # Optional serialization dependencies
 itsdangerous               = {optional=true, version=">=2.0"}
+orjson                     = {optional=true, version=">=3.0"}
 pyyaml                     = {optional=true, version=">=6.0.1"}
 ujson                      = {optional=true, version=">=5.4"}
 
@@ -84,7 +85,7 @@ mongodb  = ["pymongo"]
 redis    = ["redis"]
 
 # Package extras for optional seriazliation dependencies
-json     = ["ujson"]  # Will optionally be used by JSON serializer for improved performance
+json     = ["orjson"]  # Will optionally be used by JSON serializer for improved performance
 security = ["itsdangerous"]
 yaml     = ["pyyaml"]
 
@@ -93,6 +94,7 @@ all = [
     "boto3",
     "botocore",
     "itsdangerous",
+    "orjson",
     "pymongo",
     "pyyaml",
     "redis",

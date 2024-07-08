@@ -5,6 +5,7 @@
    :nosignatures:
 """
 
+import json
 import pickle
 from functools import partial
 from importlib import import_module
@@ -108,21 +109,26 @@ except ImportError as e:
 
 
 # JSON serializer
+_json_preconf_stage = json_preconf_stage
 try:
-    import ujson as json
+    import ujson as json  # type: ignore
 
     _json_preconf_stage = ujson_preconf_stage
 except ImportError:
-    import json  # type: ignore
+    pass
+try:
+    import orjson as json  # type: ignore
 
-    _json_preconf_stage = json_preconf_stage
+    _json_preconf_stage = orjson_preconf_stage
+except ImportError:
+    pass
 
 _json_stage = Stage(dumps=partial(json.dumps, indent=2), loads=json.loads)
 json_serializer = SerializerPipeline(
     [_json_preconf_stage, _json_stage],
     name='json',
     is_binary=False,
-)  #: Complete JSON serializer; uses ultrajson if available
+)  #: Complete JSON serializer; uses orjson or ultrajson if available, otherwise stdlib json
 
 
 # YAML serializer
