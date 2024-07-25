@@ -2,6 +2,7 @@
 
 ## Unreleased
 * Fix error handling with `stale_if_error` during revalidation requests
+* Remove `[bson]` package extra to prevent accidentally installing it in the same environment as `pymongo`
 
 ## 1.2.1 (2024-06-18)
 
