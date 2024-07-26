@@ -102,7 +102,12 @@ pip install requests-cache[mongo]
 Or if you would like to use the standalone BSON codec for a different backend, without installing
 MongoDB dependencies:
 ```bash
-pip install requests-cache[bson]
+pip install bson
+```
+
+```{warning}
+Only install the standalone `bson` package if you intend to use it without pymongo.
+Do not install both at the same time!
 ```
 
 ## Response Content Format
