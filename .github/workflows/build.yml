@@ -100,5 +100,6 @@ jobs:
           vulnerability-service: osv
           # Ignore issues with pip and setuptools versions used by the action itself
           ignore-vulns: |
+            GHSA-cx63-2mw6-8hw5
             PYSEC-2023-228
             PYSEC-2022-43012
