@@ -60,7 +60,7 @@ redis                      = {optional=true, version=">=3"}
 
 # Optional serialization dependencies
 itsdangerous               = {optional=true, version=">=2.0"}
-orjson                     = {optional=true, version=">=3.0"}
+orjson                     = {optional=true, version=">=3.0", markers = "implementation_name != 'pypy'"}
 pyyaml                     = {optional=true, version=">=6.0.1"}
 ujson                      = {optional=true, version=">=5.4"}
 
