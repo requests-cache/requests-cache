@@ -6,11 +6,7 @@ import pytest
 from requests import Response
 from urllib3.response import HTTPResponse
 
-from requests_cache.models.response import (
-    CachedResponse,
-    OriginalResponse,
-    format_file_size,
-)
+from requests_cache.models.response import CachedResponse, OriginalResponse, format_file_size
 from requests_cache.policy import CacheActions, utcnow
 from tests.conftest import MOCKED_URL
 
@@ -68,6 +64,14 @@ def test_is_expired(expires, is_expired, mock_session):
     response = CachedResponse.from_response(mock_session.get(MOCKED_URL), expires=expires)
     assert response.from_cache is True
     assert response.is_expired == is_expired
+
+
+def test_is_expired__timezone_naive(mock_session):
+    response = CachedResponse.from_response(
+        mock_session.get(MOCKED_URL),
+        expires=datetime.now() - timedelta(days=1),
+    )
+    assert response.is_expired is True
 
 
 def test_iterator(mock_session):

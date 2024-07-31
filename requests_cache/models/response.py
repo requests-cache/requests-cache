@@ -154,7 +154,11 @@ class CachedResponse(RichMixin, BaseResponse):
     @property
     def is_expired(self) -> bool:
         """Determine if this cached response is expired"""
-        return self.expires is not None and utcnow() >= self.expires
+        try:
+            return self.expires is not None and utcnow() >= self.expires
+        except TypeError as e:
+            logger.warning(e)
+            return True
 
     def is_older_than(self, older_than: ExpirationTime) -> bool:
         """Determine if this cached response is older than the given time"""

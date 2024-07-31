@@ -2,6 +2,7 @@
 
 ## Unreleased
 * Add `verify` parameter to `BaseCache.contains()` and `delete()` to handle requests made with SSL verification disabled
+* Ignore and log timezone errors when attempting to reuse responses cached in `requests-cache <= 1.1`
 * Fix error handling with `stale_if_error` during revalidation requests
 * Remove `[bson]` package extra to prevent accidentally installing it in the same environment as `pymongo`
 
