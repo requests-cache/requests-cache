@@ -12,15 +12,7 @@ from collections import UserDict
 from datetime import datetime
 from logging import getLogger
 from pickle import PickleError
-from typing import (
-    TYPE_CHECKING,
-    Iterable,
-    Iterator,
-    List,
-    MutableMapping,
-    Optional,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Iterable, Iterator, List, MutableMapping, Optional, TypeVar
 from warnings import warn
 
 from requests import Request, Response
@@ -140,6 +132,7 @@ class BaseCache:
         key: Optional[str] = None,
         request: Optional[AnyRequest] = None,
         url: Optional[str] = None,
+        verify: bool = True,
     ):
         """Check if the specified request is cached
 
@@ -147,11 +140,12 @@ class BaseCache:
             key: Check for a specific cache key
             request: Check for a matching request, according to current request matching settings
             url: Check for a matching GET request with the specified URL
+            verify: Check for requests with or without SSL verification
         """
         if url:
             request = Request('GET', url)
         if request and not key:
-            key = self.create_key(request)
+            key = self.create_key(request, verify=verify)
         return key in self.responses or key in self.redirects
 
     def delete(
@@ -162,6 +156,7 @@ class BaseCache:
         older_than: ExpirationTime = None,
         requests: Optional[Iterable[AnyRequest]] = None,
         urls: Optional[Iterable[str]] = None,
+        verify: bool = True,
     ):
         """Remove responses from the cache according one or more conditions.
 
@@ -172,12 +167,13 @@ class BaseCache:
             older_than: Remove responses older than this value, relative to ``response.created_at``
             requests: Remove matching responses, according to current request matching settings
             urls: Remove matching GET requests for the specified URL(s)
+            verify: Set to ``False`` to remove responses without SSL verification
         """
         delete_keys: List[str] = list(keys) if keys else []
         if urls:
             requests = list(requests or []) + [Request('GET', url).prepare() for url in urls]
         if requests:
-            delete_keys += [self.create_key(request) for request in requests]
+            delete_keys += [self.create_key(request, verify=verify) for request in requests]
 
         for response in self.filter(
             valid=False, expired=expired, invalid=invalid, older_than=older_than

@@ -6,6 +6,7 @@ from logging import getLogger
 from pickle import PickleError
 from unittest.mock import patch
 
+import pytest
 from requests import Request
 
 from requests_cache.backends import BaseCache, SQLiteDict
@@ -65,10 +66,11 @@ def test_contains__multipart_request(mock_session):
     assert not mock_session.cache.contains(request=request)
 
 
-def test_contains__url(mock_session):
-    mock_session.get(MOCKED_URL)
-    assert mock_session.cache.contains(url=MOCKED_URL)
-    assert not mock_session.cache.contains(url=f'{MOCKED_URL}?foo=bar')
+@pytest.mark.parametrize('verify', [True, False])
+def test_contains__url(verify, mock_session):
+    mock_session.get(MOCKED_URL, verify=verify)
+    assert mock_session.cache.contains(url=MOCKED_URL, verify=verify)
+    assert not mock_session.cache.contains(url=f'{MOCKED_URL}?foo=bar', verify=verify)
 
 
 def test_delete__keys(mock_session):
@@ -211,13 +213,14 @@ def test_delete__urls(mock_session):
         assert not mock_session.cache.contains(url=url)
 
 
-def test_delete__requests(mock_session):
+@pytest.mark.parametrize('verify', [True, False])
+def test_delete__requests(verify, mock_session):
     urls = [MOCKED_URL, MOCKED_URL_JSON, MOCKED_URL_REDIRECT]
     for url in urls:
-        mock_session.get(url)
+        mock_session.get(url, verify=verify)
 
     requests = [Request('GET', url).prepare() for url in urls]
-    mock_session.cache.delete(requests=requests)
+    mock_session.cache.delete(requests=requests, verify=verify)
 
     for request in requests:
         assert not mock_session.cache.contains(request=request)
