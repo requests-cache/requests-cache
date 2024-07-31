@@ -45,6 +45,23 @@ Usage:
 ```
 :::
 
+#### JSON libraries
+The alternative JSON libraries [`orjson`](https://github.com/ijl/orjson) and
+[`ultrajson`](https://github.com/ultrajson/ultrajson) are supported.
+
+The alias `serializer='json'` will use them in the following priority, if installed:
+* `orjson`
+* `ultrajson`
+* stdlib `json`
+
+Or, to be more explicit (recommended), use one of the following serializer objects:
+```py
+>>> from requests_cache import CachedSession, json_serializer ujson_serializer, orjson_serializer
+>>> session = CachedSession('my_cache', serializer=json_serializer)
+>>> session = CachedSession('my_cache', serializer=ujson_serializer)
+>>> session = CachedSession('my_cache', serializer=orjson_serializer)
+```
+
 This will use [ultrajson](https://github.com/ultrajson/ultrajson) if installed, otherwise the stdlib
 `json` module will be used. You can install the optional dependencies for this serializer with:
 ```bash

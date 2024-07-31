@@ -27,11 +27,14 @@ from .pipeline import SerializerPipeline, Stage
 from .preconf import (
     bson_document_serializer,
     bson_serializer,
+    default_json_serializer,
     dict_serializer,
     dynamodb_document_serializer,
     json_serializer,
+    orjson_serializer,
     pickle_serializer,
     safe_pickle_serializer,
+    ujson_serializer,
     utf8_encoder,
     yaml_serializer,
 )
@@ -48,6 +51,9 @@ __all__ = [
     'dynamodb_document_serializer',
     'dict_serializer',
     'json_serializer',
+    'orjson_serializer',
+    'ujson_serializer',
+    'default_json_serializer',
     'pickle_serializer',
     'safe_pickle_serializer',
     'yaml_serializer',
@@ -56,7 +62,7 @@ __all__ = [
 
 SERIALIZERS = {
     'bson': bson_serializer,
-    'json': json_serializer,
+    'json': default_json_serializer,
     'pickle': pickle_serializer,
     'yaml': yaml_serializer,
 }

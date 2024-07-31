@@ -52,6 +52,8 @@ def get_placeholder_class(original_exception: Optional[Exception] = None):
         raise original_exception or ImportError(msg)
 
     class Placeholder:
+        name = 'placeholder'
+
         def __init__(self, *args, **kwargs):
             _log_error()
 

@@ -13,7 +13,7 @@ from shutil import rmtree
 from threading import RLock
 from typing import Iterator, Optional
 
-from ..serializers import SERIALIZERS, SerializerType, json_serializer
+from ..serializers import SerializerType, json_serializer
 from . import BaseCache, BaseStorage, StrOrPath
 from .sqlite import SQLiteDict, get_cache_path
 
@@ -139,7 +139,14 @@ def _get_extension(extension: Optional[str] = None, serializer=None) -> str:
     """Use either the provided file extension, or get the serializer's default extension"""
     if extension:
         return f'.{extension}'
-    for name, obj in SERIALIZERS.items():
-        if serializer is obj:
-            return '.' + name.replace('pickle', 'pkl')
-    return ''
+    subs = {
+        'safe_pickle': 'pkl',
+        'pickle': 'pkl',
+        'orjson': 'json',
+        'ujson': 'json',
+    }
+    if serializer and (name := serializer.name):
+        for k, v in subs.items():
+            name = name.replace(k, v)
+        return f'.{name}'
+    return '.dat'

@@ -24,25 +24,60 @@ from requests_cache import (
 from tests.conftest import skip_missing_deps
 
 
-def test_stdlib_json():
+@skip_missing_deps('orjson')
+def test_json_default__orjson():
+    """1st priority JSON module: orjson"""
+    from requests_cache.serializers.preconf import default_json_serializer, orjson_serializer
+
+    assert default_json_serializer.name == 'orjson'
+    assert default_json_serializer is orjson_serializer
+
+
+@skip_missing_deps('ujson')
+def test_json_default__ujson():
+    """2nd priority JSON module: ultrajson"""
+
     import requests_cache.serializers.preconf
 
-    with patch.dict(sys.modules, {'ujson': None, 'cattr.preconf.ujson': None}):
+    with patch.dict(sys.modules, {'orjson': None, 'cattr.preconf.orjson': None}):
         reload(requests_cache.serializers.preconf)
-        from requests_cache.serializers.preconf import json as module_json
+        from requests_cache.serializers.preconf import default_json_serializer, ujson_serializer
 
-        assert module_json is json
+        assert default_json_serializer.name == 'ujson'
+        assert default_json_serializer is ujson_serializer
+
+    reload(requests_cache.serializers.preconf)
+
+
+def test_json_default__stdlib_json():
+    """3rd priority JSON module: stdlib JSON"""
+    import requests_cache.serializers.preconf
+
+    with patch.dict(
+        sys.modules,
+        {'ujson': None, 'cattr.preconf.ujson': None, 'orjson': None, 'cattr.preconf.orjson': None},
+    ):
+        reload(requests_cache.serializers.preconf)
+        from requests_cache.serializers.preconf import default_json_serializer, json_serializer
+
+        assert default_json_serializer.name == 'json'
+        assert default_json_serializer is json_serializer
 
     reload(requests_cache.serializers.preconf)
 
 
 @skip_missing_deps('ujson')
-def test_ujson():
-    import ujson
+@skip_missing_deps('orjson')
+def test_json_explicit_lib():
+    from requests_cache.serializers.preconf import (
+        json_serializer,
+        orjson_serializer,
+        ujson_serializer,
+    )
 
-    from requests_cache.serializers.preconf import json as module_json
-
-    assert module_json is ujson
+    response = CachedResponse(status_code=200)
+    for obj in [json_serializer, ujson_serializer, orjson_serializer]:
+        assert obj.loads(obj.dumps(response)) == response
 
 
 @skip_missing_deps('bson')
@@ -64,16 +99,22 @@ def test_standalone_bson():
 def test_optional_dependencies():
     import requests_cache.serializers.preconf
 
-    with patch.dict(sys.modules, {'bson': None, 'itsdangerous': None, 'yaml': None}):
+    with patch.dict(
+        sys.modules,
+        {'bson': None, 'itsdangerous': None, 'yaml': None, 'orjson': None, 'ujson': None},
+    ):
         reload(requests_cache.serializers.preconf)
 
         from requests_cache.serializers.preconf import (
             bson_serializer,
+            orjson_serializer,
             safe_pickle_serializer,
+            ujson_serializer,
             yaml_serializer,
         )
 
-        for obj in [bson_serializer, yaml_serializer]:
+        for obj in [bson_serializer, yaml_serializer, orjson_serializer, ujson_serializer]:
+            print(f'Testing serializer {obj.name}')
             with pytest.raises(ImportError):
                 obj.dumps('')
             with pytest.raises(ImportError):
