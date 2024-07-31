@@ -90,6 +90,7 @@ def _parse_http_date(value: str) -> Optional[datetime]:
     try:
         expire_after = parsedate_to_datetime(value)
         return expire_after.astimezone(timezone.utc)
+    # Can occur when using a cache created with requests-cache <=1.1
     except (TypeError, ValueError):
         logger.debug(f'Failed to parse timestamp: {value}')
         return None
