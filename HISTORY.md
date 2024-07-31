@@ -1,6 +1,7 @@
 # History
 
 ## Unreleased
+* Add `verify` parameter to `BaseCache.contains()` and `delete()` to handle requests made with SSL verification disabled
 * Fix error handling with `stale_if_error` during revalidation requests
 * Remove `[bson]` package extra to prevent accidentally installing it in the same environment as `pymongo`
 
