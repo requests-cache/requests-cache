@@ -95,7 +95,7 @@ jobs:
       - name: Run style checks & linting
         uses: pre-commit/action@v3.0.1
       - name: Scan dependencies for known vulnerabilities
-        uses: pypa/gh-action-pip-audit@v1.0.8
+        uses: pypa/gh-action-pip-audit@v1.1.0
         with:
           vulnerability-service: osv
           # Ignore issues with pip and setuptools versions used by the action itself
