@@ -773,6 +773,13 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/96195209?v=4",
       "profile": "https://github.com/federicocagnola",
       "contributions": ["bug"]
+    },
+    {
+      "login": "hugovk",
+      "name": "Hugo van Kemenade",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1324225?v=4",
+      "profile": "https://github.com/hugovk",
+      "contributions": ["code"]
     }
   ],
   "contributorsPerLine": 7,
