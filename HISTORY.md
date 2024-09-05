@@ -7,7 +7,8 @@
 * Remove `[bson]` package extra to prevent accidentally installing it in the same environment as `pymongo`
 * ⚠️ Changed behavior for `serializer='json'`, depending on installed packages:
   * Priority: `orjson` -> `ujson` -> stdlib `json`
-* Added the following serializers to explicitly use a specific JSON library: `json_serializer`, `ujson_serializer`, and `orjson_serializer`
+* Add the following serializers to explicitly use a specific JSON library: `json_serializer`, `ujson_serializer`, and `orjson_serializer`
+* Add support for Python 3.13
 
 ## 1.2.1 (2024-06-18)
 
