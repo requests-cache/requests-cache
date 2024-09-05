@@ -85,7 +85,6 @@ mongodb  = ["pymongo"]
 redis    = ["redis"]
 
 # Package extras for optional seriazliation dependencies
-json     = ["orjson"]  # Will optionally be used by JSON serializer for improved performance
 security = ["itsdangerous"]
 yaml     = ["pyyaml"]
 

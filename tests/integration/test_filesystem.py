@@ -106,6 +106,8 @@ class TestFileCache(BaseCacheTest):
             session.cache.responses[f'key_{i}'] = {f'value_{i}': i}
 
         expected_extension = serializer_name.replace('pickle', 'pkl')
+        if 'json' in serializer_name:
+            expected_extension = 'json'
         assert len(list(session.cache.paths())) == num_files
         for path in session.cache.paths():
             assert path.is_file()

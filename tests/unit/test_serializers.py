@@ -19,50 +19,19 @@ from requests_cache import (
     json_serializer,
     safe_pickle_serializer,
     utf8_encoder,
+    init_serializer,
 )
 from tests.conftest import skip_missing_deps
 
 
 @skip_missing_deps('orjson')
-def test_json_default__orjson():
-    """1st priority JSON module: orjson"""
-    from requests_cache.serializers.preconf import default_json_serializer, orjson_serializer
-
-    assert default_json_serializer.name == 'orjson'
-    assert default_json_serializer is orjson_serializer
-
-
 @skip_missing_deps('ujson')
-def test_json_default__ujson():
-    """2nd priority JSON module: ultrajson"""
+def test_json_aliases():
+    from requests_cache.serializers.preconf import orjson_serializer, ujson_serializer
 
-    import requests_cache.serializers.preconf
-
-    with patch.dict(sys.modules, {'orjson': None, 'cattr.preconf.orjson': None}):
-        reload(requests_cache.serializers.preconf)
-        from requests_cache.serializers.preconf import default_json_serializer, ujson_serializer
-
-        assert default_json_serializer.name == 'ujson'
-        assert default_json_serializer is ujson_serializer
-
-    reload(requests_cache.serializers.preconf)
-
-
-def test_json_default__stdlib_json():
-    """3rd priority JSON module: stdlib JSON"""
-    import requests_cache.serializers.preconf
-
-    with patch.dict(
-        sys.modules,
-        {'ujson': None, 'cattr.preconf.ujson': None, 'orjson': None, 'cattr.preconf.orjson': None},
-    ):
-        reload(requests_cache.serializers.preconf)
-        from requests_cache.serializers.preconf import default_json_serializer, json_serializer
-
-        assert default_json_serializer.name == 'json'
-        assert default_json_serializer is json_serializer
-
-    reload(requests_cache.serializers.preconf)
+    assert init_serializer('json', decode_content=True) is json_serializer
+    assert init_serializer('orjson', decode_content=True) is orjson_serializer
+    assert init_serializer('ujson', decode_content=True) is ujson_serializer
 
 
 @skip_missing_deps('ujson')
