@@ -140,6 +140,7 @@ def _get_extension(extension: Optional[str] = None, serializer=None) -> str:
     if extension:
         return f'.{extension}'
     subs = {
+        'bson': 'bson',
         'safe_pickle': 'pkl',
         'pickle': 'pkl',
         'orjson': 'json',

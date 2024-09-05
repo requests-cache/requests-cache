@@ -1,7 +1,6 @@
 # Note: Almost all serializer logic is covered by parametrized integration tests.
 # Any additional serializer-specific tests can go here.
 import gzip
-import json
 import pickle
 import sys
 from importlib import reload
@@ -78,22 +77,6 @@ def test_json_explicit_lib():
     response = CachedResponse(status_code=200)
     for obj in [json_serializer, ujson_serializer, orjson_serializer]:
         assert obj.loads(obj.dumps(response)) == response
-
-
-@skip_missing_deps('bson')
-def test_standalone_bson():
-    """Handle different method names for standalone bson codec vs pymongo"""
-    import requests_cache.serializers.preconf
-
-    # Can't easily install both pymongo and bson (standalone) for tests;
-    # Using json module here since it has same functions as bson (standalone)
-    with patch.dict(sys.modules, {'bson': json, 'pymongo': None}):
-        reload(requests_cache.serializers.preconf)
-        bson_functions = requests_cache.serializers.preconf._get_bson_functions()
-
-        assert bson_functions == {'dumps': 'dumps', 'loads': 'loads'}
-
-    reload(requests_cache.serializers.preconf)
 
 
 def test_optional_dependencies():
