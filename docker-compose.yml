@@ -1,6 +1,4 @@
 # Containers needed to test all backend services locally
-version: '3.7'
-
 services:
   httpbin:
     image: kennethreitz/httpbin
