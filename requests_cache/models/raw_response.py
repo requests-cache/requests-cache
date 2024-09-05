@@ -50,12 +50,14 @@ class CachedHTTPResponse(RichMixin, HTTPResponse):
         """Create a CachedHTTPResponse based on an original response, and restore the response to
         its previous state.
         """
+        if TYPE_CHECKING:
+            assert isinstance(response.raw, HTTPResponse)
         # Get basic attributes
         kwargs = {k: getattr(response.raw, k, None) for k in fields_dict(cls).keys()}
         # Init kwarg for HTTPResponse._request_url has no leading '_'
-        kwargs['request_url'] = response.raw._request_url
+        kwargs['request_url'] = response.raw._request_url  # type: ignore[attr-defined]
         kwargs['body'] = _copy_body(response)
-        return cls(**kwargs)  # type: ignore  # False positive in mypy 0.920+?
+        return cls(**kwargs)  # type: ignore[arg-type]  # False positive in mypy 0.920+?
 
     @classmethod
     def from_cached_response(cls, response: 'CachedResponse'):
@@ -117,8 +119,10 @@ def _copy_body(response: Response) -> Optional[bytes]:
     """Read and copy raw response data, and then restore response object to its previous state.
     This is necessary so streaming responses behave consistently with or without the cache.
     """
+    if TYPE_CHECKING:
+        assert isinstance(response.raw, HTTPResponse)
     # File pointer is missing or closed; nothing to do
-    if not getattr(response.raw, '_fp', None) or is_fp_closed(response.raw._fp):
+    if not getattr(response.raw, '_fp', None) or is_fp_closed(response.raw._fp):  # type: ignore[attr-defined]
         return None
     # Body has already been read & decoded by requests
     elif getattr(response.raw, '_has_decoded_content', False):
