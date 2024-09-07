@@ -1,16 +1,31 @@
 # History
 
-## Unreleased
-* Add `verify` parameter to `BaseCache.contains()` and `delete()` to handle requests made with SSL verification disabled
-* Ignore and log timezone errors when attempting to reuse responses cached in `requests-cache <= 1.1`
-* Fix error handling with `stale_if_error` during revalidation requests
+## 1.3.0 (Unreleased)
+
+⚠️ **Deprecations & removals:**
+* See changes to BSON and JSON serializers below:
+
+💾 **Serialization:**
+* ⚠️ Drop support for standalone `bson` codec; please install `pymongo` to use BSON serialization
 * Remove `[bson]` package extra to prevent accidentally installing it in the same environment as `pymongo`
-* ⚠️ Changed behavior for `serializer='json'`, depending on installed packages:
-  * Priority: `orjson` -> `ujson` -> stdlib `json`
-* Add the following serializers to explicitly use a specific JSON library: `json_serializer`, `ujson_serializer`, and `orjson_serializer`
+* When using BSON serialization with the filesystem backend, add a `.bson` file extension by default
+* ⚠️ `serializer='json'` will no longer automatically use `ultrajson` if installed; it must be specified explicitly
+* Add support for `orjson` as a JSON serializer
+  * However, see https://github.com/ijl/orjson/issues/483 for potential memory issues
+* Add the following serializer objects to specify a JSON library: `json_serializer`, `ujson_serializer`, and `orjson_serializer`
+* Remove `[json]` package extra due to multiple supported JSON libraries
+
+ℹ️ **Cache convenience methods:**
+* Add `verify` parameter to `BaseCache.contains()` and `delete()` to handle requests made with SSL verification disabled
+
+🧩 **Compatibility:**
 * Add support for Python 3.13
 
-## 1.2.1 (2024-06-18)
+🪲 **Bugfixes:**
+* Ignore and log timezone errors when attempting to reuse responses cached in `requests-cache <= 1.1`
+* Fix error handling with `stale_if_error` during revalidation requests
+
+### 1.2.1 (2024-06-18)
 
 🪲 **Bugfixes:**
 * Fix `normalize_headers` not accepting header values in bytes

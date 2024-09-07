@@ -49,12 +49,7 @@ Usage:
 The alternative JSON libraries [`orjson`](https://github.com/ijl/orjson) and
 [`ultrajson`](https://github.com/ultrajson/ultrajson) are supported.
 
-The alias `serializer='json'` will use them in the following priority, if installed:
-* `orjson`
-* `ultrajson`
-* stdlib `json`
-
-Or, to be more explicit (recommended), use one of the following serializer objects:
+To use a specific JSON library, use one of the following serializer objects:
 ```py
 >>> from requests_cache import CachedSession, json_serializer ujson_serializer, orjson_serializer
 >>> session = CachedSession('my_cache', serializer=json_serializer)
@@ -106,26 +101,21 @@ MongoDB, but it can also be used independently. Compared to JSON, it has better 
 (although still not as fast as `pickle`), and adds support for additional data types. It is not
 human-readable, but some tools support reading and editing it directly.
 
-Usage:
+It is used by default for the MongoDB backend, but can be used with other backends, for example
+{py:class}`.FileCache`. Example:
 ```python
->>> session = CachedSession('my_cache', serializer='bson')
+>>> session = CachedSession('my_cache', backend='filesystem', serializer='bson')
 ```
 
 You can install the extra dependencies for this serializer with:
 ```bash
-pip install requests-cache[mongo]
+pip install requests-cache[mongodb]
 ```
 
 Or if you would like to use the standalone BSON codec for a different backend, without installing
 MongoDB dependencies:
-```bash
-pip install bson
-```
 
-```{warning}
-Only install the standalone `bson` package if you intend to use it without pymongo.
-Do not install both at the same time!
-```
+
 
 ## Response Content Format
 By default, any JSON or text response body will be decoded, so the response is fully

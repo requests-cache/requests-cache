@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "requests-cache"
-version = "1.2.2"
+version = "1.3.0"
 description = "A persistent cache for python requests"
 authors = ["Roman Haritonov", "Jordan Cook"]
 license = "BSD-2-Clause"
@@ -85,7 +85,6 @@ mongodb  = ["pymongo"]
 redis    = ["redis"]
 
 # Package extras for optional seriazliation dependencies
-json     = ["orjson"]  # Will optionally be used by JSON serializer for improved performance
 security = ["itsdangerous"]
 yaml     = ["pyyaml"]
 

@@ -79,25 +79,15 @@ except ImportError as e:
     safe_pickle_serializer = get_placeholder_class(e)  # noqa: F811
 
 
-# BSON/MongoDB document serializers
-def _get_bson_functions():
-    """Handle different function names between pymongo's bson and standalone bson"""
-    try:
-        import pymongo  # noqa: F401
-
-        return {'dumps': 'encode', 'loads': 'decode'}
-    except ImportError:
-        return {'dumps': 'dumps', 'loads': 'loads'}
-
-
+# BSON/MongoDB document serializer
 try:
     import bson
 
     bson_serializer = SerializerPipeline(
-        [bson_preconf_stage, Stage(bson, **_get_bson_functions())],
+        [bson_preconf_stage, Stage(bson, dumps='encode', loads='decode')],
         name='bson',
         is_binary=True,
-    )  #: Complete BSON serializer; uses pymongo's ``bson`` if installed, otherwise standalone ``bson`` codec
+    )  #: Complete BSON serializer
     bson_document_serializer = SerializerPipeline(
         [bson_preconf_stage],
         name='bson_document',
@@ -108,13 +98,12 @@ except ImportError as e:
     bson_document_serializer = get_placeholder_class(e)
 
 
-# JSON serializer: stlib
+# JSON serializer: stdlib
 json_serializer = SerializerPipeline(
     [json_preconf_stage, Stage(dumps=partial(json.dumps, indent=2), loads=json.loads)],
     name='json',
     is_binary=False,
 )  #: Complete JSON serializer using stdlib json module
-default_json_serializer = json_serializer  #: Complete JSON serializer; uses orjson or ultrajson if available, otherwise stdlib json  # noqa: E501
 
 
 # JSON serializer: ultrajson
@@ -126,7 +115,6 @@ try:
         name='ujson',
         is_binary=False,
     )  #: Complete JSON serializer using ultrajson module
-    default_json_serializer = ujson_serializer
 except ImportError as e:
     ujson_serializer = get_placeholder_class(e)
 
@@ -143,7 +131,6 @@ try:
         name='orjson',
         is_binary=True,
     )  #: Complete JSON serializer using orjson module
-    default_json_serializer = orjson_serializer
 except ImportError as e:
     orjson_serializer = get_placeholder_class(e)
 
