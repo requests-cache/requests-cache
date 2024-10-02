@@ -26,7 +26,7 @@ on:
         default: 'false'
 
 env:
-  LATEST_PY_VERSION: '3.11'
+  LATEST_PY_VERSION: '3.12'
   PYTEST_VERBOSE: 'true'
   STRESS_TEST_MULTIPLIER: 7
 
