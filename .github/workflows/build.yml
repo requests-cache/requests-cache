@@ -8,7 +8,7 @@ on:
     branches: [main]
   workflow_dispatch:
 env:
-  LATEST_PY_VERSION: '3.11'
+  LATEST_PY_VERSION: '3.12'
   PYTEST_VERBOSE: 'true'
 
 jobs:
