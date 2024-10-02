@@ -64,20 +64,6 @@ orjson                     = {optional=true, version=">=3.0", markers = "impleme
 pyyaml                     = {optional=true, version=">=6.0.1"}
 ujson                      = {optional=true, version=">=5.4"}
 
-# Dependencies for building documentation;
-# defined here because readthedocs doesn't (yet?) support poetry.dev-dependencies
-furo                       = {optional=true, version="^2023.3"}
-linkify-it-py              = {optional=true, version="^2.0"}
-myst-parser                = {optional=true, version="^1.0"}
-sphinx                     = {optional=true, version="^5.0.2"}
-sphinx-autodoc-typehints   = {optional=true, version=">=1.19"}
-sphinx-automodapi          = {optional=true, version=">=0.14"}
-sphinx-copybutton          = {optional=true, version=">=0.5"}
-sphinx-design              = {optional=true, version=">=0.2"}
-sphinx-notfound-page       = {optional=true, version=">=0.8"}
-sphinxcontrib-apidoc       = {optional=true, version=">=0.3"}
-sphinxext-opengraph        = {optional=true, version=">=0.9"}
-
 [tool.poetry.extras]
 # Package extras for optional backend dependencies
 dynamodb = ["boto3", "botocore"]
@@ -100,23 +86,7 @@ all = [
     "ujson",
 ]
 
-# Documentation
-docs = [
-    "matplotlib",
-    "furo",
-    "linkify-it-py",
-    "myst-parser",
-    "sphinx",
-    "sphinx-autodoc-typehints",
-    "sphinx-automodapi",
-    "sphinx-copybutton",
-    "sphinx-design",
-    "sphinx-notfound-page",
-    "sphinxcontrib-apidoc",
-    "sphinxext-opengraph",
-]
-
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 # For unit + integration tests
 coverage              = "^7.1"
 psutil                = "^5.0"
@@ -140,7 +110,21 @@ nox                   = "^2023.4"
 # https://github.com/cjolowicz/nox-poetry/pull/1213
 nox-poetry            = {version = "^1.0.0", python = "<4"}
 rich                  = ">=10.0"
-sphinx-autobuild      = "^2021.3.14"
+
+# Documentation dependencies needed for Readthedocs builds
+[tool.poetry.group.docs.dependencies]
+furo                       = {python=">=3.10", version="^2024.8"}
+linkify-it-py              = {python=">=3.10", version=">=2.0"}
+myst-parser                = {python=">=3.10", version=">=3.0"}
+sphinx                     = {python=">=3.10", version="^8.0.2"}
+sphinx-autobuild           = {python=">=3.10", version="^2024.9"}
+sphinx-autodoc-typehints   = {python=">=3.10", version="^2.4"}
+sphinx-automodapi          = {python=">=3.10", version="^0.18"}
+sphinx-copybutton          = {python=">=3.10", version=">=0.5"}
+sphinx-design              = {python=">=3.10", version=">=0.6"}
+sphinx-notfound-page       = {python=">=3.10", version=">=1.0"}
+sphinxcontrib-apidoc       = {python=">=3.10", version=">=0.3"}
+sphinxext-opengraph        = {python=">=3.10", version=">=0.9"}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

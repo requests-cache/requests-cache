@@ -120,6 +120,10 @@ as they are running on the default port.
 ## Documentation
 [Sphinx](https://www.sphinx-doc.org/en/master/) is used to generate documentation.
 
+First, install documentation dependencies:
+```sh
+$ poetry install -E all --with docs
+```
 To build the docs locally:
 ```bash
 nox -e docs
