@@ -112,9 +112,9 @@ always_document_param_types = True
 apidoc_module_dir = str(PACKAGE_DIR)
 apidoc_output_dir = APIDOC_DIR.stem
 apidoc_excluded_paths = ['session.py']
-apidoc_extra_args = [f'--templatedir={TEMPLATE_DIR}']  # Note: Must be an absolute path
 apidoc_module_first = True
 apidoc_separate_modules = True
+apidoc_template_dir = '_templates/apidoc'
 apidoc_toc_file = False
 
 # HTML general settings

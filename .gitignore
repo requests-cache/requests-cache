@@ -3,7 +3,7 @@ dist/
 downloads/
 example_cache/
 http_cache/
-scratch/
+scratch
 venv/
 
 *.db
