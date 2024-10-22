@@ -8,7 +8,7 @@ If you want to discuss ideas about the project in general, or have a more open-e
 please use [Discussions](https://github.com/orgs/requests-cache/discussions).
 
 ## Development Status
-Requests-cache is under active development! Contributions are very welcome, and will be attributed on the
+Requests-cache is in a relatively mature state, but is still under active maintenance. Contributions are very welcome, and will be attributed on the
 [Contributors](https://requests-cache.readthedocs.io/en/main/project_info/contributors.html)
 page.
 
@@ -26,7 +26,7 @@ If you are interested in helping out, here are a few ways to get started:
 ## Dev Installation
 To set up for local development (requires [poetry](https://python-poetry.org/docs/#installation)):
 
-```bash
+```sh
 git clone https://github.com/requests-cache/requests-cache.git
 cd requests-cache
 poetry install -v -E all
@@ -39,14 +39,14 @@ Code linting and formatting tools used include:
 * [mypy](https://mypy.readthedocs.io/en/stable/getting_started.html)
 
 All of these will be run by GitHub Actions on pull requests. You can also run them locally with:
-```bash
+```sh
 nox -e lint
 ```
 
 #### Pre-Commit Hooks
 Optionally, you can use [pre-commit](https://github.com/pre-commit/pre-commit) to automatically
 run all of these checks before a commit is made:
-```bash
+```sh
 pre-commit install
 ```
 
@@ -54,7 +54,7 @@ This can save you some time in that it will show you errors immediately rather t
 jobs to complete, or if you forget to manually run the checks before committing.
 
 You can disable these hooks at any time with:
-```bash
+```sh
 pre-commit uninstall
 ```
 
@@ -76,17 +76,17 @@ pre-commit uninstall
 
 For CI jobs (including PRs), these tests will be run for each supported python version.
 You can use [nox](https://nox.thea.codes) to do this locally, if needed:
-```bash
+```sh
 nox -e test
 ```
 
 Or to run tests for a specific python version:
-```bash
+```sh
 nox -e test-3.10
 ```
 
 To generate a coverage report:
-```bash
+```sh
 nox -e cov
 ```
 
@@ -98,7 +98,7 @@ config is included to make this easier. First, [install docker](https://docs.doc
 and [install docker-compose](https://docs.docker.com/compose/install/).
 
 Then, run:
-```bash
+```sh
 docker-compose up -d
 pytest tests/integration
 ```
@@ -108,7 +108,7 @@ If you can't easily run Docker containers in your environment but still want to 
 integration tests, you can use [pytest-httpbin](https://github.com/kevin1024/pytest-httpbin) instead
 of the httpbin container. This just requires installing an extra package and setting an environment
 variable:
-```bash
+```sh
 pip install pytest-httpbin
 export USE_PYTEST_HTTPBIN=true
 pytest tests/integration/test_cache.py
@@ -125,12 +125,12 @@ First, install documentation dependencies:
 $ poetry install -E all --with docs
 ```
 To build the docs locally:
-```bash
+```sh
 nox -e docs
 ```
 
 To preview:
-```bash
+```sh
 # MacOS:
 open docs/_build/html/index.html
 # Linux:
@@ -138,7 +138,7 @@ xdg-open docs/_build/html/index.html
 ```
 
 You can also use [sphinx-autobuild](https://github.com/executablebooks/sphinx-autobuild) to rebuild the docs and live reload in the browser whenever doc contents change:
-```bash
+```sh
 nox -e livedocs
 ```
 
@@ -149,7 +149,7 @@ succeed locally but fail remotely. To help debug this, you can use the
 the docs. A configured build container is included in `docs/docker-compose.yml` to simplify this.
 
 Run with:
-```bash
+```sh
 # Optionally add --build to rebuild with updated dependencies
 docker-compose -f docs/docker-compose.yml up -d
 docker exec readthedocs make all
@@ -191,7 +191,7 @@ Downstream builds:
 Pre-release builds are convenient for letting testers try out in-development changes. Versions with
 the suffix `.dev` (among others) can be deployed to PyPI and installed by users with `pip install --pre`,
 and are otherwise ignored by `pip install`:
-```
+```sh
 # Install latest pre-release build:
 pip install -U --pre requests-cache
 
