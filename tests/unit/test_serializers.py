@@ -4,7 +4,7 @@ import gzip
 import pickle
 import sys
 from importlib import reload
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
@@ -27,11 +27,9 @@ from tests.conftest import skip_missing_deps
 @skip_missing_deps('orjson')
 @skip_missing_deps('ujson')
 def test_json_aliases():
-    from requests_cache.serializers.preconf import orjson_serializer, ujson_serializer
-
-    assert init_serializer('json', decode_content=True) is json_serializer
-    assert init_serializer('orjson', decode_content=True) is orjson_serializer
-    assert init_serializer('ujson', decode_content=True) is ujson_serializer
+    assert init_serializer('json', decode_content=True).name == 'json'
+    assert init_serializer('orjson', decode_content=True).name == 'orjson'
+    assert init_serializer('ujson', decode_content=True).name == 'ujson'
 
 
 @skip_missing_deps('ujson')
@@ -134,3 +132,20 @@ def test_cattrs_compat():
 
     stage_2 = CattrStage(factory=BaseConverter)
     assert isinstance(stage_2.converter, BaseConverter)
+
+
+def test_copy():
+    stage_1 = CattrStage()
+    stage_2 = Stage(MagicMock())
+    serializer_1 = SerializerPipeline([stage_1, stage_2], name='test_serializer', is_binary=True)
+    serializer_2 = serializer_1.copy()
+    serializer_1.set_decode_content(True)
+
+    assert serializer_1.name == serializer_2.name
+    assert serializer_1.is_binary == serializer_2.is_binary
+    for stage in serializer_1.stages:
+        print(stage)
+    for stage in serializer_2.stages:
+        print(stage)
+    assert serializer_1.stages[0].decode_content is True
+    assert serializer_2.stages[0].decode_content is False

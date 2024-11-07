@@ -14,6 +14,7 @@
   * However, see https://github.com/ijl/orjson/issues/483 for potential memory issues
 * Add the following serializer objects to specify a JSON library: `json_serializer`, `ujson_serializer`, and `orjson_serializer`
 * Remove `[json]` package extra due to multiple supported JSON libraries
+* Allow `decode_content` to be set to different values across multiple sessions in use at the same time
 
 ℹ️ **Cache convenience methods:**
 * Add `verify` parameter to `BaseCache.contains()` and `delete()` to handle requests made with SSL verification disabled

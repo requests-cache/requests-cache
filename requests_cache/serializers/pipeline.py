@@ -30,6 +30,9 @@ class Stage:
         self.dumps = getattr(obj, dumps) if isinstance(dumps, str) else dumps
         self.loads = getattr(obj, loads) if isinstance(loads, str) else loads
 
+    def copy(self) -> 'Stage':
+        return Stage(self.obj, self.dumps, self.loads)
+
 
 class SerializerPipeline:
     """A pipeline of stages chained together to serialize and deserialize response objects.
@@ -50,6 +53,14 @@ class SerializerPipeline:
         self.dump_stages = [stage.dumps for stage in stages]
         self.load_stages = [stage.loads for stage in reversed(stages)]
         self.name = name
+
+    def copy(self) -> 'SerializerPipeline':
+        """Create a copy of this pipeline and its stage objects"""
+        return SerializerPipeline(
+            [stage.copy() for stage in self.stages],
+            name=self.name,
+            is_binary=self.is_binary,
+        )
 
     def dumps(self, value) -> Union[str, bytes]:
         for step in self.dump_stages:
