@@ -65,6 +65,11 @@ class CattrStage(Stage):
         self.converter = init_converter(factory, **kwargs)
         self.decode_content = decode_content
 
+    def copy(self) -> 'CattrStage':
+        stage = CattrStage(decode_content=self.decode_content)
+        stage.converter = self.converter
+        return stage
+
     @singledispatchmethod
     def dumps(self, value):
         return value

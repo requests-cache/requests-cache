@@ -73,7 +73,7 @@ SerializerType = Union[str, SerializerPipeline, Stage]
 def init_serializer(
     serializer: Optional[SerializerType], decode_content: bool
 ) -> Optional[SerializerPipeline]:
-    """Intitialze a serializer by name or instance"""
+    """Initialize a serializer by name or instance"""
     if not serializer:
         return None
 
@@ -82,7 +82,9 @@ def init_serializer(
         serializer = SERIALIZERS[serializer]
 
     # Wrap in a SerializerPipeline, if needed
-    if not isinstance(serializer, SerializerPipeline):
+    if isinstance(serializer, SerializerPipeline):
+        serializer = serializer.copy()
+    else:
         serializer = SerializerPipeline([serializer], name=str(serializer))
     serializer.set_decode_content(decode_content)
 
