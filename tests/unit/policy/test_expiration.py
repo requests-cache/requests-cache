@@ -5,11 +5,13 @@ from unittest.mock import patch
 import pytest
 
 from requests_cache.policy.expiration import (
+    DO_NOT_CACHE,
     EXPIRE_IMMEDIATELY,
     get_expiration_datetime,
     get_url_expiration,
     utcnow,
 )
+from requests_cache.policy.directives import set_request_headers
 from tests.conftest import HTTPDATE_DATETIME, HTTPDATE_STR
 
 
@@ -94,3 +96,27 @@ def test_get_url_expiration__evaluation_order(url, expected_expire_after):
         '*': 1,
     }
     assert get_url_expiration(url, urls_expire_after) == expected_expire_after
+
+
+def test_set_request_headers():
+    headers = set_request_headers(
+        {'ETag': '123456'},
+        expire_after=60,
+        only_if_cached=True,
+        refresh=True,
+        force_refresh=True,
+    )
+    assert headers['Cache-Control'] == 'max-age=60,must-revalidate,no-cache,only-if-cached'
+    assert headers['ETag'] == '123456'
+
+
+def test_set_request_headers__do_not_cache():
+    headers = set_request_headers(
+        {},
+        expire_after=DO_NOT_CACHE,
+        only_if_cached=False,
+        refresh=False,
+        force_refresh=False,
+    )
+    assert 'X-ACTUAL-NO-CACHE' in headers
+    assert 'Cache-Control' not in headers

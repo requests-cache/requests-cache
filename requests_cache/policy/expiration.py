@@ -11,7 +11,7 @@ from typing import Pattern as RegexPattern
 from .._utils import try_int
 from . import ExpirationPattern, ExpirationPatterns, ExpirationTime
 
-# Special expiration values that may be set by either headers or keyword args
+# Special client-side expiration values that may be set by either headers or keyword args
 DO_NOT_CACHE = 0x0D0E0200020704  # Per RFC 4824
 EXPIRE_IMMEDIATELY = 0
 NEVER_EXPIRE = -1
@@ -51,8 +51,6 @@ def get_expiration_datetime(
 
 def get_expiration_seconds(expire_after: ExpirationTime) -> int:
     """Convert an expiration value in any supported format to an expiration time in seconds"""
-    if expire_after == DO_NOT_CACHE:
-        return DO_NOT_CACHE
     expires = get_expiration_datetime(expire_after, ignore_invalid_httpdate=True)
     return ceil((expires - utcnow()).total_seconds()) if expires else NEVER_EXPIRE
 

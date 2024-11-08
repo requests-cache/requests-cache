@@ -95,20 +95,13 @@ class CacheActions(RichMixin):
         with the `expire_after` option provided in :py:meth:`.CachedSession.request`.
 
         Args:
+            cache_key: The cache key created based on the initial request
             request: The outgoing request
             settings: Session-level cache settings
         """
         settings = settings or CacheSettings()
         directives = CacheDirectives.from_headers(request.headers)
         logger.debug(f'Cache directives from request headers: {directives}')
-
-        # Merge values that may come from either settings or headers
-        only_if_cached = settings.only_if_cached or directives.only_if_cached
-        refresh = directives.max_age == EXPIRE_IMMEDIATELY or directives.must_revalidate
-        stale_if_error = settings.stale_if_error or directives.stale_if_error
-        stale_while_revalidate = (
-            settings.stale_while_revalidate or directives.stale_while_revalidate
-        )
 
         # Check expiration values in order of precedence
         expire_after = coalesce(
@@ -117,12 +110,22 @@ class CacheActions(RichMixin):
             settings.expire_after,
         )
 
+        # Merge values that may come from either settings (requests-cache-specific) or headers (standard)
+        actual_no_cache = directives.actual_no_cache or expire_after == DO_NOT_CACHE
+        kinda_no_cache = directives.no_cache or directives.no_store
+        only_if_cached = settings.only_if_cached or directives.only_if_cached
+        refresh = directives.max_age == EXPIRE_IMMEDIATELY or directives.must_revalidate
+        stale_if_error = settings.stale_if_error or directives.stale_if_error
+        stale_while_revalidate = (
+            settings.stale_while_revalidate or directives.stale_while_revalidate
+        )
+
         # Check and log conditions for reading from the cache
         read_criteria = {
             'disabled cache': settings.disabled,
             'disabled method': not _is_method_allowed(request, settings),
-            'disabled by headers or refresh': directives.no_cache or directives.no_store,
-            'disabled by expiration': expire_after == DO_NOT_CACHE,
+            'disabled by headers or refresh': kinda_no_cache,
+            'disabled by expiration': actual_no_cache,
         }
         _log_cache_criteria('read', read_criteria)
 
