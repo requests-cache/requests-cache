@@ -15,14 +15,14 @@ from typing import Optional, Type
 
 import requests
 
-from .backends import BackendSpecifier, BaseCache, init_backend
+from .backends import BackendSpecifier, BaseCache, init_backend, StrOrPath
 from .session import CachedSession, OriginalSession
 
 logger = getLogger(__name__)
 
 
 def install_cache(
-    cache_name: str = 'http_cache',
+    cache_name: StrOrPath = 'http_cache',
     backend: Optional[BackendSpecifier] = None,
     session_factory: Type[OriginalSession] = CachedSession,
     **kwargs,
