@@ -3,7 +3,7 @@ Closes #<issue number>
 <!--
 If any of the items below don't apply to your PR, you can just remove them.
 See the contributing guide for more info:
-https://requests-cache.readthedocs.io/en/main/contributing.html
+https://requests-cache.readthedocs.io/en/main/project_info/contributing.html
 -->
 ### Checklist
 - [ ] Added docstrings and type annotations
