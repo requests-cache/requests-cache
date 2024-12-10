@@ -42,6 +42,10 @@ def install_cache(
     """
     backend = init_backend(cache_name, backend, **kwargs)
 
+    # By default, don't close backend connections when the session is closed,
+    # since request.get(), etc. will create and close a new session object for each request
+    kwargs.setdefault('autoclose', False)
+
     class _ConfiguredCachedSession(session_factory):  # type: ignore  # See mypy issue #5865
         def __init__(self):
             super().__init__(cache_name=cache_name, backend=backend, **kwargs)

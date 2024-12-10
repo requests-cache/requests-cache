@@ -16,6 +16,9 @@
 * Remove `[json]` package extra due to multiple supported JSON libraries
 * Allow `decode_content` to be set to different values across multiple sessions in use at the same time
 
+⚙️ **Session settings:**
+* Add `autoclose` option to close backend connections when the session is closed
+
 ℹ️ **Cache convenience methods:**
 * Add `verify` parameter to `BaseCache.contains()` and `delete()` to handle requests made with SSL verification disabled
 
@@ -25,6 +28,7 @@
 🪲 **Bugfixes:**
 * Ignore and log timezone errors when attempting to reuse responses cached in `requests-cache <= 1.1`
 * Fix error handling with `stale_if_error` during revalidation requests
+* By default, do not automatically close backend connections when using `install_cache()`
 
 ### 1.2.1 (2024-06-18)
 
