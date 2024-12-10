@@ -90,7 +90,7 @@ To generate a coverage report:
 nox -e cov
 ```
 
-See `nox --list` for a ful list of available commands.
+See `nox --list` for a full list of available commands.
 
 ### Integration Test Containers
 A live web server and backend databases are required to run integration tests, and docker-compose

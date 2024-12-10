@@ -9,7 +9,7 @@ repos:
       - id: mixed-line-ending
       - id: trailing-whitespace
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.1
+    rev: v0.8.2
     hooks:
       - id: ruff
       - id: ruff-format
@@ -33,6 +33,10 @@ repos:
     hooks:
       - id: xenon
         args: [--max-average=A, --max-modules=B, --max-absolute=C]
+  - repo: https://github.com/crate-ci/typos
+    rev: typos-dict-v0.11.37
+    hooks:
+      - id: typos
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v4.0.0-alpha.8
     hooks:

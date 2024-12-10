@@ -34,7 +34,7 @@ True 2021-01-01 18:00:00 2021-01-02 18:00:00 False
 
 >>> # Print a response object to get general information about it
 >>> print(response)
-'request: GET https://httpbin.org/get, response: 200 (308 bytes), created: 2021-01-01 22:45:00 IST, expires: 2021-01-02 18:45:00 IST (fresh)'
+'request: GET https://httpbin.org/get, response: 200 (308 bytes), created: 2024-01-01 22:45:00 EST, expires: 2024-01-02 18:45:00 EST (fresh)'
 ```
 :::
 
