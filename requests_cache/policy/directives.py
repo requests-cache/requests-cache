@@ -6,7 +6,7 @@ from requests.structures import CaseInsensitiveDict
 
 from .._utils import decode, get_valid_kwargs, try_int
 from ..models import RichMixin
-from . import HeaderDict, get_expiration_seconds
+from . import DO_NOT_CACHE, HeaderDict, get_expiration_seconds
 
 
 @define(repr=False)
@@ -23,6 +23,7 @@ class CacheDirectives(RichMixin):
     must_revalidate: bool = field(default=False)
     no_cache: bool = field(default=False)
     no_store: bool = field(default=False)
+    actual_no_cache: bool = field(default=False)  # Nonstandard value/internal use only
     only_if_cached: bool = field(default=False)
     stale_if_error: int = field(default=None, converter=try_int)
     stale_while_revalidate: int = field(default=None, converter=try_int)
@@ -39,6 +40,7 @@ class CacheDirectives(RichMixin):
             cls.__init__, {k.replace('-', '_'): v for k, v in kv_directives.items()}
         )
 
+        kwargs['actual_no_cache'] = headers.pop('X-ACTUAL-NO-CACHE', False)
         kwargs['expires'] = headers.get('Expires')
         kwargs['etag'] = headers.get('ETag')
         kwargs['last_modified'] = headers.get('Last-Modified')
@@ -71,8 +73,6 @@ def set_request_headers(
     headers = CaseInsensitiveDict(headers)
     directives = headers['Cache-Control'].split(',') if headers.get('Cache-Control') else []
 
-    if expire_after is not None:
-        directives.append(f'max-age={get_expiration_seconds(expire_after)}')
     if only_if_cached:
         directives.append('only-if-cached')
     if refresh:
@@ -80,6 +80,13 @@ def set_request_headers(
     if force_refresh:
         directives.append('no-cache')
 
+    # Handle custom value to completely skip the cache; much be passed via headers to make the
+    # round trip from CachedSession.request() -> Session.request() -> CachedSession.send()
+    if expire_after == DO_NOT_CACHE:
+        headers['X-ACTUAL-NO-CACHE'] = 'true'
+    elif expire_after is not None:
+        directives.append(f'max-age={get_expiration_seconds(expire_after)}')
+
     if directives:
-        headers['Cache-Control'] = ','.join(directives)
+        headers['Cache-Control'] = ','.join(sorted(set(directives)))
     return headers

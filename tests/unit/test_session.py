@@ -722,6 +722,8 @@ def test_do_not_cache(mock_session):
     # Skip read
     response = mock_session.get(MOCKED_URL, expire_after=DO_NOT_CACHE)
     assert response.from_cache is False
+    # Internal value only; should not be sent to server
+    assert 'Cache-Control' not in response.request.headers
 
     # Skip write
     mock_session.settings.expire_after = DO_NOT_CACHE
