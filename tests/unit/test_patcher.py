@@ -33,6 +33,7 @@ def test_session_settings():
     assert patched_session.settings.expire_after == 360
     assert patched_session.settings.cache_control is True
     assert patched_session.settings.allowable_codes == (200, 301)
+    assert patched_session.settings.autoclose is False
 
     requests_cache.uninstall_cache()
 

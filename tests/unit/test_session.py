@@ -1102,3 +1102,18 @@ def test_send_and_cache__already_cached(mock_send, mock_session):
         CachedResponse(),
     )
     assert r1 is r2
+
+
+def test_close(mock_session):
+    """By default, backend connections should be closed when the session closes"""
+    with patch.object(mock_session.cache, 'close') as mock_close:
+        mock_session.close()
+        mock_close.assert_called_once()
+
+
+def test_close__autoclose_off(mock_session):
+    """With autoclose=False, backend connections should NOT be closed when the session closes"""
+    mock_session.settings.autoclose = False
+    with patch.object(mock_session.cache, 'close') as mock_close:
+        mock_session.close()
+        mock_close.assert_not_called()

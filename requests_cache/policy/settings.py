@@ -26,6 +26,7 @@ class CacheSettings(RichMixin):
     allowable_codes: Iterable[int] = field(default=DEFAULT_STATUS_CODES)
     allowable_methods: Iterable[str] = field(default=DEFAULT_METHODS)
     always_revalidate: bool = field(default=False)
+    autoclose: bool = field(default=True)
     cache_control: bool = field(default=False)
     disabled: bool = field(default=False)
     expire_after: ExpirationTime = field(default=None)

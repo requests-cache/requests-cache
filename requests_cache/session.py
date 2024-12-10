@@ -57,6 +57,7 @@ class CacheMixin(MIXIN_BASE):
         filter_fn: Optional[FilterCallback] = None,
         key_fn: Optional[KeyCallback] = None,
         stale_if_error: Union[bool, int] = False,
+        autoclose: bool = True,
         **kwargs,
     ):
         self.cache = init_backend(cache_name, backend, serializer=serializer, **kwargs)
@@ -72,6 +73,7 @@ class CacheMixin(MIXIN_BASE):
             filter_fn=filter_fn,
             key_fn=key_fn,
             stale_if_error=stale_if_error,
+            autoclose=autoclose,
             **kwargs,
         )
         self._lock = RLock()
@@ -339,7 +341,8 @@ class CacheMixin(MIXIN_BASE):
     def close(self):
         """Close the session and any open backend connections"""
         super().close()
-        self.cache.close()
+        if self.settings.autoclose:
+            self.cache.close()
 
     def __getstate__(self):
         # Unlike requests.Session, CachedSession may contain backend connection objects that can't
@@ -379,6 +382,7 @@ class CachedSession(CacheMixin, OriginalSession):
             accepts a time value representing maximum staleness to accept.
         stale_while_revalidate: Return a stale response initially, while a non-blocking request is
             sent to refresh the response for the next time it's requested
+        autoclose: Close the cache backend when the session is closed
         filter_fn: Response filtering function that indicates whether or not a given response should
             be cached. See :ref:`custom-filtering` for details.
         key_fn: Request matching function for generating custom cache keys. See
