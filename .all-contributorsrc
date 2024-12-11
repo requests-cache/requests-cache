@@ -780,6 +780,41 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/1324225?v=4",
       "profile": "https://github.com/hugovk",
       "contributions": ["code"]
+    },
+    {
+      "login": "castedo",
+      "name": "Castedo Ellerman",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1416766?v=4",
+      "profile": "https://castedo.com/",
+      "contributions": ["bug", "ideas"]
+    },
+    {
+      "login": "FernandoKGA",
+      "name": "Fernando Karchiloff",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29988718?v=4",
+      "profile": "https://ferkarchiloff.dev/",
+      "contributions": ["bug"]
+    },
+    {
+      "login": "jedie",
+      "name": "Jens Diemer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/71315?v=4",
+      "profile": "http://www.jensdiemer.de/",
+      "contributions": ["bug"]
+    },
+    {
+      "login": "caseyclements",
+      "name": "Casey Clements",
+      "avatar_url": "https://avatars.githubusercontent.com/u/737181?v=4",
+      "profile": "https://github.com/caseyclements",
+      "contributions": ["ideas"]
+    },
+    {
+      "login": "ShaneHarvey",
+      "name": "Shane Harvey",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5015933?v=4",
+      "profile": "https://github.com/ShaneHarvey",
+      "contributions": ["ideas"]
     }
   ],
   "contributorsPerLine": 7,
