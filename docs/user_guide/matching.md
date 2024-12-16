@@ -52,6 +52,13 @@ As well as headers, if `match_headers=True` is used:
 Since `ignored_parameters` is most often used for sensitive info like credentials, these values will also be removed from the cached request parameters, body, and headers.
 ```
 
+```{tip}
+Variations in headers can be introduced by the libraries used by CacheSession.
+These variations can be eliminated by calling CachedSession request functions
+with a fixed header value. For example, always passing `"Accept-Encoding": "gzip,
+deflate"` ensures that additional compression encodings are not added to the request.
+```
+
 (matching-headers)=
 ## Matching Request Headers
 ```{note}
