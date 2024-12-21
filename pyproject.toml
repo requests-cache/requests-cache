@@ -89,7 +89,7 @@ all = [
 [tool.poetry.group.dev.dependencies]
 # For unit + integration tests
 coverage              = "^7.1"
-psutil                = "^5.0"
+psutil                = ">=5,<7"
 pytest                = "^8.0"
 pytest-clarity        = "^1.0.1"
 pytest-cov            = ">=3.0"
