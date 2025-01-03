@@ -6,6 +6,8 @@ Notes:
 * 'lint' command: tools and environments are managed by pre-commit
 * All other commands: the current environment will be used instead of creating new ones
 * Run `nox -l` to see all available commands
+* See Contributing Guide for more usage details:
+  https://github.com/requests-cache/requests-cache/blob/main/CONTRIBUTING.md
 """
 
 import platform
@@ -37,7 +39,7 @@ ALL_TESTS = [UNIT_TESTS, INTEGRATION_TESTS, COMPAT_TESTS]
 STRESS_TEST_MULTIPLIER = 10
 DEFAULT_COVERAGE_FORMATS = ['html', 'term']
 # Run tests in parallel, grouped by test module
-XDIST_ARGS = '--numprocesses=auto --dist=loadfile'
+XDIST_ARGS = ['--numprocesses=auto', '--dist=loadfile']
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 
@@ -47,17 +49,14 @@ def test(session):
     """Run tests in a separate virtualenv per python version"""
     test_paths = session.posargs or ALL_TESTS
     session.install('.', 'pytest', 'pytest-xdist', 'requests-mock', 'rich', 'timeout-decorator')
-
-    cmd = f'pytest -rsxX {XDIST_ARGS}'
-    session.run(*cmd.split(' '), *test_paths)
+    session.run('pytest', '-rsxX', *XDIST_ARGS, *test_paths)
 
 
 @session(python=False, name='test-current')
 def test_current(session):
     """Run tests using the current virtualenv"""
     test_paths = session.posargs or ALL_TESTS
-    cmd = f'pytest -rsxX {XDIST_ARGS}'
-    session.run(*cmd.split(' '), *test_paths)
+    session.run('pytest', '-rsxX', *XDIST_ARGS, *test_paths)
 
 
 @session(python=False)
@@ -73,7 +72,7 @@ def coverage(session):
     """Run tests and generate coverage report"""
     cmd = ['pytest', *ALL_TESTS, '-rsxX', '--cov']
     if not IS_PYPY:
-        cmd += XDIST_ARGS.split(' ')
+        cmd += XDIST_ARGS
 
     # Add coverage formats
     cov_formats = session.posargs or DEFAULT_COVERAGE_FORMATS
@@ -88,11 +87,10 @@ def coverage(session):
 @session(python=False, name='stress')
 def stress_test(session):
     """Run concurrency tests with a higher stress test multiplier"""
-    cmd = f'pytest {INTEGRATION_TESTS} -rs -k concurrency'
     multiplier = session.posargs[0] if session.posargs else STRESS_TEST_MULTIPLIER
-
+    cmd = ['pytest', *INTEGRATION_TESTS, '-rs', '-k', 'concurrency']
     session.run(
-        *cmd.split(' '),
+        *cmd,
         env={'STRESS_TEST_MULTIPLIER': str(multiplier)},
     )
 
@@ -114,20 +112,21 @@ def livedocs(session):
     """Auto-build docs with live reload in browser.
     Add `--open` to also open the browser after starting.
     """
-    args = ['-a']
-    args += [f'--watch {pattern}' for pattern in LIVE_DOCS_WATCH]
-    args += [f'--ignore {pattern}' for pattern in LIVE_DOCS_IGNORE]
-    args += [f'--port {LIVE_DOCS_PORT}', '-j auto']
+    cmd = ['sphinx-autobuild', 'docs', 'docs/_build/html']
+    cmd += ['-a']
+    cmd += ['--port', str(LIVE_DOCS_PORT), '-j', 'auto']
+    for pattern in LIVE_DOCS_WATCH:
+        cmd += ['--watch', pattern]
+    for pattern in LIVE_DOCS_IGNORE:
+        cmd += ['--ignore', pattern]
     if session.posargs == ['open']:
-        args.append('--open-browser')
+        cmd.append('--open-browser')
 
     clean(session)
-    cmd = 'sphinx-autobuild docs docs/_build/html ' + ' '.join(args)
-    session.run(*cmd.split(' '))
+    session.run(*cmd)
 
 
 @session(python=False)
 def lint(session):
     """Run linters and code formatters via pre-commit"""
-    cmd = 'pre-commit run --all-files'
-    session.run(*cmd.split(' '))
+    session.run('pre-commit', 'run', '--all-files')
