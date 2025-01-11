@@ -250,7 +250,7 @@ class SQLiteDict(BaseStorage):
         with self._lock:
             if not self._connection:
                 logger.debug(f'Opening connection to {self.db_path}:{self.table_name}')
-                self._connection = sqlite3.connect(self.db_path, **self.connection_kwargs)
+                self._connection = sqlite3.connect(self.db_path, isolation_level=None, **self.connection_kwargs)
                 # Note: DBAPI doesn't support integer placeholders
                 if self.busy_timeout is not None:
                     self._connection.execute(f'PRAGMA busy_timeout={self.busy_timeout}')
@@ -262,11 +262,10 @@ class SQLiteDict(BaseStorage):
                 if self.wal and not self.fast_save:
                     self._connection.execute('PRAGMA synchronous=NORMAL')
 
-        # Multithreaded write operations must be run in serial
         if commit and self._can_commit:
-            with self._lock:
+            # Multithreaded write operations must be run in serial
+            with self._acquire_sqlite_lock():
                 yield self._connection
-                self._connection.commit()
         # Read operations can be run in parallel (no lock or COMMIT)
         else:
             yield self._connection
@@ -290,11 +289,29 @@ class SQLiteDict(BaseStorage):
             ...         d1[i] = i * 2
 
         """
+        with self._acquire_sqlite_lock():
+            yield
+
+    @contextmanager
+    def _acquire_sqlite_lock(self):
         with self._lock:
             self._can_commit = False
+            while True:
+                try:
+                    # wait for a write lock
+                    self._connection.execute("BEGIN IMMEDIATE")
+                    break
+                except sqlite3.OperationalError as e:
+                    # note that time.sleep can take 50us+:
+                    # https://github.com/python/cpython/issues/125997.
+                    time.sleep(1e-4)
+                    continue
             try:
                 yield
                 self._connection.commit()
+            except sqlite3.OperationalError:
+                # do something else? what else to do here
+                self._connection.rollback()
             finally:
                 self._can_commit = True
 
@@ -318,28 +335,7 @@ class SQLiteDict(BaseStorage):
             return self.deserialize(key, row[0])
 
     def __setitem__(self, key, value):
-        if not self.retries:
-            self._write(key, value)
-            return
-
-        for i in range(self.retries):
-            try:
-                self._write(key, value)
-                return
-            # Even with WAL mode, rarely a write may fail with SQLITE_BUSY; if so, retry up to
-            # self._retries times. Any other errors will be re-raised.
-            except sqlite3.OperationalError as e:
-                if 'database is locked' not in str(e):
-                    raise
-                elif i < self.retries - 1:
-                    logger.warning(
-                        f'Database is locked in thread {threading.get_ident()}; '
-                        f'retrying ({i+1}/{self.retries})'
-                    )
-                    sleep(0.1)
-                # On last retry, log the error and abort the write
-                else:
-                    logger.error(e)
+        self._write(key, value)
 
     def _write(self, key, value):
         # If available, set expiration as a timestamp in unix format
