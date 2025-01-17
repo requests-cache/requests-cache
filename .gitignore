@@ -35,6 +35,7 @@ package.json
 .nox/
 test-reports/
 
-# Sphinx
+# Sphinx / Readthedocs
 docs/_build/
 docs/modules/
+docs/requirements.txt

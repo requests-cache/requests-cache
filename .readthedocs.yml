@@ -13,7 +13,8 @@ build:
     # Use poetry to export optional + documentation dependencies
     post_create_environment:
       - python -m pip install poetry poetry-plugin-export
-      - poetry export -o docs/requirements.txt --all-extras --with=docs
+      - python -m poetry add 'urllib3=1.26.20' # Workaround for exporter dependency walker
+      - python -m poetry export -o docs/requirements.txt --all-extras --with=docs
 python:
   install:
     - requirements: docs/requirements.txt
