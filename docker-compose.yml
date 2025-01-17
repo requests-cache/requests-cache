@@ -37,8 +37,20 @@ services:
     volumes:
       - 'redis_data:/bitnami/redis/data'
 
+  valkey:
+    image: docker.io/bitnami/valkey:8.0
+    container_name: valkey-test
+    environment:
+      ALLOW_EMPTY_PASSWORD: 'yes'
+    ports:
+      - '6380:6379'
+    volumes:
+      - 'valkey_data:/bitnami/valkey/data'
+
 volumes:
   mongodb_data:
     driver: local
   redis_data:
+    driver: local
+  valkey_data:
     driver: local
