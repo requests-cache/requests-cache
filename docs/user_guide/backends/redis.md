@@ -33,7 +33,7 @@ Or you can pass an existing `Redis` object:
 >>> from redis import Redis
 
 >>> connection = Redis(host='192.168.1.63', port=6379)
->>> backend = RedisCache(connection=connection))
+>>> backend = RedisCache(connection=connection)
 >>> session = CachedSession('http_cache', backend=backend)
 ```
 
@@ -60,10 +60,27 @@ Alternatively, you can disable TTL completely with the `ttl` argument:
 >>> backend = RedisCache(ttl=False)
 ```
 
+## Valkey
+If you want to use [Valkey](https://valkey.io) (an open-source, Redis-compatible key-value store)
+instead of Redis, you can connect to it in the exact same way without any code changes.
+
+Valkey instances are compatible with `redis-py`, but if you have an advanced use case that requires
+using [`valkey-py`](https://github.com/valkey-io/valkey-py), you can use its client as a drop-in
+replacement for `redis-py`'s client:
+
+```python
+>>> from requests_cache import CachedSession, RedisCache
+>>> from valkey import Valkey
+
+>>> backend = RedisCache(connection=Valkey())
+>>> session = CachedSession('http_cache', backend=backend)
+```
+
+
 ## Redislite
 If you can't easily set up your own Redis server, another option is
-[redislite](https://github.com/yahoo/redislite). It contains its own lightweight, embedded Redis
-database, and can be used as a drop-in replacement for redis-py. Usage example:
+[`redislite`](https://github.com/yahoo/redislite). It contains its own lightweight, embedded Redis
+database, and can be used as a drop-in replacement for `redis-py`. Usage example:
 ```python
 >>> from redislite import Redis
 >>> from requests_cache import CachedSession, RedisCache
