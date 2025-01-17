@@ -26,7 +26,7 @@ multiple Session-modifying libraries:
 
 >>> session = CachedHTMLSession()
 >>> response = session.get('https://github.com/')
->>> print(response.from_cache, response.html.links)
+>>> print(response.html.links)
 ```
 
 
@@ -34,7 +34,7 @@ Or if you are using {py:func}`.install_cache`, you can use the `session_factory`
 ```python
 >>> install_cache(session_factory=CachedHTMLSession)
 >>> response = requests.get('https://github.com/')
->>> print(response.from_cache, response.html.links)
+>>> print(response.html.links)
 ```
 
 The same approach can be used with other libraries that subclass {py:class}`requests.Session`.
