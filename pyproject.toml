@@ -118,7 +118,7 @@ linkify-it-py              = {python=">=3.10", version=">=2.0"}
 myst-parser                = {python=">=3.10", version=">=3.0"}
 sphinx                     = {python=">=3.10", version="^8.0.2"}
 sphinx-autobuild           = {python=">=3.10", version="^2024.9"}
-sphinx-autodoc-typehints   = {python=">=3.10", version="^2.4"}
+sphinx-autodoc-typehints   = {python=">=3.10", version=">=2.4,<4.0"}
 sphinx-automodapi          = {python=">=3.10", version="^0.18"}
 sphinx-copybutton          = {python=">=3.10", version=">=0.5"}
 sphinx-design              = {python=">=3.10", version=">=0.6"}
