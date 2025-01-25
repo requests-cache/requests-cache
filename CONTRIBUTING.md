@@ -1,6 +1,7 @@
 # Contributing Guide
 
 ## Bug Reports, Feedback, and Discussion
+
 If you discover a bug or want to request a new feature, please
 [create an issue](https://github.com/requests-cache/requests-cache/issues/new/choose).
 
@@ -8,11 +9,13 @@ If you want to discuss ideas about the project in general, or have a more open-e
 please use [Discussions](https://github.com/orgs/requests-cache/discussions).
 
 ## Development Status
+
 Requests-cache is in a relatively mature state, but is still under active maintenance. Contributions are very welcome, and will be attributed on the
 [Contributors](https://requests-cache.readthedocs.io/en/main/project_info/contributors.html)
 page.
 
 ## How to Help
+
 If you are interested in helping out, here are a few ways to get started:
 
 * Give feedback on open issues
@@ -24,6 +27,7 @@ If you are interested in helping out, here are a few ways to get started:
 * If you find an issue you want to work on, please comment on it so others know it's in progress
 
 ## Dev Installation
+
 To set up for local development (requires [poetry](https://python-poetry.org/docs/#installation)):
 
 ```sh
@@ -33,6 +37,7 @@ poetry install -v -E all
 ```
 
 ### Linting & Formatting
+
 Code linting and formatting tools used include:
 * [ruff (linter)](https://docs.astral.sh/ruff/linter)
 * [ruff (formatter)](https://docs.astral.sh/ruff/formatter)
@@ -44,6 +49,7 @@ nox -e lint
 ```
 
 #### Pre-Commit Hooks
+
 Optionally, you can use [pre-commit](https://github.com/pre-commit/pre-commit) to automatically
 run all of these checks before a commit is made:
 ```sh
@@ -61,6 +67,7 @@ pre-commit uninstall
 ## Testing
 
 ### Test Layout
+
 * Tests are divided into unit and integration tests:
     * Unit tests can be run without any additional setup, and **don't depend on any external services**.
     * Integration tests **depend on additional services**, which are easiest to run using Docker
@@ -70,12 +77,28 @@ pre-commit uninstall
   mocking steps and other test setup.
 
 ### Running Tests
+
 * Run `pytest` to run all tests
-* Run `pytest tests/unit` to run only unit tests
+* Run `pytest tests/unit` to run only unit tests:
+
+  ```sh
+  poetry run pytest tests/unit
+  ```
+
 * Run `pytest tests/integration` to run only integration tests
 
 For CI jobs (including PRs), these tests will be run for each supported python version.
-You can use [nox](https://nox.thea.codes) to do this locally, if needed:
+You can use [nox](https://nox.thea.codes) to do this locally, if needed.
+
+Install `nox` and `nox-poetry` with:
+
+```sh
+pipx install nox
+pipx inject nox nox-poetry
+```
+
+To run tests for all python versions:
+
 ```sh
 nox -e test
 ```
@@ -93,6 +116,7 @@ nox -e cov
 See `nox --list` for a full list of available commands.
 
 ### Integration Test Containers
+
 A live web server and backend databases are required to run integration tests, and docker-compose
 config is included to make this easier. First, [install docker](https://docs.docker.com/get-docker/)
 and [install docker-compose](https://docs.docker.com/compose/install/).
@@ -104,6 +128,7 @@ pytest tests/integration
 ```
 
 ### Integration Test Alternatives
+
 If you can't easily run Docker containers in your environment but still want to run some of the
 integration tests, you can use [pytest-httpbin](https://github.com/kevin1024/pytest-httpbin) instead
 of the httpbin container. This just requires installing an extra package and setting an environment
@@ -118,6 +143,7 @@ For backend databases, you can install and run them on the host instead of in a 
 as they are running on the default port.
 
 ## Documentation
+
 [Sphinx](https://www.sphinx-doc.org/en/master/) is used to generate documentation.
 
 First, install documentation dependencies:
@@ -143,6 +169,7 @@ nox -e livedocs
 ```
 
 ### Readthedocs
+
 Sometimes, there are differences in the Readthedocs build environment that can cause builds to
 succeed locally but fail remotely. To help debug this, you can use the
 [readthedocs/build](https://github.com/readthedocs/readthedocs-docker-images) container to build
@@ -156,6 +183,7 @@ docker exec readthedocs make all
 ```
 
 ## Pull Requests
+
 Here are some general guidelines for submitting a pull request:
 
 * If the changes are trivial, just briefly explain the changes in the PR description
@@ -167,6 +195,7 @@ Here are some general guidelines for submitting a pull request:
 ## Notes for Maintainers
 
 ### Releases
+
 * Releases are built and published to PyPI based on **git tags.**
 * [Milestones](https://github.com/requests-cache/requests-cache/milestones) will be used to track
 progress on major and minor releases.
@@ -188,6 +217,7 @@ Downstream builds:
 * For reference: [repology](https://repology.org/project/python:requests-cache) lists additional downstream packages maintained by other developers.
 
 ### Pre-Releases
+
 Pre-release builds are convenient for letting testers try out in-development changes. Versions with
 the suffix `.dev` (among others) can be deployed to PyPI and installed by users with `pip install --pre`,
 and are otherwise ignored by `pip install`:
