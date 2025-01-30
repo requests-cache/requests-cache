@@ -2,6 +2,7 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from shutil import rmtree
 from sys import version_info
 from tempfile import gettempdir
+from threading import RLock
 
 import pytest
 from platformdirs import user_cache_dir
@@ -62,6 +63,15 @@ class TestFileDict(BaseStorageTest):
         cache = self.init_cache(extension='dat')
         cache['key'] = 'value'
         assert cache._path('key').suffix == '.dat'
+
+    def test_create_with_lock(self):
+        """Test passing the lock parameter."""
+        lock = RLock()
+        cache1 = self.init_cache(lock=lock)
+        cache2 = self.init_cache(lock=lock)
+        cache3 = self.init_cache()
+        assert cache1.lock is cache2.lock
+        assert cache1.lock is not cache3.lock
 
 
 class TestFileCache(BaseCacheTest):

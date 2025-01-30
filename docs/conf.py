@@ -87,6 +87,7 @@ intersphinx_mapping = {
     'redis': ('https://redis-py.readthedocs.io/en/stable/', None),
     'requests': ('https://requests.readthedocs.io/en/latest/', None),
     'urllib3': ('https://urllib3.readthedocs.io/en/latest/', None),
+    'py-filelock': ('https://py-filelock.readthedocs.io/en/latest/', None),
 }
 extlinks = {
     'boto3': ('https://boto3.amazonaws.com/v1/documentation/api/latest/reference/%s', None),

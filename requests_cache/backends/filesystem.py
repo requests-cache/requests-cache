@@ -29,6 +29,9 @@ class FileCache(BaseCache):
         decode_content: Decode JSON or text response body into a human-readable format
         extension: Extension for cache files. If not specified, the serializer default extension
             will be used.
+        lock: An optional lock to use for the directory.
+            By default, this is a :class:`threading.RLock`.
+            You can also use :attr:`filelock.FileLock` and a :class:`multiprocessing.RLock`.
     """
 
     def __init__(
@@ -44,9 +47,15 @@ class FileCache(BaseCache):
         self.responses: FileDict = FileDict(
             cache_name, use_temp=use_temp, decode_content=decode_content, **skwargs
         )
-        self.redirects: SQLiteDict = SQLiteDict(
-            self.cache_dir / 'redirects.sqlite', 'redirects', serializer=None, **kwargs
-        )
+        with self.lock:
+            self.redirects: SQLiteDict = SQLiteDict(
+                self.cache_dir / 'redirects.sqlite', 'redirects', serializer=None, **kwargs
+            )
+
+    @property
+    def lock(self) -> RLock:
+        """The lock used by the cache."""
+        return self.responses.lock
 
     @property
     def cache_dir(self) -> Path:
@@ -61,10 +70,11 @@ class FileCache(BaseCache):
         """Clear the cache"""
         # FileDict.clear() removes the cache directory, including redirects.sqlite
         self.responses.clear()
-        self.redirects.init_db()
+        with self.lock:
+            self.redirects.init_db()
 
     def delete(self, *args, **kwargs):
-        with self.responses._lock:
+        with self.lock:
             return super().delete(*args, **kwargs)
 
 
@@ -78,14 +88,20 @@ class FileDict(BaseStorage):
         use_cache_dir: bool = False,
         extension: Optional[str] = None,
         serializer: Optional[SerializerType] = json_serializer,
+        lock: Optional[RLock] = None,
         **kwargs,
     ):
         super().__init__(serializer=serializer, **kwargs)
         self.cache_dir = get_cache_path(cache_name, use_cache_dir=use_cache_dir, use_temp=use_temp)
         self.extension = _get_extension(extension, self.serializer)
         self.is_binary = getattr(self.serializer, 'is_binary', False)
-        self._lock = RLock()
+        self._lock = lock if lock is not None else RLock()
         makedirs(self.cache_dir, exist_ok=True)
+
+    @property
+    def lock(self) -> RLock:
+        """The lock used by the cache."""
+        return self._lock
 
     @contextmanager
     def _try_io(self, ignore_errors: bool = False):

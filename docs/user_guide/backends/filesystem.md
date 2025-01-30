@@ -47,4 +47,16 @@ YAML files (requires `pyyaml`):
 ## Performance and Limitations
 - Write performance will vary based on the serializer used, in the range of roughly 1-3ms per write.
 - This backend stores response files in a single directory, and does not currently implement fan-out. This means that on most filesystems, storing a very large number of responses will result in reduced performance.
-- This backend currently uses a simple threading lock rather than a file lock system, so it is not an ideal choice for highly parallel applications.
+
+### Parallelization
+
+This backend currently uses a simple threading lock rather than a file lock system, so it is not an ideal choice for highly parallel applications.
+Using several sessions or filesystem backends in the same directory (same `cache_name`) can result in race conditions.
+Make sure to use the same lock object for all sessions caching in the same filesystem directory.
+
+- If you access the directory only from one process in different sessions, initialize `lock` with the same {py:class}`threading.RLock`.
+- If you use [multiprocessing], use a {py:class}`multiprocessing.RLock`.
+- If you access the same directory from multiple processes, use a {py:attr}`filelock.FileLock`, see [py-filelock].
+
+[multiprocessing]: https://docs.python.org/3/library/multiprocessing.html
+[py-filelock]: https://py-filelock.readthedocs.io/
