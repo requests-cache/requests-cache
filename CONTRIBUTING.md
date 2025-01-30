@@ -24,112 +24,229 @@ If you are interested in helping out, here are a few ways to get started:
 * If you find an issue you want to work on, please comment on it so others know it's in progress
 
 ## Dev Installation
-To set up for local development (requires [poetry](https://python-poetry.org/docs/#installation)):
+
+To setup `requests-cache` for development, first install these tools:
+
+* [git](https://git-scm.com/) (required)
+* [Python 3](https://www.python.org/) (required)
+* [poetry](https://python-poetry.org/docs/#installation) (required)
+* [virtualenv](https://virtualenv.pypa.io/en/latest/installation.html) (recommended, see below)
+* [docker] and [docker compose][docker-compose] (partially required and recommended, see below)
+* [pre-commit] (optional)
+
+Next, clone the repository:
 
 ```sh
 git clone https://github.com/requests-cache/requests-cache.git
 cd requests-cache
-poetry install -v -E all
 ```
 
+You have these options to setup the development environment:
+
+1. Use a virtual environment (recommended):
+
+   ```sh
+   virtualenv -p python3 .venv
+   source .venv/bin/activate
+   poetry install -v -E all
+   ```
+
+2. Only use `poetry`. If you choose this option, all of the following commands need to be prefixed by `poetry run`. For example:
+
+   ```sh
+   poetry run pytest  # instead of just pytest
+   ```
+
 ### Linting & Formatting
+
 Code linting and formatting tools used include:
+
 * [ruff (linter)](https://docs.astral.sh/ruff/linter)
 * [ruff (formatter)](https://docs.astral.sh/ruff/formatter)
 * [mypy](https://mypy.readthedocs.io/en/stable/getting_started.html)
 
-All of these will be run by GitHub Actions on pull requests. You can also run them locally with:
+All of these will be run by [GitHub Actions] on pull requests. You can also run them locally with:
+
 ```sh
 nox -e lint
 ```
 
+[GitHub Actions]: https://github.com/requests-cache/requests-cache/actions
+
 #### Pre-Commit Hooks
-Optionally, you can use [pre-commit](https://github.com/pre-commit/pre-commit) to automatically
-run all of these checks before a commit is made:
-```sh
-pre-commit install
-```
 
-This can save you some time in that it will show you errors immediately rather than waiting for CI
+Optionally, you can use [pre-commit] to automatically
+run all of code checks before a commit is made.
+
+[pre-commit]: https://github.com/pre-commit/pre-commit
+
+* **Automatically** run all code checks before commit:
+
+    ```sh
+    pre-commit install
+    ```
+
+* Disable checks before commit:
+
+    ```sh
+    pre-commit uninstall
+    ```
+
+* **Manually** run all code checks before committing:
+
+    ```sh
+    nox -e lint
+    ```
+
+Running a `pre-commit` hook can save you some time in that it will show you errors immediately rather than waiting for CI
 jobs to complete, or if you forget to manually run the checks before committing.
-
-You can disable these hooks at any time with:
-```sh
-pre-commit uninstall
-```
 
 ## Testing
 
 ### Test Layout
-* Tests are divided into unit and integration tests:
-    * Unit tests can be run without any additional setup, and **don't depend on any external services**.
-    * Integration tests **depend on additional services**, which are easiest to run using Docker
-      (see Integration Tests section below).
-* See [conftest.py](https://github.com/requests-cache/requests-cache/blob/main/tests/conftest.py) for
-  [pytest fixtures](https://docs.pytest.org/en/stable/fixture.html) that apply the most common
-  mocking steps and other test setup.
 
-### Running Tests
+Tests are divided into unit and integration tests:
+
+* **Unit tests** can be run without any additional setup, and **don't depend on any external services**.
+* **Integration tests** **depend on additional services**, which are easiest to run using Docker
+    (see Integration Tests section below).
+
+Have a look at [conftest.py](https://github.com/requests-cache/requests-cache/blob/main/tests/conftest.py) for
+[pytest fixtures](https://docs.pytest.org/en/stable/fixture.html) that apply the most common
+mocking steps and other test setup.
+
+Overview:
+
 * Run `pytest` to run all tests
 * Run `pytest tests/unit` to run only unit tests
 * Run `pytest tests/integration` to run only integration tests
 
-For CI jobs (including PRs), these tests will be run for each supported python version.
-You can use [nox](https://nox.thea.codes) to do this locally, if needed:
+### Running Unit Tests
+
+We use `pytest` to run the tests. It should be installed if you followed the installation instructions above.
+
+The **Unit tests** do not depend on external services. They should all run:
+
+```sh
+pytest tests/unit
+```
+
+Output:
+
+```text
+===== 392 passed in 8.12s =====
+```
+
+### Integration Tests with Docker
+
+A live web server and backend databases are required to run integration tests, and a docker-compose
+config is included to make this easier. First, [install docker][docker]
+and [docker compose][docker-compose].
+
+[docker]: https://docs.docker.com/get-docker/
+[docker-compose]: https://docs.docker.com/compose/install/
+
+Start the docker containers:
+
+```sh
+docker compose up -d
+```
+
+Output:
+
+```text
+[+] Running 5/0
+ ✔ Container httpbin                         0.0s
+ ✔ Container mongo-test                      0.0s
+ ✔ Container valkey-test                     0.0s
+ ✔ Container dynamodb-test                   0.0s
+ ✔ Container redis-test                      0.0s
+```
+
+After this, you can run all the tests:
+
+```sh
+pytest
+```
+
+or just the integration tests:
+
+```sh
+pytest tests/integration
+```
+
+Output:
+
+```text
+===== 1194 passed in 110.27s (0:01:50) =====
+```
+
+After, you are done testing, shutdown the docker containers:
+
+```sh
+docker compose down
+```
+
+### Integration Tests with HTTP-Bin
+
+If you can't easily run Docker containers in your environment but still want to run **some of the
+integration tests**, you can use [pytest-httpbin](https://github.com/kevin1024/pytest-httpbin) instead
+of the httpbin container. This just requires installing an extra package and setting an environment
+variable:
+
+```sh
+pip install pytest-httpbin
+export USE_PYTEST_HTTPBIN=true
+pytest tests/integration/test_memory.py
+pytest tests/integration/test_filesystem.py
+pytest tests/integration/test_sqlite.py
+pytest tests/integration/test_upgrade.py
+```
+
+For backend databases, you can install and run them on the host instead of in a container, as long
+as they are running on the default port.
+
+### Testing all Python Versions
+
+For CI jobs (including PRs), all tests will be run for each supported Python version.
+We use [nox](https://nox.thea.codes) to do this locally, if needed:
+
 ```sh
 nox -e test
 ```
 
 Or to run tests for a specific python version:
+
 ```sh
 nox -e test-3.10
 ```
 
 To generate a coverage report:
+
 ```sh
 nox -e cov
 ```
 
 See `nox --list` for a full list of available commands.
 
-### Integration Test Containers
-A live web server and backend databases are required to run integration tests, and docker-compose
-config is included to make this easier. First, [install docker](https://docs.docker.com/get-docker/)
-and [install docker-compose](https://docs.docker.com/compose/install/).
-
-Then, run:
-```sh
-docker-compose up -d
-pytest tests/integration
-```
-
-### Integration Test Alternatives
-If you can't easily run Docker containers in your environment but still want to run some of the
-integration tests, you can use [pytest-httpbin](https://github.com/kevin1024/pytest-httpbin) instead
-of the httpbin container. This just requires installing an extra package and setting an environment
-variable:
-```sh
-pip install pytest-httpbin
-export USE_PYTEST_HTTPBIN=true
-pytest tests/integration/test_cache.py
-```
-
-For backend databases, you can install and run them on the host instead of in a container, as long
-as they are running on the default port.
-
 ## Documentation
+
 [Sphinx](https://www.sphinx-doc.org/en/master/) is used to generate documentation.
 
 First, install documentation dependencies:
+
 ```sh
-$ poetry install -E all --with docs
+poetry install -E all --with docs
 ```
+
 To build the docs locally:
+
 ```sh
 nox -e docs
 ```
 
 To preview:
+
 ```sh
 # MacOS:
 open docs/_build/html/index.html

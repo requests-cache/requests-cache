@@ -108,12 +108,9 @@ def httpbin(path):
     return f'{base_url}/{path}'
 
 
-try:
+USE_PYTEST_HTTPBIN = os.getenv('USE_PYTEST_HTTPBIN', '').lower() == 'true'
+if USE_PYTEST_HTTPBIN:
     import pytest_httpbin  # noqa: F401
-
-    USE_PYTEST_HTTPBIN = os.getenv('USE_PYTEST_HTTPBIN', '').lower() == 'true'
-except ImportError:
-    USE_PYTEST_HTTPBIN = False
 
 
 @pytest.fixture(scope='session', autouse=USE_PYTEST_HTTPBIN)
