@@ -224,15 +224,15 @@ class TestFileCache(BaseCacheTest):
         session = self.init_session(maximum_cache_bytes=maximum_size_on_disk, block_bytes=1)
         for i in range(files_on_disk):
             session.cache.responses[f'key_{i}'] = file_content
-        assert (
-            len(list(session.cache.paths())) == files_on_disk
-        ), f'Expecting {files_on_disk} files with size {len(file_content)}, got {len(list(session.cache.paths()))}'
+        assert len(list(session.cache.paths())) == files_on_disk, (
+            f'Expecting {files_on_disk} files with size {len(file_content)}, got {len(list(session.cache.paths()))}'
+        )
         assert len(list(session.cache.paths())) == files_on_disk
         session.cache.responses['new_file'] = file_content
         assert len(list(session.cache.paths())) == files_on_disk, 'One file should be dropped.'
-        assert (
-            'key_0' not in session.cache.responses.keys()
-        ), 'File key_0 should be dropped because it is the last one.'
+        assert 'key_0' not in session.cache.responses.keys(), (
+            'File key_0 should be dropped because it is the last one.'
+        )
 
     @pytest.mark.parametrize('maximum_size_on_disk', [1000, 10000])
     def test_do_not_store_files_too_big(self, maximum_size_on_disk):

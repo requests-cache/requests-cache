@@ -26,7 +26,7 @@
     * Add `block_bytes` parameter to set the block size
   * Add `lock` parameter to specify a custom lock object
 * **Redis:**
-    * Use `SCAN` and `HSCAN` instead of `KEYS`, `HKEYS`, and `HGETALL`
+    * For maintenance/inspection methods that iterate over the cache, use `SCAN` and `HSCAN` instead of `KEYS`, `HKEYS`, and `HGETALL`
 
 ⚙️ **Session settings:**
 * Add `autoclose` option to close backend connections when the session is closed
@@ -34,8 +34,11 @@
 ℹ️ **Cache convenience methods:**
 * Add `verify` parameter to `BaseCache.contains()` and `delete()` to handle requests made with SSL verification disabled
 
-🧩 **Compatibility:**
+🧩 **Compatibility and packaging:**
 * Add support for Python 3.13
+* Packaging and project config are now managed by uv
+  * This has no impact for users; installation from PyPI still works the same
+  * For developers, see [Contributing Guide](https://requests-cache.readthedocs.io/en/stable/project_info/contributing.html) for details
 
 🪲 **Bugfixes:**
 * Ignore and log timezone errors when attempting to reuse responses cached in `requests-cache <= 1.1`

@@ -1,10 +1,14 @@
-"""Runner script for tools used in local development and CI.
+"""An optional wrapper for common commands used in local development and CI.
+
+TODO: This will likely be replaced by uv tasks, when released:
+https://github.com/astral-sh/uv/issues/5903
 
 Notes:
 * 'test' and 'test-<python version>' commands: nox will create separate virtualenvs per python
-  version, and use `poetry.lock` to determine dependency versions
+  version
 * 'lint' command: tools and environments are managed by pre-commit
 * All other commands: the current environment will be used instead of creating new ones
+    * If using uv to manage virtualenvs, manually activate it first with `source .venv/bin/activate`
 * Run `nox -l` to see all available commands
 * See Contributing Guide for more usage details:
   https://github.com/requests-cache/requests-cache/blob/main/CONTRIBUTING.md
@@ -17,7 +21,6 @@ from pathlib import Path
 from shutil import rmtree
 
 import nox
-from nox_poetry import session
 
 nox.options.reuse_existing_virtualenvs = True
 nox.options.sessions = ['lint', 'cov']
@@ -31,7 +34,7 @@ DOC_BUILD_DIR = DOCS_DIR / '_build' / 'html'
 TEST_DIR = Path('tests')
 CLEAN_DIRS = ['dist', 'build', DOCS_DIR / '_build', DOCS_DIR / 'modules']
 
-PYTHON_VERSIONS = ['3.8', '3.9', '3.10', '3.11', '3.12', 'pypy3.9', 'pypy3.10']
+PYTHON_VERSIONS = ['3.13', '3.12', '3.11', '3.10', '3.9', '3.8', 'pypy3.9', 'pypy3.10']
 UNIT_TESTS = TEST_DIR / 'unit'
 INTEGRATION_TESTS = TEST_DIR / 'integration'
 COMPAT_TESTS = TEST_DIR / 'compat'
@@ -44,22 +47,33 @@ XDIST_ARGS = ['--numprocesses=auto', '--dist=loadfile']
 IS_PYPY = platform.python_implementation() == 'PyPy'
 
 
-@session(python=PYTHON_VERSIONS)
+def install_deps(session):
+    """Install project and test dependencies into a test-specific virtualenv using uv"""
+    session.env['UV_PROJECT_ENVIRONMENT'] = session.virtualenv.location
+    session.run_install(
+        'uv',
+        'sync',
+        '--frozen',
+        '--all-extras',
+    )
+
+
+@nox.session(python=PYTHON_VERSIONS, venv_backend='uv')
 def test(session):
     """Run tests in a separate virtualenv per python version"""
     test_paths = session.posargs or ALL_TESTS
-    session.install('.', 'pytest', 'pytest-xdist', 'requests-mock', 'rich', 'timeout-decorator')
+    install_deps(session)
     session.run('pytest', '-rsxX', *XDIST_ARGS, *test_paths)
 
 
-@session(python=False, name='test-current')
+@nox.session(python=False, name='test-current')
 def test_current(session):
     """Run tests using the current virtualenv"""
     test_paths = session.posargs or ALL_TESTS
-    session.run('pytest', '-rsxX', *XDIST_ARGS, *test_paths)
+    session.run('python', '-m', 'pytest', '-rsxX', *XDIST_ARGS, *test_paths)
 
 
-@session(python=False)
+@nox.session(python=False)
 def clean(session):
     """Clean up temporary build + documentation files"""
     for dir in CLEAN_DIRS:
@@ -67,7 +81,7 @@ def clean(session):
         rmtree(dir, ignore_errors=True)
 
 
-@session(python=False, name='cov')
+@nox.session(python=False, name='cov')
 def coverage(session):
     """Run tests and generate coverage report"""
     cmd = ['pytest', *ALL_TESTS, '-rsxX', '--cov']
@@ -84,30 +98,30 @@ def coverage(session):
     session.run(*cmd)
 
 
-@session(python=False, name='stress')
+@nox.session(python=False, name='stress')
 def stress_test(session):
     """Run concurrency tests with a higher stress test multiplier"""
     multiplier = session.posargs[0] if session.posargs else STRESS_TEST_MULTIPLIER
-    cmd = ['pytest', *INTEGRATION_TESTS, '-rs', '-k', 'concurrency']
+    cmd = ['pytest', INTEGRATION_TESTS, '-rs', '-k', 'concurrency']
     session.run(
         *cmd,
         env={'STRESS_TEST_MULTIPLIER': str(multiplier)},
     )
 
 
-@session(python=False)
+@nox.session(python=False)
 def docs(session):
     """Build Sphinx documentation"""
     session.run('sphinx-build', 'docs', DOC_BUILD_DIR, '-j', 'auto')
 
 
-@session(python=False)
+@nox.session(python=False)
 def linkcheck(session):
     """Check documentation for dead links"""
     session.run('sphinx-build', 'docs', DOC_BUILD_DIR, '-b', 'linkcheck')
 
 
-@session(python=False)
+@nox.session(python=False)
 def livedocs(session):
     """Auto-build docs with live reload in browser.
     Add `--open` to also open the browser after starting.
@@ -126,7 +140,7 @@ def livedocs(session):
     session.run(*cmd)
 
 
-@session(python=False)
+@nox.session(python=False)
 def lint(session):
     """Run linters and code formatters via pre-commit"""
     session.run('pre-commit', 'run', '--all-files')

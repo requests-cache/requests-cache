@@ -26,7 +26,6 @@ on:
         default: 'false'
 
 env:
-  LATEST_PY_VERSION: '3.12'
   PYTEST_VERBOSE: 'true'
   STRESS_TEST_MULTIPLIER: 7
 
@@ -43,14 +42,16 @@ jobs:
           - 8080:80
 
     steps:
-      # Set up python + poetry
+      # Install dependencies, with caching
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v5
         with:
-          python-version: ${{ env.LATEST_PY_VERSION }}
-      - uses: snok/install-poetry@v1.4
-        with:
-          virtualenvs-in-project: true
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - name: Install dependencies
+        run: |
+          uv python install ${{ matrix.python-version }}
+          uv sync --all-extras
 
       # Start integration test databases
       - uses: supercharge/mongodb-github-action@1.11.0
@@ -61,53 +62,26 @@ jobs:
           redis-version: 6
       - uses: rrainn/dynamodb-action@v4.0.0
 
-      # Cache packages per python version, and reuse until lockfile changes
-      - name: Cache python packages
-        id: cache
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ env.LATEST_PY_VERSION }}-latest-${{ hashFiles('poetry.lock') }}
-      - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: poetry install -v -E all
-
       # Run tests
       - name: Run stress tests
-        run: |
-          source $VENV
-          nox -e stress -- ${{ env.STRESS_TEST_MULTIPLIER }}
+        run: uv run nox -e stress -- ${{ env.STRESS_TEST_MULTIPLIER }}
 
   # Run unit tests without any optional dependencies installed
   test-minimum-deps:
     runs-on: ubuntu-latest
 
     steps:
-      # Set up python + poetry
+      # Install dependencies
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.LATEST_PY_VERSION }}
-      - uses: snok/install-poetry@v1.4
-        with:
-          virtualenvs-in-project: true
-
-      # Cache packages per python version, and reuse until lockfile changes
-      - name: Cache python packages
-        id: cache
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ matrix.python-version }}-latest-minimum-deps-${{ hashFiles('poetry.lock') }}
+      - uses: astral-sh/setup-uv@v5
       - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: poetry install -v
+        run: |
+          uv python install ${{ matrix.python-version }}
+          uv sync
 
       # Run tests
       - name: Run tests with no optional dependencies
-        run: |
-          source $VENV
-          pytest -n auto tests/unit
+        run: uv run pytest -n auto tests/unit
 
   # Run unit tests for all supported platforms and python versions
   # On python 3.11, run tests for all supported requests versions
@@ -116,16 +90,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version:
-          [
-            '3.8',
-            '3.9',
-            '3.10',
-            '3.11',
-            '3.12',
-            '3.13',
-            'pypy3.9-7.3.12',
-            'pypy3.10-7.3.12',
-          ]
+          ['3.13', '3.12', '3.11', '3.10', '3.9', '3.8', 'pypy3.9', 'pypy3.10']
         requests-version: [latest]
         exclude:
           - os: windows-latest
@@ -162,6 +127,9 @@ jobs:
           - python-version: '3.11'
             os: ubuntu-latest
             requests-version: '2.31'
+          - python-version: '3.11'
+            os: ubuntu-latest
+            requests-version: '2.32'
       fail-fast: false
     defaults:
       run:
@@ -169,36 +137,23 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      # Set up python + poetry
+      # Install dependencies, with caching
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v5
         with:
-          python-version: ${{ matrix.python-version }}
-          allow-prereleases: true
-      - uses: snok/install-poetry@v1.4
-        with:
-          virtualenvs-in-project: true
-
-      # Cache packages per python version, and reuse until lockfile changes
-      - name: Cache python packages
-        id: cache
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ matrix.os }}-${{ matrix.python-version }}-${{ matrix.requests-version }}-${{ hashFiles('poetry.lock') }}
+          enable-cache: true
+          cache-dependency-glob: uv.lock
       - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
         run: |
-          # Workaround due to older versions of requests/urllib3 having an upper bound on python version
-          sed -i -r 's/python\s+= ">=3.8"/python="^3.8"/g' pyproject.toml
-          poetry add requests@${{ matrix.requests-version }} --lock
-          poetry lock --check
-          poetry lock --no-update
-          poetry install -v -E all
+          uv python install ${{ matrix.python-version }}
+          uv sync --all-extras
+          if [[ "${{ matrix.requests-version }}" != "latest" ]]; then
+            uv pip install requests==${{ matrix.requests-version }};
+          fi
 
       # Run tests
       - name: Run tests
-        run: poetry run pytest -n auto tests/unit
+        run: uv run pytest -n auto tests/unit
 
   # Deploy stable builds on tags only, and pre-release builds from manual trigger ("workflow_dispatch")
   release:
@@ -209,12 +164,7 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.LATEST_PY_VERSION }}
-      - uses: snok/install-poetry@v1.4
-        with:
-          virtualenvs-in-project: true
+      - uses: astral-sh/setup-uv@v5
 
       - name: Set pre-release version
         if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
@@ -222,10 +172,12 @@ jobs:
           pre-release-suffix: ${{ github.event.inputs.pre-release-suffix || 'dev' }}
           pre-release-version: ${{ github.event.inputs.pre-release-version || github.run_number }}
         run: |
-          poetry version $(poetry version -s).${{ env.pre-release-suffix }}${{ env.pre-release-version }}
-          poetry version
+          PKG_VERSION=$(uvx --from=toml-cli toml get --toml-path=pyproject.toml project.version)
+          DEV_VERSION=$PKG_VERSION.${{ env.pre-release-suffix }}${{ env.pre-release-version }}
+          echo "Setting pre-release version to $DEV_VERSION"
+          uvx --from=toml-cli toml set --toml-path=pyproject.toml project.version $DEV_VERSION
 
       - name: Build package distributions
-        run: poetry build
+        run: uv build
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
