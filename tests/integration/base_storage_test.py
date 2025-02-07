@@ -37,13 +37,13 @@ class BaseStorageTest:
         caches = [self.init_cache(index=i) for i in range(10)]
         for i in range(self.num_instances):
             caches[i][f'key_{i}'] = f'value_{i}'
-            caches[i][f'key_{i+1}'] = f'value_{i+1}'
+            caches[i][f'key_{i + 1}'] = f'value_{i + 1}'
 
         for i in range(self.num_instances):
             cache = caches[i]
             assert cache[f'key_{i}'] == f'value_{i}'
             assert len(cache) == 2
-            assert f'key_{i}' in cache and f'key_{i+1}' in cache
+            assert f'key_{i}' in cache and f'key_{i + 1}' in cache
 
             del cache[f'key_{i}']
             assert f'key_{i}' not in cache

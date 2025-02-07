@@ -140,7 +140,7 @@ class TestSQLiteDict(BaseStorageTest):
         n = 500
         for i in range(n):
             cache_1[f'key_{i}'] = f'value_{i}'
-            cache_2[f'key_{i*2}'] = f'value_{i}'
+            cache_2[f'key_{i * 2}'] = f'value_{i}'
 
         assert set(cache_1.keys()) == {f'key_{i}' for i in range(n)}
         assert set(cache_2.values()) == {f'value_{i}' for i in range(n)}
@@ -217,12 +217,12 @@ class TestSQLiteDict(BaseStorageTest):
         cache = self.init_cache()
 
         for i in range(100):
-            cache[f'key_{i+1:03}'] = f'value_{i+1}'
+            cache[f'key_{i + 1:03}'] = f'value_{i + 1}'
 
         items = list(cache.sorted(key='key', reversed=True))
         assert len(items) == 100
         for i, item in enumerate(items):
-            assert item == f'value_{100-i}'
+            assert item == f'value_{100 - i}'
 
     @skip_pypy
     def test_sorted__invalid_sort_key(self):
