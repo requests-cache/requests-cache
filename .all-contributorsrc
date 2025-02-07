@@ -815,6 +815,20 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/5015933?v=4",
       "profile": "https://github.com/ShaneHarvey",
       "contributions": ["ideas"]
+    },
+    {
+      "login": "charles-cooper",
+      "name": "Charles Cooper",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3867501?v=4",
+      "profile": "https://github.com/charles-cooper",
+      "contributions": ["bug", "code"]
+    },
+    {
+      "login": "niccokunzmann",
+      "name": "Nicco Kunzmann",
+      "avatar_url": "https://avatars.githubusercontent.com/u/564768?v=4",
+      "profile": "https://niccokunzmann.github.io/",
+      "contributions": ["code", "doc", "feature"]
     }
   ],
   "contributorsPerLine": 7,
