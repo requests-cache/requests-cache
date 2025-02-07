@@ -34,9 +34,15 @@ class TestSQLiteDict(BaseStorageTest):
 
     @patch('requests_cache.backends.sqlite.sqlite3')
     def test_connection_kwargs(self, mock_sqlite):
-        """A spot check to make sure optional connection kwargs gets passed to connection"""
-        cache = self.storage_class('test', use_temp=True, timeout=0.5, invalid_kwarg='???')
-        mock_sqlite.connect.assert_called_with(cache.db_path, timeout=0.5, check_same_thread=False)
+        """A spot check to make sure optional connection kwargs gets passed to connection;
+        except for isolation_level, which is ignored
+        """
+        cache = self.storage_class(
+            'test', use_temp=True, timeout=0.5, isolation_level='DEFERRED', invalid_kwarg='???'
+        )
+        mock_sqlite.connect.assert_called_with(
+            cache.db_path, timeout=0.5, isolation_level=None, check_same_thread=False
+        )
 
     def test_use_cache_dir(self):
         relative_path = self.storage_class(CACHE_NAME).db_path
@@ -124,19 +130,6 @@ class TestSQLiteDict(BaseStorageTest):
         cache['key_1'] = 'value_1'
         assert list(cache.keys()) == ['key_1']
 
-    def test_switch_commit(self):
-        cache = self.init_cache()
-        cache['key_1'] = 'value_1'
-        cache = self.init_cache(clear=False)
-        assert 'key_1' in cache
-
-        cache._can_commit = False
-        cache['key_2'] = 'value_2'
-
-        cache = self.init_cache(clear=False)
-        assert 2 not in cache
-        assert cache._can_commit is True
-
     @skip_pypy
     @pytest.mark.parametrize('kwargs', [{'busy_timeout': 5}, {'fast_save': True}, {'wal': True}])
     def test_pragma(self, kwargs):
@@ -171,38 +164,21 @@ class TestSQLiteDict(BaseStorageTest):
             r = con.execute('PRAGMA synchronous').fetchone()
             assert r[0] == 0
 
-    def test_write_retry(self):
+    def test_write_acquire_lock(self):
+        """Writes to the database acquire the sqlite lock"""
         cache = self.init_cache()
-        locked_error = sqlite3.OperationalError('database is locked')
-        with patch.object(cache, '_write', side_effect=[locked_error, 1]) as mock_write:
+        with patch.object(cache, '_acquire_sqlite_lock') as mock_write:
             cache['key_1'] = 'value_1'
-            assert mock_write.call_count == 2
-
-    def test_write_retry__exceeded_retries(self):
-        cache = self.init_cache()
-        locked_error = sqlite3.OperationalError('database is locked')
-
-        with patch.object(cache, '_write', side_effect=locked_error) as mock_write:
-            cache['key_1'] = 'value_1'
-            assert mock_write.call_count == 3
-            assert 'key_1' not in cache
-
-        # Set a custom number of retries
-        cache = self.init_cache(retries=5)
-        with patch.object(cache, '_write', side_effect=locked_error) as mock_write:
-            cache['key_1'] = 'value_1'
-            assert mock_write.call_count == 5
-
-        # Set retries to 0 to disable retrying
-        cache = self.init_cache(retries=0)
-        with patch.object(cache, '_write', side_effect=locked_error) as mock_write:
-            with pytest.raises(sqlite3.OperationalError):
-                cache['key_1'] = 'value_1'
             assert mock_write.call_count == 1
 
-        # Expect no change to behavior if retrying is disabled and there are no errors
-        cache['key_1'] = 'value_1'
-        assert 'key_1' in cache
+    def test_write_retry_acquire_lock(self):
+        """Acquiring the lock should retry until it succeeds"""
+        cache = self.init_cache()
+        with patch.object(cache, '_connection') as mock_connection:
+            mock_connection.execute.side_effect = [sqlite3.OperationalError] * 10 + [None]
+            with cache._acquire_sqlite_lock():
+                pass
+            assert mock_connection.execute.call_count == 11
 
     def test_write_retry__other_errors(self):
         """Errors other than 'OperationalError: database is locked' should not be retried"""
