@@ -3,14 +3,15 @@
 """Generate a SQLite cache with some content for testing behavior during version upgrades"""
 
 import sys
+from importlib.metadata import version as pkg_version
 from os.path import abspath, join
 
 sys.path.insert(0, abspath('.'))
 
-from requests_cache import CachedSession, __version__
+from requests_cache import CachedSession
 from tests.conftest import HTTPBIN_FORMATS, SAMPLE_DATA_DIR
 
-DB_PATH = join(SAMPLE_DATA_DIR, f'sample.db.{__version__}')
+DB_PATH = join(SAMPLE_DATA_DIR, f'sample.db.{pkg_version("requests_cache")}')
 
 
 def make_sample_db():

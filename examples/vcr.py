@@ -4,6 +4,7 @@ Example utilities to export responses to a format compatible with VCR-based libr
 * [vcrpy](https://github.com/kevin1024/vcrpy)
 * [betamax](https://github.com/betamaxpy/betamax)
 """
+from importlib.metadata import version as pkg_version
 from os import makedirs
 from os.path import abspath, dirname, expanduser, join
 from typing import Any, Dict, Iterable
@@ -11,7 +12,7 @@ from urllib.parse import urlparse
 
 import yaml
 
-from requests_cache import BaseCache, CachedResponse, CachedSession, __version__
+from requests_cache import BaseCache, CachedResponse, CachedSession
 from requests_cache.serializers.preconf import yaml_preconf_stage
 
 
@@ -44,7 +45,7 @@ def to_vcr_cassette_dict(responses: Iterable[CachedResponse]) -> Dict:
     """Convert responses to a VCR cassette dict"""
     return {
         'http_interactions': [to_vcr_episode(r) for r in responses],
-        'recorded_with': f'requests-cache {__version__}',
+        'recorded_with': f'requests-cache {pkg_version("requests_cache")}',
     }
 
 

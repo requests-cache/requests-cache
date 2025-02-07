@@ -10,15 +10,10 @@ Notes:
 * The `_templates` directory contains some Sphinx templates that modify auto-generated sources
 """
 
-import os
-import sys
 from os.path import join
 from pathlib import Path
 from shutil import copy
-
-# Add project path
-sys.path.insert(0, os.path.abspath('..'))
-from requests_cache import __version__  # noqa: E402
+from importlib.metadata import version as pkg_version
 
 DOCS_DIR = Path(__file__).parent.absolute()
 PROJECT_DIR = DOCS_DIR.parent
@@ -33,7 +28,7 @@ project = 'requests-cache'
 needs_sphinx = '4.0'
 master_doc = 'index'
 source_suffix = ['.md', '.rst']
-version = release = __version__
+version = release = pkg_version('requests-cache')
 html_static_path = ['_static']
 exclude_patterns = ['_build']
 templates_path = ['_templates']
