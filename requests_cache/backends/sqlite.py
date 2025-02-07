@@ -27,7 +27,6 @@ from .base import VT
 
 MEMORY_URI = 'file::memory:?cache=shared'
 SQLITE_MAX_VARIABLE_NUMBER = 999
-DEFAULT_WRITE_RETRIES = 3
 
 logger = getLogger(__name__)
 
@@ -200,7 +199,6 @@ class SQLiteDict(BaseStorage):
         table_name: str = 'http_cache',
         busy_timeout: Optional[int] = None,
         fast_save: bool = False,
-        retries: Optional[int] = DEFAULT_WRITE_RETRIES,
         serializer: Optional[SerializerType] = pickle_serializer,
         use_cache_dir: bool = False,
         use_memory: bool = False,
@@ -209,9 +207,13 @@ class SQLiteDict(BaseStorage):
         **kwargs,
     ):
         super().__init__(serializer=serializer, **kwargs)
-        self._can_commit = True
+        self._active_transaction = False
         self._connection: Optional[sqlite3.Connection] = None
         self._lock = kwargs.pop('lock', threading.RLock())
+        if kwargs.pop('isolation_level', None):
+            logger.warning(
+                'SQLite backend requires exclusive transactions; isolation_level is ignored'
+            )
         self.connection_kwargs = get_valid_kwargs(sqlite_template, kwargs)
         self.connection_kwargs.setdefault('check_same_thread', False)
         if use_memory:
@@ -219,8 +221,6 @@ class SQLiteDict(BaseStorage):
         self.db_path = _get_sqlite_cache_path(db_path, use_cache_dir, use_temp, use_memory)
         self.busy_timeout = busy_timeout
         self.fast_save = fast_save
-        # Provisional option: number of times to retry writing if db is locked. Set to 0 to disable.
-        self.retries = retries
         self.table_name = table_name
         self.wal = wal
         self.init_db()
@@ -250,7 +250,9 @@ class SQLiteDict(BaseStorage):
         with self._lock:
             if not self._connection:
                 logger.debug(f'Opening connection to {self.db_path}:{self.table_name}')
-                self._connection = sqlite3.connect(self.db_path, isolation_level=None, **self.connection_kwargs)
+                self._connection = sqlite3.connect(
+                    self.db_path, isolation_level=None, **self.connection_kwargs
+                )
                 # Note: DBAPI doesn't support integer placeholders
                 if self.busy_timeout is not None:
                     self._connection.execute(f'PRAGMA busy_timeout={self.busy_timeout}')
@@ -262,8 +264,8 @@ class SQLiteDict(BaseStorage):
                 if self.wal and not self.fast_save:
                     self._connection.execute('PRAGMA synchronous=NORMAL')
 
-        if commit and self._can_commit:
-            # Multithreaded write operations must be run in serial
+        # Multithreaded write operations must be run in serial
+        if commit and not self._active_transaction:
             with self._acquire_sqlite_lock():
                 yield self._connection
         # Read operations can be run in parallel (no lock or COMMIT)
@@ -295,25 +297,24 @@ class SQLiteDict(BaseStorage):
     @contextmanager
     def _acquire_sqlite_lock(self):
         with self._lock:
-            self._can_commit = False
+            # Wait until we can acquire a write lock
             while True:
                 try:
-                    # wait for a write lock
-                    self._connection.execute("BEGIN IMMEDIATE")
+                    self._connection.execute('BEGIN IMMEDIATE')
+                    self._active_transaction = True
                     break
-                except sqlite3.OperationalError as e:
+                except sqlite3.OperationalError:
                     # note that time.sleep can take 50us+:
                     # https://github.com/python/cpython/issues/125997.
-                    time.sleep(1e-4)
+                    sleep(1e-4)
                     continue
             try:
                 yield
                 self._connection.commit()
             except sqlite3.OperationalError:
-                # do something else? what else to do here
                 self._connection.rollback()
             finally:
-                self._can_commit = True
+                self._active_transaction = False
 
     def __del__(self):
         self.close()
