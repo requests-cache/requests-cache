@@ -116,6 +116,15 @@ class BaseStorageTest:
         with pytest.raises(KeyError):
             cache['key']
 
+    def test_deleting_key_that_does_not_exist_does_not_delete_other_keys(self):
+        """If a key does not exist, deleting it should not delete other keys."""
+        cache = self.init_cache()
+        cache['key'] = 'value'
+        with pytest.raises(KeyError):
+            del cache['absent']
+        assert len(cache) == 1
+        assert 'key' in cache
+
     def test_picklable_dict(self):
         cache = self.init_cache(serializer='pickle')
         original_obj = BasicDataclass(
@@ -144,6 +153,8 @@ class BaseStorageTest:
         cache_1.clear()
         cache_2.clear()
         assert len(cache_1) == len(cache_2) == 0
+        assert not cache_1 and not cache_2
+        assert list(cache_1.keys()) == list(cache_2.keys()) == []
 
     def test_same_settings(self):
         cache_1 = self.init_cache()
@@ -170,6 +181,41 @@ class BaseStorageTest:
         n_iterations = N_ITERATIONS * N_REQUESTS_PER_ITERATION * 10
         with ThreadPoolExecutor(max_workers=N_WORKERS * 2) as executor:
             _ = list(executor.map(write, range(n_iterations)))
+
+    def test_bool(self):
+        """Check boolean conversion."""
+        cache = self.init_cache()
+        assert not cache
+        cache['key'] = 'value'
+        assert cache
+        del cache['key']
+        assert not cache
+
+    def test_reused_keys_can_be_removed(self):
+        """Keys can be reused and can be removed."""
+        cache = self.init_cache()
+        cache['key'] = 'value'
+        del cache['key']
+        assert list(cache.keys()) == []
+        cache['key'] = 'value'
+        cache['key2'] = 'value2'
+        del cache['key']
+        assert list(cache.keys()) == ['key2']
+        del cache['key2']
+        assert list(cache.keys()) == []
+
+    def test_values_are_replaced(self):
+        """Check that keys are added."""
+        cache = self.init_cache()
+        cache['key'] = 'value'
+        assert list(cache.keys()) == ['key']
+        cache['key'] = 'value2'
+        assert cache['key'] == 'value2'
+        assert list(cache.keys()) == ['key']
+        cache['key2'] = 'value3'
+        assert set(cache.keys()) == {'key', 'key2'}
+        assert cache['key'] == 'value2'
+        assert cache['key2'] == 'value3'
 
 
 @define

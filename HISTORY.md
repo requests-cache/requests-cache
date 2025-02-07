@@ -32,6 +32,15 @@
 * Fix request headers sent when `expire_after` is set to `DO_NOT_CACHE`
 * Add `lock` parameter/option to `filesystem` backend.
 
+💾 **FileSystem Backend:**
+
+* Add {py:class}`requests_cache.backends.filesystem.LimitedFileDict` class to optionally limit the `filesystem` cache:
+  * Add `maximum_total_bytes` parameter to limit the total size of the cache
+  * Add `maximum_file_bytes` parameter to limit the size of each file
+  * Add `block_bytes` parameter to set the block size
+* Add `lock` parameter to specify a custom lock object.
+* Document the new parameters and which locks could be used.
+
 ### 1.2.1 (2024-06-18)
 
 🪲 **Bugfixes:**

@@ -27,6 +27,7 @@ def make_stage(preconf_module: str, **kwargs):
 # Pre-serialization stages
 base_stage = CattrStage()  #: Base stage for all serializer pipelines
 utf8_encoder = Stage(dumps=str.encode, loads=lambda x: x.decode())  #: Encode to bytes
+utf8_serializer = SerializerPipeline([utf8_encoder], 'utf8', is_binary=True)  #: Encode to bytes
 bson_preconf_stage = make_stage(
     'cattr.preconf.bson', convert_datetime=False
 )  #: Pre-serialization steps for BSON
