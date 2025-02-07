@@ -10,11 +10,12 @@ build:
   tools:
     python: '3.12'
   jobs:
-    # Use poetry to export optional + documentation dependencies
+    # Use uv to export optional + documentation dependencies
     post_create_environment:
-      - python -m pip install poetry poetry-plugin-export
-      - python -m poetry add 'urllib3=1.26.20' # Workaround for exporter dependency walker
-      - python -m poetry export -o docs/requirements.txt --all-extras --with=docs
+      - pip install uv
+      - uv export -q --no-dev --group docs --no-emit-project -o docs/requirements.txt
 python:
   install:
+    - method: pip
+      path: .
     - requirements: docs/requirements.txt
