@@ -44,7 +44,7 @@ IS_PYPY = platform.python_implementation() == 'PyPy'
 
 
 def install_deps(session):
-    """Install project and test dependencies using uv"""
+    """Install project and test dependencies into a test-specific virtualenv using uv"""
     session.env['UV_PROJECT_ENVIRONMENT'] = session.virtualenv.location
     session.run_install(
         'uv',
@@ -54,6 +54,12 @@ def install_deps(session):
     )
 
 
+def use_uv_venv(session):
+    session.venv_backend = 'none'
+    session.virtualenv.location = '.venv'
+    session.env['VIRTUAL_ENV'] = '.venv'
+    session.env['PATH'] = f'{join(".venv", "bin")}:{getenv("PATH")}'
+
 @nox.session(python=PYTHON_VERSIONS, venv_backend='uv')
 def test(session):
     """Run tests in a separate virtualenv per python version"""
@@ -62,11 +68,13 @@ def test(session):
     session.run('pytest', '-rsxX', *XDIST_ARGS, *test_paths)
 
 
-@nox.session(python=False, name='test-current')
-def test_current(session):
-    """Run tests using the current virtualenv"""
-    test_paths = session.posargs or ALL_TESTS
-    session.run('pytest', '-rsxX', *XDIST_ARGS, *test_paths)
+@nox.session(python=False, name='test-default')
+def test_default(session):
+    """Run tests using the default virtualenv managed by uv"""
+    use_uv_venv(session)
+    # test_paths = session.posargs or ALL_TESTS
+    # session.run('pytest', '-rsxX', *XDIST_ARGS, *test_paths)
+    session.run('pytest', '-rsxX', *XDIST_ARGS, 'unit')
 
 
 @nox.session(python=False)
