@@ -1,134 +1,117 @@
-[tool.poetry]
-name = "requests-cache"
-version = "1.3.0"
-description = "A persistent cache for python requests"
-authors = ["Roman Haritonov", "Jordan Cook"]
-license = "BSD-2-Clause"
-readme = "README.md"
-documentation = "https://requests-cache.readthedocs.io"
-homepage = "https://github.com/requests-cache/requests-cache"
-repository = "https://github.com/requests-cache/requests-cache"
+[project]
+name = 'requests-cache'
+version = '1.3.0'
+description = 'A persistent cache for python requests'
+authors = [{name='Jordan Cook'}, {name='Roman Haritonov'}]
+license = 'BSD-2-Clause'
+readme = 'README.md'
 keywords = [
-    "requests",
-    "python-requests",
-    "cache",
-    "http",
-    "http-client",
-    "web",
-    "webscraping",
-    "performance",
-    "sqlite",
-    "redis",
-    "mongodb",
-    "gridfs",
-    "dynamodb",
+    'requests',
+    'python-requests',
+    'cache',
+    'http',
+    'http-client',
+    'web',
+    'webscraping',
+    'performance',
+    'sqlite',
+    'redis',
+    'mongodb',
+    'dynamodb',
 ]
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
-    "Intended Audience :: Developers",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-    "Typing :: Typed",
+    'Development Status :: 5 - Production/Stable',
+    'Intended Audience :: Developers',
+    'Topic :: Software Development :: Libraries :: Python Modules',
+    'Typing :: Typed',
 ]
-include = [
-    {format="sdist", path="*.md"},
-    {format="sdist", path="*.yml"},
-    {format="sdist", path="docs"},
-    {format="sdist", path="examples"},
-    {format="sdist", path="tests"},
-]
-
-[tool.poetry.urls]
-"Changelog" = "https://requests-cache.readthedocs.io/en/stable/project_info/history.html"
-"Issues" = "https://github.com/requests-cache/requests-cache/issues"
-
-[tool.poetry.dependencies]
-python        = ">=3.8"
+requires-python = '>=3.8'
 
 # Required dependencies
-requests      = ">=2.22"   # Needs no introduction
-urllib3       = ">=1.25.5" # Use a slightly newer version than required by requests (for bugfixes)
-attrs         = ">=21.2"   # For response data models
-cattrs        = ">=22.2"   # For response serialization
-platformdirs  = ">=2.5"    # For features that use platform-specific system directories
-url-normalize = ">=1.4"    # For more accurate request matching
-
-# Optional backend dependencies
-boto3                      = {optional=true, version=">=1.15"}
-botocore                   = {optional=true, version=">=1.18"}
-pymongo                    = {optional=true, version=">=3"}  # also provides bson serialization package
-redis                      = {optional=true, version=">=3"}
-
-# Optional serialization dependencies
-itsdangerous               = {optional=true, version=">=2.0"}
-orjson                     = {optional=true, version=">=3.0", markers = "implementation_name != 'pypy'"}
-pyyaml                     = {optional=true, version=">=6.0.1"}
-ujson                      = {optional=true, version=">=5.4"}
-
-[tool.poetry.extras]
-# Package extras for optional backend dependencies
-dynamodb = ["boto3", "botocore"]
-mongodb  = ["pymongo"]
-redis    = ["redis"]
-
-# Package extras for optional seriazliation dependencies
-security = ["itsdangerous"]
-yaml     = ["pyyaml"]
-
-# All optional packages combined, for demo/evaluation purposes
-all = [
-    "boto3",
-    "botocore",
-    "itsdangerous",
-    "orjson",
-    "pymongo",
-    "pyyaml",
-    "redis",
-    "ujson",
+dependencies = [
+    'requests       >=2.22',   # Needs no introduction
+    'urllib3        >=1.25.5', # Use a slightly newer version than required by requests (for bugfixes)
+    'attrs          >=21.2',   # For response data models
+    'cattrs         >=22.2',   # For response serialization
+    'platformdirs   >=2.5',    # For features that use platform-specific system directories
+    'url-normalize  >=1.4',    # For more accurate request matching
 ]
 
-[tool.poetry.group.dev.dependencies]
-# For unit + integration tests
-coverage              = "^7.1"
-psutil                = "^5.0"
-pytest                = "^8.0"
-pytest-clarity        = "^1.0.1"
-pytest-cov            = ">=3.0"
-pytest-rerunfailures  = ">=10.1"
-pytest-xdist          = ">=2.2"
-requests-mock         = "^1.12"
-responses             = ">=0.19"
-tenacity              = "^8.0"
-timeout-decorator     = "^0.5"
-time-machine          = {version = "^2.9", markers = "implementation_name != 'pypy'"}
+[project.urls]
+homepage = 'https://github.com/requests-cache/requests-cache'
+repository = 'https://github.com/requests-cache/requests-cache'
+documentation = 'https://requests-cache.readthedocs.io'
 
-# Tools for linting, type checking, etc. are managed with pre-commit
-pre-commit            = "^3.5"
+[project.optional-dependencies]
+# Optional backend and serialization dependencies
+dynamodb        = ['boto3>=1.15', 'botocore>=1.18']
+mongodb         = ['pymongo>=3']
+redis           = ['redis>=3']
+security        = ['itsdangerous>=2.0']
+yaml            = ['pyyaml>=6.0.1']
+all = [
+    'boto3          >=1.15',
+    'botocore       >=1.18',
+    'itsdangerous   >=2.0',
+    'orjson         >=3.0',
+    'pymongo        >=3',
+    'pyyaml         >=6.0.1',
+    'redis          >=3',
+    'ujson          >=5.4',
+]
 
-# For convenience in local development
-nox                   = "^2023.4"
-# TODO: Remove the 'python' constraint once nox-poetry drops its own constraint
-# https://github.com/cjolowicz/nox-poetry/pull/1213
-nox-poetry            = {version = "^1.0.0", python = "<4"}
-rich                  = ">=10.0"
+[dependency-groups]
+# Test dependencies and local development tools
+dev = [
+    'coverage               >=7.2',
+    'psutil                 >=5.0',
+    'pytest                 >=8.2',
+    'pytest-clarity         >=1.0.1',
+    'pytest-cov             >=3.0',
+    'pytest-pretty          >=1.2',
+    'pytest-rerunfailures   >=10.1',
+    'pytest-xdist           >=2.2',
+    'requests-mock          ~=1.12',
+    'responses              >=0.19',
+    'tenacity               ~=8.0',
+    'timeout-decorator      ~=0.5',
+    'time-machine           ~=2.9; implementation_name != "pypy"',
+    'nox                    >=2024.4',
+    'pre-commit             >=3.5',
+    'rich                   >=10.0',
+]
 
-# Documentation dependencies needed for Readthedocs builds
-[tool.poetry.group.docs.dependencies]
-furo                       = {python=">=3.10", version="^2024.8"}
-linkify-it-py              = {python=">=3.10", version=">=2.0"}
-myst-parser                = {python=">=3.10", version=">=3.0"}
-sphinx                     = {python=">=3.10", version="^8.0.2"}
-sphinx-autobuild           = {python=">=3.10", version="^2024.9"}
-sphinx-autodoc-typehints   = {python=">=3.10", version="^2.4"}
-sphinx-automodapi          = {python=">=3.10", version="^0.18"}
-sphinx-copybutton          = {python=">=3.10", version=">=0.5"}
-sphinx-design              = {python=">=3.10", version=">=0.6"}
-sphinx-notfound-page       = {python=">=3.10", version=">=1.0"}
-sphinxcontrib-apidoc       = {python=">=3.10", version=">=0.3"}
-sphinxext-opengraph        = {python=">=3.10", version=">=0.9"}
+# Documentation dependencies
+docs = [
+    'furo                       ~=2024.8    ; python_version>="3.10"',
+    'linkify-it-py              >=2.0       ; python_version>="3.10"',
+    'myst-parser                >=3.0       ; python_version>="3.10"',
+    'sphinx                     ~=8.1.3     ; python_version>="3.10"',
+    'sphinx-autobuild           ~=2024.10   ; python_version>="3.10"',
+    'sphinx-autodoc-typehints   ~=3.0       ; python_version>="3.10"',
+    'sphinx-automodapi          ~=0.18      ; python_version>="3.10"',
+    'sphinx-copybutton          >=0.5       ; python_version>="3.10"',
+    'sphinx-design              >=0.6       ; python_version>="3.10"',
+    'sphinx-notfound-page       >=1.0       ; python_version>="3.10"',
+    'sphinxcontrib-apidoc       >=0.3       ; python_version>="3.10"',
+    'sphinxext-opengraph        >=0.9       ; python_version>="3.10"',
+]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ['hatchling>=1.0.0']
+build-backend = 'hatchling.build'
+
+[tool.hatch.build]
+only-include = ['requests_cache']
+force-include = {'README.md' = 'requests_cache/README.md'}
+
+# Include tests in sdist, except for sample data, which is too large to package
+[tool.hatch.build.targets.sdist]
+only-include = ['requests_cache', 'tests']
+exclude = [
+  "tests/sample_data",
+  "tests/integration/test_upgrade.py",
+]
 
 [tool.coverage.html]
 directory = 'test-reports'
