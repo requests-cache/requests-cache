@@ -23,80 +23,49 @@ If you are interested in helping out, here are a few ways to get started:
   completely ruled out either
 * If you find an issue you want to work on, please comment on it so others know it's in progress
 
-## Dev Installation
+## Development setup
+
+### Prerequisites
 
 To setup `requests-cache` for development, first install these tools:
+* [uv](https://docs.astral.sh/uv/getting-started/installation/) (required)
+* [docker][docker] and [docker compose][docker-compose] (required for integration tests)
 
-* [git](https://git-scm.com/) (required)
-* [Python 3](https://www.python.org/) (required)
-* [poetry](https://python-poetry.org/docs/#installation) (required)
-* [virtualenv](https://virtualenv.pypa.io/en/latest/installation.html) (recommended, see below)
-* [docker] and [docker compose][docker-compose] (partially required and recommended, see below)
-* [pre-commit] (optional)
-
-Next, clone the repository:
+Next, clone the repository and install dependencies:
 
 ```sh
 git clone https://github.com/requests-cache/requests-cache.git
 cd requests-cache
+uv sync --all-extras --all-groups
 ```
 
-You have these options to setup the development environment:
-
-1. Use a virtual environment (recommended):
-
-   ```sh
-   virtualenv -p python3 .venv
-   source .venv/bin/activate
-   poetry install -v -E all
-   ```
-
-2. Only use `poetry`. If you choose this option, all of the following commands need to be prefixed by `poetry run`. For example:
-
-   ```sh
-   poetry run pytest  # instead of just pytest
-   ```
+`uv` will automatically install python and create a new virtual environment if needed.
 
 ### Linting & Formatting
 
 Code linting and formatting tools used include:
-
 * [ruff (linter)](https://docs.astral.sh/ruff/linter)
 * [ruff (formatter)](https://docs.astral.sh/ruff/formatter)
 * [mypy](https://mypy.readthedocs.io/en/stable/getting_started.html)
 
-All of these will be run by [GitHub Actions] on pull requests. You can also run them locally with:
-
+All of these will be run by [GitHub Actions](https://github.com/requests-cache/requests-cache/actions)
+on pull requests. You can also run them locally with:
 ```sh
-nox -e lint
+pre-commit run -a
 ```
-
-[GitHub Actions]: https://github.com/requests-cache/requests-cache/actions
 
 #### Pre-Commit Hooks
 
-Optionally, you can use [pre-commit] to automatically
-run all of code checks before a commit is made.
+Optionally, you can use [pre-commit](https://github.com/pre-commit/pre-commit) to automatically run
+linting and formatting on any modified files before a commit is made:
+```sh
+pre-commit install
+```
 
-[pre-commit]: https://github.com/pre-commit/pre-commit
-
-* **Automatically** run all code checks before commit:
-
-    ```sh
-    pre-commit install
-    ```
-
-* Disable checks before commit:
-
-    ```sh
-    pre-commit uninstall
-    ```
-
-* **Manually** run all code checks before committing:
-
-    ```sh
-    nox -e lint
-    ```
+To disable pre-commit hooks:
+```sh
+pre-commit uninstall
+```
 
 Running a `pre-commit` hook can save you some time in that it will show you errors immediately rather than waiting for CI
 jobs to complete, or if you forget to manually run the checks before committing.
@@ -117,9 +86,9 @@ mocking steps and other test setup.
 
 Overview:
 
-* Run `pytest` to run all tests
-* Run `pytest tests/unit` to run only unit tests
-* Run `pytest tests/integration` to run only integration tests
+* Run `uv run pytest` to run all tests
+* Run `uv run pytest tests/unit` to run only unit tests
+* Run `uv run pytest tests/integration` to run only integration tests
 
 ### Running Unit Tests
 
@@ -128,13 +97,7 @@ We use `pytest` to run the tests. It should be installed if you followed the ins
 The **Unit tests** do not depend on external services. They should all run:
 
 ```sh
-pytest tests/unit
-```
-
-Output:
-
-```text
-===== 392 passed in 8.12s =====
+uv run pytest tests/unit
 ```
 
 ### Integration Tests with Docker
