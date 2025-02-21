@@ -357,11 +357,11 @@ class BaseCacheTest:
         # Cache a response and some redirects, which should be the only non-expired cache items
         session.get(httpbin('get'), expire_after=-1)
         session.get(httpbin('redirect/3'), expire_after=-1)
-        assert len(session.cache.redirects.keys()) == 4
+        assert len(session.cache.redirects) == 4
         session.cache.delete(expired=True)
 
-        assert len(session.cache.responses.keys()) == 2
-        assert len(session.cache.redirects.keys()) == 3
+        assert len(session.cache.responses) == 2
+        assert len(session.cache.redirects) == 3
         assert not session.cache.contains(url=httpbin('redirect/1'))
         assert not any(session.cache.contains(url=httpbin(f)) for f in HTTPBIN_FORMATS)
 

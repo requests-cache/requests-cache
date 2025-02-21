@@ -6,7 +6,7 @@
 """
 
 from logging import getLogger
-from typing import Iterable, Optional
+from typing import Iterable, List, Optional
 
 from redis import Redis, StrictRedis
 
@@ -75,10 +75,9 @@ class RedisDict(BaseStorage):
         self.ttl_offset = ttl_offset
 
     def _bkey(self, key: str) -> bytes:
-        """Get a full hash key as bytes"""
         return encode(f'{self.namespace}:{key}')
 
-    def _bkeys(self, keys: Iterable[str]):
+    def _bkeys(self, keys: Iterable[str]) -> List[bytes]:
         return [self._bkey(key) for key in keys]
 
     def __contains__(self, key) -> bool:
@@ -111,8 +110,8 @@ class RedisDict(BaseStorage):
 
     def bulk_delete(self, keys: Iterable[str]):
         """Delete multiple keys from the cache, without raising errors for missing keys"""
-        if keys:
-            self.connection.delete(*self._bkeys(keys))
+        if bkeys := self._bkeys(keys):
+            self.connection.delete(*bkeys)
 
     def clear(self):
         self.bulk_delete(self.keys())
@@ -121,17 +120,16 @@ class RedisDict(BaseStorage):
         self.connection.close()
 
     def keys(self):
-        return [
-            decode(key).replace(f'{self.namespace}:', '')
-            for key in self.connection.keys(f'{self.namespace}:*')
-        ]
+        for key in self.connection.scan_iter(f'{self.namespace}:*'):
+            yield decode(key).replace(f'{self.namespace}:', '')
 
     def items(self):
-        return [(k, self[k]) for k in self.keys()]
+        for k in self.keys():
+            yield (k, self[k])
 
     def values(self):
-        for _, v in self.items():
-            yield v
+        for k in self.keys():
+            yield self[k]
 
 
 class RedisHashDict(BaseStorage):
@@ -186,14 +184,13 @@ class RedisHashDict(BaseStorage):
         self.connection.delete(self._hash_key)
 
     def keys(self):
-        return [decode(key) for key in self.connection.hkeys(self._hash_key)]
+        for k, _ in self.items():
+            yield k
 
     def items(self):
         """Get all ``(key, value)`` pairs in the hash"""
-        return [
-            (decode(k), self.deserialize(decode(k), v))
-            for k, v in self.connection.hgetall(self._hash_key).items()
-        ]
+        for k, v in self.connection.hscan_iter(self._hash_key):
+            yield (decode(k), self.deserialize(decode(k), v))
 
     def values(self):
         """Get all values in the hash"""
