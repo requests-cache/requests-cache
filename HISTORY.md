@@ -25,6 +25,8 @@
     * Add `maximum_file_bytes` parameter to limit the size of each file
     * Add `block_bytes` parameter to set the block size
   * Add `lock` parameter to specify a custom lock object
+* **Redis:**
+    * Use `SCAN` and `HSCAN` instead of `KEYS`, `HKEYS`, and `HGETALL`
 
 ⚙️ **Session settings:**
 * Add `autoclose` option to close backend connections when the session is closed
