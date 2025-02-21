@@ -15,12 +15,12 @@ python -m requests.help
 ```
 """
 from hashlib import sha256
+from importlib.metadata import version as pkg_version
 from unittest.mock import patch
 
 from requests import PreparedRequest
 from requests.help import info as get_requests_info
 
-import requests_cache
 from requests_cache import CachedSession
 from requests_cache.cache_keys import create_key
 
@@ -36,7 +36,7 @@ def create_custom_key(request: PreparedRequest, **kwargs) -> str:
     requests_info = get_requests_info()
     for lib in ['requests', 'urllib3']:
         key.update(requests_info[lib]['version'].encode('utf-8'))
-    key.update(requests_cache.__version__.encode('utf-8'))
+    key.update(pkg_version('requests_cache').encode('utf-8'))
 
     return key.hexdigest()
 

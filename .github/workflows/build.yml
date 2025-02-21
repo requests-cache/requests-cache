@@ -8,7 +8,7 @@ on:
     branches: [main]
   workflow_dispatch:
 env:
-  LATEST_PY_VERSION: '3.12'
+  LATEST_PY_VERSION: '3.13'
   PYTEST_VERBOSE: 'true'
 
 jobs:
@@ -17,16 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # Note: pypy 7.3.13 does not appear to work with poetry
         python-version:
-          - '3.13'
-          - '3.12'
-          - '3.11'
-          - '3.10'
-          - '3.9'
-          - '3.8'
-          - 'pypy3.9-7.3.12'
-          - 'pypy3.10-7.3.12'
+          ['3.13', '3.12', '3.11', '3.10', '3.9', '3.8', 'pypy3.9', 'pypy3.10']
       fail-fast: false
     services:
       nginx:
@@ -35,16 +27,16 @@ jobs:
           - 8080:80
 
     steps:
-      # Set up python + poetry
+      # Install dependencies, with caching
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v5
         with:
-          python-version: ${{ matrix.python-version }}
-          allow-prereleases: true
-      - uses: snok/install-poetry@v1.4
-        with:
-          version: 1.8.5
-          virtualenvs-in-project: true
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - name: Install dependencies
+        run: |
+          uv python install ${{ matrix.python-version }}
+          uv sync --all-extras
 
       # Start integration test databases
       - uses: supercharge/mongodb-github-action@1.12.0
@@ -55,30 +47,15 @@ jobs:
           redis-version: 6
       - uses: rrainn/dynamodb-action@v4.0.0
 
-      # Cache packages per python version, and reuse until lockfile changes
-      - name: Cache python packages
-        id: cache
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: venv-${{ matrix.python-version }}-latest-${{ hashFiles('poetry.lock') }}
-      - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: poetry install -v -E all
-
       # Run tests with coverage report
       - name: Run unit + integration tests
         if: ${{ !contains(matrix.python-version, 'pypy') }}
-        run: |
-          source $VENV
-          nox -e cov -- xml
+        run: uv run nox -e cov -- xml
 
       # pypy tests aren't run in parallel, so too slow for integration tests
       - name: Run unit tests only
         if: ${{ contains(matrix.python-version, 'pypy') }}
-        run: |
-          source $VENV
-          pytest tests/unit
+        run: uv run pytest tests/unit
 
       # Latest python version: send coverage report to codecov
       - name: 'Upload coverage report to Codecov'
