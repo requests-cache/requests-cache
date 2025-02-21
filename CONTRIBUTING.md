@@ -1,102 +1,76 @@
 # Contributing Guide
 
-## Bug Reports, Feedback, and Discussion
+## How to Contribute
+Requests-cache is in a relatively mature state, but is still under active maintenance.
+Contributions are welcome, and will be attributed on the
+[Contributors](https://requests-cache.readthedocs.io/en/main/project_info/contributors.html) page.
+
+### Bug Reports, Feedback, and Discussion
 If you discover a bug or want to request a new feature, please
 [create an issue](https://github.com/requests-cache/requests-cache/issues/new/choose).
 
 If you want to discuss ideas about the project in general, or have a more open-ended question or feedback,
 please use [Discussions](https://github.com/orgs/requests-cache/discussions).
 
-## Development Status
-Requests-cache is in a relatively mature state, but is still under active maintenance. Contributions are very welcome, and will be attributed on the
-[Contributors](https://requests-cache.readthedocs.io/en/main/project_info/contributors.html)
-page.
-
-## How to Help
+### How to Help
 If you are interested in helping out, here are a few ways to get started:
 
 * Give feedback on open issues
 * Make or suggest improvements for the documentation; see [#355](https://github.com/requests-cache/requests-cache/issues/355) for details.
 * See the [help-wanted](https://github.com/requests-cache/requests-cache/labels/help-wanted) issue label
-* See the [shelved](https://github.com/requests-cache/requests-cache/issues?q=label%3Ashelved) issue
-  label for features that have been previously proposed and are not currently planned, but not
-  completely ruled out either
 * If you find an issue you want to work on, please comment on it so others know it's in progress
 
-## Dev Installation
+### Pull Requests
+Here are some general guidelines for submitting a pull request:
+
+* In most cases, please submit an issue describing the proposed change prior to submitting a PR
+* Or, if the changes are trivial (minor bugfixes, documentation edits, etc.), just briefly explain the changes in the PR description
+* Add unit test coverage for your changes
+* If your changes add or modify user-facing behavior, add documentation describing those changes
+* Submit the PR to be merged into the `main` branch
+
+## Development Setup
+
+### Prerequisites
 
 To setup `requests-cache` for development, first install these tools:
+* [uv](https://docs.astral.sh/uv/getting-started/installation/) (required)
+* [docker][docker] and [docker compose][docker-compose] (required for integration tests)
 
-* [git](https://git-scm.com/) (required)
-* [Python 3](https://www.python.org/) (required)
-* [poetry](https://python-poetry.org/docs/#installation) (required)
-* [virtualenv](https://virtualenv.pypa.io/en/latest/installation.html) (recommended, see below)
-* [docker] and [docker compose][docker-compose] (partially required and recommended, see below)
-* [pre-commit] (optional)
-
-Next, clone the repository:
-
+Next, clone the repository and install dependencies:
 ```sh
 git clone https://github.com/requests-cache/requests-cache.git
 cd requests-cache
+uv sync --frozen --all-extras --all-groups
+uv tool install pre-commit
 ```
 
-You have these options to setup the development environment:
-
-1. Use a virtual environment (recommended):
-
-   ```sh
-   virtualenv -p python3 .venv
-   source .venv/bin/activate
-   poetry install -v -E all
-   ```
-
-2. Only use `poetry`. If you choose this option, all of the following commands need to be prefixed by `poetry run`. For example:
-
-   ```sh
-   poetry run pytest  # instead of just pytest
-   ```
+`uv` will automatically install python and create a new virtual environment if needed.
 
 ### Linting & Formatting
 
 Code linting and formatting tools used include:
-
 * [ruff (linter)](https://docs.astral.sh/ruff/linter)
 * [ruff (formatter)](https://docs.astral.sh/ruff/formatter)
 * [mypy](https://mypy.readthedocs.io/en/stable/getting_started.html)
 
-All of these will be run by [GitHub Actions] on pull requests. You can also run them locally with:
-
+All of these will be run by [GitHub Actions](https://github.com/requests-cache/requests-cache/actions)
+on pull requests. You can also run them locally with [pre-commit](https://github.com/pre-commit/pre-commit):
 ```sh
-nox -e lint
+pre-commit run -a
 ```
-
-[GitHub Actions]: https://github.com/requests-cache/requests-cache/actions
 
 #### Pre-Commit Hooks
 
-Optionally, you can use [pre-commit] to automatically
-run all of code checks before a commit is made.
+Optionally, you can use pre-commit to run linting and formatting on any modified files during a `git commit`:
+```sh
+pre-commit install
+```
 
-[pre-commit]: https://github.com/pre-commit/pre-commit
-
-* **Automatically** run all code checks before commit:
-
-    ```sh
-    pre-commit install
-    ```
-
-* Disable checks before commit:
-
-    ```sh
-    pre-commit uninstall
-    ```
-
-* **Manually** run all code checks before committing:
-
-    ```sh
-    nox -e lint
-    ```
+To disable pre-commit hooks:
+```sh
+pre-commit uninstall
+```
 
 Running a `pre-commit` hook can save you some time in that it will show you errors immediately rather than waiting for CI
 jobs to complete, or if you forget to manually run the checks before committing.
@@ -117,24 +91,14 @@ mocking steps and other test setup.
 
 Overview:
 
-* Run `pytest` to run all tests
-* Run `pytest tests/unit` to run only unit tests
-* Run `pytest tests/integration` to run only integration tests
+* Run `uv run pytest` to run all tests
+* Run `uv run pytest tests/unit` to run only unit tests
+* Run `uv run pytest tests/integration` to run only integration tests
 
 ### Running Unit Tests
-
-We use `pytest` to run the tests. It should be installed if you followed the installation instructions above.
-
-The **Unit tests** do not depend on external services. They should all run:
-
+Unit tests can be run without running any additional services:
 ```sh
-pytest tests/unit
-```
-
-Output:
-
-```text
-===== 392 passed in 8.12s =====
+uv run pytest tests/unit
 ```
 
 ### Integration Tests with Docker
@@ -147,47 +111,26 @@ and [docker compose][docker-compose].
 [docker-compose]: https://docs.docker.com/compose/install/
 
 Start the docker containers:
-
 ```sh
 docker compose up -d
 ```
 
-Output:
-
-```text
-[+] Running 5/0
- ✔ Container httpbin                         0.0s
- ✔ Container mongo-test                      0.0s
- ✔ Container valkey-test                     0.0s
- ✔ Container dynamodb-test                   0.0s
- ✔ Container redis-test                      0.0s
-```
-
 After this, you can run all the tests:
-
 ```sh
-pytest
+uv run pytest
 ```
 
 or just the integration tests:
-
 ```sh
-pytest tests/integration
-```
-
-Output:
-
-```text
-===== 1194 passed in 110.27s (0:01:50) =====
+uv run pytest tests/integration
 ```
 
 After, you are done testing, shutdown the docker containers:
-
 ```sh
 docker compose down
 ```
 
-### Integration Tests with HTTP-Bin
+### Integration Tests without Docker
 
 If you can't easily run Docker containers in your environment but still want to run **some of the
 integration tests**, you can use [pytest-httpbin](https://github.com/kevin1024/pytest-httpbin) instead
@@ -195,68 +138,31 @@ of the httpbin container. This just requires installing an extra package and set
 variable:
 
 ```sh
-pip install pytest-httpbin
 export USE_PYTEST_HTTPBIN=true
-pytest tests/integration/test_memory.py
-pytest tests/integration/test_filesystem.py
-pytest tests/integration/test_sqlite.py
-pytest tests/integration/test_upgrade.py
+uv pip install pytest-httpbin
+uv run pytest tests/integration/test_sqlite.py
 ```
 
 For backend databases, you can install and run them on the host instead of in a container, as long
 as they are running on the default port.
 
-### Testing all Python Versions
-
-For CI jobs (including PRs), all tests will be run for each supported Python version.
-We use [nox](https://nox.thea.codes) to do this locally, if needed:
-
-```sh
-nox -e test
-```
-
-Or to run tests for a specific python version:
-
-```sh
-nox -e test-3.10
-```
-
-To generate a coverage report:
-
-```sh
-nox -e cov
-```
-
-See `nox --list` for a full list of available commands.
-
 ## Documentation
 
-[Sphinx](https://www.sphinx-doc.org/en/master/) is used to generate documentation.
-
-First, install documentation dependencies:
-
-```sh
-poetry install -E all --with docs
-```
+[Sphinx](https://www.sphinx-doc.org) is used to generate documentation.
 
 To build the docs locally:
-
 ```sh
-nox -e docs
+uv run sphinx-build docs docs/_build/html
 ```
 
 To preview:
-
 ```sh
-# MacOS:
 open docs/_build/html/index.html
-# Linux:
-xdg-open docs/_build/html/index.html
 ```
 
-You can also use [sphinx-autobuild](https://github.com/executablebooks/sphinx-autobuild) to rebuild the docs and live reload in the browser whenever doc contents change:
+Alternatively, you also use [sphinx-autobuild](https://github.com/executablebooks/sphinx-autobuild) to rebuild the docs and live reload in the browser whenever doc contents change:
 ```sh
-nox -e livedocs
+uv run sphinx-autobuild --open-browser docs docs/_build/html
 ```
 
 ### Readthedocs
@@ -271,15 +177,6 @@ Run with:
 docker-compose -f docs/docker-compose.yml up -d
 docker exec readthedocs make all
 ```
-
-## Pull Requests
-Here are some general guidelines for submitting a pull request:
-
-* If the changes are trivial, just briefly explain the changes in the PR description
-* Otherwise, please submit an issue describing the proposed change prior to submitting a PR
-* Add unit test coverage for your changes
-* If your changes add or modify user-facing behavior, add documentation describing those changes
-* Submit the PR to be merged into the `main` branch
 
 ## Notes for Maintainers
 
