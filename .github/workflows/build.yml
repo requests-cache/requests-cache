@@ -51,9 +51,11 @@ jobs:
       # Start integration test databases
       - uses: supercharge/mongodb-github-action@315db7fe45ac2880b7758f1933e6e5d59afd5e94
         with:
+          mongodb-image: public.ecr.aws/docker/library/mongo
           mongodb-version: 8
       - uses: supercharge/redis-github-action@ffd8939ed7e6e3b99a359b6703e53bdeb544c2a9
         with:
+          redis-image: public.ecr.aws/docker/library/redis
           redis-version: 7
       - uses: rrainn/dynamodb-action@52f02829330b77b26c950d2ecf35bb6d881749cb
 
