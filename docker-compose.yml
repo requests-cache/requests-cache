@@ -7,7 +7,7 @@ services:
       - '8080:80'
 
   dynamodb:
-    image: amazon/dynamodb-local
+    image: public.ecr.aws/aws-dynamodb-local/aws-dynamodb-local
     container_name: dynamodb-test
     ports:
       - '8000:8000'
@@ -18,18 +18,18 @@ services:
     working_dir: '/home/dynamodblocal'
 
   mongo:
-    image: mongo
+    image: public.ecr.aws/bitnami/mongodb
     container_name: mongo-test
     environment:
       MONGO_INITDB_DATABASE: 'requests_cache_pytest'
     ports:
       - '27017:27017'
     volumes:
-      - 'mongodb_data:/data/db'
+      - 'mongodb_data:/bitnami/mongodb'
 
   redis:
+    image: public.ecr.aws/bitnami/redis
     container_name: redis-test
-    image: docker.io/bitnami/redis
     ports:
       - '6379:6379'
     environment:
@@ -38,7 +38,7 @@ services:
       - 'redis_data:/bitnami/redis/data'
 
   valkey:
-    image: docker.io/bitnami/valkey:8.0
+    image: public.ecr.aws/bitnami/valkey
     container_name: valkey-test
     environment:
       ALLOW_EMPTY_PASSWORD: 'yes'
