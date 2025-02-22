@@ -54,12 +54,14 @@ jobs:
           uv sync --all-extras
 
       # Start integration test databases
-      - uses: supercharge/mongodb-github-action@1.11.0
+      - uses: supercharge/mongodb-github-action@1.12.0
         with:
-          mongodb-version: 5.0
+          mongodb-image: public.ecr.aws/docker/library/mongo
+          mongodb-version: 8
       - uses: supercharge/redis-github-action@1.8.0
         with:
-          redis-version: 6
+          redis-image: public.ecr.aws/docker/library/redis
+          redis-version: 7
       - uses: rrainn/dynamodb-action@v4.0.0
 
       # Run tests
