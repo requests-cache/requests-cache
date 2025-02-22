@@ -443,6 +443,18 @@ def test_update_from_response__revalidate(mock_utcnow, cache_headers, validator_
     assert actions.skip_write is False
 
 
+def test_update_revalidated_response__transfer_encoding():
+    """When updating response headers after revalidating a cached response,
+    don't set both `Content-Length` and `Transfer-Encoding`
+    """
+    actions = CacheActions.from_request('key', BASIC_REQUEST, CacheSettings(cache_control=True))
+    cached_response = get_mock_response(headers={'ETag': ETAG, 'Transfer-Encoding': 'chunked'})
+    new_response = get_mock_response(status_code=304, headers={'ETag': ETAG, 'Content-Length': 0})
+    cached_response = actions.update_revalidated_response(new_response, cached_response)
+    assert cached_response.headers['Transfer-Encoding'] == 'chunked'
+    assert 'Content-Length' not in cached_response.headers
+
+
 @pytest.mark.parametrize('directive', IGNORED_DIRECTIVES)
 def test_ignored_headers(directive):
     """Ensure that currently unimplemented Cache-Control headers do not affect behavior"""

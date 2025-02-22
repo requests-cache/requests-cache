@@ -265,9 +265,17 @@ class CacheActions(RichMixin):
             cached_response.headers.get(k) != v for k, v in response.headers.items()
         )
         self.skip_write = self.expires == cached_response.expires and not headers_changed
-
         cached_response.expires = self.expires
+
+        # Update headers;
+        # Account for Transfer-Encoding in original response and Content-Length in 304 response
         cached_response.headers.update(response.headers)
+        if (
+            'Content-Length' in cached_response.headers
+            and 'Transfer-Encoding' in cached_response.headers
+        ):
+            del cached_response.headers['Content-Length']
+
         cached_response.revalidated = True
         return cached_response
 
