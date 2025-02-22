@@ -45,6 +45,7 @@
 * Fix error handling with `stale_if_error` during revalidation requests
 * By default, do not automatically close backend connections when using `install_cache()`
 * Fix request headers sent when `expire_after` is set to `DO_NOT_CACHE`
+* When updating response headers after revalidating a cached response, don't set both `Content-Length` and `Transfer-Encoding`
 
 ### 1.2.1 (2024-06-18)
 
