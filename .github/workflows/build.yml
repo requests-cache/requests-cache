@@ -39,13 +39,13 @@ jobs:
           uv sync --all-extras
 
       # Start integration test databases
-      - uses: supercharge/mongodb-github-action@1.12.0
+      - uses: supercharge/mongodb-github-action@90004df
         with:
           mongodb-version: 5.0
-      - uses: supercharge/redis-github-action@1.8.0
+      - uses: supercharge/redis-github-action@ea9b21c
         with:
           redis-version: 6
-      - uses: rrainn/dynamodb-action@v4.0.0
+      - uses: rrainn/dynamodb-action@52f028
 
       # Run tests with coverage report
       - name: Run unit + integration tests
@@ -60,7 +60,7 @@ jobs:
       # Latest python version: send coverage report to codecov
       - name: 'Upload coverage report to Codecov'
         if: ${{ matrix.python-version == env.LATEST_PY_VERSION }}
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@0565863
 
   # Run code analysis checks via pre-commit hooks
   analyze:
@@ -71,7 +71,7 @@ jobs:
         with:
           python-version: ${{ env.LATEST_PY_VERSION }}
       - name: Run style checks & linting
-        uses: pre-commit/action@v3.0.1
+        uses: pre-commit/action@2c7b380
       - name: Scan dependencies for known vulnerabilities
         uses: pypa/gh-action-pip-audit@v1.1.0
         with:

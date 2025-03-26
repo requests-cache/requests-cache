@@ -54,15 +54,15 @@ jobs:
           uv sync --all-extras
 
       # Start integration test databases
-      - uses: supercharge/mongodb-github-action@1.11.0
+      - uses: supercharge/mongodb-github-action@90004df
         with:
           mongodb-version: 5.0
-      - uses: supercharge/redis-github-action@1.8.0
+      - uses: supercharge/redis-github-action@ea9b21c
         with:
           redis-version: 6
-      - uses: rrainn/dynamodb-action@v4.0.0
-
+      - uses: rrainn/dynamodb-action@52f028
       # Run tests
+
       - name: Run stress tests
         run: uv run nox -e stress -- ${{ env.STRESS_TEST_MULTIPLIER }}
 
