@@ -39,7 +39,7 @@ jobs:
           uv sync --all-extras
 
       # Start integration test databases
-      - uses: supercharge/mongodb-github-action@90004df
+      - uses: supercharge/mongodb-github-action@90004df786821b6308fb02299e5835d0dae05d0d
         with:
           mongodb-version: 5.0
       - uses: supercharge/redis-github-action@ea9b21c
