@@ -42,7 +42,7 @@ jobs:
       - uses: supercharge/mongodb-github-action@90004df
         with:
           mongodb-version: 5.0
-      - uses: supercharge/redis-github-action@ea9b21c
+      - uses: supercharge/redis-github-action@0bc8516b2a497a7530f5fcd005a4e54d0865c04d
         with:
           redis-version: 6
       - uses: rrainn/dynamodb-action@52f028
