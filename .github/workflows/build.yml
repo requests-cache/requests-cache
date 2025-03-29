@@ -45,7 +45,7 @@ jobs:
       - uses: supercharge/redis-github-action@ea9b21c
         with:
           redis-version: 6
-      - uses: rrainn/dynamodb-action@52f028
+      - uses: rrainn/dynamodb-action@52f02829330b77b26c950d2ecf35bb6d881749cb
 
       # Run tests with coverage report
       - name: Run unit + integration tests
