@@ -157,7 +157,16 @@ def normalize_body(request: AnyPreparedRequest, ignored_parameters: ParamList) -
     if not request.body:
         return b''
 
-    filtered_body: Union[str, bytes] = request.body
+    norm_body: Union[str, bytes] = request.body
+
+    # Handle the case where the request body is a file-like object
+    if hasattr(request.body, 'read'):
+        norm_body = request.body.read() or b''
+        try:
+            request.body.seek(0)  # type: ignore[union-attr]
+        except AttributeError as e:
+            logger.warning(f'Unable to reset original request body: {e}', exc_info=True)
+
     try:
         content_type = request.headers['Content-Type'].split(';')[0].lower()
     except (AttributeError, KeyError):
@@ -165,11 +174,11 @@ def normalize_body(request: AnyPreparedRequest, ignored_parameters: ParamList) -
 
     # Filter and sort params if possible
     if is_json_content_type(content_type):
-        filtered_body = normalize_json_body(request.body, ignored_parameters)
+        norm_body = normalize_json_body(norm_body, ignored_parameters)
     elif content_type == 'application/x-www-form-urlencoded':
-        filtered_body = normalize_params(request.body, ignored_parameters)
+        norm_body = normalize_params(norm_body, ignored_parameters)
 
-    return encode(filtered_body)
+    return encode(norm_body)
 
 
 def normalize_json_body(

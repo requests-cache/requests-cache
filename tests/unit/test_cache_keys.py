@@ -2,6 +2,7 @@
 This just contains tests for some extra edge cases not covered elsewhere.
 """
 
+from io import BytesIO
 import json
 
 import pytest
@@ -173,6 +174,42 @@ def test_normalize_request__oversized_body():
         headers={'Content-Type': 'application/octet-stream'},
     )
     assert normalize_request(request, ignored_parameters=['param']).body == encoded_body
+
+
+def test_normalize_request__file_like_body():
+    original_body = BytesIO(b'some bytes')
+    request = Request(
+        method='GET',
+        url='https://img.site.com/base/img.jpg',
+        data=original_body,
+        headers={'Content-Type': 'application/json'},
+    )
+    assert normalize_request(request).body == b'some bytes'
+    assert original_body.read() == b'some bytes'
+
+
+def test_normalize_request__file_like_reset_fails():
+    """Test a request body with a file-like class that doesn't support seek()"""
+
+    class CustomBytesIO:
+        def __init__(self, content):
+            self.content = content
+
+        def __len__(self):
+            return len(self.content)
+
+        def read(self):
+            return self.content
+
+    original_body = CustomBytesIO(b'some bytes')
+    request = Request(
+        method='GET',
+        url='https://img.site.com/base/img.jpg',
+        data=original_body,
+        headers={'Content-Type': 'application/json'},
+    )
+    assert normalize_request(request).body == b'some bytes'
+    assert original_body.read() == b'some bytes'
 
 
 def test_normalize_headers__single_header_value_as_bytes():
