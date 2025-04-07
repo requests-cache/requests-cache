@@ -244,6 +244,7 @@ The `expire_after` argument can be used to override the session's expiration for
 If you want to manually refresh a response before it expires, you can use the `refresh` argument.
 
 * This is equivalent to **F5** in most browsers.
+  * ⚠️ Note: This only affects conditional requests.
 * The response will be saved with a new expiration time, according to the normal expiration rules
 described above.
 * If possible, this will {ref}`revalidate <conditional-requests>` with the server to potentially
