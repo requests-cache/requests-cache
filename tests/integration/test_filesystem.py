@@ -1,6 +1,4 @@
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from shutil import rmtree
-from sys import version_info
 from tempfile import gettempdir
 from threading import RLock
 from typing import Generator
@@ -19,7 +17,7 @@ from requests_cache.serializers import (
     yaml_serializer,
     utf8_serializer,
 )
-from tests.conftest import HTTPBIN_FORMATS, HTTPBIN_METHODS, N_ITERATIONS
+from tests.conftest import HTTPBIN_FORMATS, HTTPBIN_METHODS
 from tests.integration.base_cache_test import BaseCacheTest
 from tests.integration.base_storage_test import CACHE_NAME, BaseStorageTest
 
@@ -204,14 +202,6 @@ class TestFileCache(BaseCacheTest):
 
         # Redirects db should be in the same directory as response files
         assert session.cache.redirects.db_path.parent == session.cache.responses.cache_dir
-
-    # TODO: Remove after fixing issue with SQLite multiprocessing on python 3.12
-    @pytest.mark.parametrize('executor_class', [ThreadPoolExecutor, ProcessPoolExecutor])
-    @pytest.mark.parametrize('iteration', range(N_ITERATIONS))
-    def test_concurrency(self, iteration, executor_class):
-        if version_info >= (3, 12):
-            pytest.xfail('Concurrent usage of SQLite backend is not yet supported on python 3.12')
-        super().test_concurrency(iteration, executor_class)
 
     @pytest.mark.parametrize('maximum_size_on_disk', [1000, 10000])
     @pytest.mark.parametrize('files_on_disk', [3, 100])
