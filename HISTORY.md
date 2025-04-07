@@ -42,6 +42,7 @@
 
 🪲 **Bugfixes:**
 * Fix `sqlite3.InterfaceError: bad parameter or other API misuse` with concurrent SQLite usage in python 3.12+
+* Add support for normalizing file-like request bodies
 * Ignore and log timezone errors when attempting to reuse responses cached in `requests-cache <= 1.1`
 * Fix error handling with `stale_if_error` during revalidation requests
 * By default, do not automatically close backend connections when using `install_cache()`
