@@ -1,10 +1,8 @@
 import os
 import pickle
 import sqlite3
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from datetime import timedelta
 from os.path import join
-from sys import version_info
 from tempfile import NamedTemporaryFile, gettempdir
 from threading import Thread
 from unittest.mock import patch
@@ -16,7 +14,7 @@ from requests_cache.backends import BaseCache, SQLiteCache, SQLiteDict
 from requests_cache.backends.sqlite import MEMORY_URI
 from requests_cache.models import CachedResponse
 from requests_cache.policy import utcnow
-from tests.conftest import N_ITERATIONS, skip_pypy
+from tests.conftest import skip_pypy
 from tests.integration.base_cache_test import BaseCacheTest
 from tests.integration.base_storage_test import CACHE_NAME, BaseStorageTest
 
@@ -414,11 +412,3 @@ class TestSQLiteCache(BaseCacheTest):
             assert prev_item is None or prev_item.expires < item.expires
             assert item.cache_key
             assert not item.is_expired
-
-    # TODO: Remove after fixing issue with SQLite multiprocessing on python 3.12
-    @pytest.mark.parametrize('executor_class', [ThreadPoolExecutor, ProcessPoolExecutor])
-    @pytest.mark.parametrize('iteration', range(N_ITERATIONS))
-    def test_concurrency(self, iteration, executor_class):
-        if version_info >= (3, 12):
-            pytest.xfail('Concurrent usage of SQLite backend is not yet supported on python 3.12')
-        super().test_concurrency(iteration, executor_class)
