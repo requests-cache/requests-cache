@@ -34,7 +34,7 @@ dependencies = [
     'attrs          >=21.2',   # For response data models
     'cattrs         >=22.2',   # For response serialization
     'platformdirs   >=2.5',    # For features that use platform-specific system directories
-    'url-normalize  >=1.4',    # For more accurate request matching
+    'url-normalize  >=2.0',    # For more accurate request matching
 ]
 
 [project.urls]
