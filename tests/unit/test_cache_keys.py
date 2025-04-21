@@ -19,6 +19,7 @@ from requests_cache.cache_keys import (
 
 CACHE_KEY = 'e25f7e6326966e82'
 
+
 @pytest.mark.parametrize(
     'url, params',
     [
