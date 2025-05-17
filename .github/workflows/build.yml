@@ -60,7 +60,7 @@ jobs:
       # Latest python version: send coverage report to codecov
       - name: 'Upload coverage report to Codecov'
         if: ${{ matrix.python-version == env.LATEST_PY_VERSION }}
-        uses: codecov/codecov-action@ad3126e916f78f00edff4ed0317cf185271ccc2d
+        uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24
 
   # Run code analysis checks via pre-commit hooks
   analyze:
