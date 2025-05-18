@@ -20,6 +20,10 @@ def test_get_expiration_datetime__no_expiration(mock_datetime):
     assert get_expiration_datetime(None) is None
     assert get_expiration_datetime(-1) is None
     assert get_expiration_datetime(EXPIRE_IMMEDIATELY) == mock_datetime.now(timezone.utc)
+    # test 'Expires: 0' (str)
+    assert get_expiration_datetime('0') is mock_datetime.now(timezone.utc)
+    # test 'Expires: -1' (str) - Azure silliness
+    assert get_expiration_datetime('-1') is mock_datetime.now(timezone.utc)
 
 
 @pytest.mark.parametrize(

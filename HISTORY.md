@@ -50,6 +50,7 @@
 * Fix request headers sent when `expire_after` is set to `DO_NOT_CACHE`
 * Show a warning when initializing a cache with both `cache_name` and a backend instance (database names, file paths, etc. cannot be reliably updated after initialization)
 * When updating response headers after revalidating a cached response, don't set both `Content-Length` and `Transfer-Encoding`
+* Treat invalid HTTP dates (eg. 'Expires: 0' and 'Expires: -1') as 'already expired' as per RFC 2616, section 14.21
 
 ### 1.2.1 (2024-06-18)
 
