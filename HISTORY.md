@@ -42,6 +42,7 @@
   * For developers, see [Contributing Guide](https://requests-cache.readthedocs.io/en/stable/project_info/contributing.html) for details
 
 🪲 **Bugfixes:**
+* Allow `content_root_key` setting to target a sub-tree in `normalize_json_body`, so only listed fields under that key are ignored in cache keys
 * Fix `sqlite3.InterfaceError: bad parameter or other API misuse` with concurrent SQLite usage in python 3.12+
 * Add support for normalizing file-like request bodies
 * Ignore and log timezone errors when attempting to reuse responses cached in `requests-cache <= 1.1`

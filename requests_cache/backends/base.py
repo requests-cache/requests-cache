@@ -119,6 +119,7 @@ class BaseCache:
         return key_fn(
             request=request,
             ignored_parameters=self._settings.ignored_parameters,
+            content_root_key=self._settings.content_root_key,
             match_headers=match_headers or self._settings.match_headers,
             serializer=self.responses.serializer,
             **kwargs,
