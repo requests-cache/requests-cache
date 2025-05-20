@@ -26,6 +26,13 @@ def get_expiration_datetime(
     ignore_invalid_httpdate: bool = False,
 ) -> Optional[datetime]:
     """Convert an expiration value in any supported format to an absolute datetime"""
+    # Invalid dates MUST be treated as 'already expired' (RFC 2616, section 14.21)
+    # Expires headers arrive as integer strings (eg. '0'...or even '-1' if you are Azure...)
+    if (
+        isinstance(expire_after, str)
+        and (expire_after[1:] if expire_after[0] == '-' else expire_after).isdigit()
+    ):
+        expire_after = EXPIRE_IMMEDIATELY
     # Never expire (or do not cache, in which case expiration won't be used)
     if expire_after is None or expire_after in [NEVER_EXPIRE, DO_NOT_CACHE]:
         return None
