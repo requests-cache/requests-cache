@@ -1,10 +1,10 @@
 # Containers needed to test all backend services locally
 services:
   httpbin:
-    image: kennethreitz/httpbin
+    image: mccutchen/go-httpbin
     container_name: httpbin
     ports:
-      - '8080:80'
+      - '8080:8080'
 
   dynamodb:
     image: amazon/dynamodb-local
