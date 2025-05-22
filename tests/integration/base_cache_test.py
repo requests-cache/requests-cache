@@ -143,7 +143,7 @@ class BaseCacheTest:
         def get_json(url):
             return json.loads(session.get(url).text)
 
-        response_1 = get_json(httpbin('cookies/set/test1/test2'))
+        response_1 = get_json(httpbin('cookies/set?test1=test2'))
         with session.cache_disabled():
             assert get_json(httpbin('cookies')) == response_1
 
@@ -153,7 +153,7 @@ class BaseCacheTest:
 
         # Not from cache
         with session.cache_disabled():
-            response_3 = get_json(httpbin('cookies/set/test3/test4'))
+            response_3 = get_json(httpbin('cookies/set?test3=test4'))
             assert response_3 == get_json(httpbin('cookies'))
 
     @pytest.mark.parametrize(

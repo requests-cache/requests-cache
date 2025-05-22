@@ -58,7 +58,6 @@ N_REQUESTS_PER_ITERATION = 10 + 10 * STRESS_TEST_MULTIPLIER
 HTTPBIN_DEFAULT = 'http://localhost:8080'
 HTTPBIN_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 HTTPBIN_FORMATS = [
-    'brotli',
     'deflate',
     'deny',
     'encoding/utf8',
