@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 from contextlib import nullcontext
-from hashlib import blake2b
+from hashlib import blake2b, sha256
 from logging import getLogger
 from typing import (
     TYPE_CHECKING,
@@ -81,7 +81,13 @@ def create_key(
     ]
 
     # Generate a hash based on this info
-    key = blake2b(digest_size=8)
+    try:
+        key = blake2b(digest_size=8)
+    except (TypeError, ValueError):
+        # OpenSSL 1.1.0 doesn't support the digest_size parameter for blake2b, resulting in a TypeError
+        # On FIPS-compliant systems, blake2b is not compliant algorithm, resulting in a ValueError
+        # In both cases, fallback to SHA-256
+        key = sha256()  # type: ignore
     for part in key_parts:
         key.update(encode(part))
     return key.hexdigest()

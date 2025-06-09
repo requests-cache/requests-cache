@@ -37,6 +37,7 @@
 🧩 **Compatibility and packaging:**
 * Add support for Python 3.13
 * Add compatibility with url-normalize 2.0
+* Add compatibility with FIPS-compliant systems
 * Packaging and project config are now managed by uv
   * This has no impact for users; installation from PyPI still works the same
   * For developers, see [Contributing Guide](https://requests-cache.readthedocs.io/en/stable/project_info/contributing.html) for details
