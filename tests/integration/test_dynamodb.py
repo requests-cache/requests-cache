@@ -45,7 +45,11 @@ class TestDynamoDbDict(BaseStorageTest):
         DynamoDbDict('test_table', region_name='us-east-2', invalid_kwarg='???')
         mock_resource.assert_called_with('dynamodb', region_name='us-east-2')
 
-    def test_create_table_error(self):
+    @patch('requests_cache.backends.dynamodb.boto3.resource')
+    def test_no_create_table(self, mock_resource):
+        DynamoDbDict('test_table', region_name='us-east-2', create_table=False)
+        self.assetEquals(mock_resource.create_table.call_count, 0)
+    def test_enable_ttl_error(self):
         """An error other than 'table already exists' should be reraised"""
         from botocore.exceptions import ClientError
 
@@ -55,7 +59,7 @@ class TestDynamoDbDict(BaseStorageTest):
             with pytest.raises(ClientError):
                 cache._enable_ttl()
 
-    def test_enable_ttl_error(self):
+    def test_create_table_error(self):
         """An error other than 'ttl already enabled' should be reraised"""
         from botocore.exceptions import ClientError
 
