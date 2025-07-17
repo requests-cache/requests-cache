@@ -34,6 +34,7 @@ class DynamoDbCache(BaseCache):
     def __init__(
         self,
         table_name: str = 'http_cache',
+        create_table: bool = True,
         *,
         ttl: bool = True,
         connection: Optional[ServiceResource] = None,
@@ -45,6 +46,7 @@ class DynamoDbCache(BaseCache):
         skwargs = {'serializer': serializer, **kwargs} if serializer else kwargs
         self.responses = DynamoDbDict(
             table_name,
+            create_table=create_table,
             ttl=ttl,
             connection=connection,
             decode_content=decode_content,
@@ -68,6 +70,7 @@ class DynamoDbDict(BaseStorage):
     def __init__(
         self,
         table_name: str,
+        create_table: bool = True,
         ttl: bool = True,
         connection: Optional[ServiceResource] = None,
         serializer: Optional[SerializerType] = dynamodb_document_serializer,
@@ -82,7 +85,8 @@ class DynamoDbDict(BaseStorage):
         self.ttl = ttl
 
         self._table = self.connection.Table(self.table_name)
-        self._create_table()
+        if create_table:
+            self._create_table()
         if ttl:
             self._enable_ttl()
 
