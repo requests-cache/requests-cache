@@ -96,6 +96,11 @@ want to quickly test out DynamoDB as a cache backend, but in a production enviro
 likely want to create the tables yourself, for example with
 [CloudFormation](https://aws.amazon.com/cloudformation/) or [Terraform](https://www.terraform.io/).
 
+If you don't want requests-cache to automatically create the dynamodb table you can pass in an optional parameter.
+```python
+>>> backend = DynamoDbCache(create_table=False)
+```
+
 You just need a table with a single partition key. A `value` attribute (containing response data)
 will be created dynamically once items are added to the table.
 - Table: `http_cache` (or any other name, as long as it matches the `table_name` parameter for `DynamoDbCache`)

@@ -27,6 +27,8 @@
   * Add `lock` parameter to specify a custom lock object
 * **Redis:**
     * For maintenance/inspection methods that iterate over the cache, use `SCAN` and `HSCAN` instead of `KEYS`, `HKEYS`, and `HGETALL`
+* **DynamoDB**
+  * Add optional parameter `create_table` of `DynamoDBCache` to control if the class attempts to create the table in DynamoDB or not.
 
 ⚙️ **Session settings:**
 * Add `autoclose` option to close backend connections when the session is closed
