@@ -48,7 +48,7 @@ class TestDynamoDbDict(BaseStorageTest):
     @patch('requests_cache.backends.dynamodb.boto3.resource')
     def test_no_create_table(self, mock_resource):
         DynamoDbDict('test_table', region_name='us-east-2', create_table=False)
-        self.assetEquals(mock_resource.create_table.call_count, 0)
+        assert mock_resource.create_table.call_count == 0
 
     def test_enable_ttl_error(self):
         """An error other than 'table already exists' should be reraised"""
