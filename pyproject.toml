@@ -73,7 +73,7 @@ dev = [
     'pytest-xdist           >=2.2',
     'requests-mock          ~=1.12',
     'responses              >=0.19',
-    'tenacity               ~=8.0',
+    'tenacity               >=8,<10',
     'timeout-decorator      ~=0.5',
     'time-machine           ~=2.9; implementation_name != "pypy"',
     'nox                    >=2024.4',
