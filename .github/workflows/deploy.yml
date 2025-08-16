@@ -43,7 +43,7 @@ jobs:
 
     steps:
       # Install dependencies, with caching
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
@@ -72,7 +72,7 @@ jobs:
 
     steps:
       # Install dependencies
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: astral-sh/setup-uv@v6
       - name: Install dependencies
         run: |
@@ -138,7 +138,7 @@ jobs:
 
     steps:
       # Install dependencies, with caching
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
@@ -163,7 +163,7 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: astral-sh/setup-uv@v6
 
       - name: Set pre-release version
