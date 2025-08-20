@@ -79,7 +79,7 @@ intersphinx_mapping = {
     'itsdangerous': ('https://itsdangerous.palletsprojects.com/en/2.0.x/', None),
     'pymongo': ('https://pymongo.readthedocs.io/en/stable/', None),
     'python': ('https://docs.python.org/3', None),
-    'redis': ('https://redis-py.readthedocs.io/en/stable/', None),
+    'redis': ('https://redis.readthedocs.io/en/stable/', None),
     'requests': ('https://requests.readthedocs.io/en/latest/', None),
     'urllib3': ('https://urllib3.readthedocs.io/en/latest/', None),
     'py-filelock': ('https://py-filelock.readthedocs.io/en/latest/', None),
