@@ -283,7 +283,7 @@ def test_replacing_an_items_changes_the_total_size(lfd: LimitedFileDict, new_val
 
 def test_no_error_if_cache_is_empty(lfd: LimitedFileDict):
     """We should be safe to drop files if we have no files in the cache."""
-    lfd.drop_oldest_key()
+    lfd._drop_oldest_key()
 
 
 def test_do_not_store_files_too_big(maximum_cache_bytes: int, lfd: LimitedFileDict):
@@ -417,9 +417,9 @@ def test_invalid_state_file_removed_get_value(broken_lfd: LimitedFileDict, broke
 
 def test_invalid_state_file_removed_drop_value(broken_lfd: LimitedFileDict):
     """Invalid state because of concurrency."""
-    broken_lfd.drop_oldest_key()
-    broken_lfd.drop_oldest_key()
-    broken_lfd.drop_oldest_key()
+    broken_lfd._drop_oldest_key()
+    broken_lfd._drop_oldest_key()
+    broken_lfd._drop_oldest_key()
     assert len(broken_lfd) == 0
 
 
@@ -442,23 +442,23 @@ def test_size_is_updated_even_if_key_is_replaced(lfd: LimitedFileDict, lfd2: Lim
 
 def test_getting_the_oldest_key_of_empty_cache(lfd: LimitedFileDict):
     """The id should be None."""
-    assert lfd.get_oldest_key()[0] is None
-    assert lfd.get_oldest_key()[0] is None
+    assert lfd._get_oldest_key()[0] is None
+    assert lfd._get_oldest_key()[0] is None
 
 
 def test_oldest_key_set(lfd: LimitedFileDict, lfd2: LimitedFileDict):
     """The oldest key should work with deleted values."""
     lfd['key'] = '123'
-    assert lfd.get_oldest_key()[0] == 'key'
-    assert lfd2.get_oldest_key()[0] == 'key'
+    assert lfd._get_oldest_key()[0] == 'key'
+    assert lfd2._get_oldest_key()[0] == 'key'
 
 
 def test_oldest_key_deleted(lfd: LimitedFileDict, lfd2: LimitedFileDict):
     """The oldest key should work with deleted values."""
     lfd['key'] = '123'
     del lfd2['key']
-    assert lfd.get_oldest_key()[0] is None
-    assert lfd2.get_oldest_key()[0] is None
+    assert lfd._get_oldest_key()[0] is None
+    assert lfd2._get_oldest_key()[0] is None
 
 
 def test_oldest_key_deleted_new_value(lfd: LimitedFileDict, lfd2: LimitedFileDict):
@@ -466,16 +466,16 @@ def test_oldest_key_deleted_new_value(lfd: LimitedFileDict, lfd2: LimitedFileDic
     lfd['key'] = '123'
     lfd['key2'] = '123'
     del lfd2['key']
-    assert lfd.get_oldest_key()[0] == 'key2'
-    assert lfd2.get_oldest_key()[0] == 'key2'
+    assert lfd._get_oldest_key()[0] == 'key2'
+    assert lfd2._get_oldest_key()[0] == 'key2'
 
 
 def test_oldest_key_stays(lfd: LimitedFileDict, lfd2: LimitedFileDict):
     """The oldest key should stay when a newer key is added."""
     lfd['key'] = '123'
     lfd['key2'] = '123'
-    assert lfd.get_oldest_key()[0] == 'key'
-    assert lfd2.get_oldest_key()[0] == 'key'
+    assert lfd._get_oldest_key()[0] == 'key'
+    assert lfd2._get_oldest_key()[0] == 'key'
 
 
 def test_oldest_key_changes(lfd: LimitedFileDict, lfd2: LimitedFileDict):
@@ -483,14 +483,14 @@ def test_oldest_key_changes(lfd: LimitedFileDict, lfd2: LimitedFileDict):
     lfd['key'] = '123'
     lfd['key2'] = '123'
     lfd['key'] = '123'
-    assert lfd.get_oldest_key()[0] == 'key2'
-    assert lfd2.get_oldest_key()[0] == 'key2'
+    assert lfd._get_oldest_key()[0] == 'key2'
+    assert lfd2._get_oldest_key()[0] == 'key2'
 
 
 def test_file_id_increases(lfd: LimitedFileDict):
     """The file id should increase."""
-    assert lfd.get_new_file_id() == 0
-    assert lfd.get_new_file_id() == 1
+    assert lfd._get_new_file_id() == 0
+    assert lfd._get_new_file_id() == 1
 
 
 @pytest.mark.parametrize(

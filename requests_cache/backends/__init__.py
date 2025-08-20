@@ -75,16 +75,17 @@ def init_backend(
 
     # Already a backend instance
     if isinstance(backend, BaseCache):
-        if cache_name:
-            backend.cache_name = str(cache_name)
-            # Database names, file paths, etc. cannot be reliably updated after initialization, so
-            # warn if the user passes both `cache_name` and a backend instance
-            warn(
-                '`cache_name` cannot be set after backend initialization; '
-                'please pass it to the backend class instead',
-                DeprecationWarning,
-                stacklevel=3,
-            )
+        # TODO: fix; cache_name is always passed via session default
+        # if cache_name:
+        #     backend.cache_name = str(cache_name)
+        #     # Database names, file paths, etc. cannot be reliably updated after initialization, so
+        #     # warn if the user passes both `cache_name` and a backend instance
+        #     warn(
+        #         '`cache_name` cannot be set after backend initialization; '
+        #         'please pass it to the backend class instead',
+        #         DeprecationWarning,
+        #         stacklevel=3,
+        #     )
         return backend
     # If no backend is specified, use SQLite as default, unless the environment doesn't support it
     elif not backend:
