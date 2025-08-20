@@ -21,6 +21,7 @@ PACKAGE_DIR = PROJECT_DIR / 'requests_cache'
 TEMPLATE_DIR = DOCS_DIR / '_templates'
 EXTRA_APIDOC_DIR = DOCS_DIR / 'api'
 APIDOC_DIR = DOCS_DIR / 'modules'
+REPO_URL = 'https://github.com/requests-cache/requests-cache'
 
 
 # General information about the project.
@@ -79,7 +80,7 @@ intersphinx_mapping = {
     'itsdangerous': ('https://itsdangerous.palletsprojects.com/en/2.0.x/', None),
     'pymongo': ('https://pymongo.readthedocs.io/en/stable/', None),
     'python': ('https://docs.python.org/3', None),
-    'redis': ('https://redis-py.readthedocs.io/en/stable/', None),
+    'redis': ('https://redis.readthedocs.io/en/stable/', None),
     'requests': ('https://requests.readthedocs.io/en/latest/', None),
     'urllib3': ('https://urllib3.readthedocs.io/en/latest/', None),
     'py-filelock': ('https://py-filelock.readthedocs.io/en/latest/', None),
@@ -139,6 +140,8 @@ html_theme_options = {
         'color-brand-primary': '#5eb8ff',
         'color-brand-content': '#368ce2',
     },
+    'source_edit_link': f'{REPO_URL}/edit/main/docs/{{filename}}',
+    'top_of_page_buttons': ['edit'],
 }
 
 
