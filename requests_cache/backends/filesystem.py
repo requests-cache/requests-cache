@@ -12,6 +12,7 @@ from pathlib import Path
 from pickle import PickleError
 from shutil import rmtree
 from threading import RLock
+from time import time_ns
 from typing import Any, Iterator, Optional
 
 from ..serializers import SerializerType, json_serializer
@@ -168,23 +169,10 @@ class FileDict(BaseStorage):
         with self._lock:
             return self.cache_dir.glob(f'*{self.extension}')
 
-
-def _get_extension(extension: Optional[str] = None, serializer=None) -> str:
-    """Use either the provided file extension, or get the serializer's default extension"""
-    if extension:
-        return f'.{extension}'
-    subs = {
-        'bson': 'bson',
-        'safe_pickle': 'pkl',
-        'pickle': 'pkl',
-        'orjson': 'json',
-        'ujson': 'json',
-    }
-    if serializer and (name := serializer.name):
-        for k, v in subs.items():
-            name = name.replace(k, v)
-        return f'.{name}'
-    return '.dat'
+    def size(self) -> int:
+        """Return the size of the database, in bytes"""
+        with self._lock:
+            return sum(path.stat().st_size for path in self.paths())
 
 
 TEN_MB = 10 * 1024 * 1024
@@ -229,12 +217,17 @@ class LimitedFileDict(FileDict):
         if self.block_bytes < 1:
             raise ValueError(f'block_bytes must be greater than 0, not {block_bytes}')
 
-        # TODO
+        self.lru_index = LRUDict(self.cache_dir / 'lru.db', 'lru', serializer=None, **kwargs)
 
-    # @property
-    # def total_bytes(self) -> int:
-    #     """The total size of all the files in the cache."""
-    #     # TODO
+    # TODO
+    # def size(self) -> int:
+    #     """Return the size of the database, in bytes"""
+
+    # def _add_to_total_bytes(self, difference_in_bytes: int):
+    #     """Change the size of the cache."""
+    #     with self._lock:
+    #         difference_in_bytes = self.compute_file_size(self.block_bytes, difference_in_bytes)
+    #         self.size_file.write_text(str(difference_in_bytes + self.total_bytes))
 
     # def __delitem__(self, key: str) -> None:
     #     """Delete a value for a key, and update total cache size"""
@@ -280,6 +273,199 @@ class LimitedFileDict(FileDict):
         """Return the size in bytes of the file, rounded up to fit the blocks on the file system"""
         sign = -1 if file_size < 0 else 1
         return (file_size * sign + block_size - 1) // block_size * block_size * sign
+
+
+class LRUDict(SQLiteDict):
+    def init_db(self):
+        self.close()
+        with self.connection(commit=True) as con:
+            # Table for LRU metadata
+            con.execute(
+                f'CREATE TABLE IF NOT EXISTS {self.table_name} ('
+                '    key TEXT PRIMARY KEY,'
+                '    access_time INTEGER NOT NULL,'
+                '    size INTEGER NOT NULL'
+                ')'
+            )
+            con.execute(
+                f'CREATE INDEX IF NOT EXISTS idx_access_time ON {self.table_name}(access_time)'
+            )
+            con.execute(f'CREATE INDEX IF NOT EXISTS idx_size ON {self.table_name}(size)')
+
+            # Single-row table to persist total cache size
+            con.execute(
+                f'CREATE TABLE IF NOT EXISTS {self.table_name}_size ('
+                '    total_size INTEGER NOT NULL'
+                ')'
+            )
+            con.execute(f'INSERT OR IGNORE INTO {self.table_name}_size (total_size) VALUES (0)')
+
+            # Triggers to update total size
+            con.execute(
+                f"""
+                CREATE TRIGGER cache_insert
+                AFTER INSERT ON {self.table_name}
+                BEGIN
+                    UPDATE {self.table_name}_size
+                    SET total_size = total_size + NEW.size;
+                END;
+                """
+            )
+            con.execute(
+                f"""
+                CREATE TRIGGER cache_delete
+                AFTER DELETE ON {self.table_name}
+                BEGIN
+                    UPDATE {self.table_name}_size
+                    SET total_size = total_size - OLD.size;
+                END;
+                """
+            )
+            con.execute(
+                f"""
+                CREATE TRIGGER cache_update
+                AFTER UPDATE OF size ON {self.table_name}
+                WHEN OLD.size != NEW.size
+                BEGIN
+                    UPDATE {self.table_name}_size
+                    SET total_size = total_size + (NEW.size - OLD.size);
+                END;
+                """
+            )
+
+    def __getitem__(self, key):
+        with self.connection() as con:
+            # Using placeholders here with python 3.12+ and concurrency results in the error:
+            # sqlite3.InterfaceError: bad parameter or other API misuse
+            row = con.execute(
+                f"SELECT access_time FROM {self.table_name} WHERE key='{key}'"
+            ).fetchone()
+            if not row:
+                raise KeyError(key)
+
+            # update access time
+            # con.execute(f'UPDATE {self.table_name} SET access_time = ? WHERE key = ?', (int(time.time_ns()), key))
+            return row[0]
+
+    # TODO: 'old.access_time' is not valid syntax in SQLite
+    # def get_and_update_time(self, key):
+    #     timestamp = int(time_ns())
+    #     with self.connection(commit=True) as con:
+    #         row = con.execute(
+    #             f'UPDATE {self.table_name} SET access_time = ? WHERE key = ? '
+    #             'RETURNING old.access_time'(timestamp, key),
+    #         ).fetchone()
+    #         if row is None:
+    #             raise KeyError(key)
+    #         return row[0]
+
+    def update_access_time(self, key: str):
+        """Update the given key with the current timestamp"""
+        timestamp = int(time_ns())
+        with self.connection() as con:
+            con.execute(
+                f'UPDATE {self.table_name} SET access_time = ? WHERE key = ?',
+                (timestamp, key),
+            )
+
+    # def __delitem__(self, key):
+    #     """Delete an item and update total cache size"""
+    #     with self.connection(commit=True) as con:
+    #         row = con.execute(
+    #             f'DELETE FROM {self.table_name} WHERE key = ? RETURNING size', (key,)
+    #         ).fetchone()
+
+    #         # Update total size
+    #         if not row:
+    #             raise KeyError
+
+    #         con.execute(
+    #             f'UPDATE {self.table_name}_size SET total_size = total_size - ?',
+    #             (row[0],),
+    #         )
+
+    def __setitem__(self, key: str, size: int):
+        """Save a value (file size), and update access time and total cache size"""
+
+        timestamp = int(time_ns())
+        with self.connection(commit=True) as con:
+            # row = con.execute(
+            #     f'SELECT size FROM {self.table_name} WHERE key = ?',
+            #     (key,),
+            # ).fetchone()
+            # old_size = row[0] if row else 0
+            # size_diff = size - old_size
+            # print(f'Old size for {key!r}: {old_size}, new size: {size}, diff: {size_diff}')
+            con.execute(
+                f"""
+                INSERT INTO {self.table_name} (key, access_time, size)
+                VALUES (?, ?, ?)
+                ON CONFLICT(key) DO UPDATE
+                SET access_time = excluded.access_time, size = excluded.size
+                """,
+                (key, timestamp, size),
+            )
+
+            # # Update total size
+            # if size_diff:
+            #     con.execute(
+            #         f'UPDATE {self.table_name}_size SET total_size = total_size + ?',
+            #         (size_diff,),
+            #     )
+
+    def get_lru(self, total_size: int):
+        """Get the least recently used keys with a combined size >= total_size"""
+
+        with self.connection() as con:
+            cur = con.execute(
+                f"""
+                WITH ordered AS (
+                    SELECT key, size, access_time, SUM(size) OVER (ORDER BY access_time) AS running_total
+                    FROM {self.table_name}
+                )
+                SELECT * FROM ordered WHERE running_total - size < ?
+                ORDER BY access_time;
+                """,
+                (total_size,),
+            )
+            rows = cur.fetchall()
+            cur.close()
+            return [row[0] for row in rows]
+
+    def clear(self):
+        super().clear()
+        with self.connection(commit=True) as con:
+            con.execute(f'UPDATE {self.table_name}_size SET total_size = 0')
+
+    def count(self, *args, **kwargs):
+        with self.connection() as con:
+            return con.execute(f'SELECT COUNT(key) FROM {self.table_name}').fetchone()[0]
+
+    def sorted(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def total_size(self) -> int:
+        with self.connection() as con:
+            row = con.execute(f'SELECT total_size FROM {self.table_name}_size').fetchone()
+            return row[0] if row else 0
+
+
+def _get_extension(extension: Optional[str] = None, serializer=None) -> str:
+    """Use either the provided file extension, or get the serializer's default extension"""
+    if extension:
+        return f'.{extension}'
+    subs = {
+        'bson': 'bson',
+        'safe_pickle': 'pkl',
+        'pickle': 'pkl',
+        'orjson': 'json',
+        'ujson': 'json',
+    }
+    if serializer and (name := serializer.name):
+        for k, v in subs.items():
+            name = name.replace(k, v)
+        return f'.{name}'
+    return '.dat'
 
 
 ___all__ = ['FileCache', 'FileDict', 'LimitedFileDict']
