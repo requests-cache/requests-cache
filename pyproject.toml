@@ -93,6 +93,8 @@ docs = [
     'sphinx-copybutton          >=0.5       ; python_version>="3.11"',
     'sphinx-design              >=0.6       ; python_version>="3.11"',
     'sphinx-notfound-page       >=1.0       ; python_version>="3.11"',
+    'sphinx-llms-txt            >=0.5       ; python_version>="3.11"',
+    'sphinx-sitemap             >=2.8       ; python_version>="3.11"',
     'sphinxcontrib-apidoc       >=0.3       ; python_version>="3.11"',
     'sphinxext-opengraph        >=0.9       ; python_version>="3.11"',
 ]

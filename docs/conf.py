@@ -30,6 +30,7 @@ needs_sphinx = '4.0'
 master_doc = 'index'
 source_suffix = ['.md', '.rst']
 version = release = pkg_version('requests-cache')
+html_baseurl = 'https://requests-cache.readthedocs.io/'
 html_static_path = ['_static']
 exclude_patterns = ['_build']
 templates_path = ['_templates']
@@ -48,6 +49,8 @@ extensions = [
     'sphinx_automodapi.smart_resolver',
     'sphinx_copybutton',
     'sphinx_design',
+    'sphinx_llms_txt',
+    'sphinx_sitemap',
     'sphinxcontrib.apidoc',
     'sphinxext.opengraph',
     'myst_parser',
@@ -113,6 +116,9 @@ apidoc_module_first = True
 apidoc_separate_modules = True
 apidoc_template_dir = '_templates/apidoc'
 apidoc_toc_file = False
+
+# Generate llms.txt
+lms_txt_file = True
 
 # HTML general settings
 html_favicon = join('_static', 'favicon.ico')
