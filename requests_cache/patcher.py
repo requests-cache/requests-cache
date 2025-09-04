@@ -48,7 +48,7 @@ def install_cache(
 
     class _ConfiguredCachedSession(session_factory):  # type: ignore  # See mypy issue #5865
         def __init__(self):
-            super().__init__(cache_name=cache_name, backend=backend, **kwargs)
+            super().__init__(backend=backend, **kwargs)
 
     _patch_session_factory(_ConfiguredCachedSession)
 

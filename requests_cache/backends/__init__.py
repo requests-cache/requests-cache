@@ -75,10 +75,12 @@ def init_backend(
 
     # Already a backend instance
     if isinstance(backend, BaseCache):
-        if cache_name:
+        # Database names, file paths, etc. cannot be reliably updated after initialization, so
+        # warn if the user passes both `cache_name` and a backend instance
+        from ..policy import DEFAULT_CACHE_NAME
+
+        if cache_name and cache_name != DEFAULT_CACHE_NAME:
             backend.cache_name = str(cache_name)
-            # Database names, file paths, etc. cannot be reliably updated after initialization, so
-            # warn if the user passes both `cache_name` and a backend instance
             warn(
                 '`cache_name` cannot be set after backend initialization; '
                 'please pass it to the backend class instead',
