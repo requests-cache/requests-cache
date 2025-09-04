@@ -74,7 +74,6 @@ dev = [
     'requests-mock          ~=1.12',
     'responses              >=0.19',
     'tenacity               ~=8.0',
-    'timeout-decorator      ~=0.5',
     'time-machine           ~=2.9; implementation_name != "pypy"',
     'nox                    >=2024.4',
     'pre-commit             >=3.5',
