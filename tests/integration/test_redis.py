@@ -15,7 +15,11 @@ def ensure_connection():
     """Fail all tests in this module if Redis is not running"""
     from redis import Redis
 
-    Redis().info()
+    client = Redis()
+    try:
+        client.info()
+    finally:
+        client.close()
 
 
 class TestRedisDict(BaseStorageTest):

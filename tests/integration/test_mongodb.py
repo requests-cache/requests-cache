@@ -27,7 +27,10 @@ def ensure_connection():
     from pymongo import MongoClient
 
     client = MongoClient(serverSelectionTimeoutMS=2000)
-    client.server_info()
+    try:
+        client.server_info()
+    finally:
+        client.close()
 
 
 class TestMongoDict(BaseStorageTest):

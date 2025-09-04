@@ -37,7 +37,7 @@
 * Add `verify` parameter to `BaseCache.contains()` and `delete()` to handle requests made with SSL verification disabled
 
 🧩 **Compatibility and packaging:**
-* Add support for Python 3.13
+* Add support for Python 3.13 and 3.14
 * Add compatibility with url-normalize 2.0
 * Add compatibility with FIPS-compliant systems
     * Note: Due to using a different hashing algorithm for cache keys, caches cannot be shared between FIPS- and non-FIPS-compliant systems
