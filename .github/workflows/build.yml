@@ -50,7 +50,9 @@ jobs:
       # Run tests with coverage report
       - name: Run unit + integration tests
         if: ${{ !contains(matrix.python-version, 'pypy') }}
-        run: uv run nox -e cov -- xml
+        run: |
+          uv run nox -e cov -- xml
+          uv run nox -e stress -- 1
 
       # pypy tests aren't run in parallel, so too slow for integration tests
       - name: Run unit tests only

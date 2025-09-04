@@ -84,11 +84,15 @@ def clean(session):
 @nox.session(python=False, name='cov')
 def coverage(session):
     """Run tests and generate coverage report"""
-    cmd = ['pytest', *ALL_TESTS, '-rsxX', '--cov']
+    cmd = ['pytest', *ALL_TESTS, '-rsxX']
+
+    # Exclude concurrency tests to run separately without xdist
+    cmd += ['-k', 'not concurrency']
     if not IS_PYPY:
         cmd += XDIST_ARGS
 
     # Add coverage formats
+    cmd += ['--cov']
     cov_formats = session.posargs or DEFAULT_COVERAGE_FORMATS
     cmd += [f'--cov-report={f}' for f in cov_formats]
 
