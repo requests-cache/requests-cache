@@ -435,7 +435,7 @@ class SQLiteDict(BaseStorage):
             filter_expr = 'WHERE expires is null or expires > ?'
             params = (time(),)
 
-        with self.connection(commit=True) as con:
+        with self.connection() as con:
             for row in con.execute(
                 f'SELECT key, value FROM {self.table_name} {filter_expr}'
                 f'  ORDER BY {key} {direction} {limit_expr}',
