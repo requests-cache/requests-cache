@@ -44,9 +44,9 @@ except ImportError as e:
     SQLiteCache = SQLiteDict = get_placeholder_class(e)  # type: ignore
 
 try:
-    from .filesystem import FileCache, FileDict
+    from .filesystem import FileCache, FileDict, LRUFileDict
 except ImportError as e:
-    FileCache = FileDict = get_placeholder_class(e)  # type: ignore
+    FileCache = FileDict = LRUFileDict = get_placeholder_class(e)  # type: ignore
 
 
 BACKEND_CLASSES = {

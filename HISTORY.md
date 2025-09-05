@@ -20,12 +20,8 @@
 💾 **Backends:**
 * **SQLite:**
   * Use exclusive transaction locks to prevent write contention; replaces retry behavior
-* ***FileSystem:**
-  * Add {py:class}`requests_cache.backends.filesystem.LimitedFileDict` class to optionally limit the `filesystem` cache:
-    * Add `maximum_total_bytes` parameter to limit the total size of the cache
-    * Add `maximum_file_bytes` parameter to limit the size of each file
-    * Add `block_bytes` parameter to set the block size
-  * Add `lock` parameter to specify a custom lock object
+* ***Filesystem:**
+  * Add {py:class}`requests_cache.backends.filesystem.LRUFileDict` class to optionally limit the size of the filesystem cache:
 * **Redis:**
     * For maintenance/inspection methods that iterate over the cache, use `SCAN` and `HSCAN` instead of `KEYS`, `HKEYS`, and `HGETALL`
 * **DynamoDB**
