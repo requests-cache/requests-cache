@@ -134,7 +134,7 @@ session = CachedSession(
     expire_after=timedelta(days=1),    # Otherwise expire responses after one day
     allowable_codes=[200, 400],        # Cache 400 responses as a solemn reminder of your failures
     allowable_methods=['GET', 'POST'], # Cache whatever HTTP methods you want
-    ignored_parameters=['api_key'],    # Don't match this request param, and redact if from the cache
+    ignored_parameters=['api_key'],    # Don't match this request param, and redact it from the cache
     match_headers=['Accept-Language'], # Cache a different response per language
     stale_if_error=True,               # In case of request errors, use stale cache data if possible
 )
