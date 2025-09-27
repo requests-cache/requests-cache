@@ -148,4 +148,4 @@ def livedocs(session):
 @nox.session(python=False)
 def lint(session):
     """Run linters and code formatters via pre-commit"""
-    session.run('pre-commit', 'run', '--all-files')
+    session.run('prek', 'run', '--all-files')

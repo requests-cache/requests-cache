@@ -42,7 +42,7 @@ Next, clone the repository and install dependencies:
 git clone https://github.com/requests-cache/requests-cache.git
 cd requests-cache
 uv sync --frozen --all-extras --all-groups
-uv tool install pre-commit
+uv tool install prek
 ```
 
 `uv` will automatically install python and create a new virtual environment if needed.
@@ -55,24 +55,24 @@ Code linting and formatting tools used include:
 * [mypy](https://mypy.readthedocs.io/en/stable/getting_started.html)
 
 All of these will be run by [GitHub Actions](https://github.com/requests-cache/requests-cache/actions)
-on pull requests. You can also run them locally with [pre-commit](https://github.com/pre-commit/pre-commit):
+on pull requests. You can also run them locally with [prek](https://github.com/j178/prek) (or [pre-commit](https://github.com/pre-commit/pre-commit), if you prefer):
 ```sh
-pre-commit run -a
+prek run -a
 ```
 
 #### Pre-Commit Hooks
 
-Optionally, you can use pre-commit to run linting and formatting on any modified files during a `git commit`:
+Optionally, you can use prek to automatically
 ```sh
-pre-commit install
+prek install
 ```
 
-To disable pre-commit hooks:
+To disable hooks:
 ```sh
-pre-commit uninstall
+prek uninstall
 ```
 
-Running a `pre-commit` hook can save you some time in that it will show you errors immediately rather than waiting for CI
+This can save you some time in that it will show you errors immediately rather than waiting for CI
 jobs to complete, or if you forget to manually run the checks before committing.
 
 ## Testing

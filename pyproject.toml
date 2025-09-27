@@ -76,7 +76,7 @@ dev = [
     'tenacity               ~=8.0',
     'time-machine           ~=2.9; implementation_name != "pypy"',
     'nox                    >=2024.4',
-    'pre-commit             >=3.5',
+    'prek                   >=0.2',
     'rich                   >=10.0',
 ]
 
