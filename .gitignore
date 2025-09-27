@@ -3,6 +3,7 @@ dist/
 downloads/
 example_cache/
 http_cache/
+benchmark_cache/
 scratch
 venv/
 

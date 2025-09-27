@@ -19,7 +19,7 @@ from rich.progress import Progress
 from requests_cache import CachedResponse, CachedSession
 
 BASE_RESPONSE = requests.get('https://httpbin.org/get')
-CACHE_NAME = 'rubbish_bin'
+CACHE_NAME = 'benchmark_cache'
 WARMUP_ITERATIONS = 100
 ITERATIONS = 5000
 MAX_RESPONSE_SIZE = 1024 * 350
@@ -95,6 +95,12 @@ if __name__ == '__main__':
     elif args.backend == 'sqlite-memory':
         args.backend = 'sqlite'
         kwargs = {'use_memory': True}
+    elif args.backend == 'filesystem-lru':
+        args.backend = 'filesystem'
+        kwargs = {
+            'max_cache_bytes': (args.max_size * ITERATIONS) / 2,
+            'block_size': 4096,
+        }
 
     session = CachedSession(
         CACHE_NAME,

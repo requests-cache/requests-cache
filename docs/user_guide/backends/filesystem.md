@@ -73,6 +73,7 @@ Example with all LRU-related options:
 ...       maximum_cache_bytes=200*1024*1024, # 200MB
 ...       maximum_file_bytes=50*1024*1024,   # 50MB
 ...       block_bytes=4096,                  # 4KB blocks
+...       sync_index=True,                   # Check for manual changes on disk since last use
 ... )
 ```
 ```
