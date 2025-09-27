@@ -45,19 +45,19 @@ YAML files (requires `pyyaml`):
 ```
 
 ## Limiting Cache Size
-If you want to limit the size of the cache, you can enable LRU caching with the `maximum_cache_bytes` option:
+If you want to limit the size of the cache, you can enable LRU caching with the `max_cache_bytes` option:
 
 ```python
 >>> session = CachedSession(
 ...     '~/http_cache',
 ...       backend='filesystem',
-...       maximum_cache_bytes=200*1024*1024, # 200MB
+...       max_cache_bytes=200*1024*1024, # 200MB
 ... )
 ```
 
 When the cache reaches the specified size, the least recently used file(s) will be deleted until the cache is back under the limit.
 
-Files larger than this will not be cached. To reduce the size limit for individual files, use the `maximum_file_bytes` option.
+Files larger than this will not be cached. To reduce the size limit for individual files, use the `max_file_bytes` option.
 
 ```{note}
 Note on accurate file size tracking: Files on disk are stored in blocks, so the actual size on disk may be larger than the raw file size. To ensure that the real disk usage stays below the maximum, you can set the `block_bytes` parameter to the block size of your filesystem. 4KB is a common size, for example, so you could set `block_bytes=4096`.
@@ -70,10 +70,10 @@ Example with all LRU-related options:
 >>> session = CachedSession(
 ...     '~/http_cache',
 ...       backend='filesystem',
-...       maximum_cache_bytes=200*1024*1024, # 200MB
-...       maximum_file_bytes=50*1024*1024,   # 50MB
-...       block_bytes=4096,                  # 4KB blocks
-...       sync_index=True,                   # Check for manual changes on disk since last use
+...       max_cache_bytes=200*1024*1024, # 200MB
+...       max_file_bytes=50*1024*1024,   # 50MB
+...       block_bytes=4096,              # 4KB blocks
+...       sync_index=True,               # Check for manual changes on disk since last use
 ... )
 ```
 ```

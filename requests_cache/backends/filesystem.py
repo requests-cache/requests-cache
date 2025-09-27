@@ -33,16 +33,16 @@ class FileCache(BaseCache):
         decode_content: Decode JSON or text response body into a human-readable format
         extension: Extension for cache files. If not specified, the serializer default extension
             will be used.
-        maximum_cache_bytes: Enable LRU caching, and set the maximum total size (in bytes) of cached
+        max_cache_bytes: Enable LRU caching, and set the maximum total size (in bytes) of cached
             responses on the file system.
-        maximum_file_bytes: The maximum size of a single file.
-            By default, this is the same as ``maximum_cache_bytes``.
-            Only used if ``maximum_cache_bytes`` is set.
+        max_file_bytes: The maximum size of a single file.
+            By default, this is the same as ``max_cache_bytes``.
+            Only used if ``max_cache_bytes`` is set.
         block_bytes: The size of a block of data on the file system, which will be used when
-            computing total file size on disk. Only used if ``maximum_cache_bytes`` is set.
+            computing total file size on disk. Only used if ``max_cache_bytes`` is set.
         sync_index: On startup, sync LRU metadata with any changes on disk since last use. Use this
             if you intend to modify cache files outside of requests-cache. Leave off to reduce
-            startup time for larger caches. Only used if ``maximum_cache_bytes`` is set.
+            startup time for larger caches. Only used if ``max_cache_bytes`` is set.
         lock: Replace the default :class:`threading.RLock` object without your own. Use this if you
             want to share the lock between multiple cache instances, and/or use a different lock
             type (such as :py:class:`multiprocessing.RLock` or :py:class:`filelock.FileLock`).
@@ -58,7 +58,7 @@ class FileCache(BaseCache):
     ):
         super().__init__(cache_name=str(cache_name), **kwargs)
         skwargs = {'serializer': serializer, **kwargs} if serializer else kwargs
-        self.responses: FileDict = (LRUFileDict if 'maximum_cache_bytes' in kwargs else FileDict)(
+        self.responses: FileDict = (LRUFileDict if 'max_cache_bytes' in kwargs else FileDict)(
             cache_name, use_temp=use_temp, decode_content=decode_content, **skwargs
         )
         with self.lock:
@@ -184,9 +184,9 @@ class LRUFileDict(FileDict):
     Args:
         block_bytes: The size of a block of data on the file system.
             File sizes will be aligned with this.
-        maximum_cache_bytes: The maximum total size of all files in the cache.
-        maximum_file_bytes: The maximum size of a single file.
-            By default, this is the same as ``maximum_cache_bytes``.
+        max_cache_bytes: The maximum total size of all files in the cache.
+        max_file_bytes: The maximum size of a single file.
+            By default, this is the same as ``max_cache_bytes``.
         sync_index: Check for filesystem changes since last use. Use this if you intend to modify
             cache files outside of requests-cache. Leave off to reduce startup time for larger caches.
     """
@@ -201,17 +201,15 @@ class LRUFileDict(FileDict):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.maximum_cache_bytes = maximum_cache_bytes
+        self.max_cache_bytes = max_cache_bytes
         self.block_bytes = block_bytes
-        self.maximum_file_bytes = maximum_file_bytes or maximum_cache_bytes
-        if self.maximum_file_bytes > self.maximum_cache_bytes:
+        self.max_file_bytes = max_file_bytes or max_cache_bytes
+        if self.max_file_bytes > self.max_cache_bytes:
             raise ValueError(
-                f'maximum_file_bytes must be smaller or equal to maximum_cache_bytes ({maximum_cache_bytes})'
+                f'max_file_bytes must be smaller or equal to max_cache_bytes ({max_cache_bytes})'
             )
-        if self.block_bytes > self.maximum_file_bytes:
-            raise ValueError(
-                f'block_bytes must be smaller than maximum_file_bytes ({maximum_file_bytes})'
-            )
+        if self.block_bytes > self.max_file_bytes:
+            raise ValueError(f'block_bytes must be smaller than max_file_bytes ({max_file_bytes})')
         if self.block_bytes < 1:
             raise ValueError(f'block_bytes must be greater than 0, not {block_bytes}')
 
@@ -243,9 +241,9 @@ class LRUFileDict(FileDict):
         del content
         file_size = self._get_size_on_disk(len(data))
 
-        if file_size > self.maximum_file_bytes:
+        if file_size > self.max_file_bytes:
             logger.debug(
-                f'Not caching {key!r} because it is larger than {self.maximum_file_bytes} bytes.'
+                f'Not caching {key!r} because it is larger than {self.max_file_bytes} bytes.'
             )
             return
 
