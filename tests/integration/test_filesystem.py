@@ -195,14 +195,39 @@ class TestLRUFileDict(TestFileDict):
         assert 'key_0' not in lfd.keys(), 'File key_0 should be dropped because it is the last one.'
 
     def test_evict__already_deleted(self):
+        """Test behahior when a file is being evicted but has already been (manually) deleted on disk"""
+        lfd = self.init_cache(maximum_cache_bytes=1000, plaintext=True)
+        lfd['key_0'] = '0' * 500
+        sleep(0.01)
+        lfd['key_1'] = '0' * 500
+
+        # Manually delete file, so LRU index is now out of sync
+        os.unlink(lfd._key2path('key_0'))
+        assert 'key_0' not in lfd.keys()
+
+        # Adding this key should trigger eviction
+        lfd['key_2'] = '0' * 500
+        assert len(lfd) == 2
+        assert len(lfd.lru_index) == 2
+        assert 'key_0' not in lfd.lru_index
+
+    def test_sync_index(self):
+        """With sync_index=True, the LRU index should be updated on init for any manual file changes."""
         lfd = self.init_cache(maximum_cache_bytes=1000, plaintext=True)
         lfd['key_0'] = '0' * 100
         sleep(0.01)
         lfd['key_1'] = '0' * 100
+
+        # Manually delete a file outside of cache interface
         os.unlink(lfd._key2path('key_0'))
-        assert 'key_0' not in lfd.keys()
+
+        # Index should be updated on init
+        lfd = self.init_cache(
+            maximum_cache_bytes=1000, sync_index=True, plaintext=True, clear=False
+        )
         lfd._evict(100)
         assert len(lfd) == 1
+        assert len(lfd.lru_index) == 1
 
     def test_large_file_evicts_all(self):
         """If we add a big file, we should delete everything."""
@@ -376,6 +401,43 @@ class TestLRUDict:
         assert cache.get_lru(total_size=501) == ['key0', 'key2', 'key3', 'key1']
         assert cache.get_lru(total_size=600) == ['key0', 'key2', 'key3', 'key1']
         assert cache.get_lru(total_size=700) == ['key0', 'key2', 'key3', 'key1']
+
+    @pytest.mark.parametrize(
+        ('sort_key', 'reversed_order', 'limit', 'expected'),
+        [
+            # Sort by access_time (default)
+            ('access_time', False, None, ['key1', 'key2', 'key3']),
+            ('access_time', True, None, ['key3', 'key2', 'key1']),
+            ('access_time', False, 2, ['key1', 'key2']),
+            ('access_time', True, 2, ['key3', 'key2']),
+            # Sort by size
+            ('size', False, None, ['key1', 'key2', 'key3']),
+            ('size', True, None, ['key3', 'key2', 'key1']),
+            ('size', False, 2, ['key1', 'key2']),
+            # Sort by key (alphabetical)
+            ('key', False, None, ['key1', 'key2', 'key3']),
+            ('key', True, None, ['key3', 'key2', 'key1']),
+        ],
+    )
+    def test_sorted(self, sort_key, reversed_order, limit, expected):
+        cache = self.init_cache()
+
+        # Add items with different sizes and access times
+        cache['key1'] = 100
+        sleep(0.001)
+        cache['key2'] = 200
+        sleep(0.001)
+        cache['key3'] = 300
+
+        result = list(cache.sorted(key=sort_key, reversed=reversed_order, limit=limit))
+        assert result == expected
+
+    def test_sorted__invalid_key(self):
+        cache = self.init_cache()
+        cache['key1'] = 100
+
+        with pytest.raises(ValueError, match='Invalid sort key: invalid'):
+            list(cache.sorted(key='invalid'))
 
     def test_total_size(self):
         """Test that total cache size is tracked correctly"""

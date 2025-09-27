@@ -40,6 +40,9 @@ class FileCache(BaseCache):
             Only used if ``maximum_cache_bytes`` is set.
         block_bytes: The size of a block of data on the file system, which will be used when
             computing total file size on disk. Only used if ``maximum_cache_bytes`` is set.
+        sync_index: On startup, sync LRU metadata with any changes on disk since last use. Use this
+            if you intend to modify cache files outside of requests-cache. Leave off to reduce
+            startup time for larger caches. Only used if ``maximum_cache_bytes`` is set.
         lock: Replace the default :class:`threading.RLock` object without your own. Use this if you
             want to share the lock between multiple cache instances, and/or use a different lock
             type (such as :py:class:`multiprocessing.RLock` or :py:class:`filelock.FileLock`).
@@ -184,6 +187,8 @@ class LRUFileDict(FileDict):
         maximum_cache_bytes: The maximum total size of all files in the cache.
         maximum_file_bytes: The maximum size of a single file.
             By default, this is the same as ``maximum_cache_bytes``.
+        sync_index: Check for filesystem changes since last use. Use this if you intend to modify
+            cache files outside of requests-cache. Leave off to reduce startup time for larger caches.
     """
 
     def __init__(
@@ -192,6 +197,7 @@ class LRUFileDict(FileDict):
         block_bytes: int = 1,
         max_cache_bytes: int = 100 * 1024 * 1024,  # 100MB
         max_file_bytes: Optional[int] = None,
+        sync_index: bool = False,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
@@ -210,6 +216,10 @@ class LRUFileDict(FileDict):
             raise ValueError(f'block_bytes must be greater than 0, not {block_bytes}')
 
         self.lru_index = LRUDict(self.cache_dir / 'lru.db', 'lru', **kwargs)
+        # Rebuild LRU index if explicitly asked,
+        # or for a new cache (potentially with existing files but no metadata)
+        if sync_index or len(self.lru_index) == 0:
+            self._sync_lru_index()
 
     def __getitem__(self, key):
         """Get a value and update its access time in the LRU index"""
@@ -279,6 +289,14 @@ class LRUFileDict(FileDict):
                 del self[key]
             except KeyError:
                 pass
+
+    def _sync_lru_index(self):
+        """Rebuild the LRU index from files on disk"""
+        with self._lock:
+            self.lru_index.clear()
+            for path in self.paths():
+                key = path.stem
+                self.lru_index[key] = self._get_size_on_disk(path.stat().st_size)
 
     def _get_size_on_disk(self, file_size: int) -> int:
         """Return a file size on disk, rounded up to fit the blocks on the file system"""
