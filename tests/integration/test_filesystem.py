@@ -89,7 +89,7 @@ class TestLRUFileDict(TestFileDict):
         self,
         index=0,
         clear=True,
-        maximum_cache_bytes=10000,
+        max_cache_bytes=10000,
         block_bytes=1,
         plaintext=False,
         **kwargs,
@@ -106,7 +106,7 @@ class TestLRUFileDict(TestFileDict):
         cache = self.storage_class(
             f'{CACHE_NAME}_{index}',
             use_temp=True,
-            maximum_cache_bytes=maximum_cache_bytes,
+            max_cache_bytes=max_cache_bytes,
             block_bytes=block_bytes,
             **kwargs,
         )
@@ -119,8 +119,8 @@ class TestLRUFileDict(TestFileDict):
         """This block size is invalid."""
         with pytest.raises(ValueError):
             self.init_cache(
-                maximum_file_bytes=100,
-                maximum_cache_bytes=100,
+                max_file_bytes=100,
+                max_cache_bytes=100,
                 block_bytes=block_bytes,
             )
 
@@ -128,15 +128,15 @@ class TestLRUFileDict(TestFileDict):
         """Cannot have file size greater than maximum cache size."""
         with pytest.raises(ValueError):
             self.init_cache(
-                maximum_file_bytes=1000,
-                maximum_cache_bytes=100,
+                max_file_bytes=1000,
+                max_cache_bytes=100,
                 block_bytes=100,
             )
 
-    def test_init__maximum_file_bytes_defaults_to_max_size(self):
+    def test_init__max_file_bytes_defaults_to_max_size(self):
         """The argument is initialized properly."""
-        lfd = self.init_cache(maximum_cache_bytes=100, block_bytes=100)
-        assert lfd.maximum_file_bytes == lfd.maximum_cache_bytes == 100
+        lfd = self.init_cache(max_cache_bytes=100, block_bytes=100)
+        assert lfd.max_file_bytes == lfd.max_cache_bytes == 100
 
     def test_init__shared_lock(self):
         """Test passing the lock parameter."""
@@ -165,11 +165,11 @@ class TestLRUFileDict(TestFileDict):
         del lfd['key']
         assert 'key' not in lfd2
 
-    @pytest.mark.parametrize('maximum_cache_bytes', [1000, 10000])
-    def test_do_not_store_files_too_big(self, maximum_cache_bytes: int):
+    @pytest.mark.parametrize('max_cache_bytes', [1000, 10000])
+    def test_do_not_store_files_too_big(self, max_cache_bytes: int):
         """If a file is too big, it should not be cached at all."""
-        lfd = self.init_cache(maximum_cache_bytes=maximum_cache_bytes)
-        file_content = '0' * (maximum_cache_bytes + 1)
+        lfd = self.init_cache(max_cache_bytes=max_cache_bytes)
+        file_content = '0' * (max_cache_bytes + 1)
         lfd['key'] = file_content
         assert 'key' not in lfd.keys()
 
@@ -179,9 +179,9 @@ class TestLRUFileDict(TestFileDict):
 
         After adding, the least recently used files are removed.
         """
-        maximum_cache_bytes = 1000
-        lfd = self.init_cache(maximum_cache_bytes=maximum_cache_bytes, plaintext=True)
-        file_content = '0' * (maximum_cache_bytes // files_on_disk)
+        max_cache_bytes = 1000
+        lfd = self.init_cache(max_cache_bytes=max_cache_bytes, plaintext=True)
+        file_content = '0' * (max_cache_bytes // files_on_disk)
         for i in range(files_on_disk):
             lfd[f'key_{i}'] = file_content
         assert len(list(lfd.paths())) == files_on_disk, (
@@ -196,7 +196,7 @@ class TestLRUFileDict(TestFileDict):
 
     def test_evict__already_deleted(self):
         """Test behahior when a file is being evicted but has already been (manually) deleted on disk"""
-        lfd = self.init_cache(maximum_cache_bytes=1000, plaintext=True)
+        lfd = self.init_cache(max_cache_bytes=1000, plaintext=True)
         lfd['key_0'] = '0' * 500
         sleep(0.01)
         lfd['key_1'] = '0' * 500
@@ -213,7 +213,7 @@ class TestLRUFileDict(TestFileDict):
 
     def test_sync_index(self):
         """With sync_index=True, the LRU index should be updated on init for any manual file changes."""
-        lfd = self.init_cache(maximum_cache_bytes=1000, plaintext=True)
+        lfd = self.init_cache(max_cache_bytes=1000, plaintext=True)
         lfd['key_0'] = '0' * 100
         sleep(0.01)
         lfd['key_1'] = '0' * 100
@@ -222,16 +222,14 @@ class TestLRUFileDict(TestFileDict):
         os.unlink(lfd._key2path('key_0'))
 
         # Index should be updated on init
-        lfd = self.init_cache(
-            maximum_cache_bytes=1000, sync_index=True, plaintext=True, clear=False
-        )
+        lfd = self.init_cache(max_cache_bytes=1000, sync_index=True, plaintext=True, clear=False)
         lfd._evict(100)
         assert len(lfd) == 1
         assert len(lfd.lru_index) == 1
 
     def test_large_file_evicts_all(self):
         """If we add a big file, we should delete everything."""
-        lfd = self.init_cache(maximum_cache_bytes=1000, plaintext=True)
+        lfd = self.init_cache(max_cache_bytes=1000, plaintext=True)
         for i in range(100):
             lfd[f'key_{i}'] = '1' * 10
         lfd['big_file'] = '0' * 1000
@@ -308,11 +306,11 @@ class TestLRUFileDict(TestFileDict):
         del block_lfd['key2']
         assert block_lfd.size() == 0
 
-    @pytest.mark.parametrize('maximum_cache_bytes', [5, 6, 7, 8, 9])
-    def test_clear_with_unaligned_blocks(self, maximum_cache_bytes):
+    @pytest.mark.parametrize('max_cache_bytes', [5, 6, 7, 8, 9])
+    def test_clear_with_unaligned_blocks(self, max_cache_bytes):
         lfd = self.init_cache(
-            maximum_file_bytes=5,
-            maximum_cache_bytes=maximum_cache_bytes,
+            max_file_bytes=5,
+            max_cache_bytes=max_cache_bytes,
             block_bytes=5,
         )
         lfd.clear()
@@ -527,15 +525,15 @@ class TestFileCache(BaseCacheTest):
         # Redirects db should be in the same directory as response files
         assert session.cache.redirects.db_path.parent == session.cache.responses.cache_dir
 
-    @pytest.mark.parametrize('maximum_cache_bytes', [1000, 10000])
+    @pytest.mark.parametrize('max_cache_bytes', [1000, 10000])
     @pytest.mark.parametrize('files_on_disk', [3, 100])
-    def test_drop_oldest_files(self, maximum_cache_bytes, files_on_disk):
+    def test_drop_oldest_files(self, max_cache_bytes, files_on_disk):
         """Check that the files are added up to the size.
 
         After adding, the first ones are dropped.
         """
-        file_content = '0' * (maximum_cache_bytes // files_on_disk - 2)  # remove UTF8 BOM
-        session = self.init_session(maximum_cache_bytes=maximum_cache_bytes, block_bytes=1)
+        file_content = '0' * (max_cache_bytes // files_on_disk - 2)  # remove UTF8 BOM
+        session = self.init_session(max_cache_bytes=max_cache_bytes, block_bytes=1)
         for i in range(files_on_disk):
             session.cache.responses[f'key_{i}'] = file_content
         assert len(list(session.cache.paths())) == files_on_disk, (
@@ -548,19 +546,17 @@ class TestFileCache(BaseCacheTest):
             'File key_0 should be dropped because it is the last one.'
         )
 
-    @pytest.mark.parametrize('maximum_size_on_disk', [1000, 10000])
-    def test_do_not_store_files_too_big(self, maximum_size_on_disk):
+    @pytest.mark.parametrize('max_size_on_disk', [1000, 10000])
+    def test_do_not_store_files_too_big(self, max_size_on_disk):
         """If a file is too big, it should not be cached at all."""
-        file_content = '0' * (maximum_size_on_disk + 1)
-        session = self.init_session(maximum_cache_bytes=maximum_size_on_disk, block_bytes=1)
+        file_content = '0' * (max_size_on_disk + 1)
+        session = self.init_session(max_cache_bytes=max_size_on_disk, block_bytes=1)
         session.cache.responses['key'] = file_content
         assert 'key' not in session.cache.responses.keys()
 
     def test_size(self):
         """Check that the total bytes are summed up if files are added."""
-        session = self.init_session(
-            maximum_cache_bytes=100, block_bytes=1, serializer=utf8_serializer
-        )
+        session = self.init_session(max_cache_bytes=100, block_bytes=1, serializer=utf8_serializer)
         start_bytes = session.cache.responses.size()
         session.cache.responses['key_1'] = 'value_1'
         assert session.cache.responses.size() == start_bytes + len('value_1')
