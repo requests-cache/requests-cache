@@ -32,7 +32,7 @@ LIVE_DOCS_WATCH = ['requests_cache', 'examples']
 DOCS_DIR = Path('docs')
 DOC_BUILD_DIR = DOCS_DIR / '_build' / 'html'
 TEST_DIR = Path('tests')
-CLEAN_DIRS = ['dist', 'build', DOCS_DIR / '_build', DOCS_DIR / 'modules']
+CLEAN_DIRS = ['dist', 'build', DOCS_DIR / '_build', DOCS_DIR / 'modules', Path('test-reports')]
 
 PYTHON_VERSIONS = ['3.13', '3.12', '3.11', '3.10', '3.9', '3.8', 'pypy3.9', 'pypy3.10']
 UNIT_TESTS = TEST_DIR / 'unit'
