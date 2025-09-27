@@ -141,7 +141,7 @@ class BaseStorageTest:
         assert obj.int_attr == original_obj.int_attr
         assert obj.str_attr == original_obj.str_attr
 
-    def test_clear_and_work_again(self):
+    def test_clear(self):
         cache_1 = self.init_cache()
         cache_2 = self.init_cache(connection=getattr(cache_1, 'connection', None))
 
@@ -155,6 +155,12 @@ class BaseStorageTest:
         assert len(cache_1) == len(cache_2) == 0
         assert not cache_1 and not cache_2
         assert list(cache_1.keys()) == list(cache_2.keys()) == []
+
+    def test_clear_empty_cache(self):
+        cache = self.init_cache()
+        cache.clear()
+        assert len(cache) == 0
+        assert list(cache.keys()) == []
 
     def test_same_settings(self):
         cache_1 = self.init_cache()
