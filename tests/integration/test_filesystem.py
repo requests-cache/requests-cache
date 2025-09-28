@@ -528,9 +528,9 @@ class TestFileCache(BaseCacheTest):
     @pytest.mark.parametrize('max_cache_bytes', [1000, 10000])
     @pytest.mark.parametrize('files_on_disk', [3, 100])
     def test_drop_oldest_files(self, max_cache_bytes, files_on_disk):
-        """Check that the files are added up to the size.
+        """Check that responses are added up to the max size.
 
-        After adding, the first ones are dropped.
+        After adding, the least recently used ones are dropped.
         """
         file_content = '0' * (max_cache_bytes // files_on_disk - 2)  # remove UTF8 BOM
         session = self.init_session(max_cache_bytes=max_cache_bytes, block_bytes=1)

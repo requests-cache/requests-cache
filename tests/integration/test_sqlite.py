@@ -10,7 +10,7 @@ from unittest.mock import patch
 import pytest
 from platformdirs import user_cache_dir
 
-from requests_cache.backends import BaseCache, SQLiteCache, SQLiteDict
+from requests_cache.backends import BaseCache, LRUSQLiteDict, SQLiteCache, SQLiteDict
 from requests_cache.backends.sqlite import MEMORY_URI
 from requests_cache.models import CachedResponse
 from requests_cache.policy import utcnow
@@ -311,6 +311,13 @@ class TestSQLiteDict(BaseStorageTest):
         assert 10000 < cache.size() < 200000
 
 
+class TestLRUSQLiteDict(TestSQLiteDict):
+    storage_class = LRUSQLiteDict
+    init_kwargs = {'use_temp': True}
+    # TODO: tests for LRUSQLiteDict; see TestLRUFileDict + TestLRUDict in test_filesystem.py
+    #   for examples, but adapt to differences in LRUSQLiteDict
+
+
 class TestSQLiteCache(BaseCacheTest):
     backend_class = SQLiteCache
     init_kwargs = {'use_temp': True}
@@ -412,3 +419,14 @@ class TestSQLiteCache(BaseCacheTest):
             assert prev_item is None or prev_item.expires < item.expires
             assert item.cache_key
             assert not item.is_expired
+
+    # TODO
+    def test_drop_oldest_files(self):
+        """Check that responses are added up to the max size.
+
+        After adding, the least recently used ones are dropped.
+        """
+
+    # TODO
+    def test_do_not_store_files_too_big(self, max_size_on_disk):
+        """If a file is too big, it should not be cached at all."""
