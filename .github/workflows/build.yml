@@ -83,7 +83,7 @@ jobs:
         with:
           python-version: ${{ env.LATEST_PY_VERSION }}
       - name: Run style checks & linting
-        uses: pre-commit/action@1b06ec171f2f6faa71ed760c4042bd969e4f8b43
+        uses: j178/prek-action@58823ed88dcaae7bcfdea0cb7366af30ac510fe7
       - name: Scan dependencies for known vulnerabilities
         uses: pypa/gh-action-pip-audit@v1.1.0
         with:
