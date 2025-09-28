@@ -13,7 +13,7 @@ from os import unlink
 from os.path import getsize, isfile
 from pathlib import Path
 from tempfile import gettempdir
-from time import sleep, time
+from time import sleep, time, time_ns
 from typing import Collection, Iterator, List, Optional, Tuple, Type
 
 from platformdirs import user_cache_dir
@@ -46,6 +46,8 @@ class SQLiteCache(BaseCache):
             loss. See `pragma: synchronous <https://www.sqlite.org/pragma.html#pragma_synchronous>`_
             for details.
         wal: Use `Write Ahead Logging <https://sqlite.org/wal.html>`_, so readers do not block writers.
+        max_cache_bytes: Enable LRU caching, and set the maximum total size (in bytes) of cached
+            responses on the file system.
         kwargs: Additional keyword arguments for :py:func:`sqlite3.connect`
     """
 
@@ -58,7 +60,9 @@ class SQLiteCache(BaseCache):
         super().__init__(cache_name=str(db_path), **kwargs)
         # Only override serializer if a non-None value is specified
         skwargs = {'serializer': serializer, **kwargs} if serializer else kwargs
-        self.responses: SQLiteDict = SQLiteDict(db_path, table_name='responses', **skwargs)
+        self.responses: SQLiteDict = (LRUSQLiteDict if 'max_cache_bytes' in kwargs else SQLiteDict)(
+            db_path, table_name='responses', **skwargs
+        )
         self.redirects: SQLiteDict = SQLiteDict(
             db_path,
             table_name='redirects',
@@ -449,6 +453,125 @@ class SQLiteDict(BaseStorage):
     def vacuum(self):
         with self.connection(commit=True) as con:
             con.execute('VACUUM')
+
+
+class LRUSQLiteDict(SQLiteDict):
+    def __init__(
+        self,
+        *args,
+        max_cache_bytes: int = 100 * 1024 * 1024,  # 100MB
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self.max_cache_bytes = max_cache_bytes
+
+    def init_db(self):
+        """Initialize the database, if it hasn't already been"""
+        self.close()
+        with self.connection(commit=True) as con:
+            # Extend an existing SQLiteDict table with LRU metadata
+            try:
+                con.execute(f'ALTER TABLE {self.table_name} ADD COLUMN access_time INTEGER')
+                con.execute(f'ALTER TABLE {self.table_name} ADD COLUMN size INTEGER')
+            except sqlite3.OperationalError:
+                pass
+
+            con.execute(
+                f'CREATE TABLE IF NOT EXISTS {self.table_name} ('
+                '    key TEXT PRIMARY KEY,'
+                '    value BLOB,'
+                '    expires INTEGER,'
+                '    access_time INTEGER,'
+                '    size INTEGER'
+                ')'
+            )
+            con.execute(f'CREATE INDEX IF NOT EXISTS expires_idx ON {self.table_name}(expires)')
+            con.execute(
+                f'CREATE INDEX IF NOT EXISTS idx_access_time ON {self.table_name}(access_time)'
+            )
+            con.execute(f'CREATE INDEX IF NOT EXISTS idx_size ON {self.table_name}(size)')
+
+    def __getitem__(self, key):
+        with self.connection() as con:
+            row = con.execute(f"SELECT value FROM {self.table_name} WHERE key='{key}'").fetchone()
+            if not row:
+                raise KeyError(key)
+            value = row[0]
+
+        self._update_access_time(key)
+        return self.deserialize(key, value)
+
+    def _update_access_time(self, key: str):
+        """Update the given key with the current timestamp
+
+        Raises:
+            KeyError: If the key doesn't exist in the LRU index
+        """
+        timestamp = int(time_ns())
+        with self.connection(commit=True) as con:
+            cur = con.execute(
+                f'UPDATE {self.table_name} SET access_time = ? WHERE key = ?',
+                (timestamp, key),
+            )
+        if not cur.rowcount:
+            raise KeyError(key)
+
+    def __setitem__(self, key, value):
+        """Save a value, and evict items to make space if needed"""
+
+        # If available, set expiration as a timestamp in unix format
+        expires = getattr(value, 'expires_unix', None)
+        timestamp = int(time_ns())
+        value = self.serialize(value)
+        size = len(value)
+
+        if size > self.max_cache_bytes:
+            logger.debug(
+                f'Not caching {key!r} because it is larger than {self.max_cache_bytes} bytes.'
+            )
+            return
+
+        # TODO: take into account existing size if any; evict(new_size-old_size)
+        self._evict(size)
+
+        with self.connection(commit=True) as con:
+            con.execute(
+                f'INSERT OR REPLACE INTO {self.table_name} (key, value, expires, access_time, size) VALUES (?, ?, ?, ?, ?)',
+                (key, value, expires, timestamp, size),
+            )
+
+    def _evict(self, desired_free_bytes: int):
+        """Make space in the cache to fit the given number of bytes, if needed.
+
+        This starts deleting the least recently used entries first.
+        """
+        current_size = self.size()
+        space_needed = current_size + desired_free_bytes - self.max_cache_bytes
+        if space_needed <= 0:
+            return
+
+        # Get LRU keys to evict based on how much space we need
+        keys_to_evict = self.get_lru(space_needed)
+        self.bulk_delete(keys_to_evict)
+
+    def get_lru(self, total_size: int):
+        """Get the least recently used keys with a combined size >= total_size"""
+
+        with self.connection() as con:
+            cur = con.execute(
+                f"""
+                WITH ordered AS (
+                    SELECT key, size, access_time, SUM(size) OVER (ORDER BY access_time) AS running_total
+                    FROM {self.table_name}
+                )
+                SELECT * FROM ordered WHERE running_total - size < ?
+                ORDER BY access_time;
+                """,
+                (total_size,),
+            )
+            rows = cur.fetchall()
+            cur.close()
+            return [row[0] for row in rows]
 
 
 def _format_sequence(values: Collection) -> Tuple[str, List]:
