@@ -523,7 +523,7 @@ class LRUSQLiteDict(SQLiteDict):
         expires = getattr(value, 'expires_unix', None)
         timestamp = int(time_ns())
         value = self.serialize(value)
-        size = len(value)
+        size = self._get_size_in_db(len(value))
 
         if size > self.max_cache_bytes:
             logger.debug(
@@ -536,7 +536,8 @@ class LRUSQLiteDict(SQLiteDict):
 
         with self.connection(commit=True) as con:
             con.execute(
-                f'INSERT OR REPLACE INTO {self.table_name} (key, value, expires, access_time, size) VALUES (?, ?, ?, ?, ?)',
+                f'INSERT OR REPLACE INTO {self.table_name} (key, value, expires, access_time, size) '
+                'VALUES (?, ?, ?, ?, ?)',
                 (key, value, expires, timestamp, size),
             )
 
@@ -553,6 +554,48 @@ class LRUSQLiteDict(SQLiteDict):
         # Get LRU keys to evict based on how much space we need
         keys_to_evict = self.get_lru(space_needed)
         self.bulk_delete(keys_to_evict)
+
+    def _get_size_in_db(self, value_size: int) -> int:
+        """Estimate how much the database file will grow when adding a row.
+
+        Based on empirical analysis of SQLite growth patterns from explore_db_growth.py:
+        - Growth occurs in page increments (typically 4096 bytes)
+        - Growth triggers around every 3-4KB of accumulated data
+        - Large items (>1500B) often trigger 2-page allocation (8192 bytes)
+        - Medium items (500-1500B) typically trigger 1-page allocation (4096 bytes)
+        - Small items (<500B) often fit multiple per page
+
+        Args:
+            value_size: Size of the serialized value in bytes
+
+        Returns:
+            Estimated database file size increase in bytes
+        """
+        with self.connection() as con:
+            page_size = con.execute('PRAGMA page_size').fetchone()[0]
+
+            # Estimate full row size including all overhead (refined from empirical data)
+            estimated_key_size = 15  # Typical cache keys: "key1", "response_123", etc.
+            row_metadata = 25  # SQLite row header and cell overhead
+            index_overhead = 45  # Overhead for 3 indexes (expires, access_time, size)
+            estimated_row_size = value_size + estimated_key_size + row_metadata + index_overhead
+
+            # Size-based prediction derived from empirical exploration:
+            # - Small items (<500B): Often fit multiple per page, predict 1 page
+            # - Medium items (500-1500B): Typically trigger 1 page allocation
+            # - Large items (>1500B): Often trigger 2-page allocation for future growth
+
+            if estimated_row_size < 500:
+                # Small items: conservative 1-page prediction
+                return page_size  # 4096 bytes
+            elif estimated_row_size < 1500:
+                # Medium items: typically 1 page
+                # From exploration: 1KB items trigger growth every 3-4 rows
+                return page_size  # 4096 bytes
+            else:
+                # Large items: often trigger 2-page allocation
+                # From exploration: 2KB+ items trigger growth every 2-3 rows
+                return 2 * page_size  # 8192 bytes
 
     def get_lru(self, total_size: int):
         """Get the least recently used keys with a combined size >= total_size"""

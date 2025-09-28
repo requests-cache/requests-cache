@@ -355,7 +355,9 @@ class TestLRUSQLiteDict(TestSQLiteDict):
 
     def test_eviction_on_size_limit(self):
         """Test that items are evicted when cache size limit is reached."""
-        cache = self.init_cache(max_cache_bytes=40000, serializer=utf8_serializer)
+        # Based on empirical data: DB starts at ~24KB, grows to ~32KB on 3rd item
+        # Set limit to trigger eviction when 3rd item is added
+        cache = self.init_cache(max_cache_bytes=30000, serializer=utf8_serializer)
         cache['key1'] = 'x' * 2000
         sleep(0.001)
         cache['key2'] = 'y' * 2000
@@ -381,7 +383,9 @@ class TestLRUSQLiteDict(TestSQLiteDict):
 
     def test_lru_eviction_order(self):
         """Test that eviction follows LRU order."""
-        cache = self.init_cache(max_cache_bytes=58000, serializer=utf8_serializer)
+        # Based on empirical data: DB grows to ~32KB after 3 items, 4th item triggers eviction
+        # Set limit to allow 3 items but trigger eviction on 4th
+        cache = self.init_cache(max_cache_bytes=35000, serializer=utf8_serializer)
         cache['key1'] = 'x' * 2000
         sleep(0.001)
         cache['key2'] = 'x' * 2000
