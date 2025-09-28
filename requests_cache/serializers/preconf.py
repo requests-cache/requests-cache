@@ -5,6 +5,7 @@
    :nosignatures:
 """
 
+import base64
 import json
 import pickle
 from functools import partial
@@ -15,11 +16,24 @@ from .cattrs import CattrStage, _convert_floats, make_decimal_timedelta_converte
 from .pipeline import SerializerPipeline, Stage
 
 
-def make_stage(preconf_module: str, **kwargs):
-    """Create a preconf serializer stage from a module name, if dependencies are installed"""
+def make_stage(preconf_module: str, b64: bool = False, **kwargs):
+    """Create a preconf serializer stage from a module name, if dependencies are installed.
+
+    For JSON converters, force base64 encoding; cattrs defaults to base85, which
+    (in the cpython implementation) has poor memory performance with large objects.
+    """
     try:
         factory = import_module(preconf_module).make_converter
-        return CattrStage(factory, **kwargs)
+        stage = CattrStage(factory, **kwargs)
+        if b64:
+            # Override the default bytes hooks to use base64 encoding instead of base85
+            stage.converter.register_unstructure_hook(
+                bytes, lambda v: base64.b64encode(v).decode() if v else None
+            )
+            stage.converter.register_structure_hook(
+                bytes, lambda v, _: base64.b64decode(v.encode()) if v else b''
+            )
+        return stage
     except ImportError as e:
         return get_placeholder_class(e)
 
@@ -30,13 +44,13 @@ utf8_encoder = Stage(dumps=str.encode, loads=lambda x: x.decode())  #: Encode to
 utf8_serializer = SerializerPipeline([utf8_encoder], 'utf8', is_binary=True)  #: Encode to bytes
 bson_preconf_stage = make_stage(
     'cattr.preconf.bson', convert_datetime=False
-)  #: Pre-serialization steps for BSON
-json_preconf_stage = make_stage('cattr.preconf.json')  #: Pre-serialization steps for JSON
-msgpack_preconf_stage = make_stage('cattr.preconf.msgpack')  #: Pre-serialization steps for msgpack
-orjson_preconf_stage = make_stage('cattr.preconf.orjson')  #: Pre-serialization steps for orjson
-toml_preconf_stage = make_stage('cattr.preconf.tomlkit')  #: Pre-serialization steps for TOML
-ujson_preconf_stage = make_stage('cattr.preconf.ujson')  #: Pre-serialization steps for ultrajson
-yaml_preconf_stage = make_stage('cattr.preconf.pyyaml')  #: Pre-serialization steps for YAML
+)  #: Pre-serialization for BSON
+json_preconf_stage = make_stage('cattr.preconf.json', b64=True)  #: Pre-serialization for JSON
+msgpack_preconf_stage = make_stage('cattr.preconf.msgpack')  #: Pre-serialization for msgpack
+orjson_preconf_stage = make_stage('cattr.preconf.orjson', b64=True)  #: Pre-serialization for orjson
+toml_preconf_stage = make_stage('cattr.preconf.tomlkit')  #: Pre-serialization for TOML
+ujson_preconf_stage = make_stage('cattr.preconf.ujson', b64=True)  #: Pre-serialization for ujson
+yaml_preconf_stage = make_stage('cattr.preconf.pyyaml')  #: Pre-serialization for YAML
 
 # Basic serializers with no additional dependencies
 dict_serializer = SerializerPipeline(
