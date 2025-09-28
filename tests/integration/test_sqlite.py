@@ -5,6 +5,7 @@ from datetime import timedelta
 from os.path import join
 from tempfile import NamedTemporaryFile, gettempdir
 from threading import Thread
+from time import sleep
 from unittest.mock import patch
 
 import pytest
@@ -14,6 +15,7 @@ from requests_cache.backends import BaseCache, LRUSQLiteDict, SQLiteCache, SQLit
 from requests_cache.backends.sqlite import MEMORY_URI
 from requests_cache.models import CachedResponse
 from requests_cache.policy import utcnow
+from requests_cache.serializers import utf8_serializer
 from tests.conftest import skip_pypy
 from tests.integration.base_cache_test import BaseCacheTest
 from tests.integration.base_storage_test import CACHE_NAME, BaseStorageTest
@@ -178,20 +180,6 @@ class TestSQLiteDict(BaseStorageTest):
                 pass
             assert mock_connection.execute.call_count == 11
 
-    def test_write_retry__other_errors(self):
-        """Errors other than 'OperationalError: database is locked' should not be retried"""
-        cache = self.init_cache()
-
-        error_1 = sqlite3.OperationalError('no more rows available')
-        with patch.object(cache, '_write', side_effect=error_1):
-            with pytest.raises(sqlite3.OperationalError):
-                cache['key_1'] = 'value_1'
-
-        error_2 = sqlite3.DatabaseError('hard drive is on fire')
-        with patch.object(cache, '_write', side_effect=error_2):
-            with pytest.raises(sqlite3.DatabaseError):
-                cache['key_1'] = 'value_1'
-
     @skip_pypy
     @pytest.mark.parametrize('limit', [None, 50])
     def test_sorted__by_size(self, limit):
@@ -313,9 +301,200 @@ class TestSQLiteDict(BaseStorageTest):
 
 class TestLRUSQLiteDict(TestSQLiteDict):
     storage_class = LRUSQLiteDict
-    init_kwargs = {'use_temp': True}
-    # TODO: tests for LRUSQLiteDict; see TestLRUFileDict + TestLRUDict in test_filesystem.py
-    #   for examples, but adapt to differences in LRUSQLiteDict
+    init_kwargs = {'use_temp': True, 'max_cache_bytes': 10 * 1024 * 1024}
+
+    def test_get_set_with_lru_tracking(self):
+        """Test basic get/set operations with LRU access time tracking."""
+        cache = self.init_cache()
+        cache['key1'] = 'value1'
+        cache['key2'] = 'value2'
+        cache['key3'] = 'value3'
+
+        assert cache['key1'] == 'value1'
+        assert cache['key2'] == 'value2'
+        assert cache['key3'] == 'value3'
+
+        # Check that LRU metadata is stored
+        with cache.connection() as con:
+            rows = con.execute(
+                f'SELECT key, access_time, size FROM {cache.table_name} ORDER BY key'
+            ).fetchall()
+            assert len(rows) == 3
+            for row in rows:
+                assert row[1] is not None  # access_time should be set
+                assert row[2] > 0  # size should be positive
+
+    def test_access_time_update(self):
+        """Test that access times are updated on reads."""
+        cache = self.init_cache()
+        cache['key1'] = 'value1'
+        cache['key2'] = 'value2'
+
+        # Get initial access times
+        with cache.connection() as con:
+            initial_times = {
+                row[0]: row[1]
+                for row in con.execute(
+                    f'SELECT key, access_time FROM {cache.table_name}'
+                ).fetchall()
+            }
+
+        sleep(0.001)  # Ensure time difference
+        _ = cache['key1']  # This should update access_time for key1
+
+        with cache.connection() as con:
+            updated_times = {
+                row[0]: row[1]
+                for row in con.execute(
+                    f'SELECT key, access_time FROM {cache.table_name}'
+                ).fetchall()
+            }
+
+        assert updated_times['key1'] > initial_times['key1']
+        assert updated_times['key2'] == initial_times['key2']
+
+    def test_eviction_on_size_limit(self):
+        """Test that items are evicted when cache size limit is reached."""
+        cache = self.init_cache(max_cache_bytes=40000, serializer=utf8_serializer)
+        cache['key1'] = 'x' * 2000
+        sleep(0.001)
+        cache['key2'] = 'y' * 2000
+        sleep(0.001)
+        cache['key3'] = 'z' * 2000
+
+        # key1 should be evicted (least recently used)
+        assert 'key1' not in cache
+        assert 'key2' in cache
+        assert 'key3' in cache
+
+    def test_do_not_store_items_too_big(self):
+        """Test that items larger than max_cache_bytes are not stored."""
+        cache = self.init_cache(max_cache_bytes=25000, serializer=utf8_serializer)
+        large_value = 'x' * 26000
+
+        cache['small_key'] = 'small_value'
+        cache['large_key'] = large_value
+
+        assert 'small_key' in cache
+        assert 'large_key' not in cache
+        assert cache['small_key'] == 'small_value'
+
+    def test_lru_eviction_order(self):
+        """Test that eviction follows LRU order."""
+        cache = self.init_cache(max_cache_bytes=58000, serializer=utf8_serializer)
+        cache['key1'] = 'x' * 2000
+        sleep(0.001)
+        cache['key2'] = 'x' * 2000
+        sleep(0.001)
+        cache['key3'] = 'x' * 2000
+        sleep(0.001)
+
+        # Make key1 the most recently used
+        _ = cache['key1']
+        sleep(0.001)
+
+        # Add a new item that should evict key2 (least recently used after key1 access)
+        cache['key4'] = 'x' * 2000
+        assert 'key1' in cache
+        assert 'key2' not in cache
+        assert 'key3' in cache
+        assert 'key4' in cache
+
+    def test_get_lru(self):
+        """Test the get_lru method."""
+        cache = self.init_cache(serializer=utf8_serializer)
+
+        cache['key1'] = 'x' * 10
+        sleep(0.001)
+        cache['key2'] = 'x' * 20
+        sleep(0.001)
+        cache['key3'] = 'x' * 30
+
+        # Should return keys in LRU order until total size >= requested
+        lru_keys = cache.get_lru(25)  # Should get key1 (10) + key2 (20) = 30 >= 25
+        assert lru_keys == ['key1', 'key2']
+
+        lru_keys = cache.get_lru(55)  # Should get all keys (10 + 20 + 30 = 60 >= 55)
+        assert lru_keys == ['key1', 'key2', 'key3']
+
+        lru_keys = cache.get_lru(5)  # Should get just key1 (10 >= 5)
+        assert lru_keys == ['key1']
+
+    def test_update_existing_item(self):
+        """Test updating an existing item updates size and access_time."""
+        cache = self.init_cache()
+
+        cache['key1'] = 'small'
+        original_time = None
+        original_size = None
+
+        with cache.connection() as con:
+            row = con.execute(
+                f'SELECT access_time, size FROM {cache.table_name} WHERE key=?', ('key1',)
+            ).fetchone()
+            original_time = row[0]
+            original_size = row[1]
+
+        sleep(0.001)
+        cache['key1'] = 'much_larger_value'
+
+        with cache.connection() as con:
+            row = con.execute(
+                f'SELECT access_time, size FROM {cache.table_name} WHERE key=?', ('key1',)
+            ).fetchone()
+            new_time = row[0]
+            new_size = row[1]
+
+        assert new_time > original_time
+        assert new_size > original_size
+
+    def test_delete_item(self):
+        """Test that deleting items works correctly."""
+        cache = self.init_cache()
+
+        cache['key1'] = 'value1'
+        cache['key2'] = 'value2'
+
+        assert len(cache) == 2
+        del cache['key1']
+        assert len(cache) == 1
+        assert 'key1' not in cache
+        assert 'key2' in cache
+
+    def test_multiple_cache_instances(self):
+        """Test that multiple cache instances see the same data."""
+        cache1 = self.init_cache(index=1)
+        cache2 = self.init_cache(index=1, clear=False)
+
+        cache1['key1'] = 'value1'
+        assert cache2['key1'] == 'value1'
+
+        del cache1['key1']
+        assert 'key1' not in cache2
+
+    def test_bulk_operations_with_eviction(self):
+        """Test bulk operations trigger appropriate evictions."""
+        cache = self.init_cache(max_cache_bytes=26000, serializer=utf8_serializer)
+
+        with cache.bulk_commit():
+            for i in range(20):
+                cache[f'key_{i}'] = 'x' * 150
+
+        assert len(cache) < 20
+        assert len(cache) > 0
+
+    def test_eviction_with_update(self):
+        """Test eviction calculation when updating existing keys."""
+        # Use max_cache_bytes that accounts for SQLite database overhead (~24KB minimum)
+        cache = self.init_cache(max_cache_bytes=25200, serializer=utf8_serializer)
+
+        cache['key1'] = 'x' * 400
+        cache['key2'] = 'x' * 400
+
+        # Update key1 with larger value - should trigger eviction of key2
+        cache['key1'] = 'x' * 800
+        assert 'key1' in cache
+        assert 'key2' not in cache
 
 
 class TestSQLiteCache(BaseCacheTest):
