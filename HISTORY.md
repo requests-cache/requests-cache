@@ -6,10 +6,11 @@
 * See changes to BSON and JSON serializers below:
 
 💾 **Serialization:**
+* Significantly reduce the memory usage of JSON serialization
+* ⚠️ `serializer='json'` will no longer automatically use `ultrajson` if installed; it must be specified explicitly
 * ⚠️ Drop support for standalone `bson` codec; please install `pymongo` to use BSON serialization
 * Remove `[bson]` package extra to prevent accidentally installing it in the same environment as `pymongo`
 * When using BSON serialization with the filesystem backend, add a `.bson` file extension by default
-* ⚠️ `serializer='json'` will no longer automatically use `ultrajson` if installed; it must be specified explicitly
 * Add support for `orjson` as a JSON serializer
   * However, see https://github.com/ijl/orjson/issues/483 for potential memory issues
 * Add the following serializer objects to specify a JSON library: `json_serializer`, `ujson_serializer`, and `orjson_serializer`
