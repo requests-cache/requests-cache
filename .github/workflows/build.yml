@@ -83,13 +83,11 @@ jobs:
         with:
           python-version: ${{ env.LATEST_PY_VERSION }}
       - name: Run style checks & linting
-        uses: j178/prek-action@58823ed88dcaae7bcfdea0cb7366af30ac510fe7
+        uses: j178/prek-action@7af2527834173ee67a1f1301d6ec3d219cef6853 
       - name: Scan dependencies for known vulnerabilities
         uses: pypa/gh-action-pip-audit@v1.1.0
         with:
           vulnerability-service: osv
           # Ignore issues with pip and setuptools versions used by the action itself
           ignore-vulns: |
-            GHSA-cx63-2mw6-8hw5
-            PYSEC-2023-228
-            PYSEC-2022-43012
+            GHSA-4xh5-x5gv-qwph
