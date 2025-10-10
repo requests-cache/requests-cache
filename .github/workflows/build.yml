@@ -8,7 +8,7 @@ on:
     branches: [main]
   workflow_dispatch:
 env:
-  LATEST_PY_VERSION: '3.13'
+  LATEST_PY_VERSION: '3.14'
   PYTEST_VERBOSE: 'true'
 
 jobs:
@@ -19,15 +19,15 @@ jobs:
       matrix:
         python-version:
           [
+            '3.14',
             '3.13',
             '3.12',
             '3.11',
             '3.10',
             '3.9',
             '3.8',
-            '3.14-rc2',
-            'pypy3.9',
             'pypy3.10',
+            'pypy3.11',
           ]
       fail-fast: false
     services:
