@@ -44,7 +44,7 @@ jobs:
     steps:
       # Install dependencies, with caching
       - uses: actions/checkout@v5
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
           cache-dependency-glob: uv.lock
@@ -54,10 +54,10 @@ jobs:
           uv sync --all-extras
 
       # Start integration test databases
-      - uses: supercharge/mongodb-github-action@90004df786821b6308fb02299e5835d0dae05d0d
+      - uses: supercharge/mongodb-github-action@315db7fe45ac2880b7758f1933e6e5d59afd5e94
         with:
           mongodb-version: 5.0
-      - uses: supercharge/redis-github-action@0bc8516b2a497a7530f5fcd005a4e54d0865c04d
+      - uses: supercharge/redis-github-action@ffd8939ed7e6e3b99a359b6703e53bdeb544c2a9
         with:
           redis-version: 6
       - uses: rrainn/dynamodb-action@52f02829330b77b26c950d2ecf35bb6d881749cb
@@ -73,7 +73,7 @@ jobs:
     steps:
       # Install dependencies
       - uses: actions/checkout@v5
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
       - name: Install dependencies
         run: |
           uv python install ${{ matrix.python-version }}
@@ -149,7 +149,7 @@ jobs:
     steps:
       # Install dependencies, with caching
       - uses: actions/checkout@v5
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
           cache-dependency-glob: uv.lock
@@ -174,7 +174,7 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v5
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
 
       - name: Set pre-release version
         if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
