@@ -475,9 +475,9 @@ def test_stale_if_error__error_code(url, mock_session):
     with time_travel(START_DT + timedelta(seconds=1.1)):
         response = mock_session.get(url)
 
-    assert response.status_code == 200
-    assert response.from_cache is True
-    assert response.is_expired is True
+        assert response.status_code == 200
+        assert response.from_cache is True
+        assert response.is_expired is True
 
 
 @skip_pypy
@@ -496,9 +496,9 @@ def test_stale_if_error__error_code_in_allowable_codes(url, mock_session):
     with time_travel(START_DT + timedelta(seconds=1.1)):
         response = mock_session.get(url)
 
-    assert response.status_code == 404
-    assert response.from_cache is False
-    assert response.is_expired is False
+        assert response.status_code == 404
+        assert response.from_cache is False
+        assert response.is_expired is False
 
 
 @pytest.mark.parametrize('url', [MOCKED_URL_200_404, MOCKED_URL_ETAG_200_404])
