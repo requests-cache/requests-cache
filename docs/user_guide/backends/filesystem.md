@@ -44,27 +44,39 @@ YAML files (requires `pyyaml`):
 > ['/home/user/http_cache/4dc151d95200ec.yaml']
 ```
 
-## Limited Cache Size
-
-By default, the size of the cache is not limited.
-If you want to make sure caching happens within a certain amount of space, you can set the `maximum_cache_bytes` option:
+## Limiting Cache Size
+If you want to limit the size of the cache, you can enable LRU caching with the `max_cache_bytes` option:
 
 ```python
->>> session = CachedSession('~/http_cache', backend='filesystem', maximum_cache_bytes=200*1024*1024)  # 200MB
+>>> session = CachedSession(
+...     '~/http_cache',
+...       backend='filesystem',
+...       max_cache_bytes=200*1024*1024, # 200MB
+... )
 ```
 
-Parameters:
+When the cache reaches the specified size, the least recently used file(s) will be deleted until the cache is back under the limit.
 
-- `maximum_cache_bytes`: Maximum total size of the cache in bytes.
-  Once the cache has reached its maximum size, the oldest responses will be dropped to free up enough space.
-- `maximum_file_bytes`: The maximum size of a single file in the cache.
-  If a file would get larger, it will not be cached.
-  By default, this is the same as `maximum_cache_bytes` as no larger file can be stored anyway.
-- `block_bytes`: The size of a block of data on the hard drive.
-  In order to really make sure that the size on the hard drive stays below the maximum,
-  this can be set to the block size on the hard drive (e.g. `4096` for 4KB).
-  A lot of small responses can still use up space.
-  This helps ensure you do not run out of blocks on the hard drive.
+Files larger than this will not be cached. To reduce the size limit for individual files, use the `max_file_bytes` option.
+
+```{note}
+Note on accurate file size tracking: Files on disk are stored in blocks, so the actual size on disk may be larger than the raw file size. To ensure that the real disk usage stays below the maximum, you can set the `block_bytes` parameter to the block size of your filesystem. 4KB is a common size, for example, so you could set `block_bytes=4096`.
+```
+
+Example with all LRU-related options:
+```python
+
+```python
+>>> session = CachedSession(
+...     '~/http_cache',
+...       backend='filesystem',
+...       max_cache_bytes=200*1024*1024, # 200MB
+...       max_file_bytes=50*1024*1024,   # 50MB
+...       block_bytes=4096,              # 4KB blocks
+...       sync_index=True,               # Check for manual changes on disk since last use
+... )
+```
+```
 
 ## Performance and Limitations
 
@@ -74,12 +86,13 @@ Parameters:
 ### Parallelization
 
 This backend currently uses a simple threading lock rather than a file lock system, so it is not an ideal choice for highly parallel applications.
-Using several sessions or filesystem backends in the same directory (same `cache_name`) can result in race conditions.
-Make sure to use the same lock object for all sessions caching in the same filesystem directory.
+If you use multiple cache objects in the same directory, use a shared {py:class}`threading.RLock` for all of them using the `lock` parameter:
+```python
+>>> import threading
+>>> lock = threading.RLock()
+>>> session1 = CachedSession(backend='filesystem', cache_name='cache_dir', lock=lock)
+>>> session2 = CachedSession(backend='filesystem', cache_name='cache_dir', lock=lock)
+```
 
-- If you access the directory only from one process in different sessions, initialize `lock` with the same {py:class}`threading.RLock`.
-- If you use [multiprocessing], use a {py:class}`multiprocessing.RLock`.
-- If you access the same directory from multiple processes, use a {py:attr}`filelock.FileLock`, see [py-filelock].
-
-[multiprocessing]: https://docs.python.org/3/library/multiprocessing.html
-[py-filelock]: https://py-filelock.readthedocs.io/
+- If you're using the {py:mod}`.multiprocessing` module, use a {py:class}`multiprocessing.RLock` instead.
+- If you're using multiple processes by other means, use a {py:attr}`filelock.FileLock` from the [py-filelock](https://py-filelock.readthedocs.io/) library.
