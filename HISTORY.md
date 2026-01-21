@@ -651,7 +651,7 @@ Project is now added to [Code Shelter](https://www.codeshelter.co)
 -----
 ### 0.4.13 (2016-12-23)
 * Support PyMongo3, thanks to @craigls #72
-* Fix streaming releate issue #68
+* Fix streaming-related issue #68
 
 ### 0.4.12 (2016-03-19)
 * Fix ability to pass backend instance in `install_cache` #61
