@@ -24,8 +24,10 @@
   * Add {py:class}`requests_cache.backends.filesystem.LRUFileDict` class to optionally limit the size of the filesystem cache. Enabled with `max_cache_bytes` argument.
 * **Redis:**
     * For maintenance/inspection methods that iterate over the cache, use `SCAN` and `HSCAN` instead of `KEYS`, `HKEYS`, and `HGETALL`
-* **DynamoDB**
+* **DynamoDB:**
   * Add optional parameter `create_table` of `DynamoDBCache` to control if the class attempts to create the table in DynamoDB or not.
+* **GridFS:**
+  * Add a `connection` parameter to allow passing an existing `MongoClient` object
 
 ⚙️ **Session settings:**
 * Add `autoclose` option to close backend connections when the session is closed

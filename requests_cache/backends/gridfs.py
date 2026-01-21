@@ -33,6 +33,7 @@ class GridFSCache(BaseCache):
     def __init__(
         self,
         db_name: str,
+        connection: MongoClient = None,
         decode_content: bool = False,
         serializer: Optional[SerializerType] = None,
         **kwargs,
@@ -40,7 +41,9 @@ class GridFSCache(BaseCache):
         super().__init__(cache_name=db_name, **kwargs)
         skwargs = {'serializer': serializer, **kwargs} if serializer else kwargs
 
-        self.responses = GridFSDict(db_name, decode_content=decode_content, **skwargs)
+        self.responses = GridFSDict(
+            db_name, decode_content=decode_content, connection=connection, **skwargs
+        )
         self.redirects = MongoDict(
             db_name,
             collection_name='redirects',

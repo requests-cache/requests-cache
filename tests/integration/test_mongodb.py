@@ -3,6 +3,7 @@ from logging import getLogger
 from time import sleep
 from unittest.mock import patch
 
+from pymongo import MongoClient
 import pytest
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
 
@@ -113,19 +114,6 @@ class TestGridFSDict(BaseStorageTest):
     picklable = True
     num_instances = 1  # Only test a single collection instead of multiple
 
-    def test_connection_kwargs(self):
-        """A spot check to make sure optional connection kwargs gets passed to connection"""
-        cache = GridFSDict(
-            'test',
-            host='mongodb://0.0.0.0',
-            port=2222,
-            tz_aware=True,
-            connect=False,
-            invalid_kwarg='???',
-        )
-        assert "host=['0.0.0.0:2222']" in repr(cache.connection)
-        assert 'tz_aware=True' in repr(cache.connection)
-
     def test_corrupt_file(self):
         """A corrupted file should be handled and raise a KeyError instead"""
         from gridfs import GridFS
@@ -151,3 +139,30 @@ class TestGridFSDict(BaseStorageTest):
 
 class TestGridFSCache(BaseCacheTest):
     backend_class = GridFSCache
+
+    def test_connection_kwargs(self):
+        """A spot check to make sure optional connection kwargs gets passed to connection"""
+
+        cache = GridFSCache(
+            'test',
+            host='mongodb://0.0.0.0',
+            port=2222,
+            tz_aware=True,
+            connect=False,
+            invalid_kwarg='???',
+        )
+        assert "host=['0.0.0.0:2222']" in repr(cache.responses.connection)
+        assert 'tz_aware=True' in repr(cache.responses.connection)
+
+    def test_connection_obj(self):
+        connection = MongoClient(
+            host='mongodb://0.0.0.0',
+            port=2222,
+            tz_aware=True,
+            connect=False,
+        )
+        cache = GridFSCache('test', connection=connection)
+        assert cache.responses.connection is connection
+        assert cache.redirects.connection is connection
+        assert "host=['0.0.0.0:2222']" in repr(cache.responses.connection)
+        assert 'tz_aware=True' in repr(cache.responses.connection)
