@@ -29,6 +29,9 @@
 * **GridFS:**
   * Add a `connection` parameter to allow passing an existing `MongoClient` object
 
+🕗 **Expiration & headers:**
+* Add support for `Vary: Cookie`
+
 ⚙️ **Session settings:**
 * Add `autoclose` option to close backend connections when the session is closed
 
