@@ -1,6 +1,6 @@
 # History
 
-## 1.3.0 (Unreleased)
+## 1.3.0 (2026-02-02)
 
 ⚠️ **Deprecations & removals:**
 * See changes to BSON and JSON serializers below:
