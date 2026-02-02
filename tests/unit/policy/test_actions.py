@@ -3,9 +3,10 @@ from unittest.mock import patch
 
 import pytest
 from requests import PreparedRequest, Request
+from requests.cookies import RequestsCookieJar
 
 from requests_cache.cache_keys import create_key
-from requests_cache.models import CachedResponse
+from requests_cache.models import CachedRequest, CachedResponse
 from requests_cache.policy import EXPIRE_IMMEDIATELY, CacheActions, CacheSettings, utcnow
 from tests.conftest import ETAG, HTTPDATE_STR, LAST_MODIFIED, MOCKED_URL, get_mock_response
 
@@ -310,7 +311,9 @@ def test_update_from_cached_response__stale_while_revalidate():
         ({'Vary': '*'}, {'Accept': 'application/json'}, {'Accept': 'application/json'}, False),
     ],
 )
-def test_update_from_cached_response__vary(vary, cached_headers, new_headers, expected_match):
+def test_update_from_cached_response__vary_headers(
+    vary, cached_headers, new_headers, expected_match
+):
     cached_response = CachedResponse(
         headers=vary,
         request=Request(method='GET', url='https://site.com/img.jpg', headers=cached_headers),
@@ -321,6 +324,81 @@ def test_update_from_cached_response__vary(vary, cached_headers, new_headers, ex
 
     # If the headers don't match wrt. Vary, expect a new request to be sent (cache miss)
     assert actions.send_request is not expected_match
+
+
+@pytest.mark.parametrize(
+    'cached_cookies, new_cookies, expected_match',
+    [
+        ({'session': 'abc123'}, {'session': 'abc123'}, True),
+        ({'session': 'abc123'}, {'session': 'xyz789'}, False),
+        ({'session': 'abc', 'user': 'bob'}, {'session': 'abc', 'user': 'bob'}, True),
+        ({'user': 'bob', 'session': 'abc'}, {'session': 'abc', 'user': 'bob'}, True),
+        ({'session': 'abc', 'user': 'bob'}, {'session': 'abc', 'user': 'alice'}, False),
+        ({}, {}, True),
+        ({'session': 'abc123'}, {}, False),
+        ({}, {'session': 'abc123'}, False),
+    ],
+)
+def test_update_from_cached_response__vary_cookie(cached_cookies, new_cookies, expected_match):
+    cached_cookiejar = RequestsCookieJar()
+    cached_cookiejar.update(cached_cookies)
+    new_cookiejar = RequestsCookieJar()
+    new_cookiejar.update(new_cookies)
+
+    # Cached response with cookies
+    cached_request = CachedRequest(
+        method='GET',
+        url='https://site.com/page',
+        cookies=cached_cookiejar,
+    )
+    cached_response = CachedResponse(
+        headers={'Vary': 'Cookie'},
+        request=cached_request,
+    )
+
+    # New request with cookies
+    new_request = PreparedRequest()
+    new_request.prepare(method='GET', url='https://site.com/page', cookies=new_cookiejar)
+
+    actions = CacheActions.from_request('key', new_request)
+    actions.update_from_cached_response(cached_response, create_key=create_key)
+
+    # If cookies don't match, expect a new request (cache miss)
+    assert actions.send_request is not expected_match
+
+
+def test_update_from_cached_response__vary_cookie_and_headers():
+    cached_cookiejar = RequestsCookieJar()
+    cached_cookiejar.set('session', 'abc123')
+    new_cookiejar = RequestsCookieJar()
+    new_cookiejar.set('session', 'abc123')
+
+    # Cached response with Vary: Cookie, Accept
+    cached_request = CachedRequest(
+        method='GET',
+        url='https://site.com/page',
+        headers={'Accept': 'application/json'},
+        cookies=cached_cookiejar,
+    )
+    cached_response = CachedResponse(
+        headers={'Vary': 'Cookie, Accept'},
+        request=cached_request,
+    )
+
+    # New request with matching cookies but different Accept header
+    new_request = PreparedRequest()
+    new_request.prepare(
+        method='GET',
+        url='https://site.com/page',
+        headers={'Accept': 'text/html'},
+        cookies=new_cookiejar,
+    )
+
+    actions = CacheActions.from_request('key', new_request)
+    actions.update_from_cached_response(cached_response, create_key=create_key)
+
+    # Should be a cache miss because Accept header differs
+    assert actions.send_request is True
 
 
 @pytest.mark.parametrize('max_stale, usable', [(5, False), (15, True)])
