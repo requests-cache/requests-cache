@@ -90,4 +90,4 @@ jobs:
           vulnerability-service: osv
           # Ignore issues with pip and setuptools versions used by the action itself
           ignore-vulns: |
-            GHSA-4xh5-x5gv-qwph
+            GHSA-6vgw-5pg2-w6jp
