@@ -1146,6 +1146,25 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "rysson",
+      "name": "rysson",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5898312?v=4",
+      "profile": "https://github.com/rysson",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "markmentovai",
+      "name": "Mark Mentovai",
+      "avatar_url": "https://avatars.githubusercontent.com/u/933273?v=4",
+      "profile": "https://github.com/markmentovai",
+      "contributions": [
+        "test"
+      ]
     }
   ],
   "contributorsPerLine": 7,
