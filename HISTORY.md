@@ -34,6 +34,7 @@
 
 ⚙️ **Session settings:**
 * Add `autoclose` option to close backend connections when the session is closed
+* Add `read_only` option to read existing cached responses, but not write any new responses to the cache
 
 ℹ️ **Cache convenience methods:**
 * Add `verify` parameter to `BaseCache.contains()` and `delete()` to handle requests made with SSL verification disabled

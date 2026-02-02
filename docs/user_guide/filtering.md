@@ -80,3 +80,26 @@ responses (on read):
 ```{note}
 `filter_fn()` will be used **in addition to** other filtering options.
 ```
+
+(read-only)=
+## Read-Only Cache
+If you want to use existing cached responses, but not write any new ones to the cache, you can use
+the `read_only` option:
+```python
+>>> session = CachedSession()
+>>> response = session.get('https://httpbin.org/get')
+>>> session = CachedSession(read_only=True)
+>>> # Or: session.settings.read_only = True
+
+>>> # Existing cached responses will be read:
+>>> response = session.get('https://httpbin.org/get')
+>>> print(response.from_cache)
+True
+
+>>> # New responses will not be cached:
+>>> session.get('https://httpbin.org/json')
+>>> print(session.cache.contains(url='https://httpbin.org/json'))
+False
+>>> response = session.get('https://httpbin.org/json')
+>>> print(response.from_cache)
+False

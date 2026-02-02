@@ -244,6 +244,7 @@ class CacheActions(RichMixin):
             'disabled by filter': filtered_out,
             'disabled by headers': self.skip_write,
             'disabled by expiration': do_not_cache or skip_stale,
+            'disabled by read-only': self._settings.read_only,
         }
         self.skip_write = any(write_criteria.values())
         _log_cache_criteria('write', write_criteria)

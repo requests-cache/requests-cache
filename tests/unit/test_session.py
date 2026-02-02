@@ -935,6 +935,42 @@ def test_request_only_if_cached__expired(mock_session):
     assert response.status_code == 504
 
 
+def test_read_only(mock_session):
+    """In read-only mode, cached responses should be returned, but no new responses should be cached"""
+    mock_session.get(MOCKED_URL)
+    mock_session.settings.read_only = True
+    assert mock_session.get(MOCKED_URL).from_cache is True
+
+    mock_session.get(MOCKED_URL_JSON)
+    assert not mock_session.cache.contains(url=MOCKED_URL_JSON)
+    assert mock_session.get(MOCKED_URL_JSON).from_cache is False
+
+
+def test_read_only__force_refresh(mock_session):
+    """force_refresh skips cache read, but read_only still prevents write"""
+    mock_session.get(MOCKED_URL)
+    mock_session.settings.read_only = True
+
+    response = mock_session.get(MOCKED_URL, force_refresh=True)
+    assert response.from_cache is False
+    assert mock_session.cache.contains(url=MOCKED_URL)
+
+
+@skip_pypy
+def test_read_only__expired_response(mock_session):
+    """In read-only mode, expired responses trigger re-fetch but don't update cache"""
+    with time_travel(START_DT):
+        initial_response = mock_session.get(MOCKED_URL, expire_after=1)
+
+    mock_session.settings.read_only = True
+    with time_travel(START_DT + timedelta(seconds=1.1)):
+        response = mock_session.get(MOCKED_URL)
+        assert response.from_cache is False
+        # Verify cache still has the old expired entry, not the new one
+        old_response = mock_session.cache.get_response(initial_response.cache_key)
+        assert old_response and old_response.is_expired is True
+
+
 @skip_pypy
 def test_request_only_if_cached__stale_if_error__expired(mock_session):
     """only_if_cached *will* return an expired response if stale_if_error is also set"""

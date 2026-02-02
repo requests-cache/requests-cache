@@ -296,8 +296,10 @@ You can also combine this with `stale_if_error` to return cached responses even 
 
 ```{warning}
 Cached request matching is not solely dependent on the request method, URL, parameters,
-and body. Installed dependencies affecting `requests`/`urllib3` behavior will also affect
-whether a call to a CachedSession request function will result in a cache hit or not.
+and body. Installed dependencies may also affect cache hits/misses.
 For example, the presence or absence of an installed compression library might affect
 the effective value of an 'Accept-Encoding' request header.
 ```
+
+## Read-Only Requests
+See also: {ref}`read-only`
