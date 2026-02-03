@@ -6,6 +6,7 @@
 project_info/contributing
 project_info/contributors
 project_info/code_of_conduct
+project_info/packages
 project_info/related_projects
 project_info/history
 ````
