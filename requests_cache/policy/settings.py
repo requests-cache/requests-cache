@@ -32,6 +32,7 @@ class CacheSettings(RichMixin):
     disabled: bool = field(default=False)
     expire_after: ExpirationTime = field(default=None)
     filter_fn: FilterCallback = field(default=None)
+    hashed_parameters: Iterable[str] = field(factory=tuple)
     ignored_parameters: Iterable[str] = field(default=DEFAULT_IGNORED_PARAMS)
     key_fn: KeyCallback = field(default=None)
     match_headers: Union[Iterable[str], bool] = field(default=False)
