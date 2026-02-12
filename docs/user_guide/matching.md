@@ -82,6 +82,41 @@ isn't available:
 If you want to match _all_ request headers, you can use `match_headers=True`.
 
 
+(hashed-params)=
+## Hashed Parameter Matching
+In some cases, you may need to cache responses separately per user without storing
+plaintext credentials in the cache. For example, a multi-user application calling
+`GET /api/current_user` where the response varies only by the `Authorization` header.
+
+The `hashed_parameters` option solves this by **hashing** parameter values for cache key
+differentiation while **redacting** them in stored responses:
+```python
+>>> session = CachedSession(hashed_parameters=['Authorization'])
+>>> # These two requests are cached separately
+>>> session.get('https://api.example.com/me', headers={'Authorization': 'Bearer user-1-token'})
+>>> session.get('https://api.example.com/me', headers={'Authorization': 'Bearer user-2-token'})
+>>> # This is a cache hit and returns the response for user 1
+>>> r = session.get('https://api.example.com/me', headers={'Authorization': 'Bearer user-1-token'})
+>>> assert r.from_cache is True
+>>> # The token itself is not stored in the cache
+>>> assert r.request.headers['Authorization'] == 'REDACTED'
+```
+
+```{note}
+`hashed_parameters` takes precedence over `ignored_parameters`. Since `Authorization` is in
+`ignored_parameters` by default, you only need to set `hashed_parameters=['Authorization']`; there
+is no need to also remove it from `ignored_parameters`.
+```
+
+This works for any request parameter or header. For example, you could also use it with URL
+parameters:
+```python
+>>> session = CachedSession(hashed_parameters=['api_key'])
+>>> session.get('https://api.example.com/data', params={'api_key': 'key-1'})
+>>> session.get('https://api.example.com/data', params={'api_key': 'key-2'})
+```
+
+
 (custom-matching)=
 ## Custom Request Matching
 If you need more advanced behavior, you can implement your own custom request matching.

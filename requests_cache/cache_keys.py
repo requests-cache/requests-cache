@@ -58,6 +58,7 @@ def create_key(
     match_headers: Union[ParamList, bool] = False,
     serializer: Any = None,
     content_root_key: Optional[str] = None,
+    hashed_parameters: ParamList = None,
     **request_kwargs,
 ) -> str:
     """Create a normalized cache key based on a request object
@@ -66,11 +67,20 @@ def create_key(
         request: Request object to generate a cache key from
         ignored_parameters: Request parameters, headers, and/or JSON body params to exclude
         match_headers: Match only the specified headers, or ``True`` to match all headers
-        request_kwargs: Additional keyword arguments for :py:func:`~requests.request`
+        serializer: Serializer name or instance
         content_root_key: root element in the request body to apply ignored_parameters to
+        hashed_parameters: Request parameters and/or headers whose values should be hashed
+            instead of redacted, for cache key differentiation
+        request_kwargs: Additional keyword arguments for :py:func:`~requests.request`
     """
+    # Auto-include hashed_parameters in match_headers so they contribute to the cache key
+    if hashed_parameters and match_headers is not True:
+        existing = list(match_headers) if match_headers else []
+        merged = {h.lower() for h in existing} | {h.lower() for h in hashed_parameters}
+        match_headers = sorted(merged)
+
     # Normalize and gather all relevant request info to match against
-    request = normalize_request(request, ignored_parameters, content_root_key)
+    request = normalize_request(request, ignored_parameters, content_root_key, hashed_parameters)
     key_parts = [
         request.method or '',
         request.url,
@@ -114,6 +124,7 @@ def normalize_request(
     request: AnyRequest,
     ignored_parameters: ParamList = None,
     content_root_key: Optional[str] = None,
+    hashed_parameters: ParamList = None,
 ) -> AnyPreparedRequest:
     """Normalize and remove ignored parameters from request URL, body, and headers.
     This is used for both:
@@ -125,6 +136,8 @@ def normalize_request(
         request: Request object to normalize
         ignored_parameters: Request parameters, headers, and/or JSON body params to exclude
         content_root_key: root element in the request body to apply ignored_parameters to
+        hashed_parameters: Request parameters and/or headers whose values should be hashed
+            instead of redacted, for cache key differentiation
     """
     if isinstance(request, Request):
         # For a multipart POST request that hasn't been prepared, we need to patch the form boundary
@@ -136,18 +149,22 @@ def normalize_request(
 
     norm_request.method = (norm_request.method or '').upper()
     norm_request.url = normalize_url(norm_request.url or '', ignored_parameters)
-    norm_request.headers = normalize_headers(norm_request.headers, ignored_parameters)
+    norm_request.headers = normalize_headers(
+        norm_request.headers, ignored_parameters, hashed_parameters
+    )
     norm_request.body = normalize_body(norm_request, ignored_parameters, content_root_key)
     return norm_request
 
 
 def normalize_headers(
-    headers: MutableMapping[str, str], ignored_parameters: ParamList = None
+    headers: MutableMapping[str, str],
+    ignored_parameters: ParamList = None,
+    hashed_parameters: ParamList = None,
 ) -> CaseInsensitiveDict:
     """Sort and filter request headers, and normalize minor variations in multi-value headers"""
     headers = {k: decode(v) for (k, v) in headers.items()}
-    if ignored_parameters:
-        headers = filter_sort_dict(headers, ignored_parameters)
+    if ignored_parameters or hashed_parameters:
+        headers = filter_sort_dict(headers, ignored_parameters, hashed_parameters)
     for k, v in headers.items():
         if ',' in v:
             values = [v.strip() for v in v.lower().split(',') if v.strip()]
@@ -234,18 +251,27 @@ def normalize_params(value: Union[str, bytes], ignored_parameters: ParamList = N
     return query_str
 
 
-def redact_response(response: CachedResponse, ignored_parameters: ParamList) -> CachedResponse:
-    """Redact any ignored parameters (potentially containing sensitive info) from a cached request"""
-    if ignored_parameters:
-        response.url = filter_url(response.url, ignored_parameters)
-        response.request.url = filter_url(response.request.url, ignored_parameters)
-        response.headers = CaseInsensitiveDict(
-            filter_sort_dict(response.headers, ignored_parameters)
-        )
+def redact_response(
+    response: CachedResponse,
+    ignored_parameters: ParamList,
+    hashed_parameters: ParamList = None,
+) -> CachedResponse:
+    """Redact any ignored parameters (potentially containing sensitive info) from a cached request.
+
+    Both ``ignored_parameters`` and ``hashed_parameters`` are redacted in stored responses.
+    ``hashed_parameters`` are only hashed during cache key generation, not in stored data.
+    """
+    # Merge hashed_parameters into ignored set for redaction
+    all_redacted = set(ignored_parameters or []) | set(hashed_parameters or [])
+    if all_redacted:
+        redact_list = sorted(all_redacted)
+        response.url = filter_url(response.url, redact_list)
+        response.request.url = filter_url(response.request.url, redact_list)
+        response.headers = CaseInsensitiveDict(filter_sort_dict(response.headers, redact_list))
         response.request.headers = CaseInsensitiveDict(
-            filter_sort_dict(response.request.headers, ignored_parameters)
+            filter_sort_dict(response.request.headers, redact_list)
         )
-        response.request.body = normalize_body(response.request, ignored_parameters)
+        response.request.body = normalize_body(response.request, redact_list)
     return response
 
 
@@ -257,17 +283,46 @@ def filter_sort_json(data: Union[List, Mapping], ignored_parameters: ParamList):
 
 
 def filter_sort_dict(
-    data: Mapping[str, str], ignored_parameters: ParamList = None
+    data: Mapping[str, str],
+    ignored_parameters: ParamList = None,
+    hashed_parameters: ParamList = None,
 ) -> Dict[str, str]:
     # Note: Any ignored_parameters present will have their values replaced instead of removing the
     # parameter, so the cache key will still match whether the parameter was present or not.
+    # hashed_parameters take precedence: values are replaced with a SHA-256 hash for cache key
+    # differentiation, while still being redacted in stored responses (handled by redact_response).
     ignored_parameters = set(ignored_parameters or [])
-    return {k: ('REDACTED' if k in ignored_parameters else v) for k, v in sorted(data.items())}
+    hashed_parameters = set(hashed_parameters or [])
+    # hashed_parameters win over ignored_parameters
+    ignored_parameters -= hashed_parameters
+
+    def _transform_value(k: str, v: str) -> str:
+        if k in hashed_parameters:
+            return sha256(encode(v)).hexdigest()
+        if k in ignored_parameters:
+            return 'REDACTED'
+        return v
+
+    return {k: _transform_value(k, v) for k, v in sorted(data.items())}
 
 
-def filter_sort_multidict(data: KVList, ignored_parameters: ParamList = None) -> KVList:
+def filter_sort_multidict(
+    data: KVList,
+    ignored_parameters: ParamList = None,
+    hashed_parameters: ParamList = None,
+) -> KVList:
     ignored_parameters = set(ignored_parameters or [])
-    return [(k, 'REDACTED' if k in ignored_parameters else v) for k, v in sorted(data)]
+    hashed_parameters = set(hashed_parameters or [])
+    ignored_parameters -= hashed_parameters
+
+    def _transform_value(k: str, v: str) -> str:
+        if k in hashed_parameters:
+            return sha256(encode(v)).hexdigest()
+        if k in ignored_parameters:
+            return 'REDACTED'
+        return v
+
+    return [(k, _transform_value(k, v)) for k, v in sorted(data)]
 
 
 def filter_sort_list(data: List, ignored_parameters: ParamList = None) -> List:

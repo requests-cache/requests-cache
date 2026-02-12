@@ -13,6 +13,7 @@ from unittest.mock import patch
 from requests_cache.cache_keys import (
     MAX_NORM_BODY_SIZE,
     create_key,
+    filter_sort_dict,
     normalize_headers,
     normalize_request,
     redact_response,
@@ -262,3 +263,109 @@ def test_remove_ignored_headers__empty():
         headers={'foo': 'bar'},
     )
     assert normalize_request(request.prepare(), ignored_parameters=None).headers == request.headers
+
+
+def test_create_key__hashed_parameters__same_value():
+    """Requests with the same hashed parameter value should get the same cache key"""
+    request_1 = Request(
+        method='GET',
+        url='https://example.com/api/me',
+        headers={'Authorization': 'Bearer same-token'},
+    )
+    request_2 = Request(
+        method='GET',
+        url='https://example.com/api/me',
+        headers={'Authorization': 'Bearer same-token'},
+    )
+    key_1 = create_key(request_1, hashed_parameters=['Authorization'])
+    key_2 = create_key(request_2, hashed_parameters=['Authorization'])
+    assert key_1 == key_2
+
+
+@pytest.mark.parametrize(
+    'kwargs, expect_different',
+    [
+        pytest.param(
+            {'hashed_parameters': ['Authorization']},
+            True,
+            id='hashed',
+        ),
+        pytest.param(
+            {'hashed_parameters': ['Authorization'], 'ignored_parameters': ['Authorization']},
+            True,
+            id='hashed_precedence_over_ignored',
+        ),
+        pytest.param(
+            {'hashed_parameters': ['Authorization'], 'match_headers': ['Accept-Language']},
+            True,
+            id='hashed_with_explicit_match_headers',
+        ),
+        pytest.param(
+            {'ignored_parameters': ['Authorization']},
+            False,
+            id='ignored_only',
+        ),
+    ],
+)
+def test_create_key__hashed_parameters(kwargs, expect_different):
+    """With different Authorization values, cache keys should differ when hashed_parameters
+    is set, and match when only ignored_parameters is set (control case)."""
+    request_1 = Request(
+        method='GET',
+        url='https://example.com/api/me',
+        headers={'Authorization': 'Bearer token-1', 'Accept-Language': 'en'},
+    )
+    request_2 = Request(
+        method='GET',
+        url='https://example.com/api/me',
+        headers={'Authorization': 'Bearer token-2', 'Accept-Language': 'en'},
+    )
+    key_1 = create_key(request_1, **kwargs)
+    key_2 = create_key(request_2, **kwargs)
+    assert (key_1 != key_2) == expect_different
+
+
+@pytest.mark.parametrize(
+    'ignored_parameters',
+    [
+        pytest.param(None, id='hashed_only'),
+        pytest.param(['Authorization'], id='hashed_over_ignored'),
+    ],
+)
+def test_filter_sort_dict__hashed_parameters(ignored_parameters):
+    """filter_sort_dict should hash values for hashed_parameters, taking precedence
+    over ignored_parameters when both are specified."""
+    from hashlib import sha256
+
+    data = {'Authorization': 'Bearer my-token', 'Accept': 'application/json'}
+    result = filter_sort_dict(
+        data, ignored_parameters=ignored_parameters, hashed_parameters=['Authorization']
+    )
+    assert result['Authorization'] == sha256(b'Bearer my-token').hexdigest()
+    assert result['Accept'] == 'application/json'
+
+
+def test_redact_response__hashed_parameters():
+    """Both hashed_parameters and ignored_parameters should be redacted in stored responses"""
+    url = 'https://example.com/api/me'
+    request = Request(
+        method='GET',
+        url=url,
+        headers={
+            'Authorization': 'Bearer secret-token',
+            'X-API-KEY': 'my-api-key',
+        },
+    ).prepare()
+    response = Response()
+    response.url = url
+    response.request = request
+    response.headers = {}
+    response.raw = HTTPResponse(request_url=url)
+
+    redacted = redact_response(
+        response,
+        ignored_parameters=['X-API-KEY'],
+        hashed_parameters=['Authorization'],
+    )
+    assert redacted.request.headers['Authorization'] == 'REDACTED'
+    assert redacted.request.headers['X-API-KEY'] == 'REDACTED'

@@ -53,6 +53,7 @@ class CacheMixin(MIXIN_BASE):
         allowable_codes: Iterable[int] = DEFAULT_STATUS_CODES,
         allowable_methods: Iterable[str] = DEFAULT_METHODS,
         always_revalidate: bool = False,
+        hashed_parameters: Iterable[str] = (),
         ignored_parameters: Iterable[str] = DEFAULT_IGNORED_PARAMS,
         match_headers: Union[Iterable[str], bool] = False,
         filter_fn: Optional[FilterCallback] = None,
@@ -71,6 +72,7 @@ class CacheMixin(MIXIN_BASE):
             allowable_codes=allowable_codes,
             allowable_methods=allowable_methods,
             always_revalidate=always_revalidate,
+            hashed_parameters=hashed_parameters,
             ignored_parameters=ignored_parameters,
             match_headers=match_headers,
             filter_fn=filter_fn,
@@ -380,6 +382,9 @@ class CachedSession(CacheMixin, OriginalSession):
             is not expired
         match_headers: Request headers to match, when `Vary` response header is not available. May
             be a list of headers, or ``True`` to match all.
+        hashed_parameters: Request parameters and/or headers whose values should be hashed for
+            cache key differentiation but redacted in stored responses. Useful for per-user caching
+            without storing plaintext credentials. Takes precedence over ``ignored_parameters``.
         ignored_parameters: Request parameters, headers, and/or JSON body params to exclude from both
             request matching and cached request data
         read_only: Read existing cached responses, but do not write any new responses to the cache
