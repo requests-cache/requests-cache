@@ -657,6 +657,21 @@ def test_default_ignored_parameters(mock_session):
     assert response.request.headers['Authorization'] == 'REDACTED'
 
 
+def test_hashed_parameters(mock_session):
+    """hashed_parameters should produce per-user cache keys (taking precedence over
+    Authorization being in default ignored_parameters) and redact values in stored responses"""
+    mock_session.settings.hashed_parameters = ['Authorization']
+
+    response_1 = mock_session.get(MOCKED_URL, headers={'Authorization': 'Bearer user-1-token'})
+    response_2 = mock_session.get(MOCKED_URL, headers={'Authorization': 'Bearer user-2-token'})
+    response_3 = mock_session.get(MOCKED_URL, headers={'Authorization': 'Bearer user-1-token'})
+
+    assert response_1.from_cache is False
+    assert response_2.from_cache is False  # Different auth -> different cache entry
+    assert response_3.from_cache is True  # Same auth as response_1 -> cache hit
+    assert response_3.request.headers['Authorization'] == 'REDACTED'
+
+
 @patch_normalize_url
 def test_filter_fn(mock_normalize_url, mock_session):
     mock_session.settings.filter_fn = lambda r: r.request.url != MOCKED_URL_JSON
