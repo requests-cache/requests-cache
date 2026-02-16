@@ -378,7 +378,32 @@ def test_match_headers__vary(mock_session):
 
     assert mock_session.get(MOCKED_URL_VARY, headers=headers_1).from_cache is True
     assert mock_session.get(MOCKED_URL_VARY, headers=headers_2).from_cache is True
+    # First request with mismatched Vary header is a cache miss
     assert mock_session.get(MOCKED_URL_VARY, headers=headers_3).from_cache is False
+    # Second request with same mismatched headers should now be a cache hit
+    # (stored under Vary-qualified key on the previous miss)
+    assert mock_session.get(MOCKED_URL_VARY, headers=headers_3).from_cache is True
+
+
+def test_match_headers__vary_alternating(mock_session):
+    """Alternating between two Accept values should not cause endless cache misses.
+    After the first round of requests, each variant should be cached under its own
+    Vary-qualified key and served from cache on subsequent requests.
+    """
+    headers_json = {'Accept': 'application/json'}
+    headers_html = {'Accept': 'text/html'}
+
+    # First round: both are cache misses (populating the cache)
+    assert mock_session.get(MOCKED_URL_VARY, headers=headers_json).from_cache is False
+    assert mock_session.get(MOCKED_URL_VARY, headers=headers_html).from_cache is False
+
+    # Second round: both should be cache hits
+    assert mock_session.get(MOCKED_URL_VARY, headers=headers_json).from_cache is True
+    assert mock_session.get(MOCKED_URL_VARY, headers=headers_html).from_cache is True
+
+    # Third round: still cache hits
+    assert mock_session.get(MOCKED_URL_VARY, headers=headers_json).from_cache is True
+    assert mock_session.get(MOCKED_URL_VARY, headers=headers_html).from_cache is True
 
 
 @pytest.mark.parametrize(
@@ -404,6 +429,22 @@ def test_match_headers__vary_with_redirects(headers, expected_from_cache, mock_s
 
     r2 = mock_session.get(MOCKED_URL_VARY_REDIRECT, headers=headers)
     assert r2.from_cache is expected_from_cache
+
+
+def test_match_headers__vary_alternating_with_redirects(mock_session):
+    """Secondary Vary lookup should work correctly through redirect chains.
+    Each Accept-Language variant should be cached under its own Vary-qualified key.
+    """
+    headers_en = {'Accept': 'text/plain', 'Accept-Language': 'en-US'}
+    headers_gb = {'Accept': 'text/plain', 'Accept-Language': 'en-GB'}
+
+    # First round: both are cache misses
+    assert mock_session.get(MOCKED_URL_VARY_REDIRECT, headers=headers_en).from_cache is False
+    assert mock_session.get(MOCKED_URL_VARY_REDIRECT, headers=headers_gb).from_cache is False
+
+    # Second round: both should be cache hits
+    assert mock_session.get(MOCKED_URL_VARY_REDIRECT, headers=headers_en).from_cache is True
+    assert mock_session.get(MOCKED_URL_VARY_REDIRECT, headers=headers_gb).from_cache is True
 
 
 def test_include_get_headers():

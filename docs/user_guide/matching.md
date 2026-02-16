@@ -66,8 +66,10 @@ In some cases, request header values can affect response content. For example, s
 i18n and [content negotiation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation) may use the `Accept-Language` header to determine which language to serve content in.
 
 The server will ideally also send a `Vary` header in the response, which informs caches about
-which request headers to match. By default, requests-cache respects this, so in many cases it
-will already do what you want without extra configuration. Not all servers send `Vary`, however.
+which request headers to match. By default, requests-cache respects this: each unique combination
+of Vary-specified header values is cached separately, so alternating between variants (e.g.,
+different `Accept` values for content negotiation) works correctly without extra configuration.
+Not all servers send `Vary`, however.
 ```
 
 Use the `match_headers` option if you want to specify which headers you want to match when `Vary`

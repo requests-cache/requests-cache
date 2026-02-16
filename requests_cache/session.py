@@ -224,6 +224,25 @@ class CacheMixin(MIXIN_BASE):
             cached_response = self.cache.get_response(actions.cache_key)
         actions.update_from_cached_response(cached_response, self.cache.create_key, **kwargs)
 
+        # Secondary Vary lookup: if the primary entry didn't match on Vary,
+        # try a Vary-qualified key before going to the origin server.
+        if actions.vary_cache_key:
+            vary_key = actions.vary_cache_key
+            vary_cached = self.cache.get_response(vary_key)
+            # Use the Vary-qualified key for any future storage (hit or miss)
+            actions.cache_key = vary_key
+            if vary_cached is not None:
+                # Reset decision flags from the failed primary Vary check
+                actions.send_request = False
+                actions.resend_request = False
+                actions.resend_async = False
+                actions.error_504 = False
+                actions.vary_cache_key = None
+                actions._validation_headers = {}
+                # Re-evaluate freshness/expiry with the Vary-matched response
+                actions.update_from_cached_response(vary_cached, self.cache.create_key, **kwargs)
+                cached_response = vary_cached
+
         # Handle missing and expired responses based on settings and headers
         if actions.error_504:
             response: AnyResponse = get_504_response(request)
