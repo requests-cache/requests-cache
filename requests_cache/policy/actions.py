@@ -67,6 +67,7 @@ class CacheActions(RichMixin):
     resend_async: bool = field(default=False)
     skip_read: bool = field(default=False)
     skip_write: bool = field(default=False)
+    vary_cache_key: Optional[str] = field(default=None)
 
     # Inputs
     _directives: CacheDirectives = field(default=None, repr=False)
@@ -347,14 +348,19 @@ class CacheActions(RichMixin):
             return True
 
         key_kwargs['match_headers'] = match_headers
-        vary_cache_key = create_key(vary_request, **key_kwargs)
-        headers_match = create_key(self._request, **key_kwargs) == vary_cache_key
+        vary_key_cached = create_key(vary_request, **key_kwargs)
+        vary_key_current = create_key(self._request, **key_kwargs)
+        headers_match = vary_key_current == vary_key_cached
         if not headers_match:
             _log_vary_diff(
                 self._request.headers,
                 cached_response.request.headers,
                 key_kwargs['match_headers'],
             )
+            # Compute secondary cache key with merged Vary + user match_headers
+            merged = self._merge_match_headers(match_headers)
+            key_kwargs['match_headers'] = merged
+            self.vary_cache_key = create_key(self._request, **key_kwargs)
         return headers_match
 
     def _cookies_match(self, cached_request: 'CachedRequest') -> bool:
@@ -367,6 +373,16 @@ class CacheActions(RichMixin):
         cached_cookies = normalize_cookies(cached_request.cookies)
         request_cookies = normalize_cookies(getattr(self._request, '_cookies', None))
         return request_cookies == cached_cookies
+
+    def _merge_match_headers(self, vary_headers: List[str]) -> Union[List[str], bool]:
+        """Merge Vary headers with user-configured match_headers to build a complete
+        set of headers for the secondary cache key."""
+        user_headers = self._settings.match_headers
+        if user_headers is True:
+            return True
+        if not user_headers:
+            return vary_headers
+        return sorted(set(vary_headers + [h.lower() for h in user_headers]))
 
 
 def _is_method_allowed(request: PreparedRequest, settings: CacheSettings) -> bool:
