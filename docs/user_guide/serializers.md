@@ -51,7 +51,7 @@ The alternative JSON libraries [`orjson`](https://github.com/ijl/orjson) and
 
 To use a specific JSON library, use one of the following serializer objects:
 ```py
->>> from requests_cache import CachedSession, json_serializer ujson_serializer, orjson_serializer
+>>> from requests_cache import CachedSession, json_serializer, ujson_serializer, orjson_serializer
 >>> session = CachedSession('my_cache', serializer=json_serializer)
 >>> session = CachedSession('my_cache', serializer=ujson_serializer)
 >>> session = CachedSession('my_cache', serializer=orjson_serializer)
@@ -111,11 +111,6 @@ You can install the extra dependencies for this serializer with:
 ```bash
 pip install requests-cache[mongodb]
 ```
-
-Or if you would like to use the standalone BSON codec for a different backend, without installing
-MongoDB dependencies:
-
-
 
 ## Response Content Format
 By default, any JSON or text response body will be decoded, so the response is fully

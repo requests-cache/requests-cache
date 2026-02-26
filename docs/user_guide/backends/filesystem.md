@@ -65,8 +65,6 @@ Note on accurate file size tracking: Files on disk are stored in blocks, so the 
 
 Example with all LRU-related options:
 ```python
-
-```python
 >>> session = CachedSession(
 ...     '~/http_cache',
 ...       backend='filesystem',
