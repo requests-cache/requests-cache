@@ -1,5 +1,8 @@
 # History
 
+## Unreleased
+* Add tests for python 3.15 (alpha)
+
 ## 1.3.0 (2026-02-02)
 
 ⚠️ **Deprecations & removals:**

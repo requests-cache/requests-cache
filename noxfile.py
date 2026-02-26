@@ -34,7 +34,19 @@ DOC_BUILD_DIR = DOCS_DIR / '_build' / 'html'
 TEST_DIR = Path('tests')
 CLEAN_DIRS = ['dist', 'build', DOCS_DIR / '_build', DOCS_DIR / 'modules', Path('test-reports')]
 
-PYTHON_VERSIONS = ['3.13', '3.12', '3.11', '3.10', '3.9', '3.8', 'pypy3.9', 'pypy3.10']
+PYTHON_VERSIONS = [
+    '3.15',
+    '3.14',
+    '3.13',
+    '3.12',
+    '3.11',
+    '3.10',
+    '3.9',
+    '3.8',
+    'pypy3.11',
+    'pypy3.10',
+    'pypy3.9',
+]
 UNIT_TESTS = TEST_DIR / 'unit'
 INTEGRATION_TESTS = TEST_DIR / 'integration'
 COMPAT_TESTS = TEST_DIR / 'compat'
