@@ -20,6 +20,15 @@ If you are interested in helping out, here are a few ways to get started:
 * See the [help-wanted](https://github.com/requests-cache/requests-cache/labels/help-wanted) issue label
 * If you find an issue you want to work on, please comment on it so others know it's in progress
 
+### AI Policy
+AI-assisted contributions are fine, as long as:
+* Contents are fully **reviewed, tested, and understood by a human**
+* Any user-facing documentation is human-written (excluding minor edits/docstring boilerplate)
+
+The general principle is that low-effort, fully automated contributions add a maintenance burden for
+us as maintainers (limited and squishy mortal beings) that is out of proportion with the utility
+these PRs provide, especially if they are submitted solely for contribution stats.
+
 ### Pull Requests
 Here are some general guidelines for submitting a pull request:
 
@@ -28,6 +37,7 @@ Here are some general guidelines for submitting a pull request:
 * Add unit test coverage for your changes
 * If your changes add or modify user-facing behavior, add documentation describing those changes
 * Submit the PR to be merged into the `main` branch
+* Use the PR template
 
 ## Development Setup
 
@@ -188,7 +198,7 @@ progress on major and minor releases.
 on the `main` branch.
 
 Release steps:
-* Update the version in both `pyproject.toml` and `requests_cache/__init__.py`
+* Update the version in `pyproject.toml`
 * Update the release notes in `HISTORY.md`
 * Generate a sample cache for the new version (used by unit tests) with `python tests/generate_test_db.py`
 * Merge changes into the `main` branch
