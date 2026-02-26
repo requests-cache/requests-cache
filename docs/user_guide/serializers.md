@@ -112,11 +112,6 @@ You can install the extra dependencies for this serializer with:
 pip install requests-cache[mongodb]
 ```
 
-Or if you would like to use the standalone BSON codec for a different backend, without installing
-MongoDB dependencies:
-
-
-
 ## Response Content Format
 By default, any JSON or text response body will be decoded, so the response is fully
 human-readable/editable. Other content types will be saved as binary data. To save _all_ content as binary, set ``decode_content=False``:
