@@ -110,3 +110,12 @@ time via {py:class}`CachedSession.settings <.CacheSettings>`. For example:
 ```
 
 Note that this does **not** include backend and serializer settings, which cannot be changed after initialization.
+
+The `autoclose` parameter (default `True`) controls whether the cache backend connection is closed
+when the session is closed. Set it to `False` when sharing a single backend instance across
+multiple sessions, so that closing one session does not disconnect the others:
+```python
+>>> backend = RedisCache()
+>>> session1 = CachedSession(backend=backend, autoclose=False)
+>>> session2 = CachedSession(backend=backend, autoclose=False)
+```
