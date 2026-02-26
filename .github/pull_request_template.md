@@ -1,11 +1,10 @@
 Closes #<issue number>
 
 <!--
-If any of the items below don't apply to your PR, you can just remove them.
-See the contributing guide for more info:
-https://requests-cache.readthedocs.io/en/main/project_info/contributing.html
+If any of the items below don't apply to your PR, you can remove them.
 -->
-### Checklist
-- [ ] Added docstrings and type annotations
-- [ ] Added test coverage
-- [ ] Updated changelog to describe any user-facing features or changed behavior
+## Checklist
+* [ ] I have read and understood the [contributing guidelines](https://github.com/requests-cache/requests-cache/blob/main/CONTRIBUTING.md)
+* [ ] Add/update doctrings + type annotations
+* [ ] Add test coverage for any new/modified behavior
+* [ ] Update release notes in `HISTORY.md` for any user-facing changes (skip for internal-only changes)
