@@ -140,7 +140,7 @@ Or if you use a `CachedSession` object, you could replace it with a regular `Ses
 >>> import pytest
 >>> import requests
 
->>> @pytest.fixure(scope='function', autouse=True)
+>>> @pytest.fixture(scope='function', autouse=True)
 >>> def disable_requests_cache():
 ...     """Replace CachedSession with a regular Session for all test functions"""
 ...     with unittest.mock.patch('requests_cache.CachedSession', requests.Session):

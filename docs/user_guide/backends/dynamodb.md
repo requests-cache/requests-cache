@@ -77,7 +77,7 @@ aws dynamodb query \
 
 ## Expiration
 DynamoDB natively supports TTL on a per-item basis, and can automatically remove expired responses from
-the cache. This will be set by by default, according to normal {ref}`expiration settings <expiration>`.
+the cache. This will be set by default, according to normal {ref}`expiration settings <expiration>`.
 
 ```{warning}
 DynamoDB does not remove expired items immediately. See
