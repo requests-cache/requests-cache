@@ -262,11 +262,17 @@ class CacheActions(RichMixin):
         logger.debug(f'Response for URL {response.request.url} has not been modified')
 
         # Skip updating the cached response if expiration and headers are unchanged
+        # OR if session/request settings skip it.
         # Ignore validators missing from new response, since they may be omitted
         headers_changed = any(
             cached_response.headers.get(k) != v for k, v in response.headers.items()
         )
-        self.skip_write = self.expires == cached_response.expires and not headers_changed
+        expiration_changed = self.expires != cached_response.expires
+        permanent_skip = (
+            self._settings.read_only or self._settings.disabled or self._directives.no_store
+        )
+        self.skip_write = permanent_skip or not (expiration_changed or headers_changed)
+
         cached_response.expires = self.expires
 
         # Update headers;
