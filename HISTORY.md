@@ -2,6 +2,7 @@
 
 ## Unreleased
 * Add tests for python 3.15 (alpha)
+* Add support for multiple response variations based on `Vary`
 
 ## 1.3.0 (2026-02-02)
 
