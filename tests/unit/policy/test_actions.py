@@ -610,24 +610,22 @@ def test_update_from_response__revalidate(mock_utcnow, cache_headers, validator_
 
 
 @pytest.mark.parametrize(
-    'skip_write_initial, headers_changed, expected_skip_write',
+    'read_only, headers_changed, expected_skip_write',
     [
         (False, False, True),  # Nothing changed: skip_write should be True (optimization)
-        (False, True, False),  # Headers changed, no prior skip_write: should write
-        (True, False, True),  # read_only set skip_write: should remain True
+        (False, True, False),  # Headers changed, not read_only: should write
+        (True, False, True),  # read_only: should remain True even if nothing changed
         (True, True, True),  # read_only + headers changed: skip_write must remain True
     ],
 )
-def test_update_revalidated_response__skip_write(
-    skip_write_initial, headers_changed, expected_skip_write
-):
-    """skip_write should be preserved if already True (e.g. from read_only), and set based on
-    whether expiration/headers changed otherwise
+def test_update_revalidated_response__skip_write(read_only, headers_changed, expected_skip_write):
+    """skip_write should be True when read_only=True or when nothing changed,
+    and False when headers/expiration changed and read_only=False
     """
-    actions = CacheActions.from_request('key', BASIC_REQUEST, CacheSettings(cache_control=True))
-    actions.skip_write = skip_write_initial
+    actions = CacheActions.from_request(
+        'key', BASIC_REQUEST, CacheSettings(cache_control=True, read_only=read_only)
+    )
     cached_response = get_mock_response(headers={'ETag': ETAG})
-    # Align expires so the "no change" optimization can trigger when expected (actions.expires is None by default)
     cached_response.expires = None
     new_headers = {'ETag': ETAG, 'X-Custom-Header': 'new'} if headers_changed else {'ETag': ETAG}
     new_response = get_mock_response(status_code=304, headers=new_headers)
