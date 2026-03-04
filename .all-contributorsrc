@@ -1165,6 +1165,24 @@
       "contributions": [
         "test"
       ]
+    },
+    {
+      "login": "ArmaanjeetSandhu",
+      "name": "Armaanjeet Singh Sandhu",
+      "avatar_url": "https://avatars.githubusercontent.com/u/90208595?v=4",
+      "profile": "https://github.com/ArmaanjeetSandhu",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "mslw",
+      "name": "Michał Szczepanik",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11985212?v=4",
+      "profile": "https://github.com/mslw",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
