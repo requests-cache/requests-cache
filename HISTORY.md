@@ -1,6 +1,6 @@
 # History
 
-## Unreleased
+## 1.3.1 (2025-03-03)
 * Add support for multiple response variations based on `Vary`
 * Fix overwriting headers after revalidation in `read_only` mode
 * Add tests for python 3.15 (alpha)
