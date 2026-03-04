@@ -50,13 +50,13 @@ jobs:
           uv sync --all-extras
 
       # Start integration test databases
-      - uses: supercharge/mongodb-github-action@315db7fe45ac2880b7758f1933e6e5d59afd5e94
+      - uses: supercharge/mongodb-github-action@315db7fe45ac2880b7758f1933e6e5d59afd5e94 # 1.12.1
         with:
           mongodb-version: 8
-      - uses: supercharge/redis-github-action@ffd8939ed7e6e3b99a359b6703e53bdeb544c2a9
+      - uses: supercharge/redis-github-action@bc274cb7238cd63a45029db04ee48c07a72609fd # 1.8.1
         with:
           redis-version: 7
-      - uses: rrainn/dynamodb-action@52f02829330b77b26c950d2ecf35bb6d881749cb
+      - uses: rrainn/dynamodb-action@36eaff1005b37a22258716d4280f9e0377b834aa # v4.0.0
 
       # Run tests with coverage report
       - name: Run unit + integration tests
@@ -73,7 +73,7 @@ jobs:
       # Latest python version: send coverage report to codecov
       - name: 'Upload coverage report to Codecov'
         if: ${{ matrix.python-version == env.LATEST_PY_VERSION }}
-        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
 
   # Run code analysis checks via pre-commit hooks
   analyze:
@@ -84,7 +84,7 @@ jobs:
         with:
           python-version: ${{ env.LATEST_PY_VERSION }}
       - name: Run style checks & linting
-        uses: j178/prek-action@564dda4cfa5e96aafdc4a5696c4bf7b46baae5ac
+        uses: j178/prek-action@0bb87d7f00b0c99306c8bcb8b8beba1eb581c037 # v1.1.1
       - name: Scan dependencies for known vulnerabilities
         uses: pypa/gh-action-pip-audit@v1.1.0
         with:
