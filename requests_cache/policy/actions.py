@@ -266,7 +266,9 @@ class CacheActions(RichMixin):
         headers_changed = any(
             cached_response.headers.get(k) != v for k, v in response.headers.items()
         )
-        self.skip_write = self.expires == cached_response.expires and not headers_changed
+        self.skip_write = self.skip_write or (
+            self.expires == cached_response.expires and not headers_changed
+        )
         cached_response.expires = self.expires
 
         # Update headers;
