@@ -20,25 +20,25 @@ Complete project documentation can be found at [requests-cache.readthedocs.io](h
 <!-- END-RTD-IGNORE -->
 
 ## Features
-* 🍰 **Ease of use:** Keep using the `requests` library you're already familiar with. Add caching
+* **Ease of use:** Keep using the `requests` library you're already familiar with. Add caching
   with a [drop-in replacement](https://requests-cache.readthedocs.io/en/stable/user_guide/general.html#sessions)
   for `requests.Session`, or
   [install globally](https://requests-cache.readthedocs.io/en/stable/user_guide/general.html#patching)
   to add transparent caching to all `requests` functions.
-* 🚀 **Performance:** Get sub-millisecond response times for cached responses. When they expire, you
+* **Performance:** Get sub-millisecond response times for cached responses. When they expire, you
   still save time with
   [conditional requests](https://requests-cache.readthedocs.io/en/stable/user_guide/headers.html#conditional-requests).
-* 💾 **Persistence:** Works with several
+* **Persistence:** Works with several
   [storage backends](https://requests-cache.readthedocs.io/en/stable/user_guide/backends.html)
   including SQLite, Redis, MongoDB, and DynamoDB; or save responses as plain JSON files, YAML,
   and more
-* 🕗 **Expiration:** Use
+* **Expiration:** Use
   [Cache-Control](https://requests-cache.readthedocs.io/en/stable/user_guide/headers.html#cache-control)
   and other standard HTTP headers, define your own expiration schedule, keep your cache clutter-free
   with backends that natively support TTL, or any combination of strategies
-* ⚙️ **Customization:** Works out of the box with zero config, but with a robust set of features for
+* **Customization:** Works out of the box with zero config, but with a robust set of features for
   configuring and extending the library to suit your needs
-* 🧩 **Compatibility:** Can be combined with other
+* **Compatibility:** Can be combined with other
   [popular libraries based on requests](https://requests-cache.readthedocs.io/en/stable/user_guide/compatibility.html)
 
 ## Quickstart
