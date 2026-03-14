@@ -16,14 +16,14 @@ please use [Discussions](https://github.com/orgs/requests-cache/discussions).
 If you are interested in helping out, here are a few ways to get started:
 
 * Give feedback on open issues
-* Make or suggest improvements for the documentation; see [#355](https://github.com/requests-cache/requests-cache/issues/355) for details.
 * See the [help-wanted](https://github.com/requests-cache/requests-cache/labels/help-wanted) issue label
 * If you find an issue you want to work on, please comment on it so others know it's in progress
 
 ### AI Policy
-AI-assisted contributions are fine, as long as:
+AI-assisted contributions may be accepted if:
 * Contents are fully **reviewed, tested, and understood by a human**
 * Any user-facing documentation is human-written (excluding minor edits/docstring boilerplate)
+* You comment in a new or existing issue to discuss *before* submitting a PR
 
 The general principle is that low-effort, fully automated contributions add a maintenance burden for
 us as maintainers (limited and squishy mortal beings) that is out of proportion with the utility
@@ -31,13 +31,11 @@ these PRs provide, especially if they are submitted solely for contribution stat
 
 ### Pull Requests
 Here are some general guidelines for submitting a pull request:
-
-* In most cases, please submit an issue describing the proposed change prior to submitting a PR
-* Or, if the changes are trivial (minor bugfixes, documentation edits, etc.), just briefly explain the changes in the PR description
+* Use the PR template
+* In most cases, please submit an issue (or comment on an existing issue) describing the proposed change prior to submitting a PR.
+* Or, if the changes are trivial (minor bugfixes, etc.), just briefly explain the changes in the PR description
 * Add unit test coverage for your changes
 * If your changes add or modify user-facing behavior, add documentation describing those changes
-* Submit the PR to be merged into the `main` branch
-* Use the PR template
 
 ## Development Setup
 
