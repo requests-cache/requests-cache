@@ -12,8 +12,10 @@ from collections import UserDict
 from datetime import datetime
 from logging import getLogger
 from pickle import PickleError
-from typing import TYPE_CHECKING, Iterable, Iterator, List, MutableMapping, Optional, TypeVar
+from typing import TYPE_CHECKING, Iterable, Iterator, List, MutableMapping, Optional, TypeVar, Union
 from warnings import warn
+
+from pathlib import Path
 
 from requests import Request, Response
 
@@ -56,9 +58,13 @@ class BaseCache:
         self._settings = CacheSettings()  # Init and public access is done in CachedSession
 
     @property
-    def db_path(self) -> Optional[str]:
-        """Path to the cache database file, or ``None`` for non-file-based backends."""
-        return None
+    def db_path(self) -> Union[str, Path]:
+        """Path to the cache database file.
+
+        Raises:
+            NotImplementedError: For backends that do not use a file-based database.
+        """
+        raise NotImplementedError
 
     # Main cache operations
     # ---------------------
