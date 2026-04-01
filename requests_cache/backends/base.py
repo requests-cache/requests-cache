@@ -55,6 +55,11 @@ class BaseCache:
         self.redirects: BaseStorage[str, str] = DictStorage()
         self._settings = CacheSettings()  # Init and public access is done in CachedSession
 
+    @property
+    def db_path(self) -> Optional[str]:
+        """Path to the cache database file, or ``None`` for non-file-based backends."""
+        return None
+
     # Main cache operations
     # ---------------------
 
