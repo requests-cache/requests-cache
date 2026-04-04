@@ -18,7 +18,7 @@ from rich.progress import Progress
 
 from requests_cache import CachedResponse, CachedSession
 
-BASE_RESPONSE = requests.get('https://httpbin.org/get')
+BASE_RESPONSE = requests.get('https://httpbin.org/get', timeout=10.0)
 CACHE_NAME = 'benchmark_cache'
 WARMUP_ITERATIONS = 100
 ITERATIONS = 5000

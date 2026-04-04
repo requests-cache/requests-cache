@@ -78,8 +78,8 @@ def get_user_info():
 
 def test_non_github_requests():
     """Test that URL patterns are working, and that non-GitHub requests are not cached"""
-    response = requests.get('https://httpbin.org/json')
-    response = requests.get('https://httpbin.org/json')
+    response = requests.get('https://httpbin.org/json', timeout=10.0)
+    response = requests.get('https://httpbin.org/json', timeout=10.0)
     from_cache = getattr(response, 'from_cache', False)
     print(f'Non-GitHub requests cached: {from_cache}')
     assert not from_cache
@@ -92,7 +92,7 @@ def check_cache():
     print('\n'.join(get_cache().urls()))
 
     # Make sure credentials were redacted from all responses in the cache
-    response = requests.get('https://api.github.com/user/repos')
+    response = requests.get('https://api.github.com/user/repos', timeout=10.0)
     print('\nExample cached request headers:')
     print(response.request.headers)
     for response in get_cache().responses.values():

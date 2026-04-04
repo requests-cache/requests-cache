@@ -46,7 +46,7 @@ def test_mock_session(mock_http_adapter, mock_session):
     """Test that the mock_session fixture is working as expected"""
     # An error will be raised if a real request is made
     with pytest.raises(ValueError):
-        requests.get(TEST_URLS[0])
+        requests.get(TEST_URLS[0], timeout=10.0)
 
     # All mocked URLs will return a response based on requests-cache data
     for url in TEST_URLS:
@@ -64,7 +64,7 @@ def save_test_data():
     """
     session = CachedSession(TEST_DB)
     for url in TEST_URLS:
-        session.get(url)
+        session.get(url, timeout=10.0)
 
 
 if __name__ == '__main__':

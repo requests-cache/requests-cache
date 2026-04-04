@@ -199,7 +199,7 @@ class BaseCacheTest:
         be added. The `/cache` endpoint returns a 304 if one of these request headers is present.
         When this happens, the previously cached response should be returned.
         """
-        response = requests.get(httpbin('cache'))
+        response = requests.get(httpbin('cache'), timeout=10.0)
         response.headers = cached_response_headers
 
         session = self.init_session(cache_control=True)

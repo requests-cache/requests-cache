@@ -17,7 +17,7 @@ class BacktestCachedSession(CachedSession):
 
         # Response was cached after the (simulated) current time, so ignore it and send a new request
         if response.created_at and response.created_at > datetime.now(UTC):
-            new_response = requests.request(method, url, **kwargs)
+            new_response = requests.request(method, url, **kwargs, timeout=10.0)
             return set_response_defaults(new_response)
         else:
             return response
