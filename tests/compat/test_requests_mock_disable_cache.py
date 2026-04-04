@@ -18,9 +18,9 @@ def test_requests_cache_mock(requests_cache_mock):
     requests_cache_mock.get(url, text='Mock response!')
 
     # Make sure the mocker is used
-    response_1 = requests.get(url)
+    response_1 = requests.get(url, timeout=10.0)
     assert response_1.text == 'Mock response!'
 
     # Make sure the cache is not used
-    response_2 = requests.get(url)
+    response_2 = requests.get(url, timeout=10.0)
     assert getattr(response_2, 'from_cache', False) is False

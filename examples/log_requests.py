@@ -20,7 +20,7 @@ logger = getLogger('requests_cache.examples')
 @contextmanager
 def log_requests():
     """Context manager that mocks and logs all non-cached requests"""
-    real_response = set_response_defaults(requests.get('https://httpbin.org/get'))
+    real_response = set_response_defaults(requests.get('https://httpbin.org/get', timeout=10.0))
     with patch.object(OriginalSession, 'send', return_value=real_response) as mock_send:
         session = CachedSession('cache-test', backend='sqlite')
         session.cache.clear()

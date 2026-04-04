@@ -23,7 +23,7 @@ MAX_RESPONSE_SIZE = 10000  # In bytes
 N_RESPONSES = 100000
 N_INVALID_RESPONSES = 10
 
-BASE_RESPONSE = requests.get('https://httpbin.org/get')
+BASE_RESPONSE = requests.get('https://httpbin.org/get', timeout=10.0)
 HTTPBIN_EXTRA_ENDPOINTS = [
     'anything',
     'bytes/1024' 'cookies',

@@ -53,13 +53,13 @@ def test_mock_session(mock_http_adapter):
     with get_responses():
         # An error will be raised if a real request is made
         with pytest.raises(ValueError):
-            requests.get(PASSTHRU_URL)
+            requests.get(PASSTHRU_URL, timeout=10.0)
 
         # All mocked URLs will return a response based on requests-cache data
         for url in TEST_URLS:
-            response = requests.get(url)
+            response = requests.get(url, timeout=10.0)
             assert getattr(response, 'from_cache', False) is False
 
         # responses will raise an error for an unmocked URL, as usual
         with pytest.raises(ConnectionError):
-            requests.get(UNMOCKED_URL)
+            requests.get(UNMOCKED_URL, timeout=10.0)

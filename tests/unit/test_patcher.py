@@ -77,7 +77,7 @@ def test_clear__not_installed(mock_clear):
 def test_disabled(cached_request, original_request, installed_session):
     with requests_cache.disabled():
         for _ in range(3):
-            requests.get('some_url')
+            requests.get('some_url', timeout=10.0)
     assert cached_request.call_count == 0
     assert original_request.call_count == 3
 
@@ -87,7 +87,7 @@ def test_disabled(cached_request, original_request, installed_session):
 def test_enabled(cached_request, original_request, tempfile_path):
     with requests_cache.enabled(tempfile_path):
         for _ in range(3):
-            requests.get('some_url')
+            requests.get('some_url', timeout=10.0)
     assert cached_request.call_count == 3
     assert original_request.call_count == 0
 
