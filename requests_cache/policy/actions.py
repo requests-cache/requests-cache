@@ -354,12 +354,14 @@ class CacheActions(RichMixin):
         if not match_headers:
             return True
 
-        # If any Vary header is in ignored_parameters, the stored value is 'REDACTED' and cannot
-        # be compared meaningfully against the new request. Treat this as a cache miss rather than
-        # incorrectly sharing a response across requests with different values for that header.
+        # If a Vary header is in ignored_parameters and on the request, treat it as a cache miss
+        # rather than potentially returning an invalid response
         ignored = {h.lower() for h in (self._settings.ignored_parameters or [])}
-        if ignored & set(match_headers):
-            logger.debug('Failed Vary check: Vary header(s) overlap with ignored_parameters')
+        ignore_overlap = ignored & set(match_headers)
+        if ignore_overlap and any(h in self._request.headers for h in ignore_overlap):
+            logger.debug(
+                f'Failed Vary check: Vary header(s) are in ignored_parameters: {ignore_overlap}'
+            )
             return False
 
         key_kwargs['match_headers'] = match_headers

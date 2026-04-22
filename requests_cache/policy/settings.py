@@ -11,8 +11,17 @@ DEFAULT_CACHE_NAME = 'http_cache'
 DEFAULT_METHODS = ('GET', 'HEAD')
 DEFAULT_STATUS_CODES = (200,)
 
-# Default params and/or headers that are excluded from cache keys and redacted from cached responses
-DEFAULT_IGNORED_PARAMS = ('Authorization', 'X-API-KEY', 'access_token', 'api_key')
+# Common auth headers and params that are excluded from cache keys and redacted from cached responses
+AUTH_HEADERS = (
+    'Authorization',
+    'Proxy-Authorization',
+    'X-API-Key',
+    'X-Auth-Token',
+    'X-API-Token',
+    'X-Access-Token',
+)
+AUTH_PARAMS = ('access_token', 'api_key', 'apikey')
+DEFAULT_IGNORED_PARAMS = AUTH_HEADERS + AUTH_PARAMS
 
 
 @define(repr=False)

@@ -1,5 +1,9 @@
 # History
 
+## Unreleased
+* Consider Vary with an ignored header (via `ignored_parameters`) to always be a cache miss
+* Ignore + redact some additional common authentication headers + params by default
+
 ## 1.3.1 (2025-03-03)
 * Add support for multiple response variations based on `Vary`
 * Fix overwriting headers after revalidation in `read_only` mode

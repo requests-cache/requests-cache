@@ -77,3 +77,4 @@ Some are ignored by default, including:
 * `access_token` in POST body (used by OAuth)
 * `X-API-KEY` header (used by OpenAPI spec)
 * `api_key` request param (used by OpenAPI spec)
+* `X-Access-Token`/`X-Auth-Token` headers (some JWT implementations)

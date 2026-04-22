@@ -407,18 +407,26 @@ def test_match_headers__vary_alternating(mock_session):
 
 
 def test_match_headers__vary_authorization(mock_session):
-    """When Vary: Authorization overlaps with ignored_parameters, every request is a cache miss"""
+    """When Vary headers overlaps with ignored_parameters and the header is present on the
+    request, it's always a cache miss (prevents cross-user cache leakage).
+    """
     url = f'{MOCKED_URL}/vary-auth'
     mock_session.mock_adapter.register_uri(
         'GET', url, headers={'Vary': 'Authorization'}, text='mock response', status_code=200
     )
     mock_session.settings.ignored_parameters = ['Authorization']
 
+    # Header present: always a miss
     r1 = mock_session.get(url, headers={'Authorization': 'Bearer user-1-token'})
     r2 = mock_session.get(url, headers={'Authorization': 'Bearer user-1-token'})
-
     assert r1.from_cache is False
     assert r2.from_cache is False
+
+    # Header missing: no collision risk, proceed as normal
+    r3 = mock_session.get(url)
+    r4 = mock_session.get(url)
+    assert r3.from_cache is False
+    assert r4.from_cache is True
 
 
 @pytest.mark.parametrize(
