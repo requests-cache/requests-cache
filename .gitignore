@@ -33,6 +33,7 @@ package.json
 .coverage.*
 .COVERAGE.*
 .mypy_cache/
+.pytest_cache/
 .nox/
 test-reports/
 
