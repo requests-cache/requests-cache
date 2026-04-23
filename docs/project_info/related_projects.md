@@ -10,15 +10,20 @@ For other use cases, you can check out these other python projects related to ca
 * [CacheControl](https://github.com/psf/cachecontrol): An HTTP cache that ports features from `httplib2` for usage with `requests`
 * [Hishel](https://github.com/karpetrosyan/hishel): A sync+async HTTP cache for `httpx`
 
+(server-cache)=
 ## Server-side HTTP caching
 * [aiohttp-cache](https://github.com/cr0hn/aiohttp-cache): A server-side async HTTP cache for the `aiohttp` web server
-* [fastapi-cache](https://github.com/long2ice/fastapi-cache): A server-side async HTTP cache for applications build with FastAPI
+* [django cache](https://docs.djangoproject.com/en/stable/topics/cache/): Built-in server-side caching for Django applications
+* [fastapi-cache](https://github.com/long2ice/fastapi-cache): A server-side async HTTP cache for applications built with FastAPI
 * [flask-caching](https://github.com/pallets-eco/flask-caching): A server-side HTTP cache for applications built with Flask
+* [starlette-caches](https://github.com/mattmess1221/starlette-caches): HTTP caching middleware for Starlette/FastAPI, inspired by Django's cache framework
 
 ## General
 * [aiocache](https://github.com/aio-libs/aiocache): General-purpose async cache backends
 * [cachier](https://github.com/python-cachier/cachier): A general-purpose cache with file-based and MongoDB backends
+* [cachetools](https://github.com/tkem/cachetools): Memoizing collections and decorators with LRU, TTL, FIFO, and other eviction strategies
 * [diskcache](https://github.com/grantjenks/python-diskcache): A general-purpose file-based cache built on SQLite
+* [dogpile.cache](https://github.com/sqlalchemy/dogpile.cache): A caching frontend with concurrency locking and backends for Redis, Memcached, and databases
 
 ## Testing
 * [requests-mock](https://github.com/jamielennox/requests-mock): A `requests` transport adapter that mocks HTTP responses
@@ -28,3 +33,4 @@ For other use cases, you can check out these other python projects related to ca
 * [HTTPretty](https://github.com/gabrielfalcao/HTTPretty): HTTP Client mocking tool that provides a full fake TCP socket module; inspired by Ruby's [FakeWeb](https://github.com/chrisk/fakeweb).
 * [aioresponses](https://github.com/pnuckowski/aioresponses): A helper to mock web requests in `aiohttp`, inspired by `responses`
 * [aresponses](https://github.com/aresponses/aresponses): An asyncio testing server for mocking external services
+* [pook](https://github.com/h2non/pook): HTTP traffic mocking with support for `requests`, `aiohttp`, and `httpx`
