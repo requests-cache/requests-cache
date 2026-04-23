@@ -40,7 +40,7 @@ jobs:
     steps:
       # Install dependencies, with caching
       - uses: actions/checkout@v6
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
           enable-cache: true
           cache-dependency-glob: uv.lock
@@ -92,3 +92,4 @@ jobs:
           # Ignore issues with pip and setuptools versions used by the action itself
           ignore-vulns: |
             GHSA-6vgw-5pg2-w6jp
+            CVE-2026-3219

@@ -162,7 +162,7 @@ def normalize_url(url: str, ignored_parameters: ParamList) -> str:
     port, etc.
     """
     url = filter_url(url, ignored_parameters)
-    return url_normalize(url)
+    return url_normalize(url) or ''
 
 
 def normalize_body(
