@@ -1183,6 +1183,16 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "0xHunSec",
+      "name": "HunSec",
+      "avatar_url": "https://avatars.githubusercontent.com/u/39668014?v=4",
+      "profile": "https://github.com/0xHunSec",
+      "contributions": [
+        "bug",
+        "security"
+      ]
     }
   ],
   "contributorsPerLine": 7,
