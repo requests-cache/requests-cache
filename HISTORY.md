@@ -1,5 +1,10 @@
 # History
 
+## Unreleased
+* If a request contains a header that is in both `ignored_parameters` and `Vary` (for example,
+`Authorization` + `Vary: Authorization`), always consider it a cache miss
+* Ignore + redact some additional common authentication headers + params by default
+
 ## 1.3.1 (2025-03-03)
 * Add support for multiple response variations based on `Vary`
 * Fix overwriting headers after revalidation in `read_only` mode

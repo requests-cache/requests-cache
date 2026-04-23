@@ -350,8 +350,19 @@ class CacheActions(RichMixin):
                 logger.debug('Failed Vary check: cookies do not match')
                 return False
             match_headers.remove('cookie')
+
         if not match_headers:
             return True
+
+        # If a Vary header is in ignored_parameters and on the request, treat it as a cache miss
+        # rather than potentially returning an invalid response
+        ignored = {h.lower() for h in (self._settings.ignored_parameters or [])}
+        ignore_overlap = ignored & set(match_headers)
+        if ignore_overlap and any(h in self._request.headers for h in ignore_overlap):
+            logger.debug(
+                f'Failed Vary check: Vary header(s) are in ignored_parameters: {ignore_overlap}'
+            )
+            return False
 
         key_kwargs['match_headers'] = match_headers
         vary_key_cached = create_key(vary_request, **key_kwargs)

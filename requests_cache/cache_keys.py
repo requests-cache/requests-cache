@@ -66,8 +66,9 @@ def create_key(
         request: Request object to generate a cache key from
         ignored_parameters: Request parameters, headers, and/or JSON body params to exclude
         match_headers: Match only the specified headers, or ``True`` to match all headers
-        request_kwargs: Additional keyword arguments for :py:func:`~requests.request`
+        serializer: Serializer name or instance
         content_root_key: root element in the request body to apply ignored_parameters to
+        request_kwargs: Additional keyword arguments for :py:func:`~requests.request`
     """
     # Normalize and gather all relevant request info to match against
     request = normalize_request(request, ignored_parameters, content_root_key)
@@ -142,7 +143,8 @@ def normalize_request(
 
 
 def normalize_headers(
-    headers: MutableMapping[str, str], ignored_parameters: ParamList = None
+    headers: MutableMapping[str, str],
+    ignored_parameters: ParamList = None,
 ) -> CaseInsensitiveDict:
     """Sort and filter request headers, and normalize minor variations in multi-value headers"""
     headers = {k: decode(v) for (k, v) in headers.items()}
@@ -257,7 +259,8 @@ def filter_sort_json(data: Union[List, Mapping], ignored_parameters: ParamList):
 
 
 def filter_sort_dict(
-    data: Mapping[str, str], ignored_parameters: ParamList = None
+    data: Mapping[str, str],
+    ignored_parameters: ParamList = None,
 ) -> Dict[str, str]:
     # Note: Any ignored_parameters present will have their values replaced instead of removing the
     # parameter, so the cache key will still match whether the parameter was present or not.
@@ -265,7 +268,10 @@ def filter_sort_dict(
     return {k: ('REDACTED' if k in ignored_parameters else v) for k, v in sorted(data.items())}
 
 
-def filter_sort_multidict(data: KVList, ignored_parameters: ParamList = None) -> KVList:
+def filter_sort_multidict(
+    data: KVList,
+    ignored_parameters: ParamList = None,
+) -> KVList:
     ignored_parameters = set(ignored_parameters or [])
     return [(k, 'REDACTED' if k in ignored_parameters else v) for k, v in sorted(data)]
 
