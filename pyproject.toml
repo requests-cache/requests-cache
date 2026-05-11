@@ -79,6 +79,7 @@ dev = [
     'pytest-pretty          >=1.2',
     'pytest-rerunfailures   >=10.1',
     'pytest-xdist           >=2.2',
+    'requests               >=2.22.0.dev0',   # Use a prerelease if it's the latest version
     'requests-mock          ~=1.12',
     'responses              >=0.19',
     'tenacity               ~=8.0',

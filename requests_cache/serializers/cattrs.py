@@ -21,7 +21,9 @@ from functools import singledispatchmethod
 from json import JSONDecodeError
 from typing import Callable, Dict, ForwardRef, List, Optional, Union
 
+import attrs
 from cattrs import Converter
+from requests.adapters import HTTPAdapter
 from requests.cookies import RequestsCookieJar, cookiejar_from_dict
 from requests.exceptions import RequestException
 from requests.structures import CaseInsensitiveDict
@@ -29,6 +31,15 @@ from requests.structures import CaseInsensitiveDict
 from .._utils import is_json_content_type
 from ..models import CachedResponse, DecodedContent
 from .pipeline import Stage
+
+# requests/models.py uses `from __future__ import annotations` and imports RequestsCookieJar
+# and HTTPAdapter under TYPE_CHECKING only, so get_type_hints() can't find them at runtime
+# when traversing Response's MRO. Pre-resolve CachedResponse field types now so cattrs
+# won't call resolve_types() without the necessary localns.
+attrs.resolve_types(
+    CachedResponse,
+    localns={'RequestsCookieJar': RequestsCookieJar, 'HTTPAdapter': HTTPAdapter},
+)
 
 try:
     import ujson as json
