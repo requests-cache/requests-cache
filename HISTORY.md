@@ -1,6 +1,7 @@
 # History
 
-## Unreleased
+## 1.3.2 (2026-05-10)
+* Update `CachedResponse` for compatibility with requests 2.34
 * If a request contains a header that is in both `ignored_parameters` and `Vary` (for example,
 `Authorization` + `Vary: Authorization`), always consider it a cache miss
 * Ignore + redact some additional common authentication headers + params by default
