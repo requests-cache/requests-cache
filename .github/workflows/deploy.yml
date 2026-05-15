@@ -141,6 +141,9 @@ jobs:
           - python-version: '3.14'
             os: ubuntu-latest
             requests-version: '2.32'
+          - python-version: '3.14'
+            os: ubuntu-latest
+            requests-version: '2.33'
       fail-fast: false
     defaults:
       run:
