@@ -447,8 +447,13 @@ class SQLiteDict(BaseStorage):
                     yield result
 
     def vacuum(self):
-        with self.connection(commit=True) as con:
-            con.execute('VACUUM')
+        # VACUUM cannot run inside a transaction; acquire the lock and run it directly
+        with self._lock:
+            if self._connection:
+                if self._active_transaction:
+                    self._connection.commit()
+                    self._active_transaction = False
+                self._connection.execute('VACUUM')
 
 
 def _format_sequence(values: Collection) -> Tuple[str, List]:

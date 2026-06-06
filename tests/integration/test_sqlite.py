@@ -5,14 +5,14 @@ from datetime import timedelta
 from os.path import join
 from tempfile import NamedTemporaryFile, gettempdir
 from threading import Thread
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from platformdirs import user_cache_dir
 
 from requests_cache.backends import BaseCache, SQLiteCache, SQLiteDict
 from requests_cache.backends.sqlite import MEMORY_URI
-from requests_cache.models import CachedResponse
+from requests_cache.models import CachedRequest, CachedResponse
 from requests_cache.policy import utcnow
 from tests.conftest import skip_pypy
 from tests.integration.base_cache_test import BaseCacheTest
@@ -170,27 +170,43 @@ class TestSQLiteDict(BaseStorageTest):
             assert mock_write.call_count == 1
 
     def test_write_retry_acquire_lock(self):
-        """Acquiring the lock should retry until it succeeds"""
+        """Acquiring the lock should retry BEGIN IMMEDIATE until it succeeds"""
         cache = self.init_cache()
         with patch.object(cache, '_connection') as mock_connection:
             mock_connection.execute.side_effect = [sqlite3.OperationalError] * 10 + [None]
             with cache._acquire_sqlite_lock():
                 pass
-            assert mock_connection.execute.call_count == 11
+            begin_calls = [
+                c for c in mock_connection.execute.call_args_list if 'BEGIN IMMEDIATE' in str(c)
+            ]
+            assert len(begin_calls) == 11
 
-    def test_write_retry__other_errors(self):
-        """Errors other than 'OperationalError: database is locked' should not be retried"""
+    def test_write__error(self):
+        """Errors from write operations should propagate"""
         cache = self.init_cache()
-
-        error_1 = sqlite3.OperationalError('no more rows available')
-        with patch.object(cache, '_write', side_effect=error_1):
+        with patch.object(cache, '_write', side_effect=sqlite3.OperationalError('DB is on fire')):
             with pytest.raises(sqlite3.OperationalError):
                 cache['key_1'] = 'value_1'
-
-        error_2 = sqlite3.DatabaseError('hard drive is on fire')
-        with patch.object(cache, '_write', side_effect=error_2):
+        with patch.object(cache, '_write', side_effect=sqlite3.DatabaseError('HDD also on fire')):
             with pytest.raises(sqlite3.DatabaseError):
                 cache['key_1'] = 'value_1'
+
+    def test_vacuum__no_connection(self):
+        cache = self.init_cache()
+        cache._connection = None
+        cache.vacuum()
+
+    def test_vacuum__commits_active_transaction(self):
+        cache = self.init_cache()
+        mock_con = MagicMock()
+        cache._connection = mock_con
+        cache._active_transaction = True
+
+        cache.vacuum()
+
+        mock_con.commit.assert_called_once()
+        mock_con.execute.assert_called_once_with('VACUUM')
+        assert cache._active_transaction is False
 
     @skip_pypy
     @pytest.mark.parametrize('limit', [None, 50])
@@ -203,8 +219,8 @@ class TestSQLiteDict(BaseStorageTest):
             cache[f'key_{i}'] = f'value_{i}_{suffix}'
 
         # Sorted items should be in ascending order by size
-        items = list(cache.sorted(key='size'))
-        assert len(items) == limit or 100
+        items = list(cache.sorted(key='size', limit=limit))
+        assert len(items) == (limit or 100)
 
         prev_item = None
         for item in items:
@@ -241,8 +257,8 @@ class TestSQLiteDict(BaseStorageTest):
             cache[f'key_{i}'] = response
 
         # Sorted items should be in ascending order by expiration time
-        items = list(cache.sorted(key='expires'))
-        assert len(items) == limit or 100
+        items = list(cache.sorted(key='expires', limit=limit))
+        assert len(items) == (limit or 100)
 
         prev_item = None
         for item in items:
@@ -328,10 +344,11 @@ class TestSQLiteCache(BaseCacheTest):
         """When a corrupted cache prevents a normal DROP TABLE, clear() should still succeed"""
         session = self.init_session(clear=False)
         session.cache.responses['key_1'] = 'value_1'
+        db_path = session.cache.responses.db_path
         session.cache.clear()
 
         assert len(session.cache.responses) == 0
-        assert mock_unlink.call_count == 1
+        mock_unlink.assert_called_once_with(db_path)
 
     @patch.object(BaseCache, 'clear', side_effect=IOError)
     def test_clear__file_already_deleted(self, mock_clear):
@@ -377,6 +394,28 @@ class TestSQLiteCache(BaseCacheTest):
         with patch.object(SQLiteDict, 'vacuum') as mock_vacuum:
             session.cache.delete('key_1', 'key_2', vacuum=False)
             mock_vacuum.assert_not_called()
+
+    def test_vacuum__frees_disk_space(self):
+        """vacuum() should reclaim disk space after bulk deletion (regression test for #1156)"""
+        session = self.init_session()
+        db_path = session.cache.responses.db_path
+
+        for i in range(200):
+            cr = CachedResponse(status_code=200, url=f'https://example.com/{i}')
+            cr.request = CachedRequest(method='GET', url=f'https://example.com/{i}')
+            cr._content = b'x' * 50_000
+            session.cache.save_response(cr, cache_key=f'k{i}')
+
+        size_before = os.path.getsize(db_path)
+        session.cache.delete(older_than=timedelta(seconds=-1))
+        assert session.cache.responses.count() == 0
+
+        session.cache.responses.vacuum()
+        size_after = os.path.getsize(db_path)
+
+        assert size_after < size_before / 10, (
+            f'vacuum() did not reclaim disk space: {size_before} -> {size_after} bytes'
+        )
 
     @patch.object(SQLiteDict, 'sorted')
     def test_filter__expired(self, mock_sorted):

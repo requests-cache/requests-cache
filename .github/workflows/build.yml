@@ -40,7 +40,7 @@ jobs:
     steps:
       # Install dependencies, with caching
       - uses: actions/checkout@v6
-      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
         with:
           enable-cache: true
           cache-dependency-glob: uv.lock
@@ -73,7 +73,7 @@ jobs:
       # Latest python version: send coverage report to codecov
       - name: 'Upload coverage report to Codecov'
         if: ${{ matrix.python-version == env.LATEST_PY_VERSION }}
-        uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
 
   # Run code analysis checks via pre-commit hooks
   analyze:
@@ -84,13 +84,9 @@ jobs:
         with:
           python-version: ${{ env.LATEST_PY_VERSION }}
       - name: Run style checks & linting
-        uses: j178/prek-action@6ad80277337ad479fe43bd70701c3f7f8aa74db3 # v2.0.3
+        uses: j178/prek-action@bdca6f102f98e2b4c7029491a53dfd366469e33d # v2.0.4
       - name: Scan dependencies for known vulnerabilities
         uses: pypa/gh-action-pip-audit@1220774d901786e6f652ae159f7b6bc8fea6d266 # v1.1.0
         with:
+          inputs: .
           vulnerability-service: osv
-          # Ignore issues with pip and setuptools versions used by the action itself
-          ignore-vulns: |
-            GHSA-6vgw-5pg2-w6jp
-            CVE-2026-3219
-            CVE-2026-6357
