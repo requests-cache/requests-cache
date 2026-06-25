@@ -30,6 +30,7 @@ def get_expiration_datetime(
     # Expires headers arrive as integer strings (eg. '0'...or even '-1' if you are Azure...)
     if (
         isinstance(expire_after, str)
+        and expire_after
         and (expire_after[1:] if expire_after[0] == '-' else expire_after).isdigit()
     ):
         expire_after = EXPIRE_IMMEDIATELY

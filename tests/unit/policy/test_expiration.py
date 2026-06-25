@@ -54,6 +54,13 @@ def test_get_expiration_datetime__httpdate():
         get_expiration_datetime('P12Y34M56DT78H90M12.345S')
 
 
+def test_get_expiration_datetime__empty_string():
+    """An empty Expires header should raise ValueError, not IndexError"""
+    assert get_expiration_datetime('', ignore_invalid_httpdate=True) is None
+    with pytest.raises(ValueError):
+        get_expiration_datetime('')
+
+
 @pytest.mark.parametrize(
     'url, expected_expire_after',
     [
