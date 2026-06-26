@@ -2,6 +2,7 @@
 
 ## 1.3.3 (Unreleased)
 * Fix bug with SQLite `vacuum()` not freeing disc space
+* Fix error when receiving an empty `Expires` header value
 
 ## 1.3.2 (2026-05-10)
 * Update `CachedResponse` for compatibility with requests 2.34
