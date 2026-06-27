@@ -84,7 +84,7 @@ dev = [
     'requests-mock          ~=1.12',
     'responses              >=0.19',
     'tenacity               ~=8.0',
-    'time-machine           ~=2.9; implementation_name != "pypy"',
+    'time-machine           >=2.9,<4.0; implementation_name != "pypy"',
     'nox                    >=2024.4',
     'prek                   >=0.2',
     'rich                   >=10.0',
