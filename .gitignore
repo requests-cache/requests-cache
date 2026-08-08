@@ -41,3 +41,6 @@ test-reports/
 docs/_build/
 docs/modules/
 docs/requirements.txt
+
+# Project-agnostic
+.cache

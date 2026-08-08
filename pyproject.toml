@@ -180,6 +180,16 @@ known-first-party = ['tests']
 [tool.ruff.lint.pycodestyle]
 max-line-length = 120
 
+[tool.ruff-extra-rules]
+fix = true
+
+[tool.ruff-extra-rules.per-file-ignores]
+# Keeping the library interface (regardless of whether it is a public or
+# private function) is more important than renaming a function for a negligible
+# clarity improvement. However, this can be done in the next major release.
+"requests_cache/*" = ["validate-function-name"]
+"examples/*" = ["validate-function-name"]
+
 [tool.typos]
 files.extend-exclude = [
     '.all-contributorsrc',
