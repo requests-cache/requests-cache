@@ -124,10 +124,10 @@ class DynamoDbDict(BaseStorage):
                 raise
 
     def __getitem__(self, key):
-        result = self._table.get_item(Key={'key': key})
-        if 'Item' not in result:
+        response = self._table.get_item(Key={'key': key})
+        if 'Item' not in response:
             raise KeyError
-        return self.deserialize(key, result['Item']['value'])
+        return self.deserialize(key, response['Item']['value'])
 
     def __setitem__(self, key, value):
         item = {'key': key, 'value': self.serialize(value)}
