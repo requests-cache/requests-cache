@@ -171,14 +171,14 @@ def installed_session(tempfile_path) -> CachedSession:
 
 
 def mount_mock_adapter(session: CachedSession) -> CachedSession:
-    adapter = get_mock_adapter()
+    adapter = create_mock_adapter()
     for protocol in MOCK_PROTOCOLS:
         session.mount(protocol, adapter)
     session.mock_adapter = adapter
     return session
 
 
-def get_mock_adapter() -> Adapter:
+def create_mock_adapter() -> Adapter:
     """Get a requests-mock Adapter with some URLs mocked by default"""
     adapter = Adapter()
     adapter.register_uri(
@@ -273,7 +273,7 @@ def get_mock_adapter() -> Adapter:
     return adapter
 
 
-def get_mock_response(
+def create_mock_response(
     method='GET',
     url='https://img.site.com/base/img.jpg',
     status_code=200,
