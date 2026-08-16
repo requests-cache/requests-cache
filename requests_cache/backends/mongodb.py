@@ -117,10 +117,10 @@ class MongoDict(BaseStorage):
             self.collection.create_index('created_at', name='ttl_idx', expireAfterSeconds=ttl)
 
     def __getitem__(self, key):
-        result = self.collection.find_one({'_id': key})
-        if result is None:
+        document = self.collection.find_one({'_id': key})
+        if document is None:
             raise KeyError
-        value = result['data'] if 'data' in result else result
+        value = document['data'] if 'data' in document else document
         return self.deserialize(key, value)
 
     def __setitem__(self, key, value):
@@ -133,8 +133,8 @@ class MongoDict(BaseStorage):
         self.collection.replace_one({'_id': key}, value, upsert=True)
 
     def __delitem__(self, key):
-        result = self.collection.find_one_and_delete({'_id': key}, {'_id': True})
-        if result is None:
+        document = self.collection.find_one_and_delete({'_id': key}, {'_id': True})
+        if document is None:
             raise KeyError
 
     def __len__(self):
