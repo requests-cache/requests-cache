@@ -232,8 +232,7 @@ def test_normalize_request__file_like_reset_fails():
 
 
 def test_normalize_headers__single_header_value_as_bytes():
-    headers = {'Accept': b'gzip'}
-    norm_headers = normalize_headers(headers)
+    norm_headers = normalize_headers({'Accept': b'gzip'})
     assert norm_headers == {'Accept': 'gzip'}
 
 
@@ -244,8 +243,7 @@ def test_normalize_headers__multiple_header_values_as_bytes():
 
 
 def test_normalize_headers__single_header_value_as_string():
-    headers = {'Accept': 'gzip'}
-    norm_headers = normalize_headers(headers)
+    norm_headers = normalize_headers({'Accept': 'gzip'})
     assert norm_headers == {'Accept': 'gzip'}
 
 
