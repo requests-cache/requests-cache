@@ -267,8 +267,7 @@ class BaseCacheTest:
 
     def test_decode_gzip_response(self):
         """Test that gzip-compressed responses read decompressed content with decode_content=True"""
-        session = self.init_session()
-        response = session.get(httpbin('gzip'))
+        response = self.init_session().get(httpbin('gzip'))
         assert b'gzipped' in response.content
         response.raw._fp = BytesIO(response.content)
 
