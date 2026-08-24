@@ -1,12 +1,21 @@
 from datetime import timedelta
-from typing import Optional
+from typing import Optional, Union
 
 from attrs import define, field
 from requests.structures import CaseInsensitiveDict
 
 from .._utils import decode, get_valid_kwargs, try_int
 from ..models import RichMixin
-from . import DO_NOT_CACHE, HeaderDict, get_expiration_seconds
+from . import DO_NOT_CACHE, ExpirationTime, HeaderDict, get_expiration_seconds
+
+
+def _int_or_bool(value):
+    """Convert a cache directive value to an int, keeping ``True`` for value-less directives like
+    ``stale-while-revalidate`` (with no ``=seconds`` part).
+    """
+    if value is True:
+        return True
+    return try_int(value)
 
 
 @define(repr=False)
@@ -25,8 +34,8 @@ class CacheDirectives(RichMixin):
     no_store: bool = field(default=False)
     actual_no_cache: bool = field(default=False)  # Nonstandard value/internal use only
     only_if_cached: bool = field(default=False)
-    stale_if_error: int = field(default=None, converter=try_int)
-    stale_while_revalidate: int = field(default=None, converter=try_int)
+    stale_if_error: Union[bool, int] = field(default=None, converter=_int_or_bool)
+    stale_while_revalidate: Union[bool, int] = field(default=None, converter=_int_or_bool)
     etag: str = field(default=None)
     last_modified: str = field(default=None)
 
@@ -67,7 +76,13 @@ def _split_kv_directive(directive: str):
 
 
 def set_request_headers(
-    headers: Optional[HeaderDict], expire_after, only_if_cached, refresh, force_refresh
+    headers: Optional[HeaderDict],
+    expire_after,
+    only_if_cached,
+    refresh,
+    force_refresh,
+    stale_if_error: Union[bool, ExpirationTime] = None,
+    stale_while_revalidate: Union[bool, ExpirationTime] = None,
 ):
     """Translate keyword arguments into equivalent request headers"""
     headers = CaseInsensitiveDict(headers)
@@ -79,6 +94,8 @@ def set_request_headers(
         directives.append('must-revalidate')
     if force_refresh:
         directives.append('no-cache')
+    _append_stale_directive(directives, 'stale-if-error', stale_if_error)
+    _append_stale_directive(directives, 'stale-while-revalidate', stale_while_revalidate)
 
     # Handle custom value to completely skip the cache; much be passed via headers to make the
     # round trip from CachedSession.request() -> Session.request() -> CachedSession.send()
@@ -90,3 +107,16 @@ def set_request_headers(
     if directives:
         headers['Cache-Control'] = ','.join(sorted(set(directives)))
     return headers
+
+
+def _append_stale_directive(directives, name, value):
+    """Encode a per-request ``stale_if_error`` / ``stale_while_revalidate`` value as a Cache-Control
+    directive. A time value becomes ``name=<seconds>``, and ``True`` becomes a value-less directive.
+    ``None`` (and ``False``) are left off so the session-level setting still applies.
+    """
+    if value is None or value is False:
+        return
+    if value is True:
+        directives.append(name)
+    else:
+        directives.append(f'{name}={get_expiration_seconds(value)}')

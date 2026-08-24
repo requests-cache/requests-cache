@@ -972,6 +972,59 @@ def test_request_expire_after__prepared_request(mock_session):
         assert response.from_cache is False
 
 
+def test_request_stale_while_revalidate(mock_session):
+    """stale_while_revalidate can be set for a single request, without a session-level setting"""
+    assert mock_session.settings.stale_while_revalidate is False
+    mock_session.get(MOCKED_URL_ETAG, expire_after=timedelta(seconds=-2))
+
+    with patch.object(CachedSession, '_resend_async') as mock_send:
+        response = mock_session.get(MOCKED_URL_ETAG, stale_while_revalidate=True)
+        mock_send.assert_called_once()
+    assert response.from_cache is True and response.is_expired is True
+
+
+def test_request_stale_while_revalidate__time(mock_session):
+    """A per-request stale_while_revalidate may also be a time value (max acceptable staleness)"""
+    mocked_url_2 = f'{MOCKED_URL_ETAG}?k=v'
+    mock_session.get(MOCKED_URL_ETAG, expire_after=timedelta(seconds=-2))
+    mock_session.get(mocked_url_2, expire_after=timedelta(seconds=-4))
+
+    # Expired 2 seconds ago, within the 3 second window
+    response = mock_session.get(MOCKED_URL_ETAG, stale_while_revalidate=timedelta(seconds=3))
+    assert response.from_cache is True and response.is_expired is True
+
+    # Expired 4 seconds ago, so it should be refreshed instead of served stale
+    response = mock_session.get(mocked_url_2, stale_while_revalidate=timedelta(seconds=3))
+    assert response.from_cache is False and response.is_expired is False
+
+
+def test_send_stale_while_revalidate__prepared_request(mock_session):
+    """A per-request stale_while_revalidate should also work with CachedSession.send()"""
+    mock_session.get(MOCKED_URL_ETAG, expire_after=timedelta(seconds=-2))
+    request = Request(method='GET', url=MOCKED_URL_ETAG).prepare()
+
+    with patch.object(CachedSession, '_resend_async') as mock_send:
+        response = mock_session.send(request, stale_while_revalidate=True)
+        mock_send.assert_called_once()
+    assert response.from_cache is True and response.is_expired is True
+
+
+@skip_pypy
+@pytest.mark.parametrize('url', [MOCKED_URL, MOCKED_URL_ETAG])
+def test_request_stale_if_error__exception(url, mock_session):
+    """stale_if_error can be set for a single request, without a session-level setting"""
+    assert mock_session.settings.stale_if_error is False
+    mock_session.settings.expire_after = 1
+    with time_travel(START_DT):
+        assert mock_session.get(url).from_cache is False
+        assert mock_session.get(url).from_cache is True
+
+    with patch.object(mock_session.cache, 'save_response', side_effect=RequestException):
+        with time_travel(START_DT + timedelta(seconds=1.1)):
+            response = mock_session.get(url, stale_if_error=True)
+            assert response.from_cache is True and response.is_expired is True
+
+
 def test_request_only_if_cached__cached(mock_session):
     """only_if_cached has no effect if the response is already cached"""
     mock_session.get(MOCKED_URL)

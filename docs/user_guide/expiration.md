@@ -130,6 +130,11 @@ In addition to HTTP error codes, `stale_if_error` also applies to python excepti
 [Errors and Exceptions](https://requests.readthedocs.io/en/latest/user/quickstart/#errors-and-exceptions)
 for more details on request errors in general.
 
+You can also set `stale_if_error` for a single request, if you haven't set it session-wide:
+```python
+response = session.get('https://httpbin.org/get', stale_if_error=True)
+```
+
 (reset)=
 ## Resetting Expiration
 Changing the session's expiration settings does not apply retroactively.
@@ -167,6 +172,11 @@ Or specify a maximum staleness value you are willing to accept:
 ```python
 # Use a cached response while revalidating, if it expired 5 minutes ago or less
 session = CachedSession(stale_while_revalidate=timedelta(minutes=5))
+```
+
+Like `stale_if_error`, this can also be set for a single request:
+```python
+response = session.get('https://httpbin.org/get', stale_while_revalidate=True)
 ```
 
 ## Removing Responses
