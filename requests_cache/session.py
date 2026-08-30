@@ -5,11 +5,11 @@ from logging import getLogger
 from threading import RLock, Thread
 from typing import TYPE_CHECKING, Iterable, MutableMapping, Optional, Union
 
-from requests import PreparedRequest
+from requests import PreparedRequest, RequestException
 from requests import Session as OriginalSession
 from requests.hooks import dispatch_hook
 
-from ._utils import get_valid_kwargs, patch_form_boundary
+from ._utils import get_valid_kwargs, patch_form_boundary, is_json_content_type
 from .backends import BackendSpecifier, StrOrPath, init_backend
 from .models import AnyResponse, CachedResponse, OriginalResponse
 from .policy import (
@@ -34,6 +34,16 @@ else:
     MIXIN_BASE = object
 
 logger = getLogger(__name__)
+
+
+def _get_content_for_comparison(response: AnyResponse):
+    content_type = response.headers.get('Content-Type', '')
+    if is_json_content_type(content_type):
+        try:
+            return response.json()
+        except RequestException:
+            pass
+    return response.text if content_type.startswith('text/') else response.content
 
 
 class CacheMixin(MIXIN_BASE):
@@ -251,6 +261,14 @@ class CacheMixin(MIXIN_BASE):
             response = cached_response  # type: ignore
         elif actions.resend_request:
             response = self._resend(request, actions, cached_response, **kwargs)  # type: ignore
+            if (
+                isinstance(response, OriginalResponse)
+                and cached_response is not None
+                and actions._vary_matched
+            ):
+                response.has_content_changed = _get_content_for_comparison(
+                    response
+                ) != _get_content_for_comparison(cached_response)
         elif actions.send_request:
             response = self._send_and_cache(request, actions, cached_response, **kwargs)
         else:

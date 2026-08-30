@@ -35,6 +35,7 @@ class BaseResponse(Response):
     expires: Optional[datetime] = field(default=None)
     cache_key: str = ''  # Not serialized; set by BaseCache.get_response()
     revalidated: bool = False  # Not serialized; set by CacheActions.update_revalidated_response()
+    has_content_changed: Optional[bool] = None  # Not serialized; set when refreshing a response
 
     @property
     def from_cache(self) -> bool:
@@ -69,6 +70,7 @@ class OriginalResponse(BaseResponse):
 class CachedResponse(RichMixin, BaseResponse):
     """A class that emulates :py:class:`requests.Response`, optimized for serialization"""
 
+    has_content_changed: Optional[bool] = False
     _content: bytes = field(default=None)
     _decoded_content: DecodedContent = field(default=None)
     _next: Optional[CachedRequest] = field(default=None)
