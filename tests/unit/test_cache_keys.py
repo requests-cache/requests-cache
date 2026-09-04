@@ -74,6 +74,27 @@ def test_create_key__normalize_duplicate_params():
     assert create_key(request_1) == create_key(request_2)
 
 
+def test_create_key__includes_cookies():
+    request_1 = Request(
+        method='GET',
+        url='https://example.com',
+        headers={'Cookie': 'session=one; theme=dark'},
+    )
+    request_2 = Request(
+        method='GET',
+        url='https://example.com',
+        headers={'Cookie': 'theme=dark; session=one'},
+    )
+    request_3 = Request(
+        method='GET',
+        url='https://example.com',
+        headers={'Cookie': 'session=two; theme=dark'},
+    )
+
+    assert create_key(request_1) == create_key(request_2)
+    assert create_key(request_1) != create_key(request_3)
+
+
 def test_create_key__fips_hash_fallback():
     """Test that if blake2b fails due to FIPS mode, it creates a valid key using a different
     hash function. Fallback on TypeError and ValueError - both are possible in FIPS mode.

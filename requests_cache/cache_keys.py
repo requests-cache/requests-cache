@@ -77,9 +77,14 @@ def create_key(
         request.url,
         request.body or '',
         bool(request_kwargs.get('verify', True)),
-        *get_matched_headers(request.headers, match_headers),
-        str(serializer),
     ]
+    cookie_header = normalize_cookie_header(request.headers.get('Cookie', ''))
+    if cookie_header:
+        # Preserve existing cache keys for requests without cookies while
+        # separating requests whose session state can affect the response.
+        key_parts.append(cookie_header)
+    key_parts.extend(get_matched_headers(request.headers, match_headers))
+    key_parts.append(str(serializer))
 
     # Generate a hash based on this info
     try:
@@ -92,6 +97,17 @@ def create_key(
     for part in key_parts:
         key.update(encode(part))
     return key.hexdigest()
+
+
+def normalize_cookie_header(value: str) -> str:
+    """Normalize a Cookie header for request matching.
+
+    Cookies are request state even though they are not included in the cache
+    key's optional header matching. Sorting individual cookie pairs keeps the
+    key stable while preventing responses for one cookie jar from being used
+    for another, including when a redirect updates the session cookies.
+    """
+    return '; '.join(sorted(part.strip() for part in value.split(';') if part.strip()))
 
 
 def get_matched_headers(

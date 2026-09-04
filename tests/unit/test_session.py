@@ -13,6 +13,7 @@ from urllib.parse import urlencode
 
 import pytest
 import requests
+import requests_mock
 from requests import HTTPError, Request, RequestException, Session
 from requests.structures import CaseInsensitiveDict
 
@@ -244,6 +245,37 @@ def test_response_history(mock_session):
 
     r2 = mock_session.get(MOCKED_URL_REDIRECT)
     assert isinstance(r2.history[0], CachedResponse)
+
+
+def test_redirect_target_cache_key_includes_session_cookies():
+    """A redirect that changes cookies must not reuse a target cached earlier."""
+    root_url = 'http://requests-cache.test/'
+    first_url = f'{root_url}summary/first'
+    second_url = f'{root_url}summary/second'
+
+    def root_response(request, context):
+        context.status_code = 200
+        return request.headers.get('Cookie', 'anonymous')
+
+    session = CachedSession(backend='memory')
+    with requests_mock.Mocker() as adapter:
+        adapter.get(root_url, text=root_response)
+        adapter.get(
+            first_url,
+            status_code=302,
+            headers={'Location': root_url},
+        )
+        adapter.get(
+            second_url,
+            status_code=302,
+            headers={'Location': root_url},
+        )
+
+        assert session.get(root_url).text == 'anonymous'
+        session.cookies.set('session', 'first')
+        assert session.get(first_url).text == 'session=first'
+        session.cookies.set('session', 'second')
+        assert session.get(second_url).text == 'session=second'
 
 
 # Request matching
