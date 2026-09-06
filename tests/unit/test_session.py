@@ -324,10 +324,10 @@ def test_normalize_params__url(mock_session):
         'HTTPS://site.com?param_1=value_1&param_2=value_2',
     ]
 
-    def get_request(url):
+    def fetch_request(url):
         return mock_session.prepare_request(requests.Request('GET', url))
 
-    keys = [mock_session.cache.create_key(get_request(url)) for url in urls]
+    keys = [mock_session.cache.create_key(fetch_request(url)) for url in urls]
     assert len(set(keys)) == 1
 
 

@@ -221,7 +221,7 @@ class LRUFileDict(FileDict):
 
     def __getitem__(self, key):
         """Get a value and update its access time in the LRU index"""
-        value = super().__getitem__(key)
+        value = super().__getitem__(key)  # pytriage: TR5
 
         # Update access time in LRU index
         try:

@@ -85,10 +85,10 @@ class GridFSDict(BaseStorage):
     def __getitem__(self, key):
         try:
             with self._lock:
-                result = self.fs.find_one({'_id': key})
-                if result is None:
+                file_handle = self.fs.find_one({'_id': key})
+                if file_handle is None:
                     raise KeyError
-                return self.deserialize(key, result.read())
+                return self.deserialize(key, file_handle.read())
         except CorruptGridFile as e:
             logger.warning(e, exc_info=True)
             raise KeyError from e

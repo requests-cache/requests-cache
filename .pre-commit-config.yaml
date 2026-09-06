@@ -44,3 +44,9 @@ repos:
         types_or: [css, javascript, json, yaml]
         args: ['--single-quote']
         additional_dependencies: [prettier@3.5.1]
+  - repo: https://github.com/alessio-locatelli/ruff-extra-rules
+    rev: v0.2.2
+    hooks:
+      - id: ruff-extra-rules
+      - id: ruff-extra-rules-ty
+        additional_dependencies: [ty]

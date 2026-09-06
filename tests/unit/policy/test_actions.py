@@ -8,7 +8,7 @@ from requests.cookies import RequestsCookieJar
 from requests_cache.cache_keys import create_key
 from requests_cache.models import CachedRequest, CachedResponse
 from requests_cache.policy import EXPIRE_IMMEDIATELY, CacheActions, CacheSettings, utcnow
-from tests.conftest import ETAG, HTTPDATE_STR, LAST_MODIFIED, MOCKED_URL, get_mock_response
+from tests.conftest import ETAG, HTTPDATE_STR, LAST_MODIFIED, MOCKED_URL, create_mock_response
 
 IGNORED_DIRECTIVES = [
     'no-transform',
@@ -576,7 +576,7 @@ def test_is_usable__stale_while_revalidate(stale_while_revalidate, usable):
 def test_update_from_response(headers, expected_expiration):
     """Test with Cache-Control response headers"""
     actions = CacheActions.from_request('key', BASIC_REQUEST, CacheSettings(cache_control=True))
-    actions.update_from_response(get_mock_response(headers=headers))
+    actions.update_from_response(create_mock_response(headers=headers))
 
     assert actions.expire_after == expected_expiration
     assert actions.skip_write is (expected_expiration == EXPIRE_IMMEDIATELY)
@@ -584,13 +584,13 @@ def test_update_from_response(headers, expected_expiration):
 
 def test_update_from_response__no_store():
     actions = CacheActions.from_request('key', BASIC_REQUEST, CacheSettings(cache_control=True))
-    actions.update_from_response(get_mock_response(headers={'Cache-Control': 'no-store'}))
+    actions.update_from_response(create_mock_response(headers={'Cache-Control': 'no-store'}))
     assert actions.skip_write is True
 
 
 def test_update_from_response__ignored():
     actions = CacheActions.from_request('key', BASIC_REQUEST, CacheSettings(cache_control=False))
-    actions.update_from_response(get_mock_response(headers={'Cache-Control': 'max-age=5'}))
+    actions.update_from_response(create_mock_response(headers={'Cache-Control': 'max-age=5'}))
     assert actions.expire_after is None
 
 
@@ -602,7 +602,7 @@ def test_update_from_response__revalidate(mock_utcnow, cache_headers, validator_
     expiration
     """
     actions = CacheActions.from_request('key', BASIC_REQUEST, CacheSettings(cache_control=True))
-    response = get_mock_response(headers={**cache_headers, **validator_headers})
+    response = create_mock_response(headers={**cache_headers, **validator_headers})
     actions.update_from_response(response)
 
     assert actions.expires == mock_utcnow()
@@ -625,10 +625,10 @@ def test_update_revalidated_response__skip_write(read_only, headers_changed, exp
     actions = CacheActions.from_request(
         'key', BASIC_REQUEST, CacheSettings(cache_control=True, read_only=read_only)
     )
-    cached_response = get_mock_response(headers={'ETag': ETAG})
+    cached_response = create_mock_response(headers={'ETag': ETAG})
     cached_response.expires = None
     new_headers = {'ETag': ETAG, 'X-Custom-Header': 'new'} if headers_changed else {'ETag': ETAG}
-    new_response = get_mock_response(status_code=304, headers=new_headers)
+    new_response = create_mock_response(status_code=304, headers=new_headers)
     actions.update_revalidated_response(new_response, cached_response)
     assert actions.skip_write is expected_skip_write
 
@@ -638,8 +638,10 @@ def test_update_revalidated_response__transfer_encoding():
     don't set both `Content-Length` and `Transfer-Encoding`
     """
     actions = CacheActions.from_request('key', BASIC_REQUEST, CacheSettings(cache_control=True))
-    cached_response = get_mock_response(headers={'ETag': ETAG, 'Transfer-Encoding': 'chunked'})
-    new_response = get_mock_response(status_code=304, headers={'ETag': ETAG, 'Content-Length': 0})
+    cached_response = create_mock_response(headers={'ETag': ETAG, 'Transfer-Encoding': 'chunked'})
+    new_response = create_mock_response(
+        status_code=304, headers={'ETag': ETAG, 'Content-Length': 0}
+    )
     cached_response = actions.update_revalidated_response(new_response, cached_response)
     assert cached_response.headers['Transfer-Encoding'] == 'chunked'
     assert 'Content-Length' not in cached_response.headers
