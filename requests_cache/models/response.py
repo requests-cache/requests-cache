@@ -6,10 +6,11 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 import attr
 from attrs import define, field
-from requests import PreparedRequest, Response
+from requests import PreparedRequest, RequestException, Response
 from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
 
+from .._utils import is_json_content_type
 from ..policy import ExpirationTime, add_tzinfo, get_expiration_datetime, utcnow
 from . import CachedHTTPResponse, CachedRequest, RichMixin
 
@@ -64,6 +65,26 @@ class OriginalResponse(BaseResponse):
             response.cache_key = None if actions.skip_write else actions.cache_key  # type: ignore
             response.created_at = utcnow()  # type: ignore
         return response  # type: ignore
+
+    def update_content_changed(self, cached_response: Optional['CachedResponse']) -> None:
+        """Set ``has_content_changed`` by comparing this refreshed response against the previously
+        cached response, if there is one
+        """
+        if cached_response is not None:
+            self.has_content_changed = _comparable_content(self) != _comparable_content(
+                cached_response
+            )
+
+
+def _comparable_content(response: Response) -> Union[DecodedContent, bytes]:
+    """Get response content in a form that compares reliably: decoded JSON, text, or raw bytes"""
+    content_type = response.headers.get('Content-Type', '')
+    if is_json_content_type(content_type):
+        try:
+            return response.json()
+        except RequestException:
+            pass
+    return response.text if content_type.startswith('text/') else response.content
 
 
 @define(auto_attribs=False, repr=False, slots=False)
