@@ -162,6 +162,8 @@ class CacheMixin(MIXIN_BASE):
         only_if_cached: bool = False,
         refresh: bool = False,
         force_refresh: bool = False,
+        stale_if_error: Union[bool, ExpirationTime] = None,
+        stale_while_revalidate: Union[bool, ExpirationTime] = None,
         **kwargs,
     ) -> AnyResponse:
         """This method prepares and sends a request while automatically performing any necessary
@@ -180,11 +182,24 @@ class CacheMixin(MIXIN_BASE):
                 (e.g., a "soft refresh," like F5 in a browser)
             force_refresh: Always make a new request, and overwrite any previously cached response
                 (e.g., a "hard refresh", like Ctrl-F5 in a browser))
+            stale_if_error: Return a stale response if a new request raises an exception, for this
+                request only. Applies when the session-level setting of the same name is unset.
+            stale_while_revalidate: Return a stale response initially, while a non-blocking request
+                is sent to refresh it, for this request only. Applies when the session-level setting
+                of the same name is unset.
 
         Returns:
             Either a new or cached response
         """
-        headers = set_request_headers(headers, expire_after, only_if_cached, refresh, force_refresh)
+        headers = set_request_headers(
+            headers,
+            expire_after,
+            only_if_cached,
+            refresh,
+            force_refresh,
+            stale_if_error,
+            stale_while_revalidate,
+        )
         with patch_form_boundary() if kwargs.get('files') else nullcontext():
             return super().request(method, url, *args, headers=headers, **kwargs)  # type: ignore
 
@@ -195,6 +210,8 @@ class CacheMixin(MIXIN_BASE):
         only_if_cached: bool = False,
         refresh: bool = False,
         force_refresh: bool = False,
+        stale_if_error: Union[bool, ExpirationTime] = None,
+        stale_while_revalidate: Union[bool, ExpirationTime] = None,
         **kwargs,
     ) -> AnyResponse:
         """Send a prepared request, with caching. See :py:meth:`requests.Session.send` for base
@@ -212,7 +229,13 @@ class CacheMixin(MIXIN_BASE):
         """
         # Determine which actions to take based on settings and request info
         request.headers = set_request_headers(
-            request.headers, expire_after, only_if_cached, refresh, force_refresh
+            request.headers,
+            expire_after,
+            only_if_cached,
+            refresh,
+            force_refresh,
+            stale_if_error,
+            stale_while_revalidate,
         )
         actions = CacheActions.from_request(
             self.cache.create_key(request, **kwargs), request, self.settings

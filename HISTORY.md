@@ -1,5 +1,8 @@
 # History
 
+## Unreleased
+* Add per-request `stale_if_error` and `stale_while_revalidate` arguments to `CachedSession.request()` and `send()`
+
 ## 1.3.3 (2026-07-03)
 * Fix SQLite `vacuum()` not freeing disk space
 * Fix DynamoDB item enumeration when the table exceeds 1MB

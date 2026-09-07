@@ -131,3 +131,19 @@ def test_set_request_headers__do_not_cache():
     )
     assert 'X-ACTUAL-NO-CACHE' in headers
     assert 'Cache-Control' not in headers
+
+
+def test_set_request_headers__stale():
+    """stale_if_error and stale_while_revalidate are translated into Cache-Control directives.
+    A time value becomes ``name=<seconds>``, while ``True`` becomes a value-less directive.
+    """
+    headers = set_request_headers(
+        {},
+        expire_after=None,
+        only_if_cached=False,
+        refresh=False,
+        force_refresh=False,
+        stale_if_error=True,
+        stale_while_revalidate=60,
+    )
+    assert headers['Cache-Control'] == 'stale-if-error,stale-while-revalidate=60'
