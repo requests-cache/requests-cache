@@ -45,6 +45,15 @@ def test_original_response(response):
     assert response.cache_key == ''
 
 
+def test_update_content_changed__without_cached_response():
+    response = OriginalResponse()
+
+    response.update_content_changed(None)
+
+    assert response.has_content_changed is None
+    assert response._content_consumed is False
+
+
 def test_history(mock_session):
     original_response = mock_session.get(MOCKED_URL)
     original_response.history = [mock_session.get(MOCKED_URL)] * 3
