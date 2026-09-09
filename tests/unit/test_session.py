@@ -893,6 +893,33 @@ def test_has_content_changed__vary_miss(vary, initial_headers, refreshed_headers
 
 
 @pytest.mark.parametrize(
+    'original, refreshed, changed',
+    [
+        ('{"enabled":true}', '{"enabled":1}', True),
+        ('{"count":0}', '{"count":false}', True),
+        ('[true,{"enabled":false}]', '[1,{"enabled":0}]', True),
+        ('true', '1', True),
+        ('{"a":1,"b":2}', '{ "b": 2, "a": 1 }', False),
+    ],
+)
+def test_has_content_changed__json_types(original, refreshed, changed, mock_session):
+    url = f'{MOCKED_URL}/json-types'
+    mock_session.settings.expire_after = utcnow() - timedelta(1)
+    mock_session.mock_adapter.register_uri(
+        'GET', url, text=original, headers={'Content-Type': 'application/json'}
+    )
+    mock_session.get(url)
+    mock_session.mock_adapter.register_uri(
+        'GET', url, text=refreshed, headers={'Content-Type': 'application/json'}
+    )
+
+    response = mock_session.get(url, refresh=True)
+
+    assert response.from_cache is False
+    assert response.has_content_changed is changed
+
+
+@pytest.mark.parametrize(
     'content, content_type',
     [
         (b'\xe9', 'text/plain; charset=iso-8859-1'),

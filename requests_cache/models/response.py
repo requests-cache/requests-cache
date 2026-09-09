@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
+from json import dumps
 from logging import getLogger
 from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
@@ -77,11 +78,11 @@ class OriginalResponse(BaseResponse):
 
 
 def _comparable_content(response: Response) -> Union[DecodedContent, bytes]:
-    """Get response content in a form that compares reliably: decoded JSON, text, or raw bytes"""
+    """Compare normalised JSON, text, or raw bytes without conflating JSON types."""
     content_type = response.headers.get('Content-Type', '')
     if is_json_content_type(content_type):
         try:
-            return response.json()
+            return dumps(response.json(), sort_keys=True)
         except RequestException:
             pass
     return response.text if content_type.startswith('text/') else response.content
