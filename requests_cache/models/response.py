@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from json import dumps
+from json import JSONDecodeError, dumps
 from logging import getLogger
 from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
@@ -94,7 +94,7 @@ def _comparable_content(response: Response) -> Union[DecodedContent, bytes]:
     if is_json_content_type(content_type):
         try:
             return dumps(response.json(), sort_keys=True)
-        except RequestException:
+        except (JSONDecodeError, RequestException):
             pass
     return response.text if content_type.startswith('text/') else response.content
 
