@@ -25,7 +25,7 @@ from ..policy import DEFAULT_CACHE_NAME, CacheSettings, ExpirationTime
 from ..serializers import SerializerType, init_serializer
 
 # Specific exceptions that may be raised during deserialization
-DESERIALIZE_ERRORS = (AttributeError, ImportError, PickleError, TypeError, ValueError)
+DESERIALIZE_ERRORS = (AttributeError, EOFError, ImportError, PickleError, TypeError, ValueError)
 
 logger = getLogger(__name__)
 

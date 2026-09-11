@@ -608,11 +608,12 @@ def test_cache_disabled__nested(mock_session):
     assert mock_session.get(MOCKED_URL).from_cache is True
 
 
-def test_unpickle_errors(mock_session):
+@pytest.mark.parametrize('error', [PickleError, EOFError])
+def test_unpickle_errors(mock_session, error):
     """If there is an error during deserialization, the request should be made again"""
     assert mock_session.get(MOCKED_URL_JSON).from_cache is False
 
-    with patch.object(mock_session.cache.responses.serializer, 'loads', side_effect=PickleError):
+    with patch.object(mock_session.cache.responses.serializer, 'loads', side_effect=error):
         resp = mock_session.get(MOCKED_URL_JSON)
         assert resp.from_cache is False
         assert resp.json()['message'] == 'mock json response'
