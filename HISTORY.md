@@ -1,5 +1,8 @@
 # History
 
+## Unreleased
+* Fix unhandled `EOFError` when a cache value fails to deserialize
+
 ## 1.3.3 (2026-07-03)
 * Fix SQLite `vacuum()` not freeing disk space
 * Fix DynamoDB item enumeration when the table exceeds 1MB
