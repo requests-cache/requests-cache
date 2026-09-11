@@ -288,6 +288,7 @@ class CacheActions(RichMixin):
             del cached_response.headers['Content-Length']
 
         cached_response.revalidated = True
+        cached_response.has_content_changed = False
         return cached_response
 
     def _update_from_response_headers(self, directives: CacheDirectives):

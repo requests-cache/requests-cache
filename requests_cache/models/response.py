@@ -52,6 +52,8 @@ class BaseResponse(Response):
 class OriginalResponse(BaseResponse):
     """Wrapper class for non-cached responses returned by :py:class:`.CachedSession`"""
 
+    _content_consumed: bool
+
     def __init__(self, **kwargs):
         Response.__init__(self)
         self.__attrs_init__(**kwargs)
@@ -68,10 +70,19 @@ class OriginalResponse(BaseResponse):
         return response  # type: ignore
 
     def update_content_changed(self, cached_response: Optional['CachedResponse']) -> None:
-        """Set ``has_content_changed`` by comparing this refreshed response against the previously
-        cached response, if there is one
+        """Compare a buffered synchronous refresh with the previous matching cached response.
+
+        ``True`` means the content differs; ``False`` means it matches. A synchronous 304
+        revalidation also reports ``False``. ``None`` means no comparison: first requests, cache hits,
+        Vary misses, force-refresh requests, stale error fallbacks, background refreshes
+        and unbuffered streams. Results are not stored or consumed as change events.
+
+        JSON ignores formatting and object-key order, but preserves boolean/number and
+        integer/float distinctions. Text uses the response encoding; other content uses
+        bytes. Invalid JSON falls back to bytes. Large JSON bodies incur parsing and
+        normalisation costs. This method never consumes an unbuffered stream.
         """
-        if cached_response is not None:
+        if cached_response is not None and self._content_consumed:
             self.has_content_changed = _comparable_content(self) != _comparable_content(
                 cached_response
             )
@@ -92,7 +103,6 @@ def _comparable_content(response: Response) -> Union[DecodedContent, bytes]:
 class CachedResponse(RichMixin, BaseResponse):
     """A class that emulates :py:class:`requests.Response`, optimized for serialization"""
 
-    has_content_changed: Optional[bool] = False
     _content: bytes = field(default=None)
     _decoded_content: DecodedContent = field(default=None)
     _next: Optional[CachedRequest] = field(default=None)
