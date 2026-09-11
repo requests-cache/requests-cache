@@ -199,6 +199,9 @@ class CacheActions(RichMixin):
             key_kwargs: Additional keyword arguments for ``create_key``.
         """
         self._vary_matched = True
+        if cached_response is not None and self._settings.cache_control:
+            self._update_from_cached_response_headers(cached_response)
+
         usable_response = self.is_usable(cached_response)
         usable_if_error = self.is_usable(cached_response, error=True)
 
@@ -290,6 +293,14 @@ class CacheActions(RichMixin):
         cached_response.revalidated = True
         cached_response.has_content_changed = False
         return cached_response
+
+    def _update_from_cached_response_headers(self, cached_response: 'CachedResponse'):
+        """Recover stale-if-error and stale-while-revalidate directives from a cached response"""
+        directives = CacheDirectives.from_headers(cached_response.headers)
+        self._stale_if_error = self._stale_if_error or directives.stale_if_error
+        self._stale_while_revalidate = (
+            self._stale_while_revalidate or directives.stale_while_revalidate
+        )
 
     def _update_from_response_headers(self, directives: CacheDirectives):
         """Check response headers for expiration and other cache directives"""

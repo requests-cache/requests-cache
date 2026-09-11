@@ -2,6 +2,7 @@
 
 ## Unreleased
 * Fix unhandled `EOFError` when a cache value fails to deserialize
+* Recover stale-if-error and stale-while-revalidate directives from a previously cached response
 
 ## 1.3.3 (2026-07-03)
 * Add `CachedResponse.has_content_changed` to flag whether a refresh differs from the cache, when a reliable comparison is available.
