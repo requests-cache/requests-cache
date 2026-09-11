@@ -310,7 +310,7 @@ class CacheMixin(MIXIN_BASE):
         try:
             response = self._send_and_cache(request, actions, cached_response, **kwargs)
             if (
-                self.settings.stale_if_error
+                actions._stale_if_error
                 and response.status_code not in self.settings.allowable_codes
             ):
                 response.raise_for_status()

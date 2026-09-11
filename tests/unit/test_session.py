@@ -584,6 +584,29 @@ def test_stale_if_error__max_stale(url, mock_session):
         mock_session.get(url)
 
 
+def test_stale_if_error__response_header(mock_session):
+    """A `stale-if-error` response header (with `cache_control=True`) should be honored on a later
+    failed refresh, even though it wasn't set via settings or on the later request. Regression test
+    for issue #1189.
+    """
+    url = f'{MOCKED_URL}/response-stale-if-error'
+    mock_session.settings.cache_control = True
+    mock_session.mock_adapter.register_uri(
+        'GET',
+        url,
+        text='original content',
+        headers={'Cache-Control': 'max-age=0, stale-if-error=60', 'ETag': 'original'},
+    )
+    mock_session.get(url)
+
+    mock_session.mock_adapter.register_uri('GET', url, status_code=500, text='server error')
+    response = mock_session.get(url)
+
+    assert response.status_code == 200
+    assert response.from_cache is True
+    assert response.text == 'original content'
+
+
 def test_old_data_on_error():
     """stale_if_error is aliased to old_data_on_error for backwards-compatibility"""
     session = CachedSession(old_data_on_error=True, backend='memory')
