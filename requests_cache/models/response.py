@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
+from json import JSONDecodeError, dumps
 from logging import getLogger
 from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 import attr
 from attrs import define, field
-from requests import PreparedRequest, Response
+from requests import PreparedRequest, RequestException, Response
 from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
 
+from .._utils import is_json_content_type
 from ..policy import ExpirationTime, add_tzinfo, get_expiration_datetime, utcnow
 from . import CachedHTTPResponse, CachedRequest, RichMixin
 
@@ -35,6 +37,7 @@ class BaseResponse(Response):
     expires: Optional[datetime] = field(default=None)
     cache_key: str = ''  # Not serialized; set by BaseCache.get_response()
     revalidated: bool = False  # Not serialized; set by CacheActions.update_revalidated_response()
+    has_content_changed: Optional[bool] = None  # Not serialized; set when refreshing a response
 
     @property
     def from_cache(self) -> bool:
@@ -48,6 +51,8 @@ class BaseResponse(Response):
 @define(auto_attribs=False, repr=False, slots=False, init=False)
 class OriginalResponse(BaseResponse):
     """Wrapper class for non-cached responses returned by :py:class:`.CachedSession`"""
+
+    _content_consumed: bool
 
     def __init__(self, **kwargs):
         Response.__init__(self)
@@ -63,6 +68,35 @@ class OriginalResponse(BaseResponse):
             response.cache_key = None if actions.skip_write else actions.cache_key  # type: ignore
             response.created_at = utcnow()  # type: ignore
         return response  # type: ignore
+
+    def update_content_changed(self, cached_response: Optional['CachedResponse']) -> None:
+        """Compare a buffered synchronous refresh with the previous matching cached response.
+
+        ``True`` means the content differs; ``False`` means it matches. A synchronous 304
+        revalidation also reports ``False``. ``None`` means no comparison: first requests, cache hits,
+        Vary misses, force-refresh requests, stale error fallbacks, background refreshes
+        and unbuffered streams. Results are not stored or consumed as change events.
+
+        JSON ignores formatting and object-key order, but preserves boolean/number and
+        integer/float distinctions. Text uses the response encoding; other content uses
+        bytes. Invalid JSON falls back to bytes. Large JSON bodies incur parsing and
+        normalisation costs. This method never consumes an unbuffered stream.
+        """
+        if cached_response is not None and self._content_consumed:
+            self.has_content_changed = _comparable_content(self) != _comparable_content(
+                cached_response
+            )
+
+
+def _comparable_content(response: Response) -> Union[DecodedContent, bytes]:
+    """Compare normalised JSON, text, or raw bytes without conflating JSON types."""
+    content_type = response.headers.get('Content-Type', '')
+    if is_json_content_type(content_type):
+        try:
+            return dumps(response.json(), sort_keys=True)
+        except (JSONDecodeError, RequestException):
+            pass
+    return response.text if content_type.startswith('text/') else response.content
 
 
 @define(auto_attribs=False, repr=False, slots=False)

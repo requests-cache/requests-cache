@@ -4,6 +4,7 @@
 * Fix unhandled `EOFError` when a cache value fails to deserialize
 
 ## 1.3.3 (2026-07-03)
+* Add `CachedResponse.has_content_changed` to flag whether a refresh differs from the cache, when a reliable comparison is available.
 * Fix SQLite `vacuum()` not freeing disk space
 * Fix DynamoDB item enumeration when the table exceeds 1MB
 * Fix Redis `ttl_offset` for items that should have no expiry

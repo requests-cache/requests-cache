@@ -5,6 +5,9 @@ Here are some ways to get additional information out of the cache session, backe
 ## Response Details
 The following attributes are available on responses:
 - `from_cache`: indicates if the response came from the cache
+- `has_content_changed`: `True` for a changed synchronous refresh, `False` for an unchanged
+  synchronous refresh or HTTP 304 revalidation, and `None` when no comparison was made. See
+  {py:meth}`.OriginalResponse.update_content_changed` for comparison rules and limitations.
 - `cache_key`: The unique identifier used to match the request to the response (see {ref}`matching`
   for details)
 - `created_at`: {py:class}`~datetime.datetime` of when the cached response was created or last updated

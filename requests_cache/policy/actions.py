@@ -80,6 +80,7 @@ class CacheActions(RichMixin):
     _stale_if_error: Union[bool, ExpirationTime] = field(default=None, repr=False)
     _stale_while_revalidate: Union[bool, ExpirationTime] = field(default=None, repr=False)
     _validation_headers: Dict[str, str] = field(factory=dict, repr=False)
+    _vary_matched: bool = field(default=True, repr=False)
 
     @classmethod
     def from_request(
@@ -197,6 +198,7 @@ class CacheActions(RichMixin):
             create_key: Cache key function, used for validating ``Vary`` headers
             key_kwargs: Additional keyword arguments for ``create_key``.
         """
+        self._vary_matched = True
         usable_response = self.is_usable(cached_response)
         usable_if_error = self.is_usable(cached_response, error=True)
 
@@ -208,6 +210,7 @@ class CacheActions(RichMixin):
             self.send_request = True
         # If response contains Vary and doesn't match, consider it a cache miss
         elif create_key and not self._validate_vary(cached_response, create_key, **key_kwargs):
+            self._vary_matched = False
             self.send_request = True
         # Resend the request, unless settings permit a stale response
         elif not usable_response and not (self._only_if_cached and usable_if_error):
@@ -285,6 +288,7 @@ class CacheActions(RichMixin):
             del cached_response.headers['Content-Length']
 
         cached_response.revalidated = True
+        cached_response.has_content_changed = False
         return cached_response
 
     def _update_from_response_headers(self, directives: CacheDirectives):

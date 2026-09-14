@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from io import BytesIO
+from json import loads
 from time import sleep
 
 import pytest
@@ -43,6 +44,32 @@ def test_original_response(response):
     assert response.expires is None
     assert response.revalidated is False
     assert response.cache_key == ''
+
+
+def test_update_content_changed__without_cached_response():
+    response = OriginalResponse()
+
+    response.update_content_changed(None)
+
+    assert response.has_content_changed is None
+    assert response._content_consumed is False
+
+
+@pytest.mark.parametrize('content, changed', [(b'not json', False), (b'other invalid json', True)])
+def test_update_content_changed__legacy_json_error(content, changed, monkeypatch):
+    # Requests <2.27 lets the standard-library JSONDecodeError propagate.
+    monkeypatch.setattr(Response, 'json', lambda self: loads(self.text))
+    cached_response = CachedResponse(
+        content=b'not json', headers={'Content-Type': 'application/json'}
+    )
+    response = OriginalResponse()
+    response._content = content
+    response._content_consumed = True
+    response.headers['Content-Type'] = 'application/json'
+
+    response.update_content_changed(cached_response)
+
+    assert response.has_content_changed is changed
 
 
 def test_history(mock_session):

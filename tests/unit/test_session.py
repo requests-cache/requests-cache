@@ -45,6 +45,7 @@ from tests.conftest import (
     MOCKED_URL_VARY_REDIRECT,
     MOCKED_URL_VARY_REDIRECT_TARGET,
     START_DT,
+    mount_mock_adapter,
     patch_normalize_url,
     skip_pypy,
     time_travel,
@@ -836,6 +837,203 @@ def test_304_not_modified(
 
     response = mock_session.get(url)
     assert response.from_cache is expected_from_cache
+
+
+def test_has_content_changed__without_new_content(mock_session):
+    initial_response = mock_session.get(MOCKED_URL)
+    cached_response = mock_session.get(MOCKED_URL)
+
+    mock_session.get(MOCKED_URL_ETAG)
+    mock_session.mock_adapter.register_uri('GET', MOCKED_URL_ETAG, status_code=304)
+    revalidated_response = mock_session.get(MOCKED_URL_ETAG, refresh=True)
+
+    assert initial_response.has_content_changed is None
+    assert cached_response.has_content_changed is None
+    assert revalidated_response.has_content_changed is False
+
+
+@pytest.mark.parametrize(
+    'refreshed_content, expected_change',
+    [('original content', False), ('updated content', True)],
+)
+def test_has_content_changed__refreshed_response(refreshed_content, expected_change, mock_session):
+    url = f'{MOCKED_URL}/content-change'
+    mock_session.settings.expire_after = utcnow() - timedelta(1)
+    mock_session.mock_adapter.register_uri('GET', url, text='original content')
+    initial_response = mock_session.get(url)
+
+    mock_session.mock_adapter.register_uri('GET', url, text=refreshed_content)
+    refreshed_response = mock_session.get(url)
+
+    assert initial_response.has_content_changed is None
+    assert refreshed_response.from_cache is False
+    assert refreshed_response.has_content_changed is expected_change
+
+
+@pytest.mark.parametrize(
+    'vary, initial_headers, refreshed_headers',
+    [
+        ('Accept', {'Accept': 'application/json'}, {'Accept': 'text/html'}),
+        ('*', {}, {}),
+    ],
+)
+def test_has_content_changed__vary_miss(vary, initial_headers, refreshed_headers, mock_session):
+    url = f'{MOCKED_URL}/content-change-vary'
+    mock_session.settings.expire_after = utcnow() - timedelta(1)
+    mock_session.mock_adapter.register_uri(
+        'GET', url, headers={'ETag': 'initial', 'Vary': vary}, text='initial content'
+    )
+    mock_session.get(url, headers=initial_headers)
+
+    mock_session.mock_adapter.register_uri(
+        'GET', url, headers={'ETag': 'refreshed', 'Vary': vary}, text='refreshed content'
+    )
+    response = mock_session.get(url, headers=refreshed_headers)
+
+    assert response.has_content_changed is None
+
+
+@pytest.mark.parametrize(
+    'original, refreshed, changed',
+    [
+        ('{"enabled":true}', '{"enabled":1}', True),
+        ('{"count":0}', '{"count":false}', True),
+        ('[true,{"enabled":false}]', '[1,{"enabled":0}]', True),
+        ('true', '1', True),
+        ('{"value":1}', '{"value":1.0}', True),
+        ('{"value":1.0}', '{"value":1e0}', False),
+        ('{"a":1,"b":2}', '{ "b": 2, "a": 1 }', False),
+    ],
+)
+def test_has_content_changed__json_types(original, refreshed, changed, mock_session):
+    url = f'{MOCKED_URL}/json-types'
+    mock_session.settings.expire_after = utcnow() - timedelta(1)
+    mock_session.mock_adapter.register_uri(
+        'GET', url, text=original, headers={'Content-Type': 'application/json'}
+    )
+    mock_session.get(url)
+    mock_session.mock_adapter.register_uri(
+        'GET', url, text=refreshed, headers={'Content-Type': 'application/json'}
+    )
+
+    response = mock_session.get(url, refresh=True)
+
+    assert response.from_cache is False
+    assert response.has_content_changed is changed
+
+
+@pytest.mark.parametrize(
+    'content, content_type',
+    [
+        (b'\xe9', 'text/plain; charset=iso-8859-1'),
+        (b'{\n  "key": 1\n}', 'application/json'),
+        (b'not json', 'application/json'),
+    ],
+)
+def test_has_content_changed__decoded_content(content, content_type, tmp_path):
+    session = mount_mock_adapter(
+        CachedSession(
+            cache_name=tmp_path,
+            backend='filesystem',
+            expire_after=utcnow() - timedelta(1),
+        )
+    )
+    url = f'{MOCKED_URL}/content-change-encoding'
+    response_kwargs = {
+        'content': content,
+        'headers': {'Content-Type': content_type},
+    }
+    session.mock_adapter.register_uri('GET', url, **response_kwargs)
+    session.get(url)
+
+    session.mock_adapter.register_uri('GET', url, **response_kwargs)
+    response = session.get(url)
+
+    assert response.has_content_changed is False
+
+
+@pytest.mark.parametrize('read_only', [True, False])
+def test_has_content_changed__unbuffered_refresh(read_only, mock_session):
+    url = f'{MOCKED_URL}/streaming-content-change'
+    mock_session.settings.expire_after = utcnow() - timedelta(1)
+    mock_session.mock_adapter.register_uri('GET', url, text='original content')
+    mock_session.get(url)
+
+    mock_session.settings.read_only = read_only
+    mock_session.settings.cache_control = True
+    headers = {} if read_only else {'Cache-Control': 'no-store'}
+    mock_session.mock_adapter.register_uri('GET', url, text='updated content', headers=headers)
+    response = mock_session.get(url, stream=True)
+
+    assert response._content_consumed is False
+    assert response.has_content_changed is None
+    assert b''.join(response.iter_content()) == b'updated content'
+
+
+def test_has_content_changed__background_refresh(mock_session):
+    url = f'{MOCKED_URL}/background-content-change'
+    mock_session.settings.stale_while_revalidate = True
+    mock_session.settings.expire_after = utcnow() - timedelta(1)
+    mock_session.mock_adapter.register_uri('GET', url, text='original content')
+    mock_session.get(url)
+
+    mock_session.settings.expire_after = 60
+    mock_session.mock_adapter.register_uri('GET', url, text='updated content')
+    with patch.object(mock_session, '_resend_async', side_effect=mock_session._send_and_cache):
+        stale_response = mock_session.get(url)
+    cached_response = mock_session.get(url)
+
+    assert stale_response.text == 'original content'
+    assert cached_response.text == 'updated content'
+    assert stale_response.has_content_changed is None
+    assert cached_response.has_content_changed is None
+
+
+def test_has_content_changed__stale_if_error(mock_session):
+    url = f'{MOCKED_URL}/failed-content-change'
+    mock_session.settings.expire_after = utcnow() - timedelta(1)
+    mock_session.settings.stale_if_error = True
+    mock_session.mock_adapter.register_uri('GET', url, text='original content')
+    mock_session.get(url)
+    mock_session.mock_adapter.register_uri('GET', url, exc=RequestException)
+
+    response = mock_session.get(url)
+
+    assert response.text == 'original content'
+    assert response.has_content_changed is None
+
+
+def test_has_content_changed__force_refresh(mock_session):
+    url = f'{MOCKED_URL}/forced-content-change'
+    mock_session.mock_adapter.register_uri('GET', url, text='original content')
+    mock_session.get(url)
+    mock_session.mock_adapter.register_uri('GET', url, text='updated content')
+
+    response = mock_session.get(url, force_refresh=True)
+
+    assert response.text == 'updated content'
+    assert response.has_content_changed is None
+
+
+@pytest.mark.parametrize('backend', ['memory', 'sqlite'])
+@pytest.mark.parametrize('background', [False, True])
+@pytest.mark.parametrize('read_only', [False, True])
+def test_has_content_changed__304_is_not_stored(backend, background, read_only, tmp_path):
+    session = mount_mock_adapter(CachedSession(tmp_path / 'cache', backend=backend))
+    session.settings.expire_after = utcnow() - timedelta(1)
+    initial = session.get(MOCKED_URL_ETAG)
+    session.settings.expire_after = 60
+    session.settings.read_only = read_only
+    session.settings.stale_while_revalidate = background
+    session.mock_adapter.register_uri('GET', MOCKED_URL_ETAG, status_code=304)
+
+    with patch.object(session, '_resend_async', side_effect=session._send_and_cache):
+        response = session.get(MOCKED_URL_ETAG)
+
+    assert response.text == initial.text
+    assert response.cache_key == initial.cache_key
+    assert response.has_content_changed is (None if background else False)
+    assert session.cache.get_response(initial.cache_key).has_content_changed is None
 
 
 def test_url_allowlist(mock_session):
