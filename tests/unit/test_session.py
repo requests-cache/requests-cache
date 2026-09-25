@@ -1192,6 +1192,31 @@ def test_stale_while_revalidate__refresh(mock_session):
     assert response.from_cache is True and response.is_expired is False
 
 
+def test_response_stale_while_revalidate_respects_only_if_cached(mock_session):
+    """only_if_cached should return a stale cached response as-is, without sending a background
+    request to revalidate it, per the documented only_if_cached contract"""
+    url = f'{MOCKED_URL}/stale-while-revalidate-only-if-cached'
+    mock_session.settings.cache_control = True
+    mock_session.mock_adapter.register_uri(
+        'GET',
+        url,
+        text='cached content',
+        headers={
+            'ETag': 'original',
+            'Cache-Control': 'max-age=0, stale-while-revalidate=60',
+        },
+    )
+    mock_session.get(url)
+    request_count = mock_session.mock_adapter.call_count
+
+    with patch.object(mock_session, '_resend_async') as resend_async:
+        response = mock_session.get(url, only_if_cached=True)
+
+    assert response.from_cache is True
+    resend_async.assert_not_called()
+    assert mock_session.mock_adapter.call_count == request_count
+
+
 # Additional request() and send() options
 # -----------------------------------------------------
 

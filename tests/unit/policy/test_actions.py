@@ -239,10 +239,12 @@ def test_update_from_cached_response__stale_if_error():
 
 
 def test_update_from_cached_response__stale_while_revalidate():
+    """only_if_cached should return the stale cached response as-is"""
     settings = CacheSettings(only_if_cached=True, stale_while_revalidate=True)
     actions = CacheActions.from_request('key', BASIC_REQUEST, settings=settings)
     actions.update_from_cached_response(EXPIRED_RESPONSE)
-    assert actions.resend_async is True
+    assert actions.error_504 is False
+    assert actions.resend_async is False
 
 
 @pytest.mark.parametrize(
