@@ -585,6 +585,69 @@ def test_stale_if_error__max_stale(url, mock_session):
         mock_session.get(url)
 
 
+def test_stale_if_error__response_header(mock_session):
+    """A `stale-if-error` response header (with `cache_control=True`) should be honored on a later
+    failed refresh, even though it wasn't set via settings or on the later request. Regression test
+    for issue #1189.
+    """
+    url = f'{MOCKED_URL}/response-stale-if-error'
+    mock_session.settings.cache_control = True
+    mock_session.mock_adapter.register_uri(
+        'GET',
+        url,
+        text='original content',
+        headers={'Cache-Control': 'max-age=0, stale-if-error=60', 'ETag': 'original'},
+    )
+    mock_session.get(url)
+
+    mock_session.mock_adapter.register_uri('GET', url, status_code=500, text='server error')
+    response = mock_session.get(url)
+
+    assert response.status_code == 200
+    assert response.from_cache is True
+    assert response.text == 'original content'
+
+
+def test_stale_if_error_is_scoped_to_matching_vary_response(mock_session):
+    """A `stale-if-error` response header recovered from a cached response that doesn't match
+    `Vary` must not apply to a different, matching variant that lacks that header.
+    """
+    url = f'{MOCKED_URL}/vary-stale-if-error'
+    json_headers = {'Accept': 'application/json'}
+    html_headers = {'Accept': 'text/html'}
+    mock_session.settings.cache_control = True
+
+    mock_session.mock_adapter.register_uri(
+        'GET',
+        url,
+        text='json',
+        headers={
+            'Vary': 'Accept',
+            'ETag': 'json',
+            'Cache-Control': 'max-age=0, stale-if-error=60',
+        },
+    )
+    assert mock_session.get(url, headers=json_headers).text == 'json'
+
+    mock_session.mock_adapter.register_uri(
+        'GET',
+        url,
+        text='html',
+        headers={
+            'Vary': 'Accept',
+            'ETag': 'html',
+            'Cache-Control': 'max-age=0',
+        },
+    )
+    assert mock_session.get(url, headers=html_headers).text == 'html'
+
+    mock_session.mock_adapter.register_uri('GET', url, status_code=500, text='server error')
+    response = mock_session.get(url, headers=html_headers)
+
+    assert response.status_code == 500
+    assert response.from_cache is False
+
+
 def test_old_data_on_error():
     """stale_if_error is aliased to old_data_on_error for backwards-compatibility"""
     session = CachedSession(old_data_on_error=True, backend='memory')
@@ -1127,6 +1190,31 @@ def test_stale_while_revalidate__refresh(mock_session):
     sleep(0.2)
     response = mock_session.get(MOCKED_URL)
     assert response.from_cache is True and response.is_expired is False
+
+
+def test_response_stale_while_revalidate_respects_only_if_cached(mock_session):
+    """only_if_cached should return a stale cached response as-is, without sending a background
+    request to revalidate it, per the documented only_if_cached contract"""
+    url = f'{MOCKED_URL}/stale-while-revalidate-only-if-cached'
+    mock_session.settings.cache_control = True
+    mock_session.mock_adapter.register_uri(
+        'GET',
+        url,
+        text='cached content',
+        headers={
+            'ETag': 'original',
+            'Cache-Control': 'max-age=0, stale-while-revalidate=60',
+        },
+    )
+    mock_session.get(url)
+    request_count = mock_session.mock_adapter.call_count
+
+    with patch.object(mock_session, '_resend_async') as resend_async:
+        response = mock_session.get(url, only_if_cached=True)
+
+    assert response.from_cache is True
+    resend_async.assert_not_called()
+    assert mock_session.mock_adapter.call_count == request_count
 
 
 # Additional request() and send() options

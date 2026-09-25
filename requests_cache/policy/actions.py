@@ -82,6 +82,11 @@ class CacheActions(RichMixin):
     _validation_headers: Dict[str, str] = field(factory=dict, repr=False)
     _vary_matched: bool = field(default=True, repr=False)
 
+    # Get session-level setting for stale_if_error and stale_while_revalidate, kept separate
+    # from the above so a non-matching Vary variant's headers don't affect a later matching one
+    _base_stale_if_error: Union[bool, ExpirationTime] = field(default=None, repr=False)
+    _base_stale_while_revalidate: Union[bool, ExpirationTime] = field(default=None, repr=False)
+
     @classmethod
     def from_request(
         cls,
@@ -143,6 +148,8 @@ class CacheActions(RichMixin):
             skip_write=directives.no_store,
             stale_if_error=stale_if_error,
             stale_while_revalidate=stale_while_revalidate,
+            base_stale_if_error=stale_if_error,
+            base_stale_while_revalidate=stale_while_revalidate,
         )
         return actions
 
@@ -199,6 +206,9 @@ class CacheActions(RichMixin):
             key_kwargs: Additional keyword arguments for ``create_key``.
         """
         self._vary_matched = True
+        if cached_response is not None and self._settings.cache_control:
+            self._update_from_cached_response_headers(cached_response)
+
         usable_response = self.is_usable(cached_response)
         usable_if_error = self.is_usable(cached_response, error=True)
 
@@ -216,7 +226,12 @@ class CacheActions(RichMixin):
         elif not usable_response and not (self._only_if_cached and usable_if_error):
             self.resend_request = True
         # Resend the request in the background; meanwhile return stale response
-        elif cached_response.is_expired and usable_response and self._stale_while_revalidate:
+        elif (
+            cached_response.is_expired
+            and usable_response
+            and self._stale_while_revalidate
+            and not self._only_if_cached
+        ):
             self.resend_async = True
 
         if cached_response is not None and not self._only_if_cached:
@@ -290,6 +305,14 @@ class CacheActions(RichMixin):
         cached_response.revalidated = True
         cached_response.has_content_changed = False
         return cached_response
+
+    def _update_from_cached_response_headers(self, cached_response: 'CachedResponse'):
+        """Recover stale-if-error and stale-while-revalidate directives from a cached response"""
+        directives = CacheDirectives.from_headers(cached_response.headers)
+        self._stale_if_error = self._base_stale_if_error or directives.stale_if_error
+        self._stale_while_revalidate = (
+            self._base_stale_while_revalidate or directives.stale_while_revalidate
+        )
 
     def _update_from_response_headers(self, directives: CacheDirectives):
         """Check response headers for expiration and other cache directives"""
