@@ -17,7 +17,7 @@ class CacheDirectives(RichMixin):
 
     expires: str = field(default=None)
     immutable: bool = field(default=False)
-    max_age: int = field(default=None, converter=try_int)
+    max_age: Optional[int] = field(default=None, converter=try_int)
     max_stale: int = field(default=None, converter=try_int)
     min_fresh: int = field(default=None, converter=try_int)
     must_revalidate: bool = field(default=False)

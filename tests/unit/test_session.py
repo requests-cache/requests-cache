@@ -608,6 +608,46 @@ def test_stale_if_error__response_header(mock_session):
     assert response.text == 'original content'
 
 
+def test_stale_if_error_is_scoped_to_matching_vary_response(mock_session):
+    """A `stale-if-error` response header recovered from a cached response that doesn't match
+    `Vary` must not apply to a different, matching variant that lacks that header.
+    """
+    url = f'{MOCKED_URL}/vary-stale-if-error'
+    json_headers = {'Accept': 'application/json'}
+    html_headers = {'Accept': 'text/html'}
+    mock_session.settings.cache_control = True
+
+    mock_session.mock_adapter.register_uri(
+        'GET',
+        url,
+        text='json',
+        headers={
+            'Vary': 'Accept',
+            'ETag': 'json',
+            'Cache-Control': 'max-age=0, stale-if-error=60',
+        },
+    )
+    assert mock_session.get(url, headers=json_headers).text == 'json'
+
+    mock_session.mock_adapter.register_uri(
+        'GET',
+        url,
+        text='html',
+        headers={
+            'Vary': 'Accept',
+            'ETag': 'html',
+            'Cache-Control': 'max-age=0',
+        },
+    )
+    assert mock_session.get(url, headers=html_headers).text == 'html'
+
+    mock_session.mock_adapter.register_uri('GET', url, status_code=500, text='server error')
+    response = mock_session.get(url, headers=html_headers)
+
+    assert response.status_code == 500
+    assert response.from_cache is False
+
+
 def test_old_data_on_error():
     """stale_if_error is aliased to old_data_on_error for backwards-compatibility"""
     session = CachedSession(old_data_on_error=True, backend='memory')
