@@ -27,6 +27,7 @@ class MongoCache(BaseCache):
     Args:
         db_name: Database name
         connection: :py:class:`~pymongo.mongo_client.MongoClient` object to reuse instead of creating a new one
+            Supplied clients must be closed by the caller.
         kwargs: Additional keyword arguments for :py:class:`~pymongo.mongo_client.MongoClient`
     """
 
@@ -77,6 +78,7 @@ class MongoDict(BaseStorage):
         db_name: Database name
         collection_name: Collection name
         connection: :py:class:`~pymongo.mongo_client.MongoClient` object to reuse instead of creating a new one
+            Supplied clients must be closed by the caller.
         kwargs: Additional keyword arguments for :py:class:`~pymongo.mongo_client.MongoClient`
     """
 
@@ -90,7 +92,8 @@ class MongoDict(BaseStorage):
     ):
         super().__init__(serializer=serializer, **kwargs)
         connection_kwargs = get_valid_kwargs(MongoClient.__init__, kwargs)
-        self.connection = connection or MongoClient(**connection_kwargs)
+        self._owns_connection = connection is None
+        self.connection = connection if connection is not None else MongoClient(**connection_kwargs)
         self.collection = self.connection[db_name][collection_name]
 
     def get_ttl(self) -> Optional[int]:
@@ -152,4 +155,6 @@ class MongoDict(BaseStorage):
         self.collection.drop()
 
     def close(self):
-        self.connection.close()
+        """Close the connection only if this instance created it."""
+        if self._owns_connection:
+            self.connection.close()
