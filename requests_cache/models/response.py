@@ -90,7 +90,7 @@ class OriginalResponse(BaseResponse):
 
 def _comparable_content(response: Response) -> Union[DecodedContent, bytes]:
     """Compare normalised JSON, text, or raw bytes without conflating JSON types."""
-    content_type = response.headers.get('Content-Type', '')
+    content_type = response.headers.get('Content-Type', '').lower()
     if is_json_content_type(content_type):
         try:
             return dumps(response.json(), sort_keys=True)

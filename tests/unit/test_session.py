@@ -968,15 +968,20 @@ def test_has_content_changed__vary_miss(vary, initial_headers, refreshed_headers
         ('{"a":1,"b":2}', '{ "b": 2, "a": 1 }', False),
     ],
 )
-def test_has_content_changed__json_types(original, refreshed, changed, mock_session):
+@pytest.mark.parametrize(
+    'content_type',
+    ['application/json', 'Application/JSON', 'APPLICATION/VND.API+JSON; charset=UTF-8'],
+    ids=['lowercase', 'mixed-case', 'uppercase-vendor'],
+)
+def test_has_content_changed__json_types(original, refreshed, changed, content_type, mock_session):
     url = f'{MOCKED_URL}/json-types'
     mock_session.settings.expire_after = utcnow() - timedelta(1)
     mock_session.mock_adapter.register_uri(
-        'GET', url, text=original, headers={'Content-Type': 'application/json'}
+        'GET', url, text=original, headers={'Content-Type': content_type}
     )
     mock_session.get(url)
     mock_session.mock_adapter.register_uri(
-        'GET', url, text=refreshed, headers={'Content-Type': 'application/json'}
+        'GET', url, text=refreshed, headers={'Content-Type': content_type}
     )
 
     response = mock_session.get(url, refresh=True)
