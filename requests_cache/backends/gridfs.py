@@ -27,6 +27,7 @@ class GridFSCache(BaseCache):
     Args:
         db_name: Database name
         connection: :py:class:`~pymongo.mongo_client.MongoClient` object to reuse instead of creating a new one
+            Supplied clients must be closed by the caller.
         kwargs: Additional keyword arguments for :py:class:`~pymongo.mongo_client.MongoClient`
     """
 
@@ -64,6 +65,7 @@ class GridFSDict(BaseStorage):
         db_name: Database name
         collection_name: Ignored; GridFS internally uses collections 'fs.files' and 'fs.chunks'
         connection: :py:class:`~pymongo.mongo_client.MongoClient` object to reuse instead of creating a new one
+            Supplied clients must be closed by the caller.
         kwargs: Additional keyword arguments for :py:class:`~pymongo.mongo_client.MongoClient`
     """
 
@@ -77,7 +79,8 @@ class GridFSDict(BaseStorage):
     ):
         super().__init__(serializer=serializer, **kwargs)
         connection_kwargs = get_valid_kwargs(MongoClient.__init__, kwargs)
-        self.connection = connection or MongoClient(**connection_kwargs)
+        self._owns_connection = connection is None
+        self.connection = connection if connection is not None else MongoClient(**connection_kwargs)
         self.db = self.connection[db_name]
         self.fs = GridFS(self.db)
         self._lock = RLock()
@@ -122,3 +125,8 @@ class GridFSDict(BaseStorage):
     def clear(self):
         self.db['fs.files'].drop()
         self.db['fs.chunks'].drop()
+
+    def close(self):
+        """Close the connection only if this instance created it."""
+        if self._owns_connection:
+            self.connection.close()

@@ -2,6 +2,7 @@
 
 ## Unreleased
 * Fix JSON refresh comparisons for mixed-case `Content-Type` values
+* Keep caller-supplied MongoDB clients open when closing MongoDB or GridFS caches
 * Fix unhandled `EOFError` when a cache value fails to deserialize
 * Recover stale-if-error and stale-while-revalidate directives from a previously cached response
 * Don't send a `stale-while-revalidate` refresh request when `only-if-cached` is also set
