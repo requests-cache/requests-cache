@@ -26,9 +26,7 @@ For prettier, more readable logs, try the [rich](https://github.com/Textualize/r
 import logging
 from rich.logging import RichHandler
 
-logging.basicConfig(
-    level='DEBUG', format="%(message)s", datefmt="[%X]", handlers=[RichHandler()]
-)
+logging.basicConfig(level='DEBUG', format='%(message)s', datefmt='[%X]', handlers=[RichHandler()])
 ```
 
 If you have other libraries installed that have verbose debug logging, you can configure only the
