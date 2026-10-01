@@ -72,8 +72,10 @@ token in the cache but making it usable for request matching (i.e., store a sepa
 per token value).
 ```python
 session = CachedSession(
-    match_headers=['Authorization'],  # Make this part of the cache key, even if not specified by Vary
-    ignored_parameters=[],            # Remove it from default ignored/redacted params
+    match_headers=[
+        'Authorization'  # Make this part of the cache key, even if not specified by Vary
+    ],
+    ignored_parameters=[],  # Remove it from default ignored/redacted params
 )
 ```
 
