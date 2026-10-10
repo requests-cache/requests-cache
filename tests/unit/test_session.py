@@ -2,6 +2,7 @@
 
 import json
 import pickle
+import sys
 from collections import UserDict, defaultdict
 from datetime import datetime, timedelta
 from logging import getLogger
@@ -121,7 +122,8 @@ def test_response_defaults(mock_session):
     response_1 = mock_session.get(MOCKED_URL)
     response_2 = mock_session.get(MOCKED_URL)
     response_3 = mock_session.get(MOCKED_URL)
-    cache_key = '29de1c4491126e0b'
+    # url-normalize 2.x (python < 3.10) normalizes custom URL schemes differently than 3.0.1+
+    cache_key = '29de1c4491126e0b' if sys.version_info < (3, 10) else '045f15dceb1b8f75'
 
     assert response_1.cache_key == cache_key
     assert isinstance(response_1.created_at, datetime)
