@@ -5,7 +5,7 @@ additional settings and features specific to requests-cache.
 # ruff: noqa: E402,F401,F403
 # isort: skip_file
 from datetime import datetime, timedelta
-from typing import Callable, Dict, Pattern as RegexPattern, Union, MutableMapping
+from typing import Callable, Dict, Pattern as RegexPattern, Union, Mapping
 
 from requests import Response
 
@@ -17,7 +17,7 @@ ExpirationPattern = Union[  # Either a glob expression as str or a compiled rege
 ExpirationPatterns = Dict[ExpirationPattern, ExpirationTime]
 FilterCallback = Callable[[Response], bool]
 KeyCallback = Callable[..., str]
-HeaderDict = MutableMapping[str, str]
+HeaderDict = Mapping[str, str]
 
 
 from .expiration import *
