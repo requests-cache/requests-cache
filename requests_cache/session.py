@@ -3,7 +3,7 @@
 from contextlib import contextmanager, nullcontext
 from logging import getLogger
 from threading import RLock, Thread
-from typing import TYPE_CHECKING, Iterable, MutableMapping, Optional, Union
+from typing import TYPE_CHECKING, Iterable, Mapping, Optional, Union
 
 from requests import PreparedRequest
 from requests import Session as OriginalSession
@@ -157,7 +157,7 @@ class CacheMixin(MIXIN_BASE):
         method: str,
         url: str,
         *args,
-        headers: Optional[MutableMapping[str, str]] = None,
+        headers: Optional[Mapping[str, str]] = None,
         expire_after: ExpirationTime = None,
         only_if_cached: bool = False,
         refresh: bool = False,
