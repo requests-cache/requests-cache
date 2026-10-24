@@ -95,7 +95,7 @@ docs = [
     'furo                       ~=2025.7    ; python_version>="3.11"',
     'linkify-it-py              >=2.0       ; python_version>="3.11"',
     'myst-parser                >=3.0       ; python_version>="3.11"',
-    'sphinx                     ~=8.2.3     ; python_version>="3.11"',
+    'sphinx                     >=8.2.3,<8.2.0     ; python_version>="3.11"',
     'sphinx-autobuild           ~=2024.10   ; python_version>="3.11"',
     'sphinx-autodoc-typehints   ~=3.2       ; python_version>="3.11"',
     'sphinx-automodapi          ~=0.20      ; python_version>="3.11"',
