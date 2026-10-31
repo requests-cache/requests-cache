@@ -324,7 +324,7 @@ class CacheActions(RichMixin):
         else:
             self.expire_after = coalesce(
                 directives.max_age,
-                directives.expires,
+                _validate_expires_header(directives.expires),
                 self.expire_after,
             )
         self.skip_write = self.skip_write or directives.no_store
@@ -427,6 +427,19 @@ class CacheActions(RichMixin):
         if not user_headers:
             return vary_headers
         return sorted(set(vary_headers + [h.lower() for h in user_headers]))
+
+
+def _validate_expires_header(expires: Optional[str]) -> ExpirationTime:
+    """An ``Expires`` header with an invalid date must be treated as 'already expired'
+    (RFC 9111, section 5.3), rather than raising an error for the whole request"""
+    if expires is None:
+        return None
+    try:
+        get_expiration_datetime(expires)
+    except ValueError:
+        logger.debug(f'Invalid Expires header: {expires!r}; treating as expired')
+        return EXPIRE_IMMEDIATELY
+    return expires
 
 
 def _is_method_allowed(request: PreparedRequest, settings: CacheSettings) -> bool:

@@ -573,6 +573,11 @@ def test_is_usable__stale_while_revalidate(stale_while_revalidate, usable):
         ({'Cache-Control': 'immutable, max-age=60'}, -1),  # Immutable should take precedence
         ({'Expires': HTTPDATE_STR}, HTTPDATE_STR),
         ({'Expires': HTTPDATE_STR, 'Cache-Control': 'max-age=60'}, 60),
+        # An invalid Expires date is treated as already expired
+        ({'Expires': 'garbage'}, 0),
+        ({'Expires': ''}, 0),
+        ({'Expires': 'Wed, 31 Feb 2099 07:28:00 GMT'}, 0),
+        ({'Expires': 'garbage', 'Cache-Control': 'max-age=60'}, 60),
     ],
 )
 def test_update_from_response(headers, expected_expiration):

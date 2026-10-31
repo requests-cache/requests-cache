@@ -1,6 +1,7 @@
 # History
 
 ## Unreleased
+* Fix `ValueError` when a response has an invalid `Expires` date (for example `Expires: garbage`); it is now treated as already expired
 * Fix JSON refresh comparisons for mixed-case `Content-Type` values
 * Keep caller-supplied MongoDB clients open when closing MongoDB or GridFS caches
 * Fix unhandled `EOFError` when a cache value fails to deserialize
