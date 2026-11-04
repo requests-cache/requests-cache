@@ -400,9 +400,9 @@ class LRUDict(SQLiteDict):
 
     def __getitem__(self, key) -> int:
         with self.connection() as con:
-            # Using placeholders here with python 3.12+ and concurrency results in the error:
-            # sqlite3.InterfaceError: bad parameter or other API misuse
-            row = con.execute(f"SELECT size FROM {self.table_name} WHERE key='{key}'").fetchone()
+            cur = con.execute(f'SELECT size FROM {self.table_name} WHERE key=?', (key,))
+            row = cur.fetchone()
+            cur.close()
             if not row:
                 raise KeyError(key)
             return row[0]
