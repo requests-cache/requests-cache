@@ -249,6 +249,49 @@ def test_response_history(mock_session):
     assert isinstance(r2.history[0], CachedResponse)
 
 
+@pytest.mark.parametrize(
+    'target_origin, redirect_headers, cache_control',
+    [
+        ('http+mock://attacker.example', {}, False),
+        ('http+mock://requests-cache.com', {'Cache-Control': 'no-store'}, True),
+    ],
+    ids=['cross_origin', 'no_store'],
+)
+def test_response_history__unsafe_redirect_not_aliased(
+    mock_session, target_origin, redirect_headers, cache_control
+):
+    """A redirect must not be aliased (or otherwise cached under the pre-redirect URL) when it's
+    unsafe to do so: either because it crosses origins, or because the redirect itself is marked
+    `Cache-Control: no-store` (checked when `cache_control=True`). Regression test for a cache
+    poisoning issue where a trusted URL that redirects unsafely would serve the redirect target's
+    response from then on.
+    """
+    mock_session.settings.cache_control = cache_control
+    source_url = 'http+mock://requests-cache.com/unsafe-redirect'
+    target_url = f'{target_origin}/unsafe-redirect-target'
+    mock_session.mock_adapter.register_uri(
+        'GET', source_url, headers={**redirect_headers, 'Location': target_url}, status_code=302
+    )
+    mock_session.mock_adapter.register_uri(
+        'GET', target_url, text='redirect target content', status_code=200
+    )
+
+    r = mock_session.get(source_url)
+
+    assert mock_session.cache.contains(url=source_url) is False
+    assert mock_session.cache.contains(url=target_url) is True
+    # `response.cache_key` must reflect where the response was actually stored (the target
+    # URL's key), not the pre-redirect source URL's key
+    assert r.cache_key == mock_session.cache.create_key(Request('GET', target_url))
+
+    # A second request for the source URL must hit the network again, rather than being served
+    # (via a redirect alias) from the target's cache entry
+    request_count = mock_session.mock_adapter.call_count
+    mock_session.get(source_url)
+    assert mock_session.mock_adapter.call_count > request_count
+    assert mock_session.mock_adapter.request_history[-1].url == source_url
+
+
 # Request matching
 # -----------------------------------------------------
 
@@ -810,6 +853,26 @@ def test_filter_fn__retroactive(mock_normalize_url, mock_session):
     mock_session.settings.filter_fn = lambda r: r.request.url != MOCKED_URL_JSON
     mock_session.get(MOCKED_URL_JSON)
     assert not mock_session.cache.contains(url=MOCKED_URL_JSON)
+
+
+def test_filter_fn__cross_origin_redirect(mock_session):
+    """filter_fn must delete the actual cache entry for a response reached via a redirect, even
+    when that response was stored under a different key than the pre-redirect URL's (e.g. a
+    cross-origin redirect; see `test_response_history__unsafe_redirect_not_aliased`)
+    """
+    source_url = 'http+mock://requests-cache.com/filtered-cross-origin-redirect'
+    target_url = 'http+mock://attacker.example/filtered-cross-origin-target'
+    mock_session.mock_adapter.register_uri(
+        'GET', source_url, headers={'Location': target_url}, status_code=302
+    )
+    mock_session.mock_adapter.register_uri(
+        'GET', target_url, text='cross-origin content', status_code=200
+    )
+    mock_session.settings.filter_fn = lambda r: r.request.url != target_url
+
+    mock_session.get(source_url)
+
+    assert mock_session.cache.contains(url=target_url) is False
 
 
 def test_key_fn(mock_session):

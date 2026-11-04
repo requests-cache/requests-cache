@@ -9,6 +9,7 @@
 * Don't send a `stale-while-revalidate` refresh request when `only-if-cached` is also set
 * Set the type of the `headers` parameter of `CachedSession.request()` to `Mapping[str, str]` instead of `MutableMapping[str, str]`
 * Fix non-ASCII text responses without a UTF-8 charset coming back changed when saved with `decode_content=True` (default for filesystem, MongoDB and DynamoDB)
+* Fix a redirect response being cached under the URL of a different-origin or `no-store` redirect
 
 ## 1.3.3 (2026-07-03)
 * Add `CachedResponse.has_content_changed` to flag whether a refresh differs from the cache, when a reliable comparison is available.

@@ -13,6 +13,7 @@ from datetime import datetime
 from logging import getLogger
 from pickle import PickleError
 from typing import TYPE_CHECKING, Iterable, Iterator, List, MutableMapping, Optional, TypeVar, Union
+from urllib.parse import urlparse
 from warnings import warn
 
 from pathlib import Path
@@ -21,13 +22,36 @@ from requests import Request, Response
 
 from ..cache_keys import create_key, redact_response
 from ..models import AnyRequest, CachedResponse
-from ..policy import DEFAULT_CACHE_NAME, CacheSettings, ExpirationTime
+from ..policy import DEFAULT_CACHE_NAME, CacheDirectives, CacheSettings, ExpirationTime
 from ..serializers import SerializerType, init_serializer
 
 # Specific exceptions that may be raised during deserialization
 DESERIALIZE_ERRORS = (AttributeError, EOFError, ImportError, PickleError, TypeError, ValueError)
 
 logger = getLogger(__name__)
+
+
+_DEFAULT_PORTS = {'http': 80, 'https': 443}
+
+
+def _same_origin(url1: str, url2: str) -> bool:
+    """Check if two URLs share the same scheme, host, and (explicit or default) port"""
+    a, b = urlparse(url1), urlparse(url2)
+    a_port = a.port or _DEFAULT_PORTS.get(a.scheme)
+    b_port = b.port or _DEFAULT_PORTS.get(b.scheme)
+    return (a.scheme, a.hostname, a_port) == (b.scheme, b.hostname, b_port)
+
+
+def _is_safe_redirect_hop(hop: Response, final_response: Response, settings: CacheSettings) -> bool:
+    """Check whether a redirect hop may be treated as an alias for the final response it led to:
+    it must be same-origin with the final response, and (when respecting ``Cache-Control``) its
+    own response must not be marked ``no-store``.
+    """
+    if not _same_origin(hop.url, final_response.url):
+        return False
+    if settings.cache_control and CacheDirectives.from_headers(hop.headers).no_store:
+        return False
+    return True
 
 
 class BaseCache:
@@ -100,12 +124,25 @@ class BaseCache:
         cache_key = cache_key or self.create_key(response.request)
         cached_response = CachedResponse.from_response(response, expires=expires)
         cached_response = redact_response(cached_response, self._settings.ignored_parameters)
-        self.responses[cache_key] = cached_response
+        has_history = bool(response.history) and not cached_response.revalidated
+        hop_is_safe = [_is_safe_redirect_hop(r, response, self._settings) for r in response.history]
 
-        # Save redirect aliases, unless this is a revalidation (i.e., it was saved previously)
-        if response.history and not cached_response.revalidated:
-            for r in response.history:
-                self.redirects[self.create_key(r.request)] = cache_key
+        # `cache_key` is normally based on the pre-redirect request. Only use it to store the
+        # response directly if that initial hop is safe to conflate with the final response
+        # (see `_is_safe_redirect_hop`) -- otherwise, a redirect to another origin or a
+        # no-store redirect could result in the final response being served for that other
+        # URL. In that case, store the response only under its own (final) URL's key instead.
+        primary_key = cache_key
+        if has_history and not hop_is_safe[0]:
+            primary_key = self.create_key(response.request)
+        self.responses[primary_key] = cached_response
+
+        # Save redirect aliases for any other hops that are safe to treat as aliases of the
+        # primary key, unless this is a revalidation (i.e., it was saved previously)
+        if has_history:
+            for r, is_safe in zip(response.history, hop_is_safe):
+                if is_safe:
+                    self.redirects[self.create_key(r.request)] = primary_key
 
     def clear(self):
         """Delete all items from the cache"""
