@@ -55,9 +55,10 @@ jobs:
           uv sync --all-extras
 
       # Start integration test databases
-      - uses: supercharge/mongodb-github-action@315db7fe45ac2880b7758f1933e6e5d59afd5e94 # 1.12.1
+      - uses: supercharge/mongodb-github-action@89d1ecb837145f486898e235478a7e267f68c44e # main
         with:
           mongodb-version: 8
+          mongodb-extra-env: GLIBC_TUNABLES=glibc.pthread.rseq=1
       - uses: supercharge/redis-github-action@bc274cb7238cd63a45029db04ee48c07a72609fd # 1.8.1
         with:
           redis-version: 7
