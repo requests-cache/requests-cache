@@ -9,6 +9,8 @@ from uuid import uuid4
 
 import pytest
 from cattrs import BaseConverter, GenConverter
+from requests.structures import CaseInsensitiveDict
+from requests.utils import get_encoding_from_headers
 
 from requests_cache import (
     CachedResponse,
@@ -149,3 +151,25 @@ def test_copy():
         print(stage)
     assert serializer_1.stages[0].decode_content is True
     assert serializer_2.stages[0].decode_content is False
+
+
+@pytest.mark.parametrize(
+    'content_type, body',
+    [
+        ('text/html', 'café – 日本'.encode('utf-8')),
+        ('text/html; charset=utf-8', 'café – 日本'.encode('utf-8')),
+        ('text/plain; charset=ISO-8859-1', 'café'.encode('latin-1')),
+        ('text/plain; charset=utf-8', b'caf\xe9'),
+    ],
+)
+def test_decode_content__text_round_trip(content_type, body):
+    """Text bodies saved with decode_content=True should come back unchanged"""
+    headers = CaseInsensitiveDict({'Content-Type': content_type})
+    # Same encoding requests would pick from the header
+    encoding = get_encoding_from_headers(headers)
+    response = CachedResponse(headers=headers, content=body, encoding=encoding)
+    stage = CattrStage(decode_content=True)
+    cached = stage.loads(stage.dumps(response))
+    assert cached.content == body
+    assert cached.encoding == response.encoding
+    assert cached.text == response.text

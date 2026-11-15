@@ -189,10 +189,13 @@ def _decode_content(response: CachedResponse, response_dict: Dict) -> Dict:
         except (JSONDecodeError, RequestException):
             pass
 
-    # Decode body as text
+    # Decode body as text, only if it's UTF-8, since it's encoded back as UTF-8 on load
     if ct_header.startswith('text/'):
-        response_dict['_decoded_content'] = response.text
-        response_dict.pop('_content', None)
+        try:
+            response_dict['_decoded_content'] = response.content.decode('utf-8')
+            response_dict.pop('_content', None)
+        except UnicodeDecodeError:
+            pass
 
     # Otherwise, it is most likely a binary body
     return response_dict
@@ -214,8 +217,8 @@ def _encode_content(response: CachedResponse) -> CachedResponse:
     if isinstance(response._decoded_content, str):
         response._content = response._decoded_content.encode('utf-8')
         response._decoded_content = None
-        # Set encoding explicitly so requests doesn't have to detect it
-        response.encoding = 'utf-8'
+        # Keep the original encoding, so .text is the same as before caching
+        response.encoding = response.encoding or 'utf-8'
         # Normalization may change Content-Length
         if 'Content-Length' in response.headers:
             response.headers['Content-Length'] = str(len(response._content))
