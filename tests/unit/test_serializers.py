@@ -173,3 +173,40 @@ def test_decode_content__text_round_trip(content_type, body):
     assert cached.content == body
     assert cached.encoding == response.encoding
     assert cached.text == response.text
+
+
+def test_decode_content__text_from_older_version():
+    """Text entries saved by older versions (``response.text`` with the original encoding) should
+    load the same as before
+    """
+    response = CachedResponse(
+        headers={'Content-Type': 'text/html'},
+        content='café'.encode('utf-8'),
+        encoding='ISO-8859-1',
+    )
+    stage = CattrStage(decode_content=True)
+    old_entry = stage.dumps(response)
+    old_entry.pop('_content', None)
+    old_entry['_decoded_content'] = response.text
+
+    cached = stage.loads(old_entry)
+    assert cached.text == response.text
+
+
+def test_decode_content__json_non_utf8():
+    """JSON is re-encoded as UTF-8 on load, so the encoding should be UTF-8 too"""
+    response = CachedResponse(
+        headers={'Content-Type': 'application/json; charset=utf-16'},
+        content='{"name":"café"}'.encode('utf-16'),
+        encoding='utf-16',
+    )
+    stage = CattrStage(decode_content=True)
+    cached = stage.loads(stage.dumps(response))
+    assert cached.json() == {'name': 'café'}
+
+
+def test_decode_content__text_without_body():
+    response = CachedResponse(headers={'Content-Type': 'text/plain'})
+    stage = CattrStage(decode_content=True)
+    cached = stage.loads(stage.dumps(response))
+    assert cached.content == b''
