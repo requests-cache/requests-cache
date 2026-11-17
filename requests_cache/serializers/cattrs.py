@@ -189,10 +189,12 @@ def _decode_content(response: CachedResponse, response_dict: Dict) -> Dict:
         except (JSONDecodeError, RequestException):
             pass
 
-    # Decode body as text
+    # Decode body as text, only if encoding it back as UTF-8 on load gives the same bytes
     if ct_header.startswith('text/'):
-        response_dict['_decoded_content'] = response.text
-        response_dict.pop('_content', None)
+        text = response.text
+        if text.encode('utf-8') == (response.content or b''):
+            response_dict['_decoded_content'] = text
+            response_dict.pop('_content', None)
 
     # Otherwise, it is most likely a binary body
     return response_dict
