@@ -159,7 +159,7 @@ def test_copy():
         ('text/html', 'café – 日本'.encode('utf-8')),
         ('text/html; charset=utf-8', 'café – 日本'.encode('utf-8')),
         ('text/plain; charset=ISO-8859-1', 'café'.encode('latin-1')),
-        ('text/plain; charset=utf-8', b'caf\xe9'),
+        ('text/plain; charset=utf-8', b'\xe9t\xe9'),
     ],
 )
 def test_decode_content__text_round_trip(content_type, body):
