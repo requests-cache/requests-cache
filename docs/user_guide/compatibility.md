@@ -72,9 +72,9 @@ requests via the [pyrate-limiter](https://github.com/vutran1710/PyrateLimiter) l
 provides a mixin, but note that the inheritance order is important: If rate-limiting is applied
 _after_ caching, you get the added benefit of not counting cache hits against your rate limit.
 ```python
->>> from pyrate_limiter import RedisBucket, RequestRate, Duration
+>>> from pyrate_limiter import SQLiteBucket
 >>> from requests import Session
->>> from requests_cache import CacheMixin, RedisCache
+>>> from requests_cache import CacheMixin
 >>> from requests_ratelimiter import LimiterMixin
 
 >>> class CachedLimiterSession(CacheMixin, LimiterMixin, Session):
@@ -83,6 +83,20 @@ _after_ caching, you get the added benefit of not counting cache hits against yo
 ...     """
 
 >>> # Limit non-cached requests to 5 requests per second, with unlimited cached requests
+>>> # Use SQLite as both the bucket backend and the cache backend
+>>> session = CachedLimiterSession(
+...     cache_name='http_cache.sqlite',
+...     backend='sqlite',
+...     per_second=5,
+...     bucket_class=SQLiteBucket,
+...     bucket_kwargs={'path': 'rate_limits.sqlite'},
+... )
+```
+
+```python
+>>> from pyrate_limiter import RedisBucket
+>>> from requests_cache import RedisCache
+
 >>> # Optionally use Redis as both the bucket backend and the cache backend
 >>> session = CachedLimiterSession(
 ...     cache_name='http_cache',
