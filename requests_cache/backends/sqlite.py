@@ -327,9 +327,11 @@ class SQLiteDict(BaseStorage):
 
     def __getitem__(self, key):
         with self.connection() as con:
-            # Using placeholders here with python 3.12+ and concurrency results in the error:
+            # Note: using placeholders here with python 3.12+ and concurrency results in the error:
             # sqlite3.InterfaceError: bad parameter or other API misuse
-            cur = con.execute(f"SELECT value FROM {self.table_name} WHERE key='{key}'")
+            # So escape the key for a string literal instead of binding it as a parameter.
+            escaped_key = key.replace("'", "''")
+            cur = con.execute(f"SELECT value FROM {self.table_name} WHERE key='{escaped_key}'")
             row = cur.fetchone()
             cur.close()
             if not row:

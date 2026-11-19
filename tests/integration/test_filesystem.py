@@ -9,6 +9,7 @@ from platformdirs import user_cache_dir
 
 from requests_cache.backends import FileCache, FileDict, LRUFileDict
 from requests_cache.backends.filesystem import LRUDict
+from requests_cache.models import CachedResponse
 from requests_cache.serializers import (
     SERIALIZERS,
     SerializerPipeline,
@@ -146,6 +147,41 @@ class TestLRUFileDict(TestFileDict):
         cache3 = self.init_cache()
         assert cache1.lock is cache2.lock
         assert cache1.lock is not cache3.lock
+
+    @pytest.mark.parametrize('key', ["it's", 'plain-key'])
+    def test_key_with_sql_metacharacters(self, key: str):
+        """Keys containing SQL metacharacters should be handled the same as any other key.
+
+        A key is stored and looked up through the LRU index as a bound parameter, so characters
+        that are meaningful to SQL must not change the result.
+        """
+        lfd = self.init_cache()
+        lfd[key] = 'value'
+
+        assert key in lfd
+        assert lfd[key] == 'value'
+        assert lfd.lru_index[key] == len(lfd._key2path(key).read_bytes())
+
+        del lfd[key]
+        assert key not in lfd
+        with pytest.raises(KeyError):
+            lfd.lru_index[key]
+
+    @pytest.mark.parametrize('key', ["it's", 'plain-key'])
+    def test_key_with_metacharacters_missing_from_index(self, key: str):
+        """A key with SQL metacharacters that has no LRU index entry is indexed, not rejected.
+
+        This is the state left behind by ``sync_index=False`` when cache files are written
+        outside requests-cache, so the lookup must index the file rather than fail.
+        """
+        lfd = self.init_cache()
+        path = lfd._key2path(key)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(lfd.serialize(CachedResponse()), encoding='utf-8')
+
+        assert list(lfd.lru_index.sorted()) == []
+        assert isinstance(lfd[key], CachedResponse)
+        assert lfd.lru_index[key] == path.stat().st_size
 
     def test_multiple_cache_instances(self):
         """Multiple cache instances should see the same files."""

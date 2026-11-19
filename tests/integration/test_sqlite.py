@@ -30,6 +30,26 @@ class TestSQLiteDict(BaseStorageTest):
         except Exception:
             pass
 
+    @pytest.mark.parametrize('key', ["it's", "a'; DROP TABLE t; --", 'plain-key'])
+    def test_key_with_metacharacters(self, key: str):
+        """Keys containing SQL metacharacters should be handled like any other key.
+
+        The key is escaped into a string literal rather than bound as a placeholder, because
+        placeholders in this lookup break under concurrency on python 3.12+ (see
+        ``SQLiteDict.__getitem__``).
+        """
+        cache = self.init_cache()
+        cache[key] = 'value'
+
+        assert key in cache
+        assert cache[key] == 'value'
+        assert list(cache.keys()) == [key]
+
+        del cache[key]
+        assert key not in cache
+        with pytest.raises(KeyError):
+            cache[key]
+
     @patch('requests_cache.backends.sqlite.sqlite3')
     def test_connection_kwargs(self, mock_sqlite):
         """A spot check to make sure optional connection kwargs gets passed to connection;
