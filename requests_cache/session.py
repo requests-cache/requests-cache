@@ -223,6 +223,7 @@ class CacheMixin(MIXIN_BASE):
         if not actions.skip_read:
             cached_response = self.cache.get_response(actions.cache_key)
         actions.update_from_cached_response(cached_response, self.cache.create_key, **kwargs)
+        primary_cache_key = actions.cache_key
 
         # Secondary Vary lookup: if the primary entry didn't match on Vary,
         # try a Vary-qualified key before going to the origin server.
@@ -254,18 +255,39 @@ class CacheMixin(MIXIN_BASE):
             if isinstance(response, OriginalResponse) and actions._vary_matched:
                 response.update_content_changed(cached_response)
         elif actions.send_request:
-            response = self._send_and_cache(request, actions, cached_response, **kwargs)
+            # If the cached response failed the Vary check, it is a plain cache
+            # miss: don't pass it on for 304 handling or other reuse
+            response = self._send_and_cache(
+                request,
+                actions,
+                cached_response if actions._vary_matched else None,
+                **kwargs,
+            )
         else:
             response = cached_response  # type: ignore  # Guaranteed to be non-None by this point
 
         # If the request has been filtered out and was previously cached, delete it
-        if self.settings.filter_fn is not None and not self.settings.filter_fn(response):
-            logger.debug(f'Deleting filtered response for URL: {response.url}')
-            self.cache.delete(actions.cache_key)
+        if self._delete_filtered_response(response, actions, primary_cache_key):
             return response
 
         # Dispatch any hooks here, because they are removed during serialization
         return dispatch_hook('response', request.hooks, response, **kwargs)
+
+    def _delete_filtered_response(
+        self, response: AnyResponse, actions: CacheActions, primary_cache_key: str
+    ) -> bool:
+        """If the response has been filtered out by ``filter_fn``, delete its cache
+        entry (if it was previously cached) and indicate that it should be returned
+        as-is. Skip the delete if the entry under the primary key belongs to a
+        different variant (the Vary check failed and no Vary-qualified key was
+        computed for this request); that entry must be left alone.
+        """
+        if self.settings.filter_fn is None or self.settings.filter_fn(response):
+            return False
+        if actions._vary_matched or actions.cache_key != primary_cache_key:
+            logger.debug(f'Deleting filtered response for URL: {response.url}')
+            self.cache.delete(actions.cache_key)
+        return True
 
     def _send_and_cache(
         self,

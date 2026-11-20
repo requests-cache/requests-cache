@@ -409,6 +409,53 @@ def test_match_headers__vary_alternating(mock_session):
     assert mock_session.get(MOCKED_URL_VARY, headers=headers_html).from_cache is True
 
 
+def test_vary_mismatch__only_if_cached(mock_session):
+    """A cached response that fails the Vary check is a plain cache miss: a
+    cache-only request for a different variant must return 504 instead of
+    sending a new request
+    """
+    url = f'{MOCKED_URL}/vary-only-if-cached'
+    mock_session.mock_adapter.register_uri(
+        'GET', url, headers={'Vary': 'Accept-Language'}, text='English', status_code=200
+    )
+    mock_session.get(url, headers={'Accept-Language': 'en'})
+    n_calls = mock_session.mock_adapter.call_count
+
+    response = mock_session.get(url, headers={'Accept-Language': 'fr'}, only_if_cached=True)
+    assert response.status_code == 504
+    assert mock_session.mock_adapter.call_count == n_calls
+
+
+def test_vary_mismatch__no_validation_headers(mock_session):
+    """A request for a different variant must not carry the cached variant's
+    validators, and a 304 response must not resurrect its body
+    """
+    url = f'{MOCKED_URL}/vary-validators'
+    mock_session.settings.expire_after = 0
+    mock_session.mock_adapter.register_uri(
+        'GET',
+        url,
+        headers={'Vary': 'Accept-Language', 'ETag': '"en-variant"'},
+        text='English',
+        status_code=200,
+    )
+    mock_session.get(url, headers={'Accept-Language': 'en'})
+
+    def respond(request, context):
+        if request.headers.get('If-None-Match'):
+            context.status_code = 304
+            return ''
+        return 'Français'
+
+    mock_session.mock_adapter.register_uri('GET', url, text=respond)
+    response = mock_session.get(url, headers={'Accept-Language': 'fr'})
+
+    last_request = mock_session.mock_adapter.request_history[-1]
+    assert 'If-None-Match' not in last_request.headers
+    assert response.status_code == 200
+    assert response.text == 'Français'
+
+
 def test_match_headers__vary_authorization(mock_session):
     """When Vary headers overlaps with ignored_parameters and the header is present on the
     request, it's always a cache miss (prevents cross-user cache leakage).
