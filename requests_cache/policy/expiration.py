@@ -19,6 +19,40 @@ NEVER_EXPIRE = -1
 logger = getLogger(__name__)
 
 
+def _timedelta_from_seconds(seconds) -> timedelta:
+    """Build a timedelta from a number of seconds, clamping to the representable range
+    instead of raising OverflowError for out-of-range values (eg. huge delta-seconds
+    from a Cache-Control header)
+    """
+    try:
+        return timedelta(seconds=seconds)
+    except OverflowError:
+        # Note: -timedelta.max is itself out of range (timedelta is asymmetric),
+        # so clamp to timedelta.min on the negative side
+        return timedelta.max if seconds >= 0 else timedelta.min
+
+
+def _saturated_add(dt: datetime, delta: timedelta) -> datetime:
+    """Add a timedelta to a datetime, saturating at datetime.min/max instead of raising
+    OverflowError (eg. adding a freshness offset to an expiration at datetime.max)"""
+    try:
+        return dt + delta
+    except OverflowError:
+        tz = dt.tzinfo or timezone.utc
+        bound = datetime.max if delta >= timedelta(0) else datetime.min
+        return bound.replace(tzinfo=tz)
+
+
+def _as_utc(dt: datetime) -> datetime:
+    """Convert a datetime to UTC, saturating at the representable bounds if the conversion
+    would overflow (eg. datetime.max with a positive UTC offset)"""
+    try:
+        return dt.astimezone(timezone.utc)
+    except OverflowError:
+        bound = datetime.max if dt.replace(tzinfo=None).year >= 9999 else datetime.min
+        return bound.replace(tzinfo=timezone.utc)
+
+
 def get_expiration_datetime(
     expire_after: ExpirationTime,
     start_time: Optional[datetime] = None,
@@ -47,14 +81,18 @@ def get_expiration_datetime(
             raise ValueError(f'Invalid HTTP date: {expire_after}')
         return expire_after_dt
     elif isinstance(expire_after, datetime):
-        return expire_after.astimezone(timezone.utc)
+        return _as_utc(expire_after)
 
     # Otherwise, it must be a timedelta or time in seconds
     if not isinstance(expire_after, timedelta):
-        expire_after = timedelta(seconds=expire_after)
+        expire_after = _timedelta_from_seconds(expire_after)
     if negative_delta:
-        expire_after = -expire_after
-    return (start_time or utcnow()) + expire_after
+        try:
+            expire_after = -expire_after
+        except OverflowError:
+            # -timedelta.max is out of range; clamp to timedelta.min
+            expire_after = timedelta.min
+    return _saturated_add(start_time or utcnow(), expire_after)
 
 
 def get_expiration_seconds(expire_after: ExpirationTime) -> int:
@@ -99,6 +137,11 @@ def _parse_http_date(value: str) -> Optional[datetime]:
     # Can occur when using a cache created with requests-cache <=1.1
     except (TypeError, ValueError):
         logger.debug(f'Failed to parse timestamp: {value}')
+        return None
+    # The date parses but cannot be represented once converted to UTC
+    # (eg. 'Fri, 31 Dec 9999 23:59:59 -1200'); treat as unparseable
+    except OverflowError:
+        logger.debug(f'Timestamp out of range: {value}')
         return None
 
 

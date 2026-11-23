@@ -1,6 +1,7 @@
 # History
 
 ## Unreleased
+* Fix `OverflowError` from out-of-range `Expires` dates (for example `Expires: Fri, 31 Dec 9999 23:59:59 -1200`) and delta-seconds values (for example `max-stale=99999999999999999999`); out-of-range dates are now treated as already expired, and out-of-range values are clamped/saturated instead of failing the request
 * Fix `ValueError` when a response has an invalid `Expires` date (for example `Expires: garbage`); it is now treated as already expired
 * Fix JSON refresh comparisons for mixed-case `Content-Type` values
 * Keep caller-supplied MongoDB clients open when closing MongoDB or GridFS caches

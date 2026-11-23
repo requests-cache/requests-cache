@@ -7,6 +7,7 @@ from requests.structures import CaseInsensitiveDict
 from .._utils import decode, get_valid_kwargs, try_int
 from ..models import RichMixin
 from . import DO_NOT_CACHE, HeaderDict, get_expiration_seconds
+from .expiration import _timedelta_from_seconds
 
 
 @define(repr=False)
@@ -53,7 +54,7 @@ class CacheDirectives(RichMixin):
             offset_seconds = self.max_stale
         elif self.min_fresh:
             offset_seconds = -self.min_fresh
-        return timedelta(seconds=offset_seconds)
+        return _timedelta_from_seconds(offset_seconds)
 
     @property
     def has_validator(self) -> bool:

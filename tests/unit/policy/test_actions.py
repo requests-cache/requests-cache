@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
 import pytest
@@ -8,6 +8,7 @@ from requests.cookies import RequestsCookieJar
 from requests_cache.cache_keys import create_key
 from requests_cache.models import CachedRequest, CachedResponse
 from requests_cache.policy import EXPIRE_IMMEDIATELY, CacheActions, CacheSettings, utcnow
+from requests_cache.policy.actions import _validate_expires_header
 from tests.conftest import ETAG, HTTPDATE_STR, LAST_MODIFIED, MOCKED_URL, create_mock_response
 
 IGNORED_DIRECTIVES = [
@@ -517,6 +518,24 @@ def test_is_usable__min_fresh(min_fresh, usable):
     actions = CacheActions.from_request('key', request)
     cached_response = CachedResponse(expires=utcnow() + timedelta(seconds=10))
     assert actions.is_usable(cached_response) is usable
+
+
+def test_is_usable__expires_at_datetime_max():
+    """A cached response expiring at datetime.max is usable (never-expires) when a freshness
+    offset is applied, instead of raising OverflowError"""
+    request = Request(
+        url='https://img.site.com/base/img.jpg',
+        headers={'Cache-Control': 'max-stale=3600'},
+    )
+    actions = CacheActions.from_request('key', request)
+    cached_response = CachedResponse(expires=datetime.max.replace(tzinfo=timezone.utc))
+    assert actions.is_usable(cached_response) is True
+
+
+def test_validate_expires_header__out_of_range():
+    """An Expires date that parses but overflows when converted to UTC is treated as
+    already expired, not an error for the whole request"""
+    assert _validate_expires_header('Fri, 31 Dec 9999 23:59:59 -1200') == EXPIRE_IMMEDIATELY
 
 
 @pytest.mark.parametrize(
