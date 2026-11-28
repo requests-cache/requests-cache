@@ -329,6 +329,53 @@ def test_update_from_cached_response__vary_headers(
     assert actions.send_request is not expected_match
 
 
+def test_update_from_cached_response__vary_mismatch_only_if_cached():
+    """A Vary mismatch is a plain cache miss: with only_if_cached, expect a 504
+    instead of sending a new request, even if the mismatched response would
+    otherwise be usable (e.g., as a stale-if-error fallback)
+    """
+    cached_response = CachedResponse(
+        headers={'Vary': 'Accept'},
+        request=Request(
+            method='GET',
+            url='https://site.com/img.jpg',
+            headers={'Accept': 'application/json'},
+        ),
+    )
+    request = Request(method='GET', url='https://site.com/img.jpg', headers={'Accept': 'text/html'})
+    settings = CacheSettings(only_if_cached=True, stale_if_error=True)
+    actions = CacheActions.from_request('key', request, settings=settings)
+    actions.update_from_cached_response(cached_response, create_key=create_key)
+
+    assert actions.error_504 is True
+    assert actions.send_request is False
+    assert actions.resend_request is False
+
+
+def test_update_from_cached_response__vary_mismatch_no_validation_headers():
+    """A Vary mismatch must not add the mismatched response's validators to the
+    new request, and must not inherit its stale-if-error directives
+    """
+    cached_response = CachedResponse(
+        expires=utcnow() - timedelta(1),
+        headers={'Vary': 'Accept', 'ETag': ETAG, 'Cache-Control': 'stale-if-error=60'},
+        request=Request(
+            method='GET',
+            url='https://site.com/img.jpg',
+            headers={'Accept': 'application/json'},
+        ),
+    )
+    request = Request(method='GET', url='https://site.com/img.jpg', headers={'Accept': 'text/html'})
+    settings = CacheSettings(cache_control=True)
+    actions = CacheActions.from_request('key', request, settings=settings)
+    actions.update_from_cached_response(cached_response, create_key=create_key)
+
+    assert actions.send_request is True
+    assert actions.resend_request is False
+    assert actions._validation_headers == {}
+    assert not actions._stale_if_error
+
+
 @pytest.mark.parametrize(
     'vary, cached_headers, new_headers, expect_vary_key_set',
     [

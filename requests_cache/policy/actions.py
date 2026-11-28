@@ -210,6 +210,24 @@ class CacheActions(RichMixin):
             key_kwargs: Additional keyword arguments for ``create_key``.
         """
         self._vary_matched = True
+        # If the cached response fails the Vary check, it is a plain cache miss.
+        # Reject it before it can affect any other decision below: only-if-cached,
+        # freshness, stale-if-error/stale-while-revalidate directives inherited from
+        # its headers, and revalidation validators must all be based on a response
+        # for this variant only.
+        if (
+            cached_response is not None
+            and create_key
+            and not self._validate_vary(cached_response, create_key, **key_kwargs)
+        ):
+            self._vary_matched = False
+            if self._only_if_cached:
+                self.error_504 = True
+            else:
+                self.send_request = True
+            logger.debug(f'Post-read cache actions: {self}')
+            return
+
         if cached_response is not None and self._settings.cache_control:
             self._update_from_cached_response_headers(cached_response)
 
@@ -221,10 +239,6 @@ class CacheActions(RichMixin):
             self.error_504 = True
         # Send the request for the first time
         elif cached_response is None:
-            self.send_request = True
-        # If response contains Vary and doesn't match, consider it a cache miss
-        elif create_key and not self._validate_vary(cached_response, create_key, **key_kwargs):
-            self._vary_matched = False
             self.send_request = True
         # Resend the request, unless settings permit a stale response
         elif not usable_response and not (self._only_if_cached and usable_if_error):
