@@ -21,6 +21,7 @@ from . import (
     get_url_expiration,
     utcnow,
 )
+from .expiration import _saturated_add
 from .settings import CacheSettings
 
 if TYPE_CHECKING:
@@ -187,7 +188,10 @@ class CacheActions(RichMixin):
         else:
             offset = self._directives.get_expire_offset()
 
-        return utcnow() < cached_response.expires + offset
+        # Saturate instead of raising OverflowError if the expiration is at datetime.max
+        # and the offset pushes it past the representable range; such a response is
+        # effectively never-expired
+        return utcnow() < _saturated_add(cached_response.expires, offset)
 
     def update_from_cached_response(
         self,
