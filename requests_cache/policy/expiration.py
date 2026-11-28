@@ -139,7 +139,7 @@ def _parse_http_date(value: str) -> Optional[datetime]:
         logger.debug(f'Failed to parse timestamp: {value}')
         return None
     # The date parses but cannot be represented once converted to UTC
-    # (eg. 'Fri, 31 Dec 9999 23:59:59 -1200'); treat as unparseable
+    # (eg. 'Fri, 31 Dec 9999 23:59:59 -1200'); treat as unparsable
     except OverflowError:
         logger.debug(f'Timestamp out of range: {value}')
         return None
