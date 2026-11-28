@@ -154,6 +154,12 @@ def test_get_expiration_datetime__huge_value_saturates(expire_after):
     assert get_expiration_datetime(expire_after) == datetime.max.replace(tzinfo=timezone.utc)
 
 
+def test_get_expiration_datetime__datetime_max_saturates():
+    """A naive datetime.max saturates at datetime.max (UTC) instead of raising ValueError
+    from astimezone()"""
+    assert get_expiration_datetime(datetime.max) == datetime.max.replace(tzinfo=timezone.utc)
+
+
 def test_get_expiration_seconds__huge_value():
     """A huge numeric expiration converts to seconds without raising OverflowError"""
     from requests_cache.policy.expiration import get_expiration_seconds

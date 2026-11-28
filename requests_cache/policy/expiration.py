@@ -48,8 +48,8 @@ def _as_utc(dt: datetime) -> datetime:
     would overflow (eg. datetime.max with a positive UTC offset)"""
     try:
         return dt.astimezone(timezone.utc)
-    except OverflowError:
-        bound = datetime.max if dt.replace(tzinfo=None).year >= 9999 else datetime.min
+    except (OverflowError, ValueError):
+        bound = datetime.max if dt.year >= 9999 else datetime.min
         return bound.replace(tzinfo=timezone.utc)
 
 
