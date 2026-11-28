@@ -5,7 +5,7 @@ from email.utils import parsedate_to_datetime
 from fnmatch import fnmatch
 from logging import getLogger
 from math import ceil
-from typing import Optional
+from typing import Optional, Union
 from typing import Pattern as RegexPattern
 
 from .._utils import try_int
@@ -19,7 +19,7 @@ NEVER_EXPIRE = -1
 logger = getLogger(__name__)
 
 
-def _timedelta_from_seconds(seconds) -> timedelta:
+def _timedelta_from_seconds(seconds: Union[int, float]) -> timedelta:
     """Build a timedelta from a number of seconds, clamping to the representable range
     instead of raising OverflowError for out-of-range values (eg. huge delta-seconds
     from a Cache-Control header)

@@ -7,11 +7,13 @@ import pytest
 from requests_cache.policy.expiration import (
     DO_NOT_CACHE,
     EXPIRE_IMMEDIATELY,
+    _parse_http_date,
     get_expiration_datetime,
+    get_expiration_seconds,
     get_url_expiration,
     utcnow,
 )
-from requests_cache.policy.directives import set_request_headers
+from requests_cache.policy.directives import CacheDirectives, set_request_headers
 from tests.conftest import HTTPDATE_DATETIME, HTTPDATE_STR
 
 
@@ -136,8 +138,6 @@ def test_set_request_headers__do_not_cache():
 def test_get_expiration_datetime__httpdate_out_of_range():
     """An Expires date that parses but overflows when converted to UTC is treated as an
     invalid date (already expired), not an OverflowError"""
-    from requests_cache.policy.expiration import _parse_http_date
-
     assert _parse_http_date('Fri, 31 Dec 9999 23:59:59 -1200') is None
     with pytest.raises(ValueError):
         get_expiration_datetime('Fri, 31 Dec 9999 23:59:59 -1200')
@@ -162,19 +162,19 @@ def test_get_expiration_datetime__datetime_max_saturates():
 
 def test_get_expiration_seconds__huge_value():
     """A huge numeric expiration converts to seconds without raising OverflowError"""
-    from requests_cache.policy.expiration import get_expiration_seconds
-
-    assert get_expiration_seconds(99999999999999999999) > 0
+    # Should be on the order of the number of seconds between now and datetime.max
+    assert get_expiration_seconds(99999999999999999999) > 10**10
 
 
 @pytest.mark.parametrize(
-    'header',
-    ['max-stale=99999999999999999999', 'min-fresh=99999999999999999999'],
+    'header, expected_offset',
+    [
+        ('max-stale=99999999999999999999', timedelta.max),
+        ('min-fresh=99999999999999999999', timedelta.min),
+    ],
 )
-def test_get_expire_offset__huge_value(header):
+def test_get_expire_offset__huge_value(header, expected_offset):
     """Huge delta-seconds values from Cache-Control headers are clamped to the
     timedelta-representable range instead of raising OverflowError"""
-    from requests_cache.policy.directives import CacheDirectives
-
     offset = CacheDirectives.from_headers({'Cache-Control': header}).get_expire_offset()
-    assert abs(offset) <= timedelta.max
+    assert offset == expected_offset
