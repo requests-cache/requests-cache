@@ -223,7 +223,6 @@ class CacheMixin(MIXIN_BASE):
         if not actions.skip_read:
             cached_response = self.cache.get_response(actions.cache_key)
         actions.update_from_cached_response(cached_response, self.cache.create_key, **kwargs)
-        primary_cache_key = actions.cache_key
 
         # Secondary Vary lookup: if the primary entry didn't match on Vary,
         # try a Vary-qualified key before going to the origin server.
@@ -267,24 +266,29 @@ class CacheMixin(MIXIN_BASE):
             response = cached_response  # type: ignore  # Guaranteed to be non-None by this point
 
         # If the request has been filtered out and was previously cached, delete it
-        if self._delete_filtered_response(response, actions, primary_cache_key):
+        if self._delete_filtered_response(response, actions):
             return response
 
         # Dispatch any hooks here, because they are removed during serialization
         return dispatch_hook('response', request.hooks, response, **kwargs)
 
-    def _delete_filtered_response(
-        self, response: AnyResponse, actions: CacheActions, primary_cache_key: str
-    ) -> bool:
+    def _delete_filtered_response(self, response: AnyResponse, actions: CacheActions) -> bool:
         """If the response has been filtered out by ``filter_fn``, delete its cache
         entry (if it was previously cached) and indicate that it should be returned
-        as-is. Skip the delete if the entry under the primary key belongs to a
-        different variant (the Vary check failed and no Vary-qualified key was
-        computed for this request); that entry must be left alone.
+        as-is. Skip the delete if nothing was written for this request: with
+        ``only_if_cached``, a cache miss produces a synthetic 504 response without
+        fetching or writing anything, so there is no entry to delete and logging
+        one would be misleading.
+
+        Otherwise, the entry under ``actions.cache_key`` is the one to delete,
+        even if the request failed the Vary check: when no Vary-qualified key was
+        computed, the response is addressed to the same (primary) key as the old
+        mismatched entry, so deleting that key removes the stale entry instead
+        of leaving it in the cache.
         """
         if self.settings.filter_fn is None or self.settings.filter_fn(response):
             return False
-        if actions._vary_matched or actions.cache_key != primary_cache_key:
+        if not actions.error_504:
             logger.debug(f'Deleting filtered response for URL: {response.url}')
             self.cache.delete(actions.cache_key)
         return True

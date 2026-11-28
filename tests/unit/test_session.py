@@ -456,6 +456,53 @@ def test_vary_mismatch__no_validation_headers(mock_session):
     assert response.text == 'Français'
 
 
+def test_vary_mismatch__filter_fn_deletes_primary_entry(mock_session):
+    """If a Vary mismatch produces no secondary key (e.g. ``Vary: *``), the new
+    response is addressed to the same primary key as the old mismatched entry.
+    If ``filter_fn`` then rejects that response, the old entry must be deleted
+    rather than left in the cache.
+    """
+    url = f'{MOCKED_URL}/vary-filter-star'
+    mock_session.mock_adapter.register_uri(
+        'GET', url, headers={'Vary': '*'}, text='Starred', status_code=200
+    )
+    mock_session.get(url, headers={'Accept-Language': 'en'})
+    assert mock_session.cache.contains(url=url)
+
+    mock_session.settings.filter_fn = lambda r: r.request.headers.get('Accept-Language') != 'fr'
+    response = mock_session.get(url, headers={'Accept-Language': 'fr'})
+    assert response.status_code == 200
+    assert response.from_cache is False
+    assert not mock_session.cache.contains(url=url)
+    # A request for the original variant is a miss again (old entry is gone)
+    assert mock_session.get(url, headers={'Accept-Language': 'en'}).from_cache is False
+
+
+def test_vary_mismatch__filter_fn_no_delete_on_504(mock_session, monkeypatch):
+    """With ``only_if_cached``, a Vary mismatch that produces a secondary key but
+    misses on lookup returns a synthetic 504 without writing anything. If
+    ``filter_fn`` rejects the 504 response, no delete must be attempted on the
+    (never written) secondary key.
+    """
+    url = f'{MOCKED_URL}/vary-filter-504'
+    mock_session.mock_adapter.register_uri(
+        'GET', url, headers={'Vary': 'Accept-Language'}, text='English', status_code=200
+    )
+    mock_session.get(url, headers={'Accept-Language': 'en'})
+    assert mock_session.cache.contains(url=url)
+
+    deletes = []
+    monkeypatch.setattr(mock_session.cache, 'delete', lambda *args, **kwargs: deletes.append(args))
+    mock_session.settings.filter_fn = lambda r: r.request.headers.get('Accept-Language') != 'fr'
+    n_calls = mock_session.mock_adapter.call_count
+
+    response = mock_session.get(url, headers={'Accept-Language': 'fr'}, only_if_cached=True)
+    assert response.status_code == 504
+    assert mock_session.mock_adapter.call_count == n_calls
+    assert deletes == []
+    assert mock_session.cache.contains(url=url)
+
+
 def test_match_headers__vary_authorization(mock_session):
     """When Vary headers overlaps with ignored_parameters and the header is present on the
     request, it's always a cache miss (prevents cross-user cache leakage).
